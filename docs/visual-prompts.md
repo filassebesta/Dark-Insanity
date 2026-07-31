@@ -129,7 +129,66 @@ a hooded spymaster half in shadow, only part of the face visible, close bust
 portrait, sly knowing half-smile, {STYLE}
 ```
 
-*(Vládce samotného lze oříznout přímo z main menu obrázku nebo z `scenario/king.png`.)*
+*(Vládcův herní portrét — viz sekce 4b. `scenario/king.png` zůstává jen pro
+obrazovku výběru scénáře, samostatně od hráčovy postupující postavy.)*
+
+---
+
+## 4b. Portrét vládce — 5 stupňů sociálního postavení + stárnutí
+
+Vládcova vlastní postava (hráč) vizuálně roste podle dvou nezávislých os:
+
+- **Status (5 pevných stupňů)** — vlastní ilustrace pro každý stupeň (níže).
+- **Věk (plynulý)** — řeší se přes `aging_overlay.png` (šediny/vrásky),
+  aplikovaný jako CSS blend vrstva přes aktuální stupňový portrét podle
+  věku postavy. Žádné samostatné "mladá/stará" verze negenerujeme.
+
+Generuj všech 5 stupňů v jedné sérii se stejným seedem / character
+reference (Midjourney `--seed`, `--cref`), ať je jasně vidět postup JEDNÉ
+postavy, ne 5 různých lidí.
+
+**`assets/portraits/ruler_tier1_peasant.png`** — 2:3, pas nahoru
+```
+a gaunt peasant in ragged patched homespun clothes and worn leather wraps on
+the feet, waist-up three-quarter view, calloused hands, weary but resolute
+expression, {STYLE}
+```
+
+**`assets/portraits/ruler_tier2_freeman.png`** — 2:3, pas nahoru
+```
+a sturdy freeman in a simple but well-mended wool tunic and leather jerkin, a
+plain iron dagger at the belt, waist-up three-quarter view, hardened
+confident expression, {STYLE}
+```
+
+**`assets/portraits/ruler_tier3_minor_noble.png`** — 2:3, pas nahoru
+```
+a minor noble in a fitted doublet with a small embroidered house sigil
+brooch, leather riding gloves, waist-up three-quarter view, calculating
+ambitious expression, {STYLE}
+```
+
+**`assets/portraits/ruler_tier4_great_noble.png`** — 2:3, pas nahoru
+```
+a powerful vassal lord in fur-trimmed embroidered robes and a heavy gold
+chain of office, a signet ring visible on one hand, waist-up three-quarter
+view, commanding proud expression, {STYLE}
+```
+
+**`assets/portraits/ruler_tier5_king.png`** — 2:3, pas nahoru
+```
+a crowned king in ermine-trimmed royal robes holding a scepter, waist-up
+three-quarter view, regal authoritative expression, {STYLE}
+```
+
+**`assets/ui/aging_overlay.png`** — 2:3, izolováno na jednobarevném pozadí
+(NENÍ pro oříznutí — je to blend vrstva, drž ji na plném bílém/černém pozadí
+pro čisté prolnutí)
+```
+a subtle semi-transparent overlay texture of fine grey hair strands, soft
+wrinkle linework, and faint age spots, isolated on a plain flat background
+for easy blending, engraving crosshatch linework, {STYLE}
+```
 
 ---
 
@@ -286,11 +345,17 @@ assets/
     parchment_bg.png
     frame_ornate.png
     divider_skull.png
+    aging_overlay.png
   scenario/
     king.png
     vassal.png
     peasant.png
   portraits/
+    ruler_tier1_peasant.png
+    ruler_tier2_freeman.png
+    ruler_tier3_minor_noble.png
+    ruler_tier4_great_noble.png
+    ruler_tier5_king.png
     heir.png
     spouse_queen.png
     spouse_king.png
