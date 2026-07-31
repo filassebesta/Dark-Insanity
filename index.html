@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Insanity Kingdom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- MAIN MENU -->
+  <section id="screen-menu" class="screen active">
+    <div class="menu-panel parchment-frame">
+      <h1 class="game-title">Insanity<br>Kingdom</h1>
+      <div class="divider">⚜</div>
+      <nav class="menu-list">
+        <button class="seal-button" data-action="goto-new-game">Nová hra</button>
+        <button class="seal-button" data-action="continue-game">Pokračovat</button>
+        <button class="seal-button" data-action="goto-load-game">Načíst hru</button>
+        <button class="seal-button" data-action="goto-options">Nastavení</button>
+        <button class="seal-button" data-action="quit-game">Konec</button>
+      </nav>
+    </div>
+  </section>
+
+  <!-- NEW GAME: dynasty naming -->
+  <section id="screen-new-game" class="screen">
+    <div class="dialog-panel parchment-frame">
+      <h2 class="gothic">Založení dynastie</h2>
+      <label class="field">
+        <span>Jméno vládce</span>
+        <input id="input-ruler-name" type="text" maxlength="24" placeholder="např. Bořivoj">
+      </label>
+      <label class="field">
+        <span>Jméno dynastie</span>
+        <input id="input-dynasty-name" type="text" maxlength="24" placeholder="např. z Vlčí Hory">
+      </label>
+      <div class="dialog-actions">
+        <button class="seal-button" data-action="back-to-menu">Zpět</button>
+        <button class="seal-button primary" data-action="goto-scenario-select">Pokračovat</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCENARIO SELECT -->
+  <section id="screen-scenario" class="screen">
+    <div class="scenario-screen">
+      <h2 class="gothic">Vyber svůj osud</h2>
+      <div class="scenario-cards">
+        <button class="scenario-card" data-scenario="panovnik">
+          <strong>Panovník</strong>
+          <span class="scenario-diff">Snadné</span>
+          <p>Vládneš už hotovému království. Výzvou je udržet ho a rozšířit.</p>
+        </button>
+        <button class="scenario-card locked" data-scenario="slechtic">
+          <strong>Šlechtic</strong>
+          <span class="scenario-diff">Střední</span>
+          <p>Připravuje se.</p>
+        </button>
+        <button class="scenario-card locked" data-scenario="sedlak">
+          <strong>Sedlák</strong>
+          <span class="scenario-diff">Těžké</span>
+          <p>Připravuje se.</p>
+        </button>
+      </div>
+      <button class="seal-button" data-action="back-to-new-game">Zpět</button>
+    </div>
+  </section>
+
+  <!-- LOAD GAME -->
+  <section id="screen-load" class="screen">
+    <div class="dialog-panel parchment-frame">
+      <h2 class="gothic">Načíst hru</h2>
+      <div id="save-slot-list" class="save-slot-list"></div>
+      <div class="dialog-actions">
+        <button class="seal-button" data-action="back-to-menu">Zpět</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- OPTIONS -->
+  <section id="screen-options" class="screen">
+    <div class="dialog-panel parchment-frame">
+      <h2 class="gothic">Nastavení</h2>
+      <label class="field checkbox">
+        <input id="input-typewriter-toggle" type="checkbox" checked>
+        <span>Postupné psaní textu</span>
+      </label>
+      <div class="dialog-actions">
+        <button class="seal-button" data-action="back-to-menu">Zpět</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN GAME SCREEN -->
+  <section id="screen-game" class="screen">
+    <header id="resource-bar" class="resource-bar">
+      <button class="menu-return-button" data-action="back-to-menu" title="Zpět do menu">☰</button>
+      <div id="resource-chips" class="resource-chips"></div>
+    </header>
+
+    <div class="book-tabs">
+      <button class="book-tab" data-panel="map">Mapa</button>
+      <button class="book-tab" data-panel="court">Dvůr</button>
+      <button class="book-tab" data-panel="chronicle">Kronika</button>
+    </div>
+
+    <main id="event-card" class="event-card parchment-frame">
+      <div id="turn-summary" class="turn-summary"></div>
+      <h2 id="event-title" class="gothic"></h2>
+      <p id="event-text" class="event-text"></p>
+      <div id="choice-list" class="choice-list"></div>
+      <div id="choice-preview" class="choice-preview"></div>
+    </main>
+
+    <div id="panel-overlay" class="panel-overlay">
+      <div id="panel-map" class="side-panel">
+        <button class="panel-close" data-action="close-panel">✕</button>
+        <h3 class="gothic">Mapa království</h3>
+        <div id="map-provinces" class="map-provinces"></div>
+        <div id="map-province-detail" class="map-province-detail"></div>
+      </div>
+      <div id="panel-court" class="side-panel">
+        <button class="panel-close" data-action="close-panel">✕</button>
+        <h3 class="gothic">Dvůr</h3>
+        <div id="court-grid" class="court-grid"></div>
+      </div>
+      <div id="panel-chronicle" class="side-panel">
+        <button class="panel-close" data-action="close-panel">✕</button>
+        <h3 class="gothic">Kronika království</h3>
+        <div id="chronicle-log" class="chronicle-log"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ENDING -->
+  <section id="screen-ending" class="screen">
+    <div class="ending-panel parchment-frame">
+      <h2 id="ending-title" class="gothic"></h2>
+      <p id="ending-text" class="event-text"></p>
+      <div id="ending-stats" class="ending-stats"></div>
+      <button class="seal-button primary" data-action="back-to-menu">Zpět do menu</button>
+    </div>
+  </section>
+
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
