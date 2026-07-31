@@ -220,6 +220,16 @@ coat of arms, ornate engraved shield border, {STYLE}
 *(Až budou provincie pojmenované, dá se do štítu domalovat/vygenerovat erb
 každé zvlášť — teď je to placeholder pro všech 5.)*
 
+**`assets/map/unrest_overlay.png`** — 1:1, izolováno na jednobarevném pozadí
+(NENÍ pro oříznutí — blend vrstva jako `aging_overlay.png`, vykresluje se
+přes provincii na mapě podle míry nepokojů, škáluj průhlednost/intenzitu
+podle hodnoty nepokojů)
+```
+dark ominous smoke and storm clouds swirling upward, isolated on a plain
+flat background for easy blending, engraving crosshatch linework, subtle and
+semi-transparent, {STYLE}
+```
+
 ---
 
 ## 6. Ikony zdrojů (7) — jeden sheet
@@ -376,6 +386,7 @@ assets/
     kingdom_map.png
     terrain_icons_sheet.png
     shield_blank.png
+    unrest_overlay.png
   icons/
     resources_sheet.png
     traits_sheet.png
