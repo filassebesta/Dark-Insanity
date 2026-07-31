@@ -305,6 +305,16 @@ lone cloaked figure walking through drifting fog, sense of dread and
 illness, {STYLE}
 ```
 
+**`assets/events/scene_succession.png`** — 4:5 (ne 16:9 — jde o speciální
+celoobrazovkovou scénu, ne běžnou dialogovou kartu)
+```
+a solemn candlelit cathedral coronation, a young heir kneeling as a bishop
+lowers a crown onto their head, the old king's draped empty throne visible
+in the shadows behind, mourning and renewal at once, {STYLE}
+```
+*(Speciální scéna pro přechod generace při přirozené smrti stářím — spouští
+se jen při tomhle konkrétním přechodu, ne jako běžný náhodný event.)*
+
 ---
 
 ## 9. Konce hry (4)
@@ -378,6 +388,7 @@ assets/
     scene_dungeon.png
     scene_feast.png
     scene_plague_village.png
+    scene_succession.png
   endings/
     ending_death.png
     ending_conquest.png
