@@ -39,6 +39,16 @@ clothing, smooth digital art, text, watermark, signature
 Červenou barvu drž jen na výrazných akcentech (koruny, krev, praporce) — podle
 main menu referenčního obrázku. Zbytek zůstává sépiová rytina.
 
+## 1b. Scénářové nálady (modifikátor {STYLE} podle obtížnosti)
+
+Základní {STYLE} zůstává stejný pro všechny assety, ale u obsahu konkrétního
+scénáře (Panovník/Šlechtic/Sedlák) přidej na konec navíc tohle:
+
+- **Panovník** (bohatší): `, warmer golden highlights, richer ink depth`
+- **Šlechtic** (neutrální): beze změny, čistý {STYLE}
+- **Sedlák** (syrovější): `, more desaturated palette, gritty muted earth
+  tones, harsher rougher linework, colder shadows`
+
 ---
 
 ## 2. UI rámy a pozadí
