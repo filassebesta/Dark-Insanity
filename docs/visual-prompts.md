@@ -5,22 +5,26 @@ Claude negeneruje obrázky, takže tenhle dokument je zadání pro externí obr�
 vygeneruješ, ořízneš a uložíš pod názvy souborů z manifestu na konci — kód se pak
 bude odkazovat přímo na tyhle cesty.
 
+**Většina promptů je psaná jako sprite sheet** — jeden prompt = jedno vygenerování =
+víc hotových assetů po oříznutí. Cílem je co nejmíň jednotlivých generování.
+Jen tři věci musí zůstat samostatné, protože se nedají smysluplně naskládat
+vedle sebe do jednoho obrázku: `parchment_bg.png` (musí být bezešvě
+dlaždicovatelný), `kingdom_map.png` (jedna velká kompozice) a
+`resources_sheet.png`/`traits_sheet.png` (ty jsou grid sheety odjakživa).
+
 ## Jak na to
 
 1. Prompty jsou psané anglicky — modely na ně reagují nejkonzistentněji.
-2. Za text každého promptu vlož blok `{STYLE}` (viz níže) — drží jednotný vizuální
-   styl napříč všemi assety, navazuje na referenční main menu obrázek.
-3. Pokud nástroj podporuje seed / style reference (Midjourney `--seed`, `--sref`),
-   použij stejný napříč celou sadou.
-4. **Portréty a scény generuj jednotlivě** — AI lépe udrží detail a podobnost.
-   **Ikony a terén generuj jako grid sheet** — jsou jednodušší, AI je líp udrží
-   oddělené v gridu. Proto jsou sekce 6 a 7 psané jako jeden prompt na celý sheet.
-5. Po vygenerování ořízni jednotlivé dlaždice/varianty a ulož podle manifestu
-   v sekci 10.
+2. Za text každého promptu vlož blok `{STYLE}` (viz níže).
+3. Po vygenerování ořízni sheet na jednotlivé buňky/panely podle popisu u
+   každého promptu a ulož podle manifestu v sekci 12.
+4. Pokud nástroj podporuje seed / style reference (Midjourney `--seed`,
+   `--sref`), použij stejný napříč všemi sheety — a v rámci jednoho sheetu
+   je to navíc automatické, protože je to jedno vygenerování.
 
-Pro Midjourney přidej na konec `--ar <poměr> --style raw --v 6` (raw = drží se
-promptu, míň "midjourney" stylizace). Pro DALL·E/SDXL/Flux funguje prompt beze
-změny, negativní část za `--no` patří u SDXL/Flux do negative promptu.
+Pro Midjourney přidej na konec `--ar <poměr> --style raw --v 6`. Pro
+DALL·E/SDXL/Flux funguje prompt beze změny, negativní část za `--no` patří
+u SDXL/Flux do negative promptu.
 
 ---
 
@@ -36,13 +40,10 @@ wash --no color photo, 3D render, cartoon, anime, flat cel-shading, modern
 clothing, smooth digital art, text, watermark, signature
 ```
 
-Červenou barvu drž jen na výrazných akcentech (koruny, krev, praporce) — podle
-main menu referenčního obrázku. Zbytek zůstává sépiová rytina.
+Červenou barvu drž jen na výrazných akcentech (koruny, krev, praporce). Zbytek
+zůstává sépiová rytina.
 
 ## 1b. Scénářové nálady (modifikátor {STYLE} podle obtížnosti)
-
-Základní {STYLE} zůstává stejný pro všechny assety, ale u obsahu konkrétního
-scénáře (Panovník/Šlechtic/Sedlák) přidej na konec navíc tohle:
 
 - **Panovník** (bohatší): `, warmer golden highlights, richer ink depth`
 - **Šlechtic** (neutrální): beze změny, čistý {STYLE}
@@ -51,198 +52,149 @@ scénáře (Panovník/Šlechtic/Sedlák) přidej na konec navíc tohle:
 
 ---
 
-## 2. UI rámy a pozadí
+## 2. Pozadí a UI rámy
 
-**`assets/ui/parchment_bg.png`** — 1:1, dlaždicovatelné
+**`assets/ui/parchment_bg.png`** — 1:1, dlaždicovatelné (samostatně, nejde spojit)
 ```
 seamless tileable texture of aged parchment / vellum paper, deep coffee-stain
 blotches, cracked edges, subtle candle-burn marks, fine paper grain, no
 illustration or text, {STYLE}
 ```
 
-**`assets/ui/frame_ornate.png`** — 4:5, prázdný střed
+**`assets/ui/ui_elements_sheet.png`** — 3:2, dvě oddělené položky vedle sebe
 ```
-ornate gothic picture frame carved from dark wood inlaid with wrought iron
-scrollwork, symmetrical filigree corners, empty flat center panel for content,
-{STYLE}
+a reference sheet with two separate decorative elements side by side, clearly
+separated with empty space between them: on the left, an ornate gothic
+picture frame carved from dark wood inlaid with wrought iron scrollwork,
+with an empty flat center panel; on the right, a horizontal ornamental
+divider with a small skull centerpiece flanked by curling vine flourishes
+and crossed bones, {STYLE}
 ```
-
-**`assets/ui/divider_skull.png`** — 4:1
-```
-horizontal ornamental line divider, small human skull centerpiece flanked by
-curling vine flourishes and crossed bones, thin engraved linework, {STYLE}
-```
-
----
-
-## 3. Výběr scénáře (Panovník / Šlechtic / Sedlák)
-
-**`assets/scenario/king.png`** — 3:4 (lze případně ořezat z main menu obrázku)
-```
-a weary crowned king in ornate robes standing before his throne, hand resting
-on the pommel of a sword, three-quarter view, noble but burdened bearing,
-{STYLE}
-```
-
-**`assets/scenario/vassal.png`** — 3:4
-```
-a young minor noble in modest but fine armor and a house tabard, standing at
-the gate of a small provincial keep, ambitious expression, one hand on a
-sword hilt, {STYLE}
-```
-
-**`assets/scenario/peasant.png`** — 3:4
-```
-a barefoot peasant in ragged homespun clothes standing in a muddy field
-before a distant burning village, holding a simple wooden pitchfork,
-determined expression despite hardship, {STYLE}
-```
+Ořež: levá polovina → `assets/ui/frame_ornate.png`, pravá polovina →
+`assets/ui/divider_skull.png`
 
 ---
 
-## 4. Postavy / portréty (bust, 3/4 úhel)
+## 3. Blend vrstvy (stárnutí + nepokoje)
 
-**`assets/portraits/heir.png`** — 3:4
+**`assets/ui/overlays_sheet.png`** — 2:1, izolováno na jednobarevném pozadí
+(NENÍ pro klasické oříznutí do UI — jde o blend vrstvy jako u aging/unrest)
 ```
-a young noble heir in fine but understated clothing, close bust portrait,
-three-quarter angle, uncertain youthful expression, faint family resemblance
-to nobility, {STYLE}
+a reference sheet with two separate semi-transparent overlay textures side
+by side, isolated on a plain flat background for easy blending: on the
+left, fine grey hair strands with soft wrinkle linework and faint age
+spots; on the right, dark ominous smoke and storm clouds swirling upward —
+engraving crosshatch linework, subtle and semi-transparent, {STYLE}
 ```
-
-**`assets/portraits/spouse_queen.png`** — 3:4
-```
-a queen consort in an embroidered gown and modest jeweled circlet, close bust
-portrait, calm composed expression, three-quarter angle, {STYLE}
-```
-
-**`assets/portraits/spouse_king.png`** — 3:4
-```
-a king consort in a fine doublet and modest circlet, close bust portrait,
-calm composed expression, three-quarter angle, {STYLE}
-```
-
-**`assets/portraits/chancellor.png`** — 3:4
-```
-an elderly chancellor in long scholarly robes, holding a ledger and quill,
-close bust portrait, shrewd calculating expression, thin spectacles, {STYLE}
-```
-
-**`assets/portraits/marshal.png`** — 3:4
-```
-a battle-scarred marshal in plate armor with a fur-lined cloak, close bust
-portrait, stern hardened expression, a scar across one eyebrow, {STYLE}
-```
-
-**`assets/portraits/spymaster.png`** — 3:4
-```
-a hooded spymaster half in shadow, only part of the face visible, close bust
-portrait, sly knowing half-smile, {STYLE}
-```
-
-*(Vládcův herní portrét — viz sekce 4b. `scenario/king.png` zůstává jen pro
-obrazovku výběru scénáře, samostatně od hráčovy postupující postavy.)*
+Ořež: levá polovina → `assets/ui/aging_overlay.png` (vykresluje se přes
+portrét vládce podle věku), pravá polovina → `assets/map/unrest_overlay.png`
+(vykresluje se přes provincii na mapě podle míry nepokojů)
 
 ---
 
-## 4b. Portrét vládce — 5 stupňů sociálního postavení + stárnutí
+## 4. Výběr scénáře (Panovník / Šlechtic / Sedlák)
 
-Vládcova vlastní postava (hráč) vizuálně roste podle dvou nezávislých os:
-
-- **Status (5 pevných stupňů)** — vlastní ilustrace pro každý stupeň (níže).
-- **Věk (plynulý)** — řeší se přes `aging_overlay.png` (šediny/vrásky),
-  aplikovaný jako CSS blend vrstva přes aktuální stupňový portrét podle
-  věku postavy. Žádné samostatné "mladá/stará" verze negenerujeme.
-
-Generuj všech 5 stupňů v jedné sérii se stejným seedem / character
-reference (Midjourney `--seed`, `--cref`), ať je jasně vidět postup JEDNÉ
-postavy, ne 5 různých lidí.
-
-**`assets/portraits/ruler_tier1_peasant.png`** — 2:3, pas nahoru
+**`assets/scenario/scenario_select_sheet.png`** — 3:1, tři postavy vedle sebe
 ```
-a gaunt peasant in ragged patched homespun clothes and worn leather wraps on
-the feet, waist-up three-quarter view, calloused hands, weary but resolute
-expression, {STYLE}
+a reference sheet with three separate full-figure character illustrations
+arranged side by side, each clearly separated by empty space, same
+engraving style and lighting throughout: (1) a weary crowned king in ornate
+robes standing before his throne, hand on the pommel of a sword; (2) a
+young minor noble in modest fine armor and a house tabard standing at the
+gate of a small keep; (3) a barefoot peasant in ragged homespun clothes
+standing in a muddy field before a distant burning village, holding a
+wooden pitchfork, {STYLE}
 ```
+Ořež zleva doprava → `scenario/king.png`, `scenario/vassal.png`,
+`scenario/peasant.png`
 
-**`assets/portraits/ruler_tier2_freeman.png`** — 2:3, pas nahoru
-```
-a sturdy freeman in a simple but well-mended wool tunic and leather jerkin, a
-plain iron dagger at the belt, waist-up three-quarter view, hardened
-confident expression, {STYLE}
-```
+---
 
-**`assets/portraits/ruler_tier3_minor_noble.png`** — 2:3, pas nahoru
+## 5. Portrét vládce — 5 stupňů sociálního postavení + stárnutí
+
+Vládcova vlastní postava roste podle dvou os: **status** (5 pevných stupňů,
+vlastní ilustrace níže) a **věk** (plynulý, řeší se přes
+`ui/aging_overlay.png` — viz sekce 3 — aplikovaný jako CSS blend vrstva přes
+aktuální stupňový portrét). Žádné samostatné "mladá/stará" verze negenerujeme.
+
+**`assets/portraits/ruler_tiers_sheet.png`** — 5:2, 5 panelů v řadě, STEJNÁ
+postava v každém panelu (jedno vygenerování = automatická konzistence)
 ```
+a character progression reference sheet showing the SAME person across 5
+panels arranged in a horizontal row, identical facial features and
+identity throughout, only clothing and bearing changing to show rising
+social status, waist-up three-quarter view in each panel, clear gutters
+between panels: panel 1 — a gaunt peasant in ragged patched homespun
+clothes, calloused hands, weary but resolute; panel 2 — a sturdy freeman in
+a mended wool tunic and leather jerkin with a plain iron dagger; panel 3 —
 a minor noble in a fitted doublet with a small embroidered house sigil
-brooch, leather riding gloves, waist-up three-quarter view, calculating
-ambitious expression, {STYLE}
+brooch and riding gloves; panel 4 — a powerful vassal lord in fur-trimmed
+embroidered robes with a heavy gold chain of office and signet ring; panel
+5 — a crowned king in ermine-trimmed royal robes holding a scepter, {STYLE}
 ```
-
-**`assets/portraits/ruler_tier4_great_noble.png`** — 2:3, pas nahoru
-```
-a powerful vassal lord in fur-trimmed embroidered robes and a heavy gold
-chain of office, a signet ring visible on one hand, waist-up three-quarter
-view, commanding proud expression, {STYLE}
-```
-
-**`assets/portraits/ruler_tier5_king.png`** — 2:3, pas nahoru
-```
-a crowned king in ermine-trimmed royal robes holding a scepter, waist-up
-three-quarter view, regal authoritative expression, {STYLE}
-```
-
-**`assets/ui/aging_overlay.png`** — 2:3, izolováno na jednobarevném pozadí
-(NENÍ pro oříznutí — je to blend vrstva, drž ji na plném bílém/černém pozadí
-pro čisté prolnutí)
-```
-a subtle semi-transparent overlay texture of fine grey hair strands, soft
-wrinkle linework, and faint age spots, isolated on a plain flat background
-for easy blending, engraving crosshatch linework, {STYLE}
-```
+Ořež panely 1–5 → `portraits/ruler_tier1_peasant.png`,
+`ruler_tier2_freeman.png`, `ruler_tier3_minor_noble.png`,
+`ruler_tier4_great_noble.png`, `ruler_tier5_king.png`
 
 ---
 
-## 5. Mapa království
+## 6. Vedlejší postavy (dvůr)
 
-**`assets/map/kingdom_map.png`** — 16:10
+**`assets/portraits/side_characters_sheet.png`** — 3:2, grid 3×2 (6 portrétů)
+```
+a character reference sheet with 6 distinct bust portraits arranged evenly
+in a 3x2 grid, each in its own cell with clear spacing, three-quarter
+angle, consistent engraving style and lighting across all: (1) a young
+noble heir in fine but understated clothing, uncertain youthful
+expression; (2) a queen consort in an embroidered gown and modest jeweled
+circlet, calm composed expression; (3) a king consort in a fine doublet and
+modest circlet, calm composed expression; (4) an elderly chancellor in
+long scholarly robes holding a ledger and quill, shrewd expression, thin
+spectacles; (5) a battle-scarred marshal in plate armor with a fur-lined
+cloak, stern expression, a scar across one eyebrow; (6) a hooded spymaster
+half in shadow, only part of the face visible, sly knowing half-smile,
+{STYLE}
+```
+Ořež grid po řádcích, zleva doprava → `portraits/heir.png`,
+`spouse_queen.png`, `spouse_king.png`, `chancellor.png`, `marshal.png`,
+`spymaster.png`
+
+*(Tyto postavy mají jeden statický portrét po celou dobu hry, bez
+stárnutí/změny statusu — jen vládce má vlastní systém z sekce 5.)*
+
+---
+
+## 7. Mapa království
+
+**`assets/map/kingdom_map.png`** — 16:10 (samostatně, jde o jednu velkou
+kompozici)
 ```
 hand-drawn antique cartography map of a small medieval kingdom seen from
-above, five distinct provinces divided by hand-inked borders, a mix of dense
-forests, mountain ranges, and winding trade roads connecting them, a walled
-capital city marked at the center, a compass rose in one corner, {STYLE}
+above, five distinct provinces divided by hand-inked borders, a mix of
+dense forests, mountain ranges, and winding trade roads connecting them, a
+walled capital city marked at the center, a compass rose in one corner,
+{STYLE}
 ```
 
-**`assets/map/terrain_icons_sheet.png`** — 3:2, grid 3×2 (6 ikon)
+**`assets/map/map_icons_sheet.png`** — grid, 7 ikon
 ```
-a clean icon set of 6 small medieval map symbols arranged evenly in a 3x2
-grid on a plain aged parchment background: a dense forest cluster, a jagged
+a clean icon set of 7 small medieval map symbols arranged evenly in a grid
+on a plain aged parchment background, each icon in its own cell with
+consistent linework and even spacing: a dense forest cluster, a jagged
 mountain peak, a winding trade road with a merchant cart, a river crossing
-with a stone bridge, a walled capital castle, a small village with a wooden
-palisade — each icon simple, iconic, clearly separated with consistent
-linework and even spacing, {STYLE}
+with a stone bridge, a walled capital castle, a small village with a
+wooden palisade, and a single blank heraldic shield template ready for a
+coat of arms, {STYLE}
 ```
-
-**`assets/map/shield_blank.png`** — 1:1
-```
-a single blank heraldic shield template, plain unadorned surface ready for a
-coat of arms, ornate engraved shield border, {STYLE}
-```
+Ořež → `map/terrain_forest.png`, `terrain_mountain.png`,
+`terrain_traderoute.png`, `terrain_river.png`, `terrain_capital.png`,
+`terrain_village.png`, `shield_blank.png`
 *(Až budou provincie pojmenované, dá se do štítu domalovat/vygenerovat erb
 každé zvlášť — teď je to placeholder pro všech 5.)*
 
-**`assets/map/unrest_overlay.png`** — 1:1, izolováno na jednobarevném pozadí
-(NENÍ pro oříznutí — blend vrstva jako `aging_overlay.png`, vykresluje se
-přes provincii na mapě podle míry nepokojů, škáluj průhlednost/intenzitu
-podle hodnoty nepokojů)
-```
-dark ominous smoke and storm clouds swirling upward, isolated on a plain
-flat background for easy blending, engraving crosshatch linework, subtle and
-semi-transparent, {STYLE}
-```
-
 ---
 
-## 6. Ikony zdrojů (7) — jeden sheet
+## 8. Ikony zdrojů (7)
 
 **`assets/icons/resources_sheet.png`** — grid 4×2 (jedno pole prázdné)
 ```
@@ -257,7 +209,7 @@ topped with a small cross (Faith), a laurel wreath encircling a star
 
 ---
 
-## 7. Ikony vlastností (4) — jeden sheet
+## 9. Ikony vlastností (4)
 
 **`assets/icons/traits_sheet.png`** — grid 2×2
 ```
@@ -273,119 +225,94 @@ hodinami z main menu.)*
 
 ---
 
-## 8. Scény pro eventy (dialogové ilustrace)
+## 10. Scény pro eventy — sheet A (dvorní/výpravné)
 
-**`assets/events/scene_throne_audience.png`** — 16:9
+**`assets/events/events_sheet_a.png`** — grid 2×2, 4 scény
 ```
-wide interior view of a gothic throne room during a royal audience, a
-petitioner kneeling before the throne, courtiers watching from the shadows,
-tall stained-glass windows, {STYLE}
+a reference sheet of 4 wide illustrated scenes arranged in a 2x2 grid, each
+scene clearly separated, consistent engraving style and lighting
+throughout: (1) a gothic throne room during a royal audience, a petitioner
+kneeling before the throne, courtiers watching from shadows, tall
+stained-glass windows; (2) a war council, armored commanders leaning over a
+map table in a candlelit war tent; (3) a crowded medieval market square
+lined with wooden stalls, merchants and townsfolk bartering, a cathedral
+spire in the background; (4) a grand medieval feast hall, a long banquet
+table filled with food and goblets, nobles seated in fine dress, musicians
+in a corner, {STYLE}
 ```
+Ořež grid → `events/scene_throne_audience.png`, `scene_war_council.png`,
+`scene_market.png`, `scene_feast.png`
 
-**`assets/events/scene_war_council.png`** — 16:9
-```
-a war council scene, armored commanders leaning over a map table inside a
-candlelit war tent, visible tension in their postures, {STYLE}
-```
+## 11. Scény pro eventy — sheet B
 
-**`assets/events/scene_forest_ambush.png`** — 16:9
+**`assets/events/events_sheet_b.png`** — grid 2×2, 4 scény
 ```
-a narrow forest road at dusk, shadowy bandit figures emerging from dense
-trees to ambush a small traveling party, sense of sudden danger, {STYLE}
+a reference sheet of 4 wide illustrated scenes arranged in a 2x2 grid, each
+scene clearly separated, consistent engraving style and lighting
+throughout: (1) a narrow forest road at dusk, shadowy bandit figures
+emerging from dense trees to ambush a small traveling party; (2) a damp
+stone dungeon cell lit by a single torch, chains on the wall, a shadowy
+prisoner figure; (3) a stricken village street, shuttered houses marked
+with warning crosses, a lone cloaked figure walking through drifting fog;
+(4) interior of a grand gothic cathedral, a lone robed figure kneeling in
+prayer before a candlelit altar, high vaulted ceiling, {STYLE}
 ```
+Ořež grid → `events/scene_forest_ambush.png`, `scene_dungeon.png`,
+`scene_plague_village.png`, `scene_cathedral.png`
 
-**`assets/events/scene_market.png`** — 16:9
-```
-a crowded medieval market square lined with wooden stalls, merchants and
-townsfolk bartering, a cathedral spire visible in the background, {STYLE}
-```
+---
 
-**`assets/events/scene_cathedral.png`** — 16:9
-```
-interior of a grand gothic cathedral, a lone robed figure kneeling in prayer
-before a candlelit altar, high vaulted ceiling, {STYLE}
-```
+## 12. Velké okamžiky — 4 konce hry + přechod generace
 
-**`assets/events/scene_dungeon.png`** — 16:9
+**`assets/endings/major_moments_sheet.png`** — grid, 5 panelů, každý 4:5
 ```
-a damp stone dungeon cell lit by a single torch, chains on the wall, a
-shadowy prisoner figure, oppressive atmosphere, {STYLE}
-```
-
-**`assets/events/scene_feast.png`** — 16:9
-```
-a grand medieval feast hall, a long banquet table filled with food and
-goblets, nobles seated in fine dress, musicians in a corner, {STYLE}
-```
-
-**`assets/events/scene_plague_village.png`** — 16:9
-```
-a stricken village street, shuttered houses marked with warning crosses, a
-lone cloaked figure walking through drifting fog, sense of dread and
-illness, {STYLE}
-```
-
-**`assets/events/scene_succession.png`** — 4:5 (ne 16:9 — jde o speciální
-celoobrazovkovou scénu, ne běžnou dialogovou kartu)
-```
-a solemn candlelit cathedral coronation, a young heir kneeling as a bishop
+a reference sheet of 5 tall dramatic full-scene illustrations arranged
+evenly in a grid, each clearly separated, consistent engraving style
+throughout: (1) a fallen crowned king lying at the foot of his own throne,
+a bloodied blade nearby, candles guttering out, somber tragic composition;
+(2) enemy foreign banners raised over a captured castle gate, the
+kingdom's own broken banner trampled in the mud; (3) a crumbling throne
+room overtaken by cracks, dust, and encroaching vines, the throne empty
+and abandoned; (4) a thriving kingdom viewed from a high balcony at golden
+sunrise, bountiful fields, a bustling prosperous city, banners flying
+proudly — warmer golden light, the only warm panel in the set; (5) a
+solemn candlelit cathedral coronation, a young heir kneeling as a bishop
 lowers a crown onto their head, the old king's draped empty throne visible
-in the shadows behind, mourning and renewal at once, {STYLE}
+in the shadows behind, {STYLE}
 ```
-*(Speciální scéna pro přechod generace při přirozené smrti stářím — spouští
-se jen při tomhle konkrétním přechodu, ne jako běžný náhodný event.)*
+Ořež → `endings/ending_death.png`, `ending_conquest.png`,
+`ending_collapse.png`, `ending_golden_age.png`, `events/scene_succession.png`
+*(Poslední panel — korunovace — se spouští jen při přechodu generace při
+přirozené smrti stářím, ne jako běžný náhodný event.)*
 
 ---
 
-## 9. Konce hry (4)
+## 13. Manifest složek (kam po oříznutí uložit)
 
-**`assets/endings/ending_death.png`** — 4:5
-```
-a fallen crowned king lying at the foot of his own throne, a bloodied blade
-nearby, candles guttering out around him, somber tragic composition, {STYLE}
-```
-
-**`assets/endings/ending_conquest.png`** — 4:5
-```
-an enemy army's foreign banners raised over a captured castle gate, the
-kingdom's own broken banner lying trampled in the mud, {STYLE}
-```
-
-**`assets/endings/ending_collapse.png`** — 4:5
-```
-a crumbling throne room overtaken by cracks, dust, and encroaching vines, the
-throne empty and abandoned, symbolizing a dynasty's end, {STYLE}
-```
-
-**`assets/endings/ending_golden_age.png`** — 4:5
-```
-a thriving kingdom viewed from a high balcony at golden sunrise, bountiful
-fields, a bustling prosperous city, banners flying proudly, {STYLE}
-```
-*(Jediný obrázek v celé sadě, kde je OK přidat teplejší zlaté světlo místo
-čisté sépie — je to jediný pozitivní konec hry.)*
-
----
-
-## 10. Manifest složek (kam po oříznutí uložit)
+13 vygenerování níže pokrývá všechny assety z celého dokumentu.
 
 ```
 assets/
   ui/
-    parchment_bg.png
+    parchment_bg.png            ← samostatné generování
+    ui_elements_sheet.png        ← ořež na frame_ornate.png + divider_skull.png
     frame_ornate.png
     divider_skull.png
+    overlays_sheet.png            ← ořež na aging_overlay.png + (map/)unrest_overlay.png
     aging_overlay.png
   scenario/
+    scenario_select_sheet.png     ← ořež na king.png + vassal.png + peasant.png
     king.png
     vassal.png
     peasant.png
   portraits/
+    ruler_tiers_sheet.png         ← ořež na ruler_tier1..5
     ruler_tier1_peasant.png
     ruler_tier2_freeman.png
     ruler_tier3_minor_noble.png
     ruler_tier4_great_noble.png
     ruler_tier5_king.png
+    side_characters_sheet.png     ← ořež na heir/spouse_queen/spouse_king/chancellor/marshal/spymaster
     heir.png
     spouse_queen.png
     spouse_king.png
@@ -393,24 +320,33 @@ assets/
     marshal.png
     spymaster.png
   map/
-    kingdom_map.png
-    terrain_icons_sheet.png
+    kingdom_map.png                ← samostatné generování
+    map_icons_sheet.png            ← ořež na terrain_*.png + shield_blank.png
+    terrain_forest.png
+    terrain_mountain.png
+    terrain_traderoute.png
+    terrain_river.png
+    terrain_capital.png
+    terrain_village.png
     shield_blank.png
-    unrest_overlay.png
+    unrest_overlay.png              ← z overlays_sheet.png (viz ui/)
   icons/
-    resources_sheet.png
-    traits_sheet.png
+    resources_sheet.png            ← už sheet, ořež na 7 jednotlivých ikon dle potřeby v kódu
+    traits_sheet.png                ← už sheet, ořež na 4 jednotlivé ikony dle potřeby v kódu
   events/
+    events_sheet_a.png              ← ořež na scene_throne_audience/war_council/market/feast
     scene_throne_audience.png
     scene_war_council.png
-    scene_forest_ambush.png
     scene_market.png
-    scene_cathedral.png
-    scene_dungeon.png
     scene_feast.png
+    events_sheet_b.png              ← ořež na scene_forest_ambush/dungeon/plague_village/cathedral
+    scene_forest_ambush.png
+    scene_dungeon.png
     scene_plague_village.png
-    scene_succession.png
+    scene_cathedral.png
+    scene_succession.png            ← z major_moments_sheet.png (viz endings/)
   endings/
+    major_moments_sheet.png         ← ořež na ending_death/conquest/collapse/golden_age + succession
     ending_death.png
     ending_conquest.png
     ending_collapse.png
