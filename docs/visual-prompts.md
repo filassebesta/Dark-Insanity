@@ -43,17 +43,23 @@ clothing, smooth digital art, text, watermark, signature
 Červenou barvu drž jen na výrazných akcentech (koruny, krev, praporce). Zbytek
 zůstává sépiová rytina.
 
-## 1c. Bílé pozadí u malých ikon (multiply trik místo ručního ořezávání)
+## 1c. Bílé pozadí u malých ikon → skutečná průhlednost přes remove.bg
 
 Malé ikony, které se v UI zobrazují volně vedle textu (zdroje, vlastnosti,
 terén/mapa — sekce 7–9), NEMAJÍ "parchment background" v promptu, i když
 zbytek stylu zůstává stejný. Důvod: i s pečlivým ořezem by kolem ikony
 zůstal viditelný obdélník pergamenu jiného odstínu, než má UI.
 
-Místo toho žádáme **plain white background**. V kódu se ikona vykreslí s
-CSS `mix-blend-mode: multiply` — bílá optická "zmizí" a zůstane jen
-inkoustová kresba, ať je pod ní jakékoli pozadí. Stačí tedy ořízout
-obdélník kolem ikony jako obvykle, žádné ruční odstraňování pozadí navíc.
+Žádný obrázkový AI model neumí spolehlivě vygenerovat opravdu průhledné
+PNG přímo (ani když si o to řekneš v promptu), takže **plain white
+background** je jen mezikrok. Postup pro tyhle 3 sheety:
+
+1. Vygeneruj podle promptu (bílé pozadí).
+2. Nahraj celý sheet do **remove.bg** (nebo obdobného nástroje na
+   odstranění pozadí) → stáhni PNG se skutečnou průhledností. Na čistě
+   bílém/plochém pozadí to funguje spolehlivě a je to zdarma bez
+   instalace.
+3. Teprve tenhle výsledek ořízni na jednotlivé ikony.
 
 Portrétů, rámu, divideru (sekce 2, 4–6) ani celoobrazovkových scén (sekce
 10–12) se tohle netýká — ty se zobrazují jako celý obdélníkový obrázek
