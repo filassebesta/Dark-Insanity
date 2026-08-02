@@ -43,6 +43,23 @@ clothing, smooth digital art, text, watermark, signature
 Červenou barvu drž jen na výrazných akcentech (koruny, krev, praporce). Zbytek
 zůstává sépiová rytina.
 
+## 1c. Bílé pozadí u malých ikon (multiply trik místo ručního ořezávání)
+
+Malé ikony, které se v UI zobrazují volně vedle textu (zdroje, vlastnosti,
+terén/mapa — sekce 7–9), NEMAJÍ "parchment background" v promptu, i když
+zbytek stylu zůstává stejný. Důvod: i s pečlivým ořezem by kolem ikony
+zůstal viditelný obdélník pergamenu jiného odstínu, než má UI.
+
+Místo toho žádáme **plain white background**. V kódu se ikona vykreslí s
+CSS `mix-blend-mode: multiply` — bílá optická "zmizí" a zůstane jen
+inkoustová kresba, ať je pod ní jakékoli pozadí. Stačí tedy ořízout
+obdélník kolem ikony jako obvykle, žádné ruční odstraňování pozadí navíc.
+
+Portrétů, rámu, divideru (sekce 2, 4–6) ani celoobrazovkových scén (sekce
+10–12) se tohle netýká — ty se zobrazují jako celý obdélníkový obrázek
+(v rámečku nebo přes celou kartu), takže pergamenové/atmosférické pozadí
+kolem nich je žádoucí, ne na škodu.
+
 ## 1b. Scénářové nálady (modifikátor {STYLE} podle obtížnosti)
 
 - **Panovník** (bohatší): `, warmer golden highlights, richer ink depth`
@@ -179,12 +196,12 @@ walled capital city marked at the center, a compass rose in one corner,
 **`assets/map/map_icons_sheet.png`** — grid, 7 ikon
 ```
 a clean icon set of 7 small medieval map symbols arranged evenly in a grid
-on a plain aged parchment background, each icon in its own cell with
-consistent linework and even spacing: a dense forest cluster, a jagged
-mountain peak, a winding trade road with a merchant cart, a river crossing
-with a stone bridge, a walled capital castle, a small village with a
-wooden palisade, and a single blank heraldic shield template ready for a
-coat of arms, {STYLE}
+on a plain white background, each icon in its own cell with consistent
+linework and even spacing: a dense forest cluster, a jagged mountain peak,
+a winding trade road with a merchant cart, a river crossing with a stone
+bridge, a walled capital castle, a small village with a wooden palisade,
+and a single blank heraldic shield template ready for a coat of arms,
+{STYLE}
 ```
 Ořež → `map/terrain_forest.png`, `terrain_mountain.png`,
 `terrain_traderoute.png`, `terrain_river.png`, `terrain_capital.png`,
@@ -199,9 +216,9 @@ každé zvlášť — teď je to placeholder pro všech 5.)*
 **`assets/icons/resources_sheet.png`** — grid 4×2 (jedno pole prázdné)
 ```
 a clean icon set of 7 small medieval heraldic icons arranged evenly in a grid
-on a plain aged parchment background, each in its own cell with consistent
-spacing and linework: an overflowing pile of gold coins (Gold), a tied sheaf
-of wheat (Food), two crossed swords behind a helmet (Army), a solid stone
+on a plain white background, each in its own cell with consistent spacing
+and linework: an overflowing pile of gold coins (Gold), a tied sheaf of
+wheat (Food), two crossed swords behind a helmet (Army), a solid stone
 pillar (Stability), a royal signet ring with a crown (Legitimacy), a chalice
 topped with a small cross (Faith), a laurel wreath encircling a star
 (Prestige) — simple, iconic, clearly separated, {STYLE}
@@ -214,8 +231,8 @@ topped with a small cross (Faith), a laurel wreath encircling a star
 **`assets/icons/traits_sheet.png`** — grid 2×2
 ```
 a clean icon set of 4 small medieval icons arranged evenly in a 2x2 grid on a
-plain aged parchment background, each in its own cell: an armored clenched
-fist (Strength), a herald's trumpet wrapped in a flowing scroll ribbon
+plain white background, each in its own cell: an armored clenched fist
+(Strength), a herald's trumpet wrapped in a flowing scroll ribbon
 (Eloquence), an owl perched atop a stack of books (Intelligence), an
 hourglass entwined with a thorny vine (Patience) — simple, iconic, clearly
 separated, consistent linework, {STYLE}
