@@ -104,10 +104,12 @@ Ořež: levá polovina → `assets/ui/frame_ornate.png`, pravá polovina →
 (NENÍ pro klasické oříznutí do UI — jde o blend vrstvy jako u aging/unrest)
 ```
 a reference sheet with two separate semi-transparent overlay textures side
-by side, isolated on a plain flat background for easy blending: on the
-left, fine grey hair strands with soft wrinkle linework and faint age
-spots; on the right, dark ominous smoke and storm clouds swirling upward —
-engraving crosshatch linework, subtle and semi-transparent, {STYLE}
+by side, isolated on a plain solid white background intended to be removed
+for a transparent PNG — no texture, no gradient, no shadow on the
+background itself: on the left, fine grey hair strands with soft wrinkle
+linework and faint age spots; on the right, dark ominous smoke and storm
+clouds swirling upward — engraving crosshatch linework, subtle and
+semi-transparent, {STYLE}
 ```
 Ořež: levá polovina → `assets/ui/aging_overlay.png` (vykresluje se přes
 portrét vládce podle věku), pravá polovina → `assets/map/unrest_overlay.png`
@@ -201,9 +203,11 @@ walled capital city marked at the center, a compass rose in one corner,
 
 **`assets/map/map_icons_sheet.png`** — grid, 7 ikon
 ```
-a clean icon set of 7 small medieval map symbols arranged evenly in a grid
-on a plain white background, each icon in its own cell with consistent
-linework and even spacing: a dense forest cluster, a jagged mountain peak,
+a clean icon set of 7 small medieval map symbols arranged evenly in a grid,
+isolated on a plain solid white background intended to be removed for a
+transparent PNG — no texture, no gradient, no shadow on the background
+itself, each icon in its own cell with consistent linework and even
+spacing: a dense forest cluster, a jagged mountain peak,
 a winding trade road with a merchant cart, a river crossing with a stone
 bridge, a walled capital castle, a small village with a wooden palisade,
 and a single blank heraldic shield template ready for a coat of arms,
@@ -221,9 +225,11 @@ každé zvlášť — teď je to placeholder pro všech 5.)*
 
 **`assets/icons/resources_sheet.png`** — grid 4×2 (jedno pole prázdné)
 ```
-a clean icon set of 7 small medieval heraldic icons arranged evenly in a grid
-on a plain white background, each in its own cell with consistent spacing
-and linework: an overflowing pile of gold coins (Gold), a tied sheaf of
+a clean icon set of 7 small medieval heraldic icons arranged evenly in a
+grid, isolated on a plain solid white background intended to be removed
+for a transparent PNG — no texture, no gradient, no shadow on the
+background itself, each in its own cell with consistent spacing and
+linework: an overflowing pile of gold coins (Gold), a tied sheaf of
 wheat (Food), two crossed swords behind a helmet (Army), a solid stone
 pillar (Stability), a royal signet ring with a crown (Legitimacy), a chalice
 topped with a small cross (Faith), a laurel wreath encircling a star
@@ -236,8 +242,10 @@ topped with a small cross (Faith), a laurel wreath encircling a star
 
 **`assets/icons/traits_sheet.png`** — grid 2×2
 ```
-a clean icon set of 4 small medieval icons arranged evenly in a 2x2 grid on a
-plain white background, each in its own cell: an armored clenched fist
+a clean icon set of 4 small medieval icons arranged evenly in a 2x2 grid,
+isolated on a plain solid white background intended to be removed for a
+transparent PNG — no texture, no gradient, no shadow on the background
+itself, each in its own cell: an armored clenched fist
 (Strength), a herald's trumpet wrapped in a flowing scroll ribbon
 (Eloquence), an owl perched atop a stack of books (Intelligence), an
 hourglass entwined with a thorny vine (Patience) — simple, iconic, clearly
