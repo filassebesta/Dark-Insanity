@@ -84,18 +84,29 @@ html, body {
 .parchment-frame::before { top: -.2rem; left: .3rem; }
 .parchment-frame::after { bottom: -.4rem; right: .3rem; transform: rotate(180deg); }
 
-/* ---------- main menu ---------- */
-.menu-panel { width: min(420px, 92vw); text-align: center; }
-.game-title {
-  font-family: var(--font-gothic);
-  font-size: 3rem;
-  line-height: 1.05;
-  margin: .2rem 0 .6rem;
-  color: var(--color-accent-red);
+/* ---------- main menu (real illustrated background, see assets/ui/menu_background.png) ---------- */
+#screen-menu { padding: 1rem; background-image: none; }
+.menu-art-frame {
+  position: relative;
+  width: min(560px, 94vw);
+  aspect-ratio: 1122 / 1402;
 }
-.game-title br + br { display: none; }
-.divider { color: var(--color-ink-soft); opacity: .7; margin: .4rem 0 1rem; letter-spacing: .5rem; }
-.menu-list { display: flex; flex-direction: column; gap: .6rem; }
+.menu-art { display: block; width: 100%; height: 100%; object-fit: contain; }
+.menu-hotspots { position: absolute; inset: 0; }
+.menu-hotspot {
+  position: absolute;
+  left: 34%;
+  width: 40%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.menu-hotspot:hover, .menu-hotspot:focus-visible {
+  background: rgba(122, 32, 32, .12);
+  box-shadow: 0 0 12px rgba(122, 32, 32, .25) inset;
+  outline: none;
+}
 
 .seal-button {
   font-family: var(--font-body);

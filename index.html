@@ -13,15 +13,14 @@
 
   <!-- MAIN MENU -->
   <section id="screen-menu" class="screen active">
-    <div class="menu-panel parchment-frame">
-      <h1 class="game-title">Insanity<br>Kingdom</h1>
-      <div class="divider">⚜</div>
-      <nav class="menu-list">
-        <button class="seal-button" data-action="goto-new-game">Nová hra</button>
-        <button class="seal-button" data-action="continue-game">Pokračovat</button>
-        <button class="seal-button" data-action="goto-load-game">Načíst hru</button>
-        <button class="seal-button" data-action="goto-options">Nastavení</button>
-        <button class="seal-button" data-action="quit-game">Konec</button>
+    <div class="menu-art-frame">
+      <img class="menu-art" src="assets/ui/menu_background.png" alt="Insanity Kingdom">
+      <nav class="menu-hotspots">
+        <button class="menu-hotspot" style="top:39%;height:6%;" data-action="goto-new-game" aria-label="New Game"></button>
+        <button class="menu-hotspot" style="top:47.5%;height:6%;" data-action="continue-game" aria-label="Continue"></button>
+        <button class="menu-hotspot" style="top:56%;height:6%;" data-action="goto-load-game" aria-label="Load Game"></button>
+        <button class="menu-hotspot" style="top:64.5%;height:6%;" data-action="goto-options" aria-label="Options"></button>
+        <button class="menu-hotspot" style="top:73%;height:6%;" data-action="quit-game" aria-label="Quit"></button>
       </nav>
     </div>
   </section>
