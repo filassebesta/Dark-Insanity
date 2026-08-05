@@ -85,10 +85,13 @@ html, body {
 .parchment-frame::after { bottom: -.4rem; right: .3rem; transform: rotate(180deg); }
 
 /* ---------- main menu (real illustrated background, see assets/ui/menu_background.png) ---------- */
-#screen-menu { padding: 1rem; background-image: none; }
+#screen-menu { padding: 0; background: #1a140d; background-image: none; }
 .menu-art-frame {
   position: relative;
-  width: min(560px, 94vw);
+  width: 100vw;
+  height: 100vh;
+  max-width: calc(100vh * 1122 / 1402);
+  max-height: calc(100vw * 1402 / 1122);
   aspect-ratio: 1122 / 1402;
 }
 .menu-art { display: block; width: 100%; height: 100%; object-fit: contain; }
