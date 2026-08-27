@@ -188,13 +188,14 @@ function statBar(label, value, cls) {
 export function renderCourtPanel(state) {
   const grid = document.getElementById('court-grid');
   grid.innerHTML = '';
+  const byGender = (base, gender) => `${base}_${gender === 'male' ? 'male' : 'female'}`;
   const members = [
     { data: state.ruler, role: 'Vládce', extra: STATUS_TIERS[state.ruler.statusTier] },
-    { data: state.heir, role: 'Dědic', portrait: 'heir' },
+    { data: state.heir, role: 'Dědic', portrait: byGender('heir', state.heir.gender) },
     { data: state.spouse, role: 'Manžel/ka', portrait: state.spouse.gender === 'male' ? 'spouse_king' : 'spouse_queen' },
-    { data: state.chancellor, role: 'Kancléř', portrait: 'chancellor' },
-    { data: state.marshal, role: 'Maršál', portrait: 'marshal' },
-    { data: state.spymaster, role: 'Špehmistr', portrait: 'spymaster' },
+    { data: state.chancellor, role: 'Kancléř', portrait: byGender('chancellor', state.chancellor.gender) },
+    { data: state.marshal, role: 'Maršál', portrait: byGender('marshal', state.marshal.gender) },
+    { data: state.spymaster, role: 'Špehmistr', portrait: byGender('spymaster', state.spymaster.gender) },
   ];
   for (const m of members) {
     const card = document.createElement('div');
