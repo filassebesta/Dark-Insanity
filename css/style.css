@@ -113,6 +113,24 @@ html, body {
   outline: none;
 }
 
+.music-toggle {
+  position: absolute;
+  top: 3%;
+  right: 4%;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  border: 2px solid var(--color-ink);
+  background: rgba(20, 14, 8, .55);
+  color: var(--color-parchment);
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.music-toggle:hover { background: rgba(20, 14, 8, .8); }
+
 .seal-button {
   font-family: var(--font-body);
   font-size: 1.05rem;

@@ -3,7 +3,7 @@ import { advanceTurn, resolveChoice, resolveRouteChoice, checkEndConditions } fr
 import {
   showScreen, renderResourceBar, updateBookTabFlags, renderTurnSummary, renderEventCard,
   renderMapPanel, renderCourtPanel, renderChroniclePanel, openPanel, closePanels,
-  renderEndingScreen, toast, setTypewriterEnabled, skipTypewriter,
+  renderEndingScreen, toast, setTypewriterEnabled, skipTypewriter, setMusicMuted,
 } from './ui.js';
 
 let currentState = null;
@@ -13,6 +13,7 @@ let pendingDynastyName = '';
 
 const settings = loadSettings();
 setTypewriterEnabled(settings.typewriter);
+setMusicMuted(settings.musicMuted);
 
 function applyMood(state) {
   document.body.className = 'mood-' + state.scenario;
@@ -184,6 +185,11 @@ function wireActions() {
         break;
       case 'close-panel':
         closePanels();
+        break;
+      case 'toggle-music':
+        settings.musicMuted = !settings.musicMuted;
+        setMusicMuted(settings.musicMuted);
+        saveSettings(settings);
         break;
       default:
         break;

@@ -11,6 +11,41 @@ export function setTypewriterEnabled(enabled) {
 export function showScreen(id) {
   document.querySelectorAll('.screen').forEach((el) => el.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  syncMenuMusic(id === 'screen-menu');
+}
+
+// ---------- menu music ----------
+
+let musicUnlockBound = false;
+
+function syncMenuMusic(shouldPlay) {
+  const music = document.getElementById('menu-music');
+  if (!music) return;
+  if (shouldPlay) {
+    const playPromise = music.play();
+    if (playPromise && playPromise.catch) {
+      playPromise.catch(() => {
+        if (musicUnlockBound) return;
+        musicUnlockBound = true;
+        const unlock = () => {
+          music.play().catch(() => {});
+          document.removeEventListener('click', unlock);
+          document.removeEventListener('keydown', unlock);
+        };
+        document.addEventListener('click', unlock, { once: true });
+        document.addEventListener('keydown', unlock, { once: true });
+      });
+    }
+  } else {
+    music.pause();
+  }
+}
+
+export function setMusicMuted(muted) {
+  const music = document.getElementById('menu-music');
+  if (music) music.muted = muted;
+  const btn = document.getElementById('music-toggle');
+  if (btn) btn.textContent = muted ? '🔇' : '🔊';
 }
 
 export function toast(message) {
