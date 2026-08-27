@@ -62,7 +62,9 @@ html, body {
     radial-gradient(circle at 15% 20%, rgba(255,250,225,.35), transparent 45%),
     radial-gradient(circle at 85% 75%, rgba(90,60,30,.20), transparent 50%),
     radial-gradient(circle at 50% 100%, rgba(60,40,20,.25), transparent 60%),
-    repeating-linear-gradient(115deg, rgba(0,0,0,.025) 0px, rgba(0,0,0,.025) 1px, transparent 1px, transparent 3px);
+    url('../assets/ui/parchment_bg.png');
+  background-size: auto, auto, auto, 280px 280px;
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat;
 }
 .screen.active { display: flex; }
 
@@ -253,6 +255,15 @@ html, body {
   margin-bottom: .8rem;
   min-height: 1.2em;
 }
+.event-image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-size: cover;
+  background-position: center;
+  border: 2px solid var(--color-ink-soft);
+  border-radius: 3px;
+  margin-bottom: .8rem;
+}
 #event-title { margin: 0 0 .6rem; font-size: 1.7rem; color: var(--color-accent-red); }
 .event-text { line-height: 1.5; font-size: 1.08rem; min-height: 4.5em; }
 .event-text .cursor { animation: blink 1s step-start infinite; }
@@ -337,6 +348,11 @@ html, body {
   display: flex; align-items: center; justify-content: center;
   font-family: var(--font-gothic); font-size: 1.4rem;
   background: var(--color-parchment-dark); border: 2px solid var(--color-ink-soft); color: var(--color-ink);
+}
+.court-avatar-img {
+  width: 64px; height: 64px; border-radius: 50%; margin: 0 auto .4rem;
+  display: block; object-fit: cover; object-position: top center;
+  border: 2px solid var(--color-ink-soft);
 }
 .court-card strong { display: block; }
 .court-card .role { font-size: .78rem; color: var(--color-ink-soft); text-transform: uppercase; letter-spacing: .05em; }

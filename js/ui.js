@@ -109,6 +109,13 @@ function renderChoicePreview(deltaEffects) {
 }
 
 export function renderEventCard(state, event, handlers) {
+  const imageEl = document.getElementById('event-image');
+  if (event.image) {
+    imageEl.style.backgroundImage = `url('${event.image}')`;
+    imageEl.hidden = false;
+  } else {
+    imageEl.hidden = true;
+  }
   document.getElementById('event-title').textContent = event.title;
   const textEl = document.getElementById('event-text');
   const choiceList = document.getElementById('choice-list');
@@ -183,20 +190,23 @@ export function renderCourtPanel(state) {
   grid.innerHTML = '';
   const members = [
     { data: state.ruler, role: 'Vládce', extra: STATUS_TIERS[state.ruler.statusTier] },
-    { data: state.heir, role: 'Dědic' },
-    { data: state.spouse, role: 'Manžel/ka' },
-    { data: state.chancellor, role: 'Kancléř' },
-    { data: state.marshal, role: 'Maršál' },
-    { data: state.spymaster, role: 'Špehmistr' },
+    { data: state.heir, role: 'Dědic', portrait: 'heir' },
+    { data: state.spouse, role: 'Manžel/ka', portrait: state.spouse.gender === 'male' ? 'spouse_king' : 'spouse_queen' },
+    { data: state.chancellor, role: 'Kancléř', portrait: 'chancellor' },
+    { data: state.marshal, role: 'Maršál', portrait: 'marshal' },
+    { data: state.spymaster, role: 'Špehmistr', portrait: 'spymaster' },
   ];
   for (const m of members) {
     const card = document.createElement('div');
     const alive = m.data.alive !== false;
     card.className = 'court-card' + (alive ? '' : ' deceased');
     const initial = m.data.name ? m.data.name[0] : '?';
+    const avatar = m.portrait
+      ? `<img class="court-avatar-img" src="assets/portraits/${m.portrait}.png" alt="${m.data.name}">`
+      : `<div class="court-avatar">${initial}</div>`;
     const loyaltyLine = m.data.loyalty !== undefined ? `<div>Věrnost: ${m.data.loyalty}</div>` : (m.extra ? `<div>${m.extra}</div>` : '');
     card.innerHTML = `
-      <div class="court-avatar">${initial}</div>
+      ${avatar}
       <strong>${m.data.name}${alive ? '' : ' †'}</strong>
       <div class="role">${m.role}</div>
       <div>Věk: ${m.data.age}</div>
@@ -205,6 +215,7 @@ export function renderCourtPanel(state) {
     grid.appendChild(card);
   }
 
+  grid.parentElement.querySelector('.ruler-status')?.remove();
   const traitsHost = document.createElement('div');
   traitsHost.className = 'ruler-status';
   traitsHost.innerHTML = '<h4 class="gothic">Vlastnosti vládce</h4>' + TRAIT_DEFS.map((t) =>
