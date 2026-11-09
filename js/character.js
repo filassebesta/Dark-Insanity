@@ -24,7 +24,8 @@ export function rulerPortraitCandidates(ruler) {
   const slug = TIER_SLUGS[ruler.statusTier] || 'king';
   const g = ruler.gender === 'female' ? 'female' : 'male';
   const base = `assets/portraits/ruler_${slug}_${g}`;
-  return ruler.age >= OLD_AGE ? [`${base}_old.png`, `${base}.png`] : [`${base}.png`];
+  const young = [`${base}.jpg`, `${base}.png`];
+  return ruler.age >= OLD_AGE ? [`${base}_old.jpg`, `${base}_old.png`, ...young] : young;
 }
 
 /** <img> that walks through candidate URLs and finally hides itself, revealing the initial underneath. */
