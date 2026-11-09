@@ -37,8 +37,8 @@ function initialProvinces() {
   }));
 }
 
-export function createNewGame(rulerName, dynastyName) {
-  const rulerGender = Math.random() < 0.5 ? 'male' : 'female';
+export function createNewGame(rulerName, dynastyName, gender) {
+  const rulerGender = gender === 'female' || gender === 'male' ? gender : (Math.random() < 0.5 ? 'male' : 'female');
   const spouseGender = rulerGender === 'male' ? 'female' : 'male';
 
   return {
@@ -59,7 +59,9 @@ export function createNewGame(rulerName, dynastyName) {
       traits: { strength: 5, eloquence: 5, intelligence: 5, patience: 5 },
       statusTier: 5,
       alive: true,
+      reignStartTurn: 0,
     },
+    pastRulers: [],
     heir: newCharacter('heir', { minAge: 8, maxAge: 16, loyalty: 70 }),
     spouse: newCharacter('spouse', { gender: spouseGender, minAge: 26, maxAge: 40, loyalty: 65 }),
     chancellor: newCharacter('chancellor', { minAge: 45, maxAge: 62, loyalty: 60 }),

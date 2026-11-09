@@ -40,6 +40,13 @@
         <span>Jméno vládce</span>
         <input id="input-ruler-name" type="text" maxlength="24" placeholder="např. Bořivoj">
       </label>
+      <div class="field">
+        <span>Vládne</span>
+        <div class="gender-toggle" role="radiogroup">
+          <label><input type="radio" name="ruler-gender" value="male" checked><span>Král</span></label>
+          <label><input type="radio" name="ruler-gender" value="female"><span>Královna</span></label>
+        </div>
+      </div>
       <label class="field">
         <span>Jméno dynastie</span>
         <input id="input-dynasty-name" type="text" maxlength="24" placeholder="např. z Vlčí Hory">
@@ -107,7 +114,7 @@
         <input id="input-typewriter-toggle" type="checkbox" checked>
         <span>Postupné psaní textu</span>
       </label>
-      <p class="hint">Ovládání: <kbd>1</kbd>–<kbd>4</kbd> volba, <kbd>Enter</kbd> pokračovat / dočíst text, <kbd>Esc</kbd> zavřít panel.</p>
+      <p class="hint">Ovládání: <kbd>1</kbd>–<kbd>4</kbd> volba, <kbd>Enter</kbd> pokračovat / dočíst text, <kbd>M</kbd> mapa, <kbd>P</kbd> postava, <kbd>Esc</kbd> zavřít panel.</p>
       <div class="dialog-actions">
         <button class="seal-button ghost" data-action="back-to-menu">Zpět</button>
       </div>
@@ -126,6 +133,7 @@
       </div>
       <div id="resource-chips" class="resource-chips"></div>
       <nav class="book-tabs">
+        <button class="book-tab" data-panel="character">Postava</button>
         <button class="book-tab" data-panel="map">Mapa</button>
         <button class="book-tab" data-panel="court">Dvůr</button>
         <button class="book-tab" data-panel="chronicle">Kronika</button>
@@ -150,19 +158,13 @@
           <p id="event-text" class="event-text"></p>
           <div id="outcome-effects" class="outcome-effects" hidden></div>
           <div id="choice-list" class="choice-list"></div>
+          <div id="event-extra" class="event-extra"></div>
           <div id="choice-preview" class="choice-preview"></div>
         </div>
       </main>
     </div>
 
     <div id="panel-overlay" class="panel-overlay">
-      <div id="panel-map" class="side-panel">
-        <button class="panel-close" data-action="close-panel" aria-label="Zavřít">✕</button>
-        <span class="panel-overline">Země koruny</span>
-        <h3 class="panel-title">Mapa království</h3>
-        <div id="map-provinces" class="map-provinces"></div>
-        <div id="map-province-detail" class="map-province-detail"></div>
-      </div>
       <div id="panel-court" class="side-panel">
         <button class="panel-close" data-action="close-panel" aria-label="Zavřít">✕</button>
         <span class="panel-overline">Rod a rádci</span>
@@ -175,6 +177,26 @@
         <h3 class="panel-title">Kronika království</h3>
         <div id="chronicle-log" class="chronicle-log"></div>
       </div>
+    </div>
+
+    <div id="map-view" class="map-view" aria-hidden="true">
+      <header class="map-header">
+        <div>
+          <span class="panel-overline light">Země koruny</span>
+          <h3 class="map-title">Mapa království</h3>
+        </div>
+        <div class="map-layer-toggles"></div>
+        <button class="icon-button" data-action="close-map" aria-label="Zavřít mapu">✕</button>
+      </header>
+      <div class="map-body">
+        <div class="map-canvas"></div>
+        <aside class="map-sidebar"></aside>
+      </div>
+    </div>
+
+    <div id="character-view" class="character-view" aria-hidden="true">
+      <button class="icon-button character-close" data-action="close-character" aria-label="Zavřít">✕</button>
+      <div id="character-sheet" class="character-sheet"></div>
     </div>
   </section>
 

@@ -2,17 +2,20 @@ import { createNewGame, saveGame, listSaves, loadGame, loadMostRecentSave, delet
 import { advanceTurn, resolveChoice, resolveRouteChoice, checkEndConditions } from './engine.js';
 import {
   showScreen, renderResourceBar, updateBookTabFlags, renderTurnSummary, renderEventCard,
-  renderMapPanel, renderCourtPanel, renderChroniclePanel, openPanel, closePanels, isPanelOpen,
+  renderCourtPanel, renderChroniclePanel, openPanel, closePanels, isPanelOpen,
   renderEndingScreen, toast, setTypewriterEnabled, skipTypewriter, setMusicMuted,
   renderReignInfo, renderCharacterPlaque, renderOutcome, renderQuietSeason, renderStaticIcons,
   resetResourceMemory, esc,
 } from './ui.js';
+import { openMap, closeMap, isMapOpen, wireMapChrome } from './map.js';
+import { openCharacter, closeCharacter, isCharacterOpen } from './character.js';
 
 let currentState = null;
 let activeEvent = null;
 let awaitingChoice = false;
 let pendingRulerName = '';
 let pendingDynastyName = '';
+let pendingGender = 'male';
 
 const settings = loadSettings();
 setTypewriterEnabled(settings.typewriter);
@@ -24,21 +27,32 @@ function refreshAllPanels(bumpedTrait = null) {
   renderReignInfo(currentState);
   renderCharacterPlaque(currentState, bumpedTrait);
   updateBookTabFlags(currentState);
-  renderMapPanel(currentState, onProvinceClick);
   renderCourtPanel(currentState);
   renderChroniclePanel(currentState);
 }
 
-function onProvinceClick(provinceId) {
-  const detail = document.getElementById('map-province-detail');
-  const province = currentState.provinces.find((p) => p.id === provinceId);
-  if (!province) return;
-  detail.textContent = province.isCapital
-    ? `${province.name} je vaše hlavní město.`
-    : `${province.name} je jednou z vašich pěti provincií.`;
+function closeOverlays() {
+  closePanels();
+  closeMap();
+  closeCharacter();
+}
+
+function isOverlayOpen() {
+  return isPanelOpen() || isMapOpen() || isCharacterOpen();
+}
+
+function openRouteMap() {
+  if (!awaitingChoice || activeEvent?.type !== 'route') return;
+  openMap(currentState, {
+    layer: 'routes',
+    focusRoutes: true,
+    allowedRoutes: activeEvent.routeOptions.map((o) => o.terrainKey),
+    onChooseRoute: handleRouteSelected,
+  });
 }
 
 function endGame(gameOver) {
+  closeOverlays();
   currentState.gameOver = gameOver;
   saveGame(currentState);
   renderEndingScreen(currentState, gameOver);
@@ -159,7 +173,7 @@ function wireActions() {
         document.getElementById('input-ruler-name').focus();
         break;
       case 'back-to-menu':
-        closePanels();
+        closeOverlays();
         showScreen('screen-menu');
         break;
       case 'back-to-new-game':
@@ -184,10 +198,24 @@ function wireActions() {
       case 'goto-scenario-select':
         pendingRulerName = document.getElementById('input-ruler-name').value.trim();
         pendingDynastyName = document.getElementById('input-dynasty-name').value.trim();
+        pendingGender = document.querySelector('input[name="ruler-gender"]:checked')?.value || 'male';
         showScreen('screen-scenario');
         break;
       case 'close-panel':
         closePanels();
+        break;
+      case 'close-map':
+        closeMap();
+        break;
+      case 'open-map-routes':
+        openRouteMap();
+        break;
+      case 'open-character':
+        closeOverlays();
+        openCharacter(currentState);
+        break;
+      case 'close-character':
+        closeCharacter();
         break;
       case 'toggle-music':
         settings.musicMuted = !settings.musicMuted;
@@ -205,22 +233,36 @@ function wireActions() {
         toast('Tento scénář se ještě připravuje.');
         return;
       }
-      startGame(createNewGame(pendingRulerName, pendingDynastyName));
+      startGame(createNewGame(pendingRulerName, pendingDynastyName, pendingGender));
     });
   });
 
   document.querySelectorAll('.book-tab').forEach((tab) => {
     tab.addEventListener('click', () => {
       const panel = tab.dataset.panel;
-      if (panel === 'map') renderMapPanel(currentState, onProvinceClick);
+      closeOverlays();
+      if (panel === 'map') {
+        if (awaitingChoice && activeEvent?.type === 'route') openRouteMap();
+        else openMap(currentState);
+        return;
+      }
+      if (panel === 'character') {
+        openCharacter(currentState);
+        return;
+      }
       if (panel === 'court') renderCourtPanel(currentState);
       if (panel === 'chronicle') renderChroniclePanel(currentState);
       openPanel(panel);
     });
   });
 
+  document.getElementById('character-plaque').addEventListener('click', () => {
+    closeOverlays();
+    openCharacter(currentState);
+  });
+
   document.getElementById('event-card').addEventListener('click', (e) => {
-    if (e.target.closest('.choice-button')) return;
+    if (e.target.closest('.choice-button, [data-action]')) return;
     skipTypewriter();
   });
 
@@ -248,10 +290,20 @@ function wireKeyboard() {
     if (e.target.matches('input, textarea')) return;
 
     if (e.key === 'Escape') {
-      closePanels();
+      closeOverlays();
       return;
     }
-    if (isPanelOpen()) return;
+    if (e.key === 'm' || e.key === 'M') {
+      if (isMapOpen()) closeMap();
+      else { closeOverlays(); document.querySelector('.book-tab[data-panel="map"]').click(); }
+      return;
+    }
+    if (e.key === 'p' || e.key === 'P') {
+      if (isCharacterOpen()) closeCharacter();
+      else { closeOverlays(); openCharacter(currentState); }
+      return;
+    }
+    if (isOverlayOpen()) return;
 
     const buttons = [...document.querySelectorAll('#choice-list .choice-button')];
     if (/^[1-9]$/.test(e.key)) {
@@ -316,6 +368,7 @@ function wireClickSound() {
 }
 
 wireActions();
+wireMapChrome();
 wireKeyboard();
 wireMenuAmbience();
 wireClickSound();

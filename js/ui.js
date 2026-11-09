@@ -1,6 +1,7 @@
 import { RESOURCE_DEFS, TRAIT_DEFS, STATUS_TIERS, TERRAIN_DEFS, SEASONS } from './data.js';
 import { interpolate, previewVisibleEffects, computeSuccessChance } from './engine.js';
 import { ICONS } from './icons.js';
+import { rulerPortraitCandidates, portraitImg } from './character.js';
 
 const DEFAULT_SCENE = 'assets/events/scene_default.jpg';
 
@@ -150,14 +151,19 @@ export function updateBookTabFlags(state) {
 
 // ---------- character plaque (bottom of the scene) ----------
 
+function tierLabel(r) {
+  if (r.statusTier === 5) return r.gender === 'female' ? 'Královna' : 'Král';
+  return STATUS_TIERS[r.statusTier];
+}
+
 export function renderCharacterPlaque(state, bumpedTrait = null) {
   const r = state.ruler;
   const initial = esc(r.name ? r.name[0] : '?');
   document.getElementById('character-plaque').innerHTML = `
-    <div class="plaque-portrait">${initial}</div>
+    <div class="plaque-portrait" data-action="open-character" title="Zobrazit postavu">${initial}${portraitImg(rulerPortraitCandidates(r), r.name)}</div>
     <div class="plaque-id">
       <span class="plaque-name">${esc(r.name)}</span>
-      <span class="plaque-sub">${esc(STATUS_TIERS[r.statusTier])} · ${r.age} let</span>
+      <span class="plaque-sub">${esc(tierLabel(r))} · ${r.age} let</span>
     </div>
     <div class="plaque-traits">
       ${TRAIT_DEFS.map((t) => `<span class="plaque-trait${t.key === bumpedTrait ? ' bump' : ''}" title="${t.label}">${t.icon}${r.traits[t.key]}</span>`).join('')}
@@ -171,9 +177,35 @@ export function renderTurnSummary(text) {
   document.getElementById('turn-summary').textContent = text || '';
 }
 
-export function setSceneImage(src) {
+const imageProbe = new Map();
+function probeImage(src) {
+  if (!imageProbe.has(src)) {
+    imageProbe.set(src, new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = src;
+    }));
+  }
+  return imageProbe.get(src);
+}
+
+/** First existing image from the list (optional per-event art first), else the default scene. */
+export async function firstExistingImage(candidates, fallback = DEFAULT_SCENE) {
+  for (const src of candidates.filter(Boolean)) {
+    if (await probeImage(src)) return src;
+  }
+  return fallback;
+}
+
+let sceneRequest = 0;
+export async function setSceneImage(candidates) {
+  const list = Array.isArray(candidates) ? candidates : [candidates];
+  const ticket = ++sceneRequest;
+  const src = await firstExistingImage(list);
+  if (ticket !== sceneRequest) return;
   const el = document.getElementById('event-image');
-  const url = `url('${src || DEFAULT_SCENE}')`;
+  const url = `url("${src}")`;
   if (el.style.backgroundImage === url) return;
   el.style.backgroundImage = url;
   el.classList.remove('swap');
@@ -210,6 +242,7 @@ export function triggerCardEntrance() {
 }
 
 function resetOutcomeBlocks() {
+  document.getElementById('event-extra').innerHTML = '';
   document.getElementById('outcome-label').hidden = true;
   document.getElementById('outcome-effects').hidden = true;
   document.getElementById('outcome-effects').innerHTML = '';
@@ -225,7 +258,7 @@ function makeChoiceButton(index, iconHtml, label, tagHtml) {
 export function renderEventCard(state, event, handlers) {
   triggerCardEntrance();
   resetOutcomeBlocks();
-  setSceneImage(event.image);
+  setSceneImage([`assets/events/${event.id}.jpg`, `assets/events/${event.id}.png`, event.image]);
   document.getElementById('event-title').textContent = event.title;
   const choiceList = document.getElementById('choice-list');
   choiceList.innerHTML = '';
@@ -241,6 +274,8 @@ export function renderEventCard(state, event, handlers) {
       btn.addEventListener('click', () => handlers.onRouteSelected(option.terrainKey));
       choiceList.appendChild(btn);
     });
+    document.getElementById('event-extra').innerHTML =
+      `<button class="map-link" data-action="open-map-routes">${TERRAIN_DEFS.traderoute.icon}Prohlédnout cesty na mapě</button>`;
     return;
   }
 
@@ -269,6 +304,7 @@ const OUTCOME_LABELS = {
 
 export function renderOutcome(state, result, onContinue) {
   triggerCardEntrance();
+  document.getElementById('event-extra').innerHTML = '';
   renderChoicePreview(null);
 
   const labelEl = document.getElementById('outcome-label');
@@ -310,7 +346,7 @@ export function renderQuietSeason(onContinue) {
   triggerCardEntrance();
   resetOutcomeBlocks();
   renderChoicePreview(null);
-  setSceneImage(null);
+  setSceneImage(['assets/events/quiet_season.jpg']);
   document.getElementById('event-title').textContent = 'Klidné období';
   typewrite(document.getElementById('event-text'), 'Království si tuto sezónu oddechlo od velkých rozhodnutí. Pole dozrávají, kupci přicházejí a odcházejí a kronikář nemá mnoho co zapsat.');
   const choiceList = document.getElementById('choice-list');
@@ -322,35 +358,6 @@ export function renderQuietSeason(onContinue) {
   choiceList.appendChild(btn);
 }
 
-// ---------- map panel ----------
-
-export function renderMapPanel(state, onProvinceClick) {
-  const list = document.getElementById('map-provinces');
-  list.innerHTML = '';
-  for (const p of state.provinces) {
-    const card = document.createElement('div');
-    card.className = 'province-card';
-    if (p.lost) {
-      card.innerHTML = `<strong>${esc(p.name)}</strong><em>Ztracena</em>`;
-    } else {
-      card.innerHTML = `
-        <strong>${esc(p.name)}${p.unrest >= 70 ? ' <span class="province-unrest-icon">· nepokoje</span>' : ''}</strong>
-        ${statBar('Loajalita', p.loyalty, 'loyalty')}
-        ${statBar('Nepokoje', p.unrest, 'unrest')}
-        ${statBar('Bohatství', p.wealth, 'wealth')}
-        ${statBar('Posádka', p.garrison, 'garrison')}
-      `;
-    }
-    card.addEventListener('click', () => onProvinceClick(p.id));
-    list.appendChild(card);
-  }
-  document.getElementById('map-province-detail').innerHTML = '';
-}
-
-function statBar(label, value, cls) {
-  return `<div class="stat-bar-row"><span class="label">${label}</span><div class="stat-bar"><div class="stat-bar-fill ${cls}" style="width:${value}%"></div></div><span>${value}</span></div>`;
-}
-
 // ---------- court panel ----------
 
 export function renderCourtPanel(state) {
@@ -358,7 +365,7 @@ export function renderCourtPanel(state) {
   grid.innerHTML = '';
   const byGender = (base, gender) => `${base}_${gender === 'male' ? 'male' : 'female'}`;
   const members = [
-    { data: state.ruler, role: 'Vládce', extra: STATUS_TIERS[state.ruler.statusTier] },
+    { data: state.ruler, role: state.ruler.gender === 'female' ? 'Vládkyně' : 'Vládce', extra: tierLabel(state.ruler) },
     { data: state.heir, role: 'Dědic', portrait: byGender('heir', state.heir.gender) },
     { data: state.spouse, role: 'Manžel/ka', portrait: state.spouse.gender === 'male' ? 'spouse_king' : 'spouse_queen' },
     { data: state.chancellor, role: 'Kancléř', portrait: byGender('chancellor', state.chancellor.gender) },

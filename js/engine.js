@@ -143,6 +143,14 @@ function handleSuccession(state) {
   if (state.heir.alive) {
     const oldName = state.ruler.name;
     const newRulerName = state.heir.name;
+    state.pastRulers = state.pastRulers || [];
+    state.pastRulers.push({
+      name: oldName,
+      gender: state.ruler.gender,
+      generation: state.generation,
+      years: Math.max(1, Math.round((state.turn - (state.ruler.reignStartTurn || 0)) / 4)),
+      diedAt: state.ruler.age,
+    });
     state.chronicle.push(makeChronicleEntry(state, `${oldName} umírá stářím. Korunu přebírá ${newRulerName}.`));
     state.ruler = {
       name: newRulerName,
@@ -151,6 +159,7 @@ function handleSuccession(state) {
       traits: { strength: 5, eloquence: 5, intelligence: 5, patience: 5 },
       statusTier: 5,
       alive: true,
+      reignStartTurn: state.turn,
     };
     state.generation += 1;
     generateSuccessorHousehold(state);
