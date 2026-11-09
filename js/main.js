@@ -3,7 +3,7 @@ import { advanceTurn, resolveChoice, resolveRouteChoice, checkEndConditions } fr
 import {
   showScreen, renderResourceBar, updateBookTabFlags, renderTurnSummary, renderEventCard,
   renderMapPanel, renderCourtPanel, renderChroniclePanel, openPanel, closePanels,
-  renderEndingScreen, toast, setTypewriterEnabled, skipTypewriter, setMusicMuted,
+  renderEndingScreen, toast, setTypewriterEnabled, skipTypewriter, setMusicMuted, triggerCardEntrance,
 } from './ui.js';
 
 let currentState = null;
@@ -93,6 +93,8 @@ function runNextTurn() {
   if (result.event) {
     presentEvent(result.event);
   } else {
+    triggerCardEntrance();
+    document.getElementById('event-image').hidden = true;
     document.getElementById('event-title').textContent = 'Klidné období';
     document.getElementById('event-text').textContent = 'Království si tento sezónu oddechlo od velkých rozhodnutí.';
     document.getElementById('choice-list').innerHTML = '<button class="choice-button" id="btn-next-season"><span>Pokračovat do dalšího období</span></button>';
@@ -228,7 +230,59 @@ function wireActions() {
     saveSettings(settings);
   });
   document.getElementById('input-typewriter-toggle').checked = settings.typewriter;
+
+  document.getElementById('panel-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'panel-overlay') closePanels();
+  });
+}
+
+// ---------- ambient polish: menu parallax + UI click sound ----------
+
+function wireMenuParallax() {
+  const parallaxEl = document.getElementById('menu-art-parallax');
+  const menuScreen = document.getElementById('screen-menu');
+  if (!parallaxEl || !menuScreen) return;
+  menuScreen.addEventListener('mousemove', (e) => {
+    const rect = parallaxEl.getBoundingClientRect();
+    const relX = (e.clientX - rect.left) / rect.width - 0.5;
+    const relY = (e.clientY - rect.top) / rect.height - 0.5;
+    const maxShift = 10;
+    parallaxEl.style.transform = `translate(${-relX * maxShift}px, ${-relY * maxShift}px)`;
+  });
+  menuScreen.addEventListener('mouseleave', () => {
+    parallaxEl.style.transform = 'translate(0, 0)';
+  });
+}
+
+let audioCtx = null;
+function playClickSound() {
+  if (settings.musicMuted) return;
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(520, now);
+    osc.frequency.exponentialRampToValueAtTime(220, now + 0.08);
+    gain.gain.setValueAtTime(0.07, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.1);
+  } catch {
+    // Web Audio unavailable — fail silently, click sound is a non-essential flourish.
+  }
+}
+
+function wireClickSound() {
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('button')) playClickSound();
+  });
 }
 
 wireActions();
+wireMenuParallax();
+wireClickSound();
 showScreen('screen-menu');

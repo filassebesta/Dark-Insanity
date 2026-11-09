@@ -95,17 +95,23 @@ export function skipTypewriter() {
 
 // ---------- resource bar ----------
 
+let previousResourceValues = null;
+
 export function renderResourceBar(state) {
   const bar = document.getElementById('resource-chips');
   bar.innerHTML = '';
   for (const def of RESOURCE_DEFS) {
     const value = state.resources[def.key];
+    const previous = previousResourceValues ? previousResourceValues[def.key] : value;
     const chip = document.createElement('div');
-    chip.className = 'resource-chip' + (value <= def.critical ? ' critical' : '');
+    let flashClass = '';
+    if (previous !== undefined && value !== previous) flashClass = value > previous ? ' flash-pos' : ' flash-neg';
+    chip.className = 'resource-chip' + (value <= def.critical ? ' critical' : '') + flashClass;
     chip.title = def.label;
     chip.innerHTML = `<span class="icon">${def.icon}</span><span class="value">${value}</span>`;
     bar.appendChild(chip);
   }
+  previousResourceValues = { ...state.resources };
 }
 
 export function updateBookTabFlags(state) {
@@ -143,7 +149,15 @@ function renderChoicePreview(deltaEffects) {
   el.innerHTML = parts.join(' &nbsp; ') || '&nbsp;';
 }
 
+export function triggerCardEntrance() {
+  const card = document.getElementById('event-card');
+  card.classList.remove('event-enter');
+  void card.offsetWidth;
+  card.classList.add('event-enter');
+}
+
 export function renderEventCard(state, event, handlers) {
+  triggerCardEntrance();
   const imageEl = document.getElementById('event-image');
   if (event.image) {
     imageEl.style.backgroundImage = `url('${event.image}')`;
@@ -280,10 +294,12 @@ export function openPanel(panelName) {
   document.querySelectorAll('.side-panel').forEach((el) => el.classList.remove('open'));
   const el = document.getElementById('panel-' + panelName);
   if (el) el.classList.add('open');
+  document.getElementById('panel-overlay').classList.add('dim');
 }
 
 export function closePanels() {
   document.querySelectorAll('.side-panel').forEach((el) => el.classList.remove('open'));
+  document.getElementById('panel-overlay').classList.remove('dim');
 }
 
 // ---------- ending screen ----------

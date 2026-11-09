@@ -43,8 +43,19 @@ html, body {
   width: 100%;
   height: 100%;
   min-height: 100vh;
-  filter: saturate(var(--mood-saturate, 1)) sepia(calc((var(--mood-warmth, 1) - 1) * 2))
-          brightness(var(--mood-warmth, 1));
+}
+/* Scenario mood (--mood-warmth/--mood-saturate, set via body.mood-*) used to be
+   applied here as a CSS `filter`, but `filter` on an ancestor makes it the
+   containing block for `position: fixed` descendants — which broke the
+   resource bar/book tabs/side panels (they stopped tracking the real
+   viewport). Re-apply mood as a non-filter technique if revisited. */
+#app::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 90;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.45) 100%);
 }
 
 .gothic { font-family: var(--font-gothic); font-weight: 400; letter-spacing: .02em; }
@@ -66,7 +77,8 @@ html, body {
   background-size: auto, auto, auto, 280px 280px;
   background-repeat: no-repeat, no-repeat, no-repeat, repeat;
 }
-.screen.active { display: flex; }
+.screen.active { display: flex; animation: screenFadeIn .45s ease; }
+@keyframes screenFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 .parchment-frame {
   position: relative;
@@ -96,7 +108,9 @@ html, body {
   max-height: calc(100vw * 1402 / 1122);
   aspect-ratio: 1122 / 1402;
 }
-.menu-art { display: block; width: 100%; height: 100%; object-fit: contain; }
+.menu-art { display: block; width: 100%; height: 100%; object-fit: contain; animation: kenBurns 30s ease-in-out infinite alternate; transform-origin: 50% 40%; }
+@keyframes kenBurns { from { transform: scale(1); } to { transform: scale(1.045); } }
+.menu-art-parallax { width: 100%; height: 100%; transition: transform .25s ease-out; will-change: transform; }
 .menu-hotspots { position: absolute; inset: 0; }
 .menu-hotspot {
   position: absolute;
@@ -106,12 +120,15 @@ html, body {
   border: none;
   cursor: pointer;
   border-radius: 4px;
+  transition: background .2s ease, box-shadow .2s ease, filter .2s ease;
 }
 .menu-hotspot:hover, .menu-hotspot:focus-visible {
   background: rgba(122, 32, 32, .12);
-  box-shadow: 0 0 12px rgba(122, 32, 32, .25) inset;
+  box-shadow: 0 0 16px rgba(122, 32, 32, .3) inset;
+  filter: brightness(1.12);
   outline: none;
 }
+.menu-hotspot:active { filter: brightness(.95); }
 
 .music-toggle {
   position: absolute;
@@ -129,7 +146,9 @@ html, body {
   align-items: center;
   justify-content: center;
 }
-.music-toggle:hover { background: rgba(20, 14, 8, .8); }
+.music-toggle:hover { background: rgba(20, 14, 8, .8); transform: scale(1.08); }
+.music-toggle:active { transform: scale(.92); }
+.music-toggle { transition: transform .15s ease, background .15s ease; }
 
 .seal-button {
   font-family: var(--font-body);
@@ -179,7 +198,13 @@ html, body {
   flex-direction: column;
   gap: .3rem;
   box-shadow: 0 8px 20px rgba(0,0,0,.4);
+  animation: cascadeIn .45s ease both;
+  transition: transform .2s ease, box-shadow .2s ease;
 }
+.scenario-cards .scenario-card:nth-child(1) { animation-delay: .08s; }
+.scenario-cards .scenario-card:nth-child(2) { animation-delay: .16s; }
+.scenario-cards .scenario-card:nth-child(3) { animation-delay: .24s; }
+.scenario-card:not(.locked):hover { transform: translateY(-4px); box-shadow: 0 14px 28px rgba(0,0,0,.5); }
 .scenario-card strong { font-family: var(--font-gothic); font-size: 1.3rem; color: var(--color-accent-red); }
 .scenario-card .scenario-diff { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--color-ink-soft); }
 .scenario-card p { margin: .3rem 0 0; font-size: .95rem; }
@@ -226,7 +251,10 @@ html, body {
 }
 .resource-chip .icon { filter: grayscale(1) sepia(.7) saturate(2) hue-rotate(0deg); font-size: 1.05rem; }
 .resource-chip .value { font-weight: 600; min-width: 1.6em; text-align: right; }
-.resource-chip.critical { animation: pulse-critical 1.1s infinite; }
+.resource-chip.flash-pos { animation: flashPos .7s ease; }
+.resource-chip.flash-neg { animation: flashNeg .7s ease; }
+@keyframes flashPos { 0% { color: #8fe388; transform: scale(1.18); } 100% { color: var(--color-parchment); transform: scale(1); } }
+@keyframes flashNeg { 0% { color: #ff6b6b; transform: scale(1.18); } 100% { color: var(--color-parchment); transform: scale(1); } }
 @keyframes pulse-critical {
   0%, 100% { color: var(--color-parchment); }
   50% { color: #ff6b6b; }
@@ -258,12 +286,16 @@ html, body {
 .book-tab:hover { background: var(--color-parchment); }
 .book-tab.flagged::after { content: '•'; color: var(--color-accent-red); }
 
+@keyframes cascadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
 /* ---------- event card ---------- */
 #screen-game.active { display: block; padding: 0; }
 .event-card {
   width: min(560px, 92vw);
   margin: 5.5rem auto 2rem;
 }
+.event-card.event-enter { animation: cardEnter .5s cubic-bezier(.2,.8,.2,1); }
+@keyframes cardEnter { from { opacity: 0; transform: translateY(18px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 .turn-summary {
   font-size: .9rem;
   font-style: italic;
@@ -300,8 +332,28 @@ html, body {
   border: 2px solid var(--color-ink-soft);
   border-radius: 30px 6px 30px 6px;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  animation: cascadeIn .35s ease both;
+  transition: background .15s ease, border-color .15s ease, transform .15s ease;
 }
-.choice-button:hover { background: #fff6df; border-color: var(--color-ink); }
+.choice-list .choice-button:nth-child(1) { animation-delay: .04s; }
+.choice-list .choice-button:nth-child(2) { animation-delay: .1s; }
+.choice-list .choice-button:nth-child(3) { animation-delay: .16s; }
+.choice-list .choice-button:nth-child(4) { animation-delay: .22s; }
+.choice-button::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -60%;
+  width: 35%; height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,.4), transparent);
+  transform: skewX(-20deg);
+  transition: left .5s ease;
+  pointer-events: none;
+}
+.choice-button:hover::after { left: 130%; }
+.choice-button:hover { background: #fff6df; border-color: var(--color-ink); transform: translateX(2px); }
+.choice-button:active { transform: translateX(2px) scale(.98); }
 .choice-button .icon { filter: grayscale(1) sepia(.7); }
 .choice-button .risk-tag { margin-left: auto; font-size: .8rem; color: var(--color-accent-red); font-weight: 600; }
 
@@ -315,7 +367,8 @@ html, body {
 .choice-preview .delta-neg { color: var(--color-accent-red); font-weight: 600; }
 
 /* ---------- side panels (map / court / chronicle) ---------- */
-.panel-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 30; }
+.panel-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 30; transition: background .25s ease; }
+.panel-overlay.dim { background: rgba(0,0,0,.4); pointer-events: auto; }
 .side-panel {
   position: absolute;
   top: 0; right: -420px;
@@ -326,7 +379,7 @@ html, body {
   box-shadow: -10px 0 30px rgba(0,0,0,.5);
   padding: 1.2rem;
   overflow-y: auto;
-  transition: right .25s ease;
+  transition: right .3s cubic-bezier(.2,.8,.2,1);
   pointer-events: auto;
 }
 .side-panel.open { right: 0; }
@@ -385,7 +438,7 @@ html, body {
 .trait-row { display: flex; justify-content: space-between; font-size: .9rem; margin-bottom: .2rem; }
 
 /* ---------- endings ---------- */
-.ending-panel { text-align: center; }
+.ending-panel { text-align: center; animation: cardEnter .6s cubic-bezier(.2,.8,.2,1) .15s both; }
 #ending-title { font-size: 2rem; }
 .ending-stats { text-align: left; margin-top: 1rem; font-size: .95rem; }
 .ending-stats div { display: flex; justify-content: space-between; border-bottom: 1px dotted var(--color-parchment-darker); padding: .2rem 0; }
