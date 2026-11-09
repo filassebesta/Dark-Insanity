@@ -5,7 +5,7 @@ import {
   renderCourtPanel, renderChroniclePanel, openPanel, closePanels, isPanelOpen,
   renderEndingScreen, toast, setTypewriterEnabled, skipTypewriter, setMusicMuted,
   renderReignInfo, renderCharacterPlaque, renderOutcome, renderQuietSeason, renderStaticIcons,
-  resetResourceMemory, esc,
+  resetResourceMemory, esc, upgradeScenarioArt,
 } from './ui.js';
 import { openMap, closeMap, isMapOpen, wireMapChrome } from './map.js';
 import { openCharacter, closeCharacter, isCharacterOpen } from './character.js';
@@ -21,6 +21,7 @@ const settings = loadSettings();
 setTypewriterEnabled(settings.typewriter);
 setMusicMuted(settings.musicMuted);
 renderStaticIcons();
+upgradeScenarioArt();
 
 function refreshAllPanels(bumpedTrait = null) {
   renderResourceBar(currentState);

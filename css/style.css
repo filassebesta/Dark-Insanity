@@ -129,7 +129,7 @@ kbd {
   content: '';
   position: absolute;
   inset: -20px;
-  background: url('../assets/ui/menu_castle.jpg') center / cover no-repeat;
+  background: var(--backdrop, url('../assets/ui/menu_castle.jpg')) center / cover no-repeat;
   filter: blur(6px) saturate(.8) brightness(.6);
   z-index: 0;
 }

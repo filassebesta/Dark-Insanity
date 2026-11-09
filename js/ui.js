@@ -56,6 +56,16 @@ export function setMusicMuted(muted) {
   }
 }
 
+/** Swap in dedicated scenario-card art when the files exist (assets/ui/scenario_<key>.jpg). */
+export function upgradeScenarioArt() {
+  document.querySelectorAll('.scenario-card').forEach((card) => {
+    const src = `assets/ui/scenario_${card.dataset.scenario}.jpg`;
+    firstExistingImage([src, src.replace(/\.jpg$/, '.png')], null).then((found) => {
+      if (found) card.querySelector('.scenario-art').style.backgroundImage = `url("${found}")`;
+    });
+  });
+}
+
 export function renderStaticIcons() {
   const back = document.querySelector('.menu-return-button');
   if (back) back.innerHTML = ICONS.menu;
@@ -440,6 +450,11 @@ const ENDING_TITLES = {
 };
 
 export function renderEndingScreen(state, gameOver) {
+  const screen = document.getElementById('screen-ending');
+  screen.style.removeProperty('--backdrop');
+  firstExistingImage([`assets/endings/ending_${gameOver.type}.jpg`, `assets/endings/ending_${gameOver.type}.png`], null).then((src) => {
+    if (src) screen.style.setProperty('--backdrop', `url("${src}")`);
+  });
   document.getElementById('ending-title').textContent = ENDING_TITLES[gameOver.type] || 'Konec';
   document.getElementById('ending-text').textContent = gameOver.text;
   const years = state.turn > 0 ? Math.ceil(state.turn / SEASONS.length) : 0;
