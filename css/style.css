@@ -130,7 +130,7 @@ kbd {
   content: '';
   position: absolute;
   inset: -20px;
-  background: var(--backdrop, url('../assets/ui/menu_castle.jpg')) center / cover no-repeat;
+  background: var(--backdrop, url('../assets/ui/backdrop.jpg')) center / cover no-repeat;
   filter: blur(6px) saturate(.8) brightness(.6);
   z-index: 0;
 }
@@ -147,7 +147,7 @@ kbd {
 .paper-panel {
   background:
     linear-gradient(rgba(235,227,209,.82), rgba(235,227,209,.82)),
-    url('../assets/ui/parchment_bg.png') center / 320px repeat,
+    url('../assets/ui/paper.svg') center / 320px repeat,
     var(--paper);
   border: 1px solid var(--gold-dim);
   outline: 1px solid var(--hairline);
@@ -283,6 +283,8 @@ kbd {
 .scenario-art {
   display: block;
   height: 170px;
+  background-color: var(--bg-2);
+  background-image: radial-gradient(ellipse at 50% 35%, rgba(200,164,106,.22), transparent 65%), linear-gradient(180deg, var(--bg-3), var(--bg-1));
   background-size: cover;
   background-position: center;
   filter: saturate(.85);
@@ -384,7 +386,7 @@ kbd {
 .game-body { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(400px, 1fr); min-height: 0; }
 
 /* scene (left) */
-.scene-panel { position: relative; overflow: hidden; background: var(--bg-1); min-height: 0; }
+.scene-panel { position: relative; overflow: hidden; background: radial-gradient(ellipse at 45% 35%, #3a2c1d, #120e0a 75%); min-height: 0; }
 .event-image {
   position: absolute;
   inset: -12px;
@@ -460,7 +462,7 @@ kbd {
   background:
     linear-gradient(90deg, rgba(0,0,0,.2), transparent 22px),
     linear-gradient(rgba(235,227,209,.82), rgba(235,227,209,.82)),
-    url('../assets/ui/parchment_bg.png') center / 320px repeat,
+    url('../assets/ui/paper.svg') center / 320px repeat,
     var(--paper);
   box-shadow: inset 0 0 90px rgba(80,55,25,.22);
   scrollbar-width: thin;
@@ -606,7 +608,7 @@ kbd {
   height: 100%;
   background:
     linear-gradient(rgba(235,227,209,.82), rgba(235,227,209,.82)),
-    url('../assets/ui/parchment_bg.png') center / 320px repeat,
+    url('../assets/ui/paper.svg') center / 320px repeat,
     var(--paper);
   border-left: 1px solid var(--gold-dim);
   box-shadow: -20px 0 60px rgba(0,0,0,.6);
@@ -657,11 +659,10 @@ kbd {
   background: radial-gradient(circle at 30% 30%, var(--bg-3), var(--bg-0));
   border: 1px solid var(--gold); color: var(--gold-bright);
 }
+.court-avatar { position: relative; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,.25); }
 .court-avatar-img {
-  width: 72px; height: 72px; border-radius: 50%; margin: 0 auto .6rem;
-  display: block; object-fit: cover; object-position: top center;
-  border: 1px solid var(--gold);
-  box-shadow: 0 4px 12px rgba(0,0,0,.25);
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: 50% 0; transform: scale(1.6); transform-origin: 50% 30%;
 }
 .court-card strong { display: block; font-family: var(--font-display); font-size: 1.15rem; font-weight: 400; }
 .court-card .role { font-family: var(--font-caps); font-size: .72rem; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: .3rem; }
@@ -890,7 +891,7 @@ kbd {
   padding: 1.8rem 1.6rem;
   background:
     linear-gradient(rgba(235,227,209,.84), rgba(235,227,209,.84)),
-    url('../assets/ui/parchment_bg.png') center / 320px repeat,
+    url('../assets/ui/paper.svg') center / 320px repeat,
     var(--paper);
   border-left: 1px solid var(--gold-dim);
   animation: cascadeIn .35s var(--ease-out);

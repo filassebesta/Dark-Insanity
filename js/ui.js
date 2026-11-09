@@ -1,7 +1,7 @@
 import { RESOURCE_DEFS, TRAIT_DEFS, STATUS_TIERS, TERRAIN_DEFS, SEASONS } from './data.js';
 import { interpolate, previewVisibleEffects, computeSuccessChance } from './engine.js';
 import { ICONS } from './icons.js';
-import { rulerPortraitCandidates, portraitImg } from './character.js';
+import { rulerPortraitCandidates, memberPortraitCandidates, portraitImg } from './character.js';
 
 const DEFAULT_SCENE = 'assets/events/scene_default.jpg';
 
@@ -212,10 +212,10 @@ let sceneRequest = 0;
 export async function setSceneImage(candidates) {
   const list = Array.isArray(candidates) ? candidates : [candidates];
   const ticket = ++sceneRequest;
-  const src = await firstExistingImage(list);
+  const src = await firstExistingImage([...list, DEFAULT_SCENE], null);
   if (ticket !== sceneRequest) return;
   const el = document.getElementById('event-image');
-  const url = `url("${src}")`;
+  const url = src ? `url("${src}")` : 'none';
   if (el.style.backgroundImage === url) return;
   el.style.backgroundImage = url;
   el.classList.remove('swap');
@@ -373,23 +373,21 @@ export function renderQuietSeason(onContinue) {
 export function renderCourtPanel(state) {
   const grid = document.getElementById('court-grid');
   grid.innerHTML = '';
-  const byGender = (base, gender) => `${base}_${gender === 'male' ? 'male' : 'female'}`;
+  const f = (c, male, female) => (c.gender === 'female' ? female : male);
   const members = [
-    { data: state.ruler, role: state.ruler.gender === 'female' ? 'Vládkyně' : 'Vládce', extra: tierLabel(state.ruler) },
-    { data: state.heir, role: 'Dědic', portrait: byGender('heir', state.heir.gender) },
-    { data: state.spouse, role: 'Manžel/ka', portrait: state.spouse.gender === 'male' ? 'spouse_king' : 'spouse_queen' },
-    { data: state.chancellor, role: 'Kancléř', portrait: byGender('chancellor', state.chancellor.gender) },
-    { data: state.marshal, role: 'Maršál', portrait: byGender('marshal', state.marshal.gender) },
-    { data: state.spymaster, role: 'Špehmistr', portrait: byGender('spymaster', state.spymaster.gender) },
+    { data: state.ruler, role: f(state.ruler, 'Vládce', 'Vládkyně'), extra: tierLabel(state.ruler), portraits: rulerPortraitCandidates(state.ruler) },
+    { data: state.heir, role: f(state.heir, 'Dědic', 'Dědička'), portraits: memberPortraitCandidates(state.heir, 'heir') },
+    { data: state.spouse, role: f(state.spouse, 'Manžel', 'Manželka'), portraits: memberPortraitCandidates(state.spouse, 'spouse') },
+    { data: state.chancellor, role: f(state.chancellor, 'Kancléř', 'Kancléřka'), portraits: memberPortraitCandidates(state.chancellor, 'chancellor') },
+    { data: state.marshal, role: f(state.marshal, 'Maršál', 'Maršálka'), portraits: memberPortraitCandidates(state.marshal, 'marshal') },
+    { data: state.spymaster, role: f(state.spymaster, 'Špehmistr', 'Špehmistryně'), portraits: memberPortraitCandidates(state.spymaster, 'spymaster') },
   ];
   for (const m of members) {
     const card = document.createElement('div');
     const alive = m.data.alive !== false;
     card.className = 'court-card' + (alive ? '' : ' deceased');
     const name = esc(m.data.name);
-    const avatar = m.portrait
-      ? `<img class="court-avatar-img" src="assets/portraits/${m.portrait}.png" alt="${name}">`
-      : `<div class="court-avatar">${esc(m.data.name ? m.data.name[0] : '?')}</div>`;
+    const avatar = `<div class="court-avatar">${esc(m.data.name ? m.data.name[0] : '?')}${portraitImg(m.portraits, m.data.name, 'court-avatar-img')}</div>`;
     const detail = m.data.loyalty !== undefined ? `Věrnost ${m.data.loyalty}` : esc(m.extra || '');
     card.innerHTML = `
       ${avatar}

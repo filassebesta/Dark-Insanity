@@ -18,7 +18,6 @@
 export const EVENTS = [
   {
     id: 'soud_o_mez',
-    image: 'assets/events/scene_council.png',
     title: 'Spor dvou sedláků',
     text: 'Před trůnem stojí dva sedláci, oba tvrdí, že mez mezi jejich poli je jinde, než říká ten druhý. Dvůr čeká na tvůj rozsudek.',
     choices: [
@@ -48,7 +47,6 @@ export const EVENTS = [
   {
     id: 'posel_k_vazalovi',
     type: 'route',
-    image: 'assets/events/scene_route.jpg',
     title: 'Posel k vazalovi',
     text: 'Vzdálený vazal otálí se složením přísahy věrnosti. Vysíláš k němu posla s dopisem — jakou cestou má jet?',
     routeOptions: [
@@ -150,7 +148,6 @@ export const EVENTS = [
 
   {
     id: 'varovani_kancelere',
-    image: 'assets/events/scene_plague.png',
     title: 'Varování kancléře',
     text: 'Kancléř {chancellor.name} varuje, že sýpky nejsou tak plné, jak by měly být, a přichází tvrdá zima.',
     choices: [
@@ -178,7 +175,6 @@ export const EVENTS = [
 
   {
     id: 'zprava_spehmistra',
-    image: 'assets/events/scene_ritual.png',
     title: 'Zpráva špehmistra',
     text: 'Špehmistr {spymaster.name} přichází s neklidnou zprávou: mezi šlechtici prý koluje řeč o spiknutí proti tvé vládě.',
     choices: [
@@ -207,7 +203,6 @@ export const EVENTS = [
 
   {
     id: 'vojenska_prehlidka',
-    image: 'assets/events/scene_march.png',
     title: 'Vojenská přehlídka',
     text: 'Maršál {marshal.name} navrhuje uspořádat velkou přehlídku vojska, ať poddaní vidí sílu koruny.',
     choices: [

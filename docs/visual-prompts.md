@@ -1,5 +1,9 @@
 # Insanity Kingdom — Vizuální prompty pro AI generování
 
+> ⚠️ **ZASTARALÉ.** Tento soubor patří ke starému postupu se sprite sheety a jeho
+> obrázky už jsou ze hry odstraněné. Aktuální zadání je v
+> [`gemini-prompts.md`](gemini-prompts.md).
+
 Claude negeneruje obrázky, takže tenhle dokument je zadání pro externí obrázkové AI
 (Midjourney, DALL·E, Stable Diffusion/Flux, Leonardo.ai...). Prompty zkopíruješ,
 vygeneruješ, ořízneš a uložíš pod názvy souborů z manifestu na konci — kód se pak

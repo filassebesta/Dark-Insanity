@@ -44,9 +44,10 @@ window.__portraitFallback = (img) => {
   }
 };
 
-function memberPortrait(c, role) {
-  if (role === 'spouse') return `assets/portraits/${c.gender === 'male' ? 'spouse_king' : 'spouse_queen'}.png`;
-  return `assets/portraits/${role}_${c.gender === 'male' ? 'male' : 'female'}.png`;
+/** Court member portrait files: assets/portraits/<role>_<male|female>.jpg (or .png). */
+export function memberPortraitCandidates(c, role) {
+  const base = `assets/portraits/${role}_${c.gender === 'male' ? 'male' : 'female'}`;
+  return [`${base}.jpg`, `${base}.png`];
 }
 
 function title5(r) {
@@ -98,7 +99,7 @@ export function renderCharacterSheet(state) {
     return `
       <div class="cs-member${alive ? '' : ' deceased'}">
         <span class="cs-mini">${initial}</span>
-        ${portraitImg([memberPortrait(c, role)], c.name, 'cs-mini-img')}
+        ${portraitImg(memberPortraitCandidates(c, role), c.name, 'cs-mini-img')}
         <div>
           <span>${ROLE_LABEL[role](c.gender)}</span>
           <strong>${esc(c.name)}${alive ? '' : ' †'}</strong>

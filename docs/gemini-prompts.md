@@ -11,6 +11,12 @@ zkopírování do Gemini (Gemini app → **Vytvořit obrázek**). U každého je
 > Hlavní menu (`assets/ui/menu_background.png`) zůstává **původní rytina** —
 > pro menu nic negeneruj.
 
+> **Staré obrázky jsou smazané.** Všechno, co vzniklo ořezáním ze sprite
+> sheetu a muselo se zvětšovat (scény událostí, portréty dvora, výchozí
+> scéna, pozadí hradu, papírová textura), je pryč. Dokud nenahraješ nové,
+> hra místo nich ukazuje tmavé malířské pozadí nebo zlaté iniciály jména.
+> Papírovou texturu teď kreslí přímo kód, tu generovat nemusíš.
+
 ---
 
 ## 0. Jak na to (postup)
@@ -22,10 +28,11 @@ zkopírování do Gemini (Gemini app → **Vytvořit obrázek**). U každého je
 3. **Konzistence postav:** u portrétů vládce nejdřív vygeneruj mladou verzi,
    pak ji **přilož jako obrázek** do dalšího promptu (stará verze) — v promptu
    je napsáno *„the same person as in the attached image“*.
-4. **Stylová kotva:** k prvnímu promptu v každém chatu přilož jeden z obrázků,
-   které už ve hře jsou (např. `assets/events/scene_default.jpg` nebo
-   `assets/portraits/chancellor_male.png`), a připiš *„Match the painting style
-   of the attached image.“* Celá hra pak bude vypadat jednotně.
+4. **Stylová kotva:** k prvnímu promptu v každém chatu přilož jeden z nových
+   portrétů vládce (`assets/portraits/ruler_king_male.jpg` nebo
+   `ruler_king_female.jpg` — stáhneš je z GitHubu) a připiš *„Match the
+   painting style of the attached image.“* Celá hra pak bude vypadat jednotně.
+   U portrétů dvora (sekce 6) je tahle věta už v promptu.
 5. **Žádný text v obrázku.** Pokud tam Gemini přesto napíše písmena,
    řekni mu: *„Remove all text and letters.“*
 6. **Stáhni v plné velikosti** a nahraj na GitHub do složky
@@ -56,25 +63,33 @@ letters, watermark or signature.
 
 ---
 
-## 1. Přehled — co generovat (podle priority)
+## 1. Přehled — co je hotové a co chybí
 
-| # | Soubor | Poměr | Cílové rozlišení | Kde se zobrazí |
-|---|--------|-------|------------------|----------------|
-| 1 | `ruler_king_male.png` | 4:5 | 1024 × 1280 | Postava (avatar), plaketa vládce |
-| 2 | `ruler_king_female.png` | 4:5 | 1024 × 1280 | Postava (avatar), plaketa vládkyně |
-| 3 | `ruler_king_male_old.png` | 4:5 | 1024 × 1280 | Avatar od 55 let věku |
-| 4 | `ruler_king_female_old.png` | 4:5 | 1024 × 1280 | Avatar od 55 let věku |
-| 5–13 | `<id_eventu>.jpg` (9 ks) | 1:1 | 2048 × 2048 | Levý obraz scény u konkrétní události |
-| 14 | `quiet_season.jpg` | 1:1 | 2048 × 2048 | Scéna „Klidné období“ |
-| 15–17 | `scenario_<klíč>.jpg` (3 ks) | 3:2 | 1200 × 800 | Karty výběru scénáře |
-| 18–21 | `ending_<typ>.jpg` (4 ks) | 16:9 | 1920 × 1080 | Pozadí obrazovky konce hry |
+✅ = hotovo a ve hře · ❌ = chybí (pořadí = doporučená priorita)
 
-Gemini obvykle vrací kolem 1024 px na delší straně — to nevadí, na cílové
-rozlišení to dotáhnu já. Důležitý je **poměr stran a kompozice**.
+| Stav | Soubor | Poměr | Cílové rozlišení | Kde se zobrazí | Prompt |
+|---|---|---|---|---|---|
+| ✅ | `ruler_king_male.jpg`, `ruler_king_female.jpg` | 4:5 | 1024 × 1280 | Postava, plaketa, Dvůr | 2.1, 2.2 |
+| ✅ | `ruler_king_male_old.jpg`, `ruler_king_female_old.jpg` | 4:5 | 1024 × 1280 | Postava od 55 let | 2.3, 2.4 |
+| ❌ | `scene_default.jpg` | 1:1 | 2048 × 2048 | Scéna, když událost nemá vlastní obrázek | 7.1 |
+| ❌ | `backdrop.jpg` | 16:9 | 1920 × 1080 | Rozmazané pozadí: nová hra, výběr scénáře, načtení, možnosti | 7.2 |
+| ❌ | `heir_male.jpg`, `heir_female.jpg` | 4:5 | 1024 × 1280 | Dvůr, Postava → Rodina | 6.1, 6.2 |
+| ❌ | `spouse_male.jpg`, `spouse_female.jpg` | 4:5 | 1024 × 1280 | Dvůr, Postava → Rodina | 6.3, 6.4 |
+| ❌ | `chancellor_male.jpg`, `chancellor_female.jpg` | 4:5 | 1024 × 1280 | Dvůr | 6.5, 6.6 |
+| ❌ | `marshal_male.jpg`, `marshal_female.jpg` | 4:5 | 1024 × 1280 | Dvůr | 6.7, 6.8 |
+| ❌ | `spymaster_male.jpg`, `spymaster_female.jpg` | 4:5 | 1024 × 1280 | Dvůr | 6.9, 6.10 |
+| ❌ | 9 × `<id_eventu>.jpg` | 1:1 | 2048 × 2048 | Scéna konkrétní události | 3.1 – 3.9 |
+| ❌ | `quiet_season.jpg` | 1:1 | 2048 × 2048 | Scéna „Klidné období“ | 3.10 |
+| ❌ | `ending_death.jpg`, `ending_conquest.jpg`, `ending_collapse.jpg`, `ending_golden_age.jpg` | 16:9 | 1920 × 1080 | Konec hry | 5.1 – 5.4 |
+| ❌ | `scenario_panovnik.jpg`, `scenario_slechtic.jpg`, `scenario_sedlak.jpg` | 3:2 | 1200 × 800 | Karty výběru scénáře | 4.1 – 4.3 |
+
+Celkem chybí **32 obrázků**. Gemini obvykle vrací kolem 1024 px na delší
+straně — to nevadí, na cílové rozlišení to dotáhnu já. Důležitý je
+**poměr stran a kompozice**.
 
 ---
 
-## 2. Portrét vládce (avatar)
+## 2. Portrét vládce (avatar) — ✅ hotovo
 
 **Kde se zobrazí:** obrazovka *Postava* (velký rám 4:5) a malé kulaté okénko
 v plaketě dole na scéně (z obrázku se bere horní střed — **obličej musí být
@@ -82,7 +97,7 @@ v horní třetině**, ne úplně u okraje).
 **Kompozice:** busta / po pás, postava mírně natočená, tmavé neutrální
 pozadí (tmavě hnědá až černá), světlo z boku jako od okna nebo svíce.
 
-### 2.1 `ruler_king_male.png` — Král (mladší, ~30 let)
+### 2.1 `ruler_king_male.jpg` — Král (mladší, ~30 let)
 Rozlišení: **4:5, cíl 1024 × 1280**
 
 ```
@@ -103,7 +118,7 @@ cartoon, 3D render, photography, oversaturated colours, airbrushed digital
 art, any text, letters, watermark or signature.
 ```
 
-### 2.2 `ruler_king_female.png` — Královna (mladší, ~30 let)
+### 2.2 `ruler_king_female.jpg` — Královna (mladší, ~30 let)
 Rozlišení: **4:5, cíl 1024 × 1280**
 
 ```
@@ -125,7 +140,7 @@ cartoon, 3D render, photography, oversaturated colours, airbrushed digital
 art, any text, letters, watermark or signature.
 ```
 
-### 2.3 `ruler_king_male_old.png` — Král ve stáří (~60 let)
+### 2.3 `ruler_king_male_old.jpg` — Král ve stáří (~60 let)
 Rozlišení: **4:5, cíl 1024 × 1280** — **přilož vygenerovaný obrázek 2.1!**
 
 ```
@@ -136,7 +151,7 @@ stooped shoulders, the ermine collar more worn. Keep the exact same painting
 style, framing and aspect ratio 4:5. No text or letters.
 ```
 
-### 2.4 `ruler_king_female_old.png` — Královna ve stáří (~60 let)
+### 2.4 `ruler_king_female_old.jpg` — Královna ve stáří (~60 let)
 Rozlišení: **4:5, cíl 1024 × 1280** — **přilož vygenerovaný obrázek 2.2!**
 
 ```
@@ -148,7 +163,7 @@ framing and aspect ratio 4:5. No text or letters.
 ```
 
 > Volitelně později (pro scénáře Šlechtic / Sedlák) stejným způsobem:
-> `ruler_noble_male.png`, `ruler_minor_noble_…`, `ruler_freeman_…`,
+> `ruler_noble_male.jpg`, `ruler_minor_noble_…`, `ruler_freeman_…`,
 > `ruler_peasant_…` (+ `_old`). Hra je už umí načíst.
 
 ---
@@ -491,14 +506,247 @@ oversaturated colours, any text, letters, watermark or signature.
 
 ---
 
-## 6. Kam to hra ukládá (pro kontrolu)
+## 6. Dvůr — portréty rádců a rodiny
+
+**Kde se zobrazí:** panel *Dvůr* (kulaté okénko 72 px) a v obrazovce
+*Postava* v části *Rodina* (kulaté okénko 48 px). Z obrázku se bere výřez
+**obličeje** — ať je obličej **uprostřed v horní třetině** a dobře nasvícený.
+Každá postava má mužskou i ženskou verzi, protože hra pohlaví losuje.
+**Postup:** ke každému promptu přilož jeden z hotových portrétů vládce, ať
+mají všichni stejný styl a pozadí.
+
+### 6.1 `heir_male.jpg` — Dědic (chlapec)
+Rozlišení: **4:5, cíl 1024 × 1280** — přilož `ruler_king_male.jpg` nebo `ruler_king_female.jpg` jako stylovou kotvu
+
+```
+Portrait painting, aspect ratio 4:5. A noble boy of about 12, heir to the throne, serious and a little uneasy beyond his years. Short tousled brown hair, a thin silver circlet, a dark blue padded doublet with a small fur collar. Shown from the chest up,
+slightly turned, plain dark umber background fading to black, warm side
+light. The face sits in the upper third of the frame, centred, with a little
+headroom.
+Match the painting style, lighting, framing and dark background of the
+attached portrait. Painted in the style of a dark-fantasy narrative RPG:
+muted oil painting with visible loose brushwork and subtle canvas texture,
+desaturated earthy palette, soft dramatic chiaroscuro, realistic proportions,
+similar in mood to "The Life and Suffering of Sir Brante". Avoid: anime,
+cartoon, 3D render, photography, oversaturated colours, airbrushed digital
+art, any text, letters, watermark or signature.
+```
+
+### 6.2 `heir_female.jpg` — Dědička (dívka)
+Rozlišení: **4:5, cíl 1024 × 1280** — přilož `ruler_king_male.jpg` nebo `ruler_king_female.jpg` jako stylovou kotvu
+
+```
+Portrait painting, aspect ratio 4:5. A noble girl of about 12, heir to the throne, composed and watchful beyond her years. Long braided light-brown hair, a thin silver circlet, a dark blue wool gown with a small fur collar. Shown from the chest up,
+slightly turned, plain dark umber background fading to black, warm side
+light. The face sits in the upper third of the frame, centred, with a little
+headroom.
+Match the painting style, lighting, framing and dark background of the
+attached portrait. Painted in the style of a dark-fantasy narrative RPG:
+muted oil painting with visible loose brushwork and subtle canvas texture,
+desaturated earthy palette, soft dramatic chiaroscuro, realistic proportions,
+similar in mood to "The Life and Suffering of Sir Brante". Avoid: anime,
+cartoon, 3D render, photography, oversaturated colours, airbrushed digital
+art, any text, letters, watermark or signature.
+```
+
+### 6.3 `spouse_male.jpg` — Manžel vládkyně (princ choť)
+Rozlišení: **4:5, cíl 1024 × 1280** — přilož `ruler_king_male.jpg` nebo `ruler_king_female.jpg` jako stylovou kotvu
+
+```
+Portrait painting, aspect ratio 4:5. A late-medieval prince consort of about 32, husband of the reigning queen. Neatly trimmed dark beard, a thin gold circlet, a dark green velvet doublet with a fur-trimmed mantle, calm but ambitious eyes. Shown from the chest up,
+slightly turned, plain dark umber background fading to black, warm side
+light. The face sits in the upper third of the frame, centred, with a little
+headroom.
+Match the painting style, lighting, framing and dark background of the
+attached portrait. Painted in the style of a dark-fantasy narrative RPG:
+muted oil painting with visible loose brushwork and subtle canvas texture,
+desaturated earthy palette, soft dramatic chiaroscuro, realistic proportions,
+similar in mood to "The Life and Suffering of Sir Brante". Avoid: anime,
+cartoon, 3D render, photography, oversaturated colours, airbrushed digital
+art, any text, letters, watermark or signature.
+```
+
+### 6.4 `spouse_female.jpg` — Manželka vládce (královna choť)
+Rozlišení: **4:5, cíl 1024 × 1280** — přilož `ruler_king_male.jpg` nebo `ruler_king_female.jpg` jako stylovou kotvu
+
+```
+Portrait painting, aspect ratio 4:5. A late-medieval queen consort of about 30, wife of the king. Dark hair pinned under a thin gold circlet and a short veil, a deep wine-red velvet gown with a fur collar, an intelligent, slightly guarded expression. Shown from the chest up,
+slightly turned, plain dark umber background fading to black, warm side
+light. The face sits in the upper third of the frame, centred, with a little
+headroom.
+Match the painting style, lighting, framing and dark background of the
+attached portrait. Painted in the style of a dark-fantasy narrative RPG:
+muted oil painting with visible loose brushwork and subtle canvas texture,
+desaturated earthy palette, soft dramatic chiaroscuro, realistic proportions,
+similar in mood to "The Life and Suffering of Sir Brante". Avoid: anime,
+cartoon, 3D render, photography, oversaturated colours, airbrushed digital
+art, any text, letters, watermark or signature.
+```
+
+### 6.5 `chancellor_male.jpg` — Kancléř
+Rozlišení: **4:5, cíl 1024 × 1280** — přilož `ruler_king_male.jpg` nebo `ruler_king_female.jpg` jako stylovou kotvu
+
+```
+Portrait painting, aspect ratio 4:5. An elderly royal chancellor of about 58. Grey receding hair, clean-shaven, deep lines on the face, sharp tired eyes. A black fur-trimmed scholar's robe, a heavy silver chain of office, holding a closed ledger. Shown from the chest up,
+slightly turned, plain dark umber background fading to black, warm side
+light. The face sits in the upper third of the frame, centred, with a little
+headroom.
+Match the painting style, lighting, framing and dark background of the
+attached portrait. Painted in the style of a dark-fantasy narrative RPG:
+muted oil painting with visible loose brushwork and subtle canvas texture,
+desaturated earthy palette, soft dramatic chiaroscuro, realistic proportions,
+similar in mood to "The Life and Suffering of Sir Brante". Avoid: anime,
+cartoon, 3D render, photography, oversaturated colours, airbrushed digital
+art, any text, letters, watermark or signature.
+```
+
+### 6.6 `chancellor_female.jpg` — Kancléřka
+Rozlišení: **4:5, cíl 1024 × 1280** — přilož `ruler_king_male.jpg` nebo `ruler_king_female.jpg` jako stylovou kotvu
+
+```
+Portrait painting, aspect ratio 4:5. An elderly royal chancelloress of about 55. Grey hair under a simple white linen wimple, sharp tired eyes, a black fur-trimmed robe, a heavy silver chain of office, holding a closed ledger. Shown from the chest up,
+slightly turned, plain dark umber background fading to black, warm side
+light. The face sits in the upper third of the frame, centred, with a little
+headroom.
+Match the painting style, lighting, framing and dark background of the
+attached portrait. Painted in the style of a dark-fantasy narrative RPG:
+muted oil painting with visible loose brushwork and subtle canvas texture,
+desaturated earthy palette, soft dramatic chiaroscuro, realistic proportions,
+similar in mood to "The Life and Suffering of Sir Brante". Avoid: anime,
+cartoon, 3D render, photography, oversaturated colours, airbrushed digital
+art, any text, letters, watermark or signature.
+```
+
+### 6.7 `marshal_male.jpg` — Maršál
+Rozlišení: **4:5, cíl 1024 × 1280** — přilož `ruler_king_male.jpg` nebo `ruler_king_female.jpg` jako stylovou kotvu
+
+```
+Portrait painting, aspect ratio 4:5. A grizzled royal marshal of about 50. Short grey-streaked hair, a scar across one cheek, a weathered stern face. Dented steel plate gorget and pauldrons over a dark red gambeson, a heavy wool cloak. Shown from the chest up,
+slightly turned, plain dark umber background fading to black, warm side
+light. The face sits in the upper third of the frame, centred, with a little
+headroom.
+Match the painting style, lighting, framing and dark background of the
+attached portrait. Painted in the style of a dark-fantasy narrative RPG:
+muted oil painting with visible loose brushwork and subtle canvas texture,
+desaturated earthy palette, soft dramatic chiaroscuro, realistic proportions,
+similar in mood to "The Life and Suffering of Sir Brante". Avoid: anime,
+cartoon, 3D render, photography, oversaturated colours, airbrushed digital
+art, any text, letters, watermark or signature.
+```
+
+### 6.8 `marshal_female.jpg` — Maršálka
+Rozlišení: **4:5, cíl 1024 × 1280** — přilož `ruler_king_male.jpg` nebo `ruler_king_female.jpg` jako stylovou kotvu
+
+```
+Portrait painting, aspect ratio 4:5. A battle-hardened royal marshal, a woman of about 45. Hair tied back tightly, a thin scar on the jaw, a weathered stern face. Dented steel plate gorget and pauldrons over a dark red gambeson, a heavy wool cloak. Shown from the chest up,
+slightly turned, plain dark umber background fading to black, warm side
+light. The face sits in the upper third of the frame, centred, with a little
+headroom.
+Match the painting style, lighting, framing and dark background of the
+attached portrait. Painted in the style of a dark-fantasy narrative RPG:
+muted oil painting with visible loose brushwork and subtle canvas texture,
+desaturated earthy palette, soft dramatic chiaroscuro, realistic proportions,
+similar in mood to "The Life and Suffering of Sir Brante". Avoid: anime,
+cartoon, 3D render, photography, oversaturated colours, airbrushed digital
+art, any text, letters, watermark or signature.
+```
+
+### 6.9 `spymaster_male.jpg` — Špehmistr
+Rozlišení: **4:5, cíl 1024 × 1280** — přilož `ruler_king_male.jpg` nebo `ruler_king_female.jpg` jako stylovou kotvu
+
+```
+Portrait painting, aspect ratio 4:5. A royal spymaster of about 45. A charcoal hooded cloak pushed back slightly, a narrow clever face with a short dark beard, half of the face in deep shadow, a faint knowing smile, a black wax seal ring. Shown from the chest up,
+slightly turned, plain dark umber background fading to black, warm side
+light. The face sits in the upper third of the frame, centred, with a little
+headroom.
+Match the painting style, lighting, framing and dark background of the
+attached portrait. Painted in the style of a dark-fantasy narrative RPG:
+muted oil painting with visible loose brushwork and subtle canvas texture,
+desaturated earthy palette, soft dramatic chiaroscuro, realistic proportions,
+similar in mood to "The Life and Suffering of Sir Brante". Avoid: anime,
+cartoon, 3D render, photography, oversaturated colours, airbrushed digital
+art, any text, letters, watermark or signature.
+```
+
+### 6.10 `spymaster_female.jpg` — Špehmistryně
+Rozlišení: **4:5, cíl 1024 × 1280** — přilož `ruler_king_male.jpg` nebo `ruler_king_female.jpg` jako stylovou kotvu
+
+```
+Portrait painting, aspect ratio 4:5. A royal spymistress of about 40. A charcoal hooded cloak with the hood half up, a narrow clever face, half in deep shadow, dark hair, a faint knowing smile, a black wax seal ring. Shown from the chest up,
+slightly turned, plain dark umber background fading to black, warm side
+light. The face sits in the upper third of the frame, centred, with a little
+headroom.
+Match the painting style, lighting, framing and dark background of the
+attached portrait. Painted in the style of a dark-fantasy narrative RPG:
+muted oil painting with visible loose brushwork and subtle canvas texture,
+desaturated earthy palette, soft dramatic chiaroscuro, realistic proportions,
+similar in mood to "The Life and Suffering of Sir Brante". Avoid: anime,
+cartoon, 3D render, photography, oversaturated colours, airbrushed digital
+art, any text, letters, watermark or signature.
+```
+
+---
+
+## 7. Výchozí scéna a pozadí obrazovek
+
+### 7.1 `scene_default.jpg` — Výchozí scéna
+Rozlišení: **1:1, cíl 2048 × 2048**
+**Kde se zobrazí:** vlevo na herní obrazovce u každé události, která ještě
+nemá vlastní obrázek. Má být obecná a klidná — hlavní motiv nahoře, spodní
+třetina tmavá (je přes ni nadpis a plaketa vládce).
+
+```
+Square painting, aspect ratio 1:1. A late-medieval stone castle on a rocky
+hill above a misty valley at dusk, a few warm lit windows, dark banners on
+the towers, crows circling, a winding road leading up to the gate. Heavy
+grey clouds with a break of pale amber light behind the castle. The lower
+third is a dark, calm hillside in shadow.
+Painted in the style of a dark-fantasy narrative RPG: muted oil painting with
+visible loose brushwork and subtle canvas texture, desaturated earthy palette
+of ochre, rust, olive green and dusty slate blue, soft dramatic chiaroscuro
+lighting, melancholic late-medieval Central European atmosphere, realistic
+proportions, cinematic composition, similar in mood to "The Life and
+Suffering of Sir Brante". Avoid: anime, cartoon, 3D render, photography,
+oversaturated colours, airbrushed digital art, any text, letters, watermark
+or signature.
+```
+
+### 7.2 `backdrop.jpg` — Pozadí vedlejších obrazovek
+Rozlišení: **16:9, cíl 1920 × 1080**
+**Kde se zobrazí:** za okny *Nová hra*, *Výběr scénáře*, *Načíst hru*,
+*Možnosti* a jako náhradní pozadí konce hry. Hra ho **rozmaže a ztmaví**,
+takže stačí jednoduchá kompozice se silnou siluetou a světlem.
+
+```
+Wide cinematic painting, aspect ratio 16:9. A panoramic view of a
+late-medieval kingdom at dusk: a dark castle silhouette on a hill on the
+left, a town with smoking chimneys below, a river winding through fields
+toward distant mountains, a dramatic cloudy sky with warm amber light on the
+horizon. The center of the image is calm and open.
+Painted in the style of a dark-fantasy narrative RPG: muted oil painting with
+visible loose brushwork and subtle canvas texture, desaturated earthy palette
+of ochre, rust, olive green and dusty slate blue, soft dramatic chiaroscuro
+lighting, melancholic late-medieval Central European atmosphere, realistic
+proportions, cinematic composition, similar in mood to "The Life and
+Suffering of Sir Brante". Avoid: anime, cartoon, 3D render, photography,
+oversaturated colours, airbrushed digital art, any text, letters, watermark
+or signature.
+```
+
+---
+
+## 8. Kam to hra ukládá (pro kontrolu)
 
 | Druh | Cesta ve hře | Když soubor chybí |
 |------|--------------|-------------------|
-| Portrét vládce | `assets/portraits/ruler_king_{male,female}.png` (+ `_old` od 55 let) | velké zlaté iniciály jména |
-| Scéna události | `assets/events/<id_eventu>.jpg` (nebo `.png`) | obrázek nastavený v události, jinak `scene_default.jpg` |
+| Portrét vládce | `assets/portraits/ruler_king_{male,female}.jpg` (+ `_old` od 55 let) | zlaté iniciály jména |
+| Portrét dvora | `assets/portraits/{heir,spouse,chancellor,marshal,spymaster}_{male,female}.jpg` | zlaté iniciály jména |
+| Scéna události | `assets/events/<id_eventu>.jpg` (nebo `.png`) | `scene_default.jpg` |
 | Klidné období | `assets/events/quiet_season.jpg` | `scene_default.jpg` |
-| Karta scénáře | `assets/ui/scenario_{panovnik,slechtic,sedlak}.jpg` | současné obrázky |
-| Konec hry | `assets/endings/ending_{death,conquest,collapse,golden_age}.jpg` | rozmazaný hrad z menu |
+| Výchozí scéna | `assets/events/scene_default.jpg` | tmavé malířské pozadí |
+| Pozadí obrazovek | `assets/ui/backdrop.jpg` | tmavé pozadí |
+| Karta scénáře | `assets/ui/scenario_{panovnik,slechtic,sedlak}.jpg` | tmavá karta |
+| Konec hry | `assets/endings/ending_{death,conquest,collapse,golden_age}.jpg` | `backdrop.jpg` |
 
-Nahrávej ideálně do `assets/_incoming/` — já soubory zpracuji a přesunu.
+Nahrávej ideálně do `assets/_incoming/` (nebo do `docs/` jako minule) —
+já soubory zpracuji a přesunu.

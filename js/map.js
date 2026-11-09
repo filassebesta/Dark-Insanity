@@ -269,7 +269,7 @@ function render() {
     <svg class="map-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Mapa království">
       <defs>
         <pattern id="map-paper" patternUnits="userSpaceOnUse" width="320" height="320">
-          <image href="assets/ui/parchment_bg.png" width="320" height="320"/>
+          <image href="assets/ui/paper.svg" width="320" height="320"/>
         </pattern>
         <pattern id="map-hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(40)">
           <path d="M0 0v7" stroke="#3b2f22" stroke-width=".8" opacity=".28"/>
