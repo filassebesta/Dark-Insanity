@@ -271,27 +271,19 @@ function wireKeyboard() {
   });
 }
 
-// ---------- ambient polish: menu slideshow + parallax, UI click sound ----------
+// ---------- ambient polish: menu parallax, UI click sound ----------
 
 function wireMenuAmbience() {
-  const backdrop = document.getElementById('menu-art-parallax');
+  const parallaxEl = document.getElementById('menu-art-parallax');
   const menuScreen = document.getElementById('screen-menu');
-  const slides = [...backdrop.querySelectorAll('.menu-slide')];
-  let current = 0;
-  setInterval(() => {
-    if (!menuScreen.classList.contains('active')) return;
-    slides[current].classList.remove('active');
-    current = (current + 1) % slides.length;
-    slides[current].classList.add('active');
-  }, 9000);
-
   menuScreen.addEventListener('mousemove', (e) => {
-    const relX = e.clientX / window.innerWidth - 0.5;
-    const relY = e.clientY / window.innerHeight - 0.5;
-    backdrop.style.transform = `translate(${-relX * 18}px, ${-relY * 12}px)`;
+    const rect = parallaxEl.getBoundingClientRect();
+    const relX = (e.clientX - rect.left) / rect.width - 0.5;
+    const relY = (e.clientY - rect.top) / rect.height - 0.5;
+    parallaxEl.style.transform = `translate(${-relX * 10}px, ${-relY * 10}px)`;
   });
   menuScreen.addEventListener('mouseleave', () => {
-    backdrop.style.transform = 'translate(0, 0)';
+    parallaxEl.style.transform = 'translate(0, 0)';
   });
 }
 

@@ -7,10 +7,9 @@ bude odkazovat přímo na tyhle cesty.
 
 > **Vizuální směr (od v0.2):** tlumená malířská dark-fantasy v duchu *The Life
 > and Suffering of Sir Brante* — olejomalba s viditelným tahem štětce, zemité
-> barvy (okr, rez, olivová, prašně modrá), melancholické světlo. Původní
-> černobílý rytinový styl je opuštěný; starý obrázek menu je archivovaný v
-> `assets/_source/menu_background_engraving.png`. Hlavní menu se teď skládá
-> v kódu (titulek + položky jsou HTML), takže pozadí menu nesmí obsahovat text.
+> barvy (okr, rez, olivová, prašně modrá), melancholické světlo. Výjimka:
+> **hlavní menu zůstává původní rytinový obrázek** `assets/ui/menu_background.png`
+> (s vypálenými položkami New Game/Continue/…), ten se nemění.
 
 **Většina promptů je psaná jako sprite sheet** — jeden prompt = jedno vygenerování =
 víc hotových assetů po oříznutí. Cílem je co nejmíň jednotlivých generování.
@@ -56,7 +55,9 @@ zlatými linkami a čtecí stránkou v barvě starého papíru.
 Tyhle dva obrázky jsou teď nejdůležitější pro celkový dojem — zatím je
 nahrazují koláže složené z malého hradu ze starého sheetu.
 
-**`assets/ui/menu_castle.jpg`** — 16:9 (ideálně 2560×1440), BEZ textu
+**`assets/ui/menu_castle.jpg`** — 16:9 (ideálně 2560×1440), BEZ textu — rozmazané
+pozadí obrazovek Nová hra / Výběr scénáře / Načíst / Nastavení / Konec hry
+a obrázek karty scénáře Panovník (samotné hlavní menu ho nepoužívá)
 ```
 a lonely gothic royal castle on a distant ridge at dusk, seen across a dark
 valley, storm clouds parting with warm golden light behind the towers, a
@@ -364,7 +365,8 @@ přirozené smrti stářím, ne jako běžný náhodný event.)*
 assets/
   ui/
     parchment_bg.png            ← samostatné generování
-    menu_castle.jpg              ← samostatné generování (pozadí menu, sekce 1d)
+    menu_castle.jpg              ← samostatné generování (pozadí vedlejších obrazovek, sekce 1d)
+    menu_background.png          ← původní hlavní menu (beze změny)
     ui_elements_sheet.png        ← ořež na frame_ornate.png + divider_skull.png
     frame_ornate.png
     divider_skull.png
