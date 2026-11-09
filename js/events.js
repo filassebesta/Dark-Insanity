@@ -48,6 +48,7 @@ export const EVENTS = [
   {
     id: 'posel_k_vazalovi',
     type: 'route',
+    image: 'assets/events/scene_route.jpg',
     title: 'Posel k vazalovi',
     text: 'Vzdálený vazal otálí se složením přísahy věrnosti. Vysíláš k němu posla s dopisem — jakou cestou má jet?',
     routeOptions: [

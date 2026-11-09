@@ -71,10 +71,11 @@ export function resolveChoice(state, event, choiceIndex) {
   if (traitGained) {
     state.ruler.traits[traitGained] = clampTrait(state.ruler.traits[traitGained] + 1);
   }
-  if (chronicleText) state.chronicle.push(makeChronicleEntry(state, interpolate(state, chronicleText)));
+  const text = chronicleText ? interpolate(state, chronicleText) : '';
+  if (text) state.chronicle.push(makeChronicleEntry(state, text));
   state.usedEvents.push(event.id);
 
-  return { outcome, effects, traitGained };
+  return { outcome, effects, traitGained, text };
 }
 
 export function resolveRouteChoice(state, event, terrainKey) {
@@ -84,9 +85,10 @@ export function resolveRouteChoice(state, event, terrainKey) {
   const branch = danger ? option.onDanger : option.onSafe;
   applyEffects(state, branch.effects);
   applyHiddenEffects(state, branch.hiddenEffects);
-  if (branch.chronicle) state.chronicle.push(makeChronicleEntry(state, interpolate(state, branch.chronicle)));
+  const text = branch.chronicle ? interpolate(state, branch.chronicle) : '';
+  if (text) state.chronicle.push(makeChronicleEntry(state, text));
   state.usedEvents.push(event.id);
-  return { danger, outcome: branch };
+  return { outcome: danger ? 'danger' : 'safe', effects: branch.effects || {}, traitGained: null, text };
 }
 
 export function pickNextEvent(state) {

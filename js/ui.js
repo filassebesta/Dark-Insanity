@@ -1,8 +1,15 @@
 import { RESOURCE_DEFS, TRAIT_DEFS, STATUS_TIERS, TERRAIN_DEFS, SEASONS } from './data.js';
 import { interpolate, previewVisibleEffects, computeSuccessChance } from './engine.js';
+import { ICONS } from './icons.js';
+
+const DEFAULT_SCENE = 'assets/events/scene_default.jpg';
 
 let typewriterTimer = null;
 let typewriterEnabled = true;
+
+export function esc(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
 
 export function setTypewriterEnabled(enabled) {
   typewriterEnabled = enabled;
@@ -21,31 +28,36 @@ let musicUnlockBound = false;
 function syncMenuMusic(shouldPlay) {
   const music = document.getElementById('menu-music');
   if (!music) return;
-  if (shouldPlay) {
-    const playPromise = music.play();
-    if (playPromise && playPromise.catch) {
-      playPromise.catch(() => {
-        if (musicUnlockBound) return;
-        musicUnlockBound = true;
-        const unlock = () => {
-          music.play().catch(() => {});
-          document.removeEventListener('click', unlock);
-          document.removeEventListener('keydown', unlock);
-        };
-        document.addEventListener('click', unlock, { once: true });
-        document.addEventListener('keydown', unlock, { once: true });
-      });
-    }
-  } else {
+  if (!shouldPlay) {
     music.pause();
+    return;
   }
+  music.play().catch(() => {
+    if (musicUnlockBound) return;
+    musicUnlockBound = true;
+    const unlock = () => {
+      if (document.getElementById('screen-menu').classList.contains('active')) music.play().catch(() => {});
+      document.removeEventListener('click', unlock);
+      document.removeEventListener('keydown', unlock);
+    };
+    document.addEventListener('click', unlock);
+    document.addEventListener('keydown', unlock);
+  });
 }
 
 export function setMusicMuted(muted) {
   const music = document.getElementById('menu-music');
   if (music) music.muted = muted;
   const btn = document.getElementById('music-toggle');
-  if (btn) btn.textContent = muted ? '🔇' : '🔊';
+  if (btn) {
+    btn.innerHTML = muted ? ICONS.mute : ICONS.sound;
+    btn.title = muted ? 'Zapnout zvuk' : 'Ztlumit zvuk';
+  }
+}
+
+export function renderStaticIcons() {
+  const back = document.querySelector('.menu-return-button');
+  if (back) back.innerHTML = ICONS.menu;
 }
 
 export function toast(message) {
@@ -54,11 +66,15 @@ export function toast(message) {
   el.className = 'toast';
   el.textContent = message;
   container.appendChild(el);
-  setTimeout(() => el.remove(), 2500);
+  setTimeout(() => el.remove(), 2900);
 }
+
+// ---------- typewriter ----------
 
 function typewrite(el, text, onDone) {
   clearInterval(typewriterTimer);
+  typewriterTimer = null;
+  el._skipHandler = null;
   if (!typewriterEnabled) {
     el.textContent = text;
     if (onDone) onDone();
@@ -66,36 +82,38 @@ function typewrite(el, text, onDone) {
   }
   el.textContent = '';
   let i = 0;
-  typewriterTimer = setInterval(() => {
-    i += 1;
-    el.textContent = text.slice(0, i);
-    if (i >= text.length) {
-      clearInterval(typewriterTimer);
-      typewriterTimer = null;
-      if (onDone) onDone();
-    }
-  }, 16);
-
-  const skip = () => {
-    if (typewriterTimer) {
-      clearInterval(typewriterTimer);
-      typewriterTimer = null;
-      el.textContent = text;
-      if (onDone) onDone();
-    }
+  const finish = () => {
+    clearInterval(typewriterTimer);
+    typewriterTimer = null;
+    el._skipHandler = null;
+    el.textContent = text;
+    if (onDone) onDone();
   };
-  el.dataset.skipBound = 'true';
-  el._skipHandler = skip;
+  typewriterTimer = setInterval(() => {
+    i += 2;
+    el.textContent = text.slice(0, i);
+    if (i >= text.length) finish();
+  }, 18);
+  el._skipHandler = finish;
 }
 
+// Returns true when there was running text to complete.
 export function skipTypewriter() {
   const el = document.getElementById('event-text');
-  if (el && el._skipHandler) el._skipHandler();
+  if (el && el._skipHandler) {
+    el._skipHandler();
+    return true;
+  }
+  return false;
 }
 
-// ---------- resource bar ----------
+// ---------- top bar ----------
 
 let previousResourceValues = null;
+
+export function resetResourceMemory() {
+  previousResourceValues = null;
+}
 
 export function renderResourceBar(state) {
   const bar = document.getElementById('resource-chips');
@@ -105,13 +123,21 @@ export function renderResourceBar(state) {
     const previous = previousResourceValues ? previousResourceValues[def.key] : value;
     const chip = document.createElement('div');
     let flashClass = '';
-    if (previous !== undefined && value !== previous) flashClass = value > previous ? ' flash-pos' : ' flash-neg';
+    if (value !== previous) flashClass = value > previous ? ' flash-pos' : ' flash-neg';
     chip.className = 'resource-chip' + (value <= def.critical ? ' critical' : '') + flashClass;
     chip.title = def.label;
+    chip.style.setProperty('--chip-color', `var(--res-${def.key})`);
     chip.innerHTML = `<span class="icon">${def.icon}</span><span class="value">${value}</span>`;
     bar.appendChild(chip);
   }
   previousResourceValues = { ...state.resources };
+}
+
+export function renderReignInfo(state) {
+  document.getElementById('reign-name').textContent = `${state.ruler.name} ${state.dynastyName}`;
+  const date = `${SEASONS[state.seasonIndex]} · rok ${state.year}`;
+  document.getElementById('reign-date').textContent = `${date} · ${state.generation}. generace`;
+  document.getElementById('scene-date').textContent = date;
 }
 
 export function updateBookTabFlags(state) {
@@ -122,31 +148,57 @@ export function updateBookTabFlags(state) {
   document.querySelector('.book-tab[data-panel="court"]').classList.toggle('flagged', anyDisloyal);
 }
 
-// ---------- event card ----------
+// ---------- character plaque (bottom of the scene) ----------
+
+export function renderCharacterPlaque(state, bumpedTrait = null) {
+  const r = state.ruler;
+  const initial = esc(r.name ? r.name[0] : '?');
+  document.getElementById('character-plaque').innerHTML = `
+    <div class="plaque-portrait">${initial}</div>
+    <div class="plaque-id">
+      <span class="plaque-name">${esc(r.name)}</span>
+      <span class="plaque-sub">${esc(STATUS_TIERS[r.statusTier])} · ${r.age} let</span>
+    </div>
+    <div class="plaque-traits">
+      ${TRAIT_DEFS.map((t) => `<span class="plaque-trait${t.key === bumpedTrait ? ' bump' : ''}" title="${t.label}">${t.icon}${r.traits[t.key]}</span>`).join('')}
+    </div>
+  `;
+}
+
+// ---------- scene + story ----------
 
 export function renderTurnSummary(text) {
   document.getElementById('turn-summary').textContent = text || '';
 }
 
-function choiceIconLabel(def, hintType, hintKey) {
+export function setSceneImage(src) {
+  const el = document.getElementById('event-image');
+  const url = `url('${src || DEFAULT_SCENE}')`;
+  if (el.style.backgroundImage === url) return;
+  el.style.backgroundImage = url;
+  el.classList.remove('swap');
+  void el.offsetWidth;
+  el.classList.add('swap');
+}
+
+function hintIcon(hintType, hintKey) {
   const source = hintType === 'trait' ? TRAIT_DEFS : RESOURCE_DEFS;
   const found = source.find((d) => d.key === hintKey);
-  return found ? found.icon : '❔';
+  return found ? found.icon : ICONS.unknown;
 }
 
 function renderChoicePreview(deltaEffects) {
   const el = document.getElementById('choice-preview');
   if (!deltaEffects || !Object.keys(deltaEffects).length) {
-    el.innerHTML = '&nbsp;';
+    el.innerHTML = '';
     return;
   }
-  const parts = Object.entries(deltaEffects).map(([key, delta]) => {
+  el.innerHTML = Object.entries(deltaEffects).map(([key, delta]) => {
     const def = RESOURCE_DEFS.find((d) => d.key === key);
     if (!def || !delta) return '';
     const cls = delta > 0 ? 'delta-pos' : 'delta-neg';
-    return `<span class="${cls}">${def.icon} ${delta > 0 ? '+' : ''}${delta}</span>`;
-  }).filter(Boolean);
-  el.innerHTML = parts.join(' &nbsp; ') || '&nbsp;';
+    return `<span class="${cls}">${def.icon}${delta > 0 ? '+' : ''}${delta} ${def.label}</span>`;
+  }).join('');
 }
 
 export function triggerCardEntrance() {
@@ -154,53 +206,120 @@ export function triggerCardEntrance() {
   card.classList.remove('event-enter');
   void card.offsetWidth;
   card.classList.add('event-enter');
+  card.scrollTop = 0;
+}
+
+function resetOutcomeBlocks() {
+  document.getElementById('outcome-label').hidden = true;
+  document.getElementById('outcome-effects').hidden = true;
+  document.getElementById('outcome-effects').innerHTML = '';
+}
+
+function makeChoiceButton(index, iconHtml, label, tagHtml) {
+  const btn = document.createElement('button');
+  btn.className = 'choice-button';
+  btn.innerHTML = `<span class="choice-index">${index + 1}.</span><span class="icon">${iconHtml}</span><span class="choice-label">${label}</span>${tagHtml}`;
+  return btn;
 }
 
 export function renderEventCard(state, event, handlers) {
   triggerCardEntrance();
-  const imageEl = document.getElementById('event-image');
-  if (event.image) {
-    imageEl.style.backgroundImage = `url('${event.image}')`;
-    imageEl.hidden = false;
-  } else {
-    imageEl.hidden = true;
-  }
+  resetOutcomeBlocks();
+  setSceneImage(event.image);
   document.getElementById('event-title').textContent = event.title;
-  const textEl = document.getElementById('event-text');
   const choiceList = document.getElementById('choice-list');
   choiceList.innerHTML = '';
   renderChoicePreview(null);
 
-  typewrite(textEl, interpolate(state, event.text));
+  typewrite(document.getElementById('event-text'), interpolate(state, event.text));
 
   if (event.type === 'route') {
-    for (const option of event.routeOptions) {
+    event.routeOptions.forEach((option, index) => {
       const terrain = TERRAIN_DEFS[option.terrainKey];
-      const btn = document.createElement('button');
-      btn.className = 'choice-button';
       const riskPct = Math.round(terrain.baseRisk * 100);
-      btn.innerHTML = `<span class="icon">${terrain.icon}</span><span>${terrain.label}</span><span class="risk-tag">${riskPct}% ${terrain.riskLabel}</span>`;
+      const btn = makeChoiceButton(index, terrain.icon, terrain.label, `<span class="risk-tag">${riskPct}% ${terrain.riskLabel}</span>`);
       btn.addEventListener('click', () => handlers.onRouteSelected(option.terrainKey));
       choiceList.appendChild(btn);
-    }
+    });
     return;
   }
 
   event.choices.forEach((choice, index) => {
-    const btn = document.createElement('button');
-    btn.className = 'choice-button';
-    const icon = choiceIconLabel(null, choice.hintType, choice.hintKey);
-    let riskTag = '';
+    let tag = '';
     if (choice.isRoll) {
       const pct = Math.round(computeSuccessChance(state, choice) * 100);
-      riskTag = `<span class="risk-tag">${pct}% úspěch</span>`;
+      tag = `<span class="risk-tag">${pct}% úspěch</span>`;
     }
-    btn.innerHTML = `<span class="icon">${icon}</span><span>${choice.label}</span>${riskTag}`;
-    btn.addEventListener('mouseenter', () => renderChoicePreview(previewVisibleEffects(choice)));
+    const btn = makeChoiceButton(index, hintIcon(choice.hintType, choice.hintKey), choice.label, tag);
+    const preview = () => renderChoicePreview(previewVisibleEffects(choice));
+    btn.addEventListener('mouseenter', preview);
+    btn.addEventListener('focus', preview);
     btn.addEventListener('mouseleave', () => renderChoicePreview(null));
     btn.addEventListener('click', () => handlers.onChoiceSelected(index));
     choiceList.appendChild(btn);
   });
+}
+
+const OUTCOME_LABELS = {
+  success: ['Úspěch', 'good'],
+  failure: ['Nezdar', 'bad'],
+  safe: ['Bez úhony', 'good'],
+  danger: ['Nebezpečí', 'bad'],
+};
+
+export function renderOutcome(state, result, onContinue) {
+  triggerCardEntrance();
+  renderChoicePreview(null);
+
+  const labelEl = document.getElementById('outcome-label');
+  const label = OUTCOME_LABELS[result.outcome];
+  if (label) {
+    labelEl.textContent = label[0];
+    labelEl.className = `outcome-label ${label[1]}`;
+    labelEl.hidden = false;
+  } else {
+    labelEl.hidden = true;
+  }
+
+  const chips = Object.entries(result.effects || {})
+    .filter(([key, delta]) => delta && RESOURCE_DEFS.some((d) => d.key === key))
+    .map(([key, delta]) => {
+      const def = RESOURCE_DEFS.find((d) => d.key === key);
+      return `<span class="effect-chip ${delta > 0 ? 'pos' : 'neg'}">${def.icon}${delta > 0 ? '+' : ''}${delta} ${def.label}</span>`;
+    });
+  if (result.traitGained) {
+    const t = TRAIT_DEFS.find((d) => d.key === result.traitGained);
+    chips.push(`<span class="effect-chip trait">${t.icon}+1 ${t.label}</span>`);
+  }
+  const effectsEl = document.getElementById('outcome-effects');
+  effectsEl.innerHTML = chips.map((c, i) => c.replace('class="effect-chip', `style="animation-delay:${0.25 + i * 0.08}s" class="effect-chip`)).join('');
+  effectsEl.hidden = chips.length === 0;
+
+  const choiceList = document.getElementById('choice-list');
+  choiceList.innerHTML = '';
+  const btn = document.createElement('button');
+  btn.className = 'choice-button continue-button';
+  btn.textContent = 'Pokračovat';
+  btn.addEventListener('click', onContinue);
+  choiceList.appendChild(btn);
+
+  typewrite(document.getElementById('event-text'), result.text || 'Rozhodnutí bylo učiněno.');
+}
+
+export function renderQuietSeason(onContinue) {
+  triggerCardEntrance();
+  resetOutcomeBlocks();
+  renderChoicePreview(null);
+  setSceneImage(null);
+  document.getElementById('event-title').textContent = 'Klidné období';
+  typewrite(document.getElementById('event-text'), 'Království si tuto sezónu oddechlo od velkých rozhodnutí. Pole dozrávají, kupci přicházejí a odcházejí a kronikář nemá mnoho co zapsat.');
+  const choiceList = document.getElementById('choice-list');
+  choiceList.innerHTML = '';
+  const btn = document.createElement('button');
+  btn.className = 'choice-button continue-button';
+  btn.textContent = 'Další období';
+  btn.addEventListener('click', onContinue);
+  choiceList.appendChild(btn);
 }
 
 // ---------- map panel ----------
@@ -212,10 +331,10 @@ export function renderMapPanel(state, onProvinceClick) {
     const card = document.createElement('div');
     card.className = 'province-card';
     if (p.lost) {
-      card.innerHTML = `<strong>${p.name}</strong><em>Ztracena</em>`;
+      card.innerHTML = `<strong>${esc(p.name)}</strong><em>Ztracena</em>`;
     } else {
       card.innerHTML = `
-        <strong>${p.name}${p.unrest >= 70 ? ' <span class="province-unrest-icon">☁</span>' : ''}</strong>
+        <strong>${esc(p.name)}${p.unrest >= 70 ? ' <span class="province-unrest-icon">· nepokoje</span>' : ''}</strong>
         ${statBar('Loajalita', p.loyalty, 'loyalty')}
         ${statBar('Nepokoje', p.unrest, 'unrest')}
         ${statBar('Bohatství', p.wealth, 'wealth')}
@@ -250,17 +369,16 @@ export function renderCourtPanel(state) {
     const card = document.createElement('div');
     const alive = m.data.alive !== false;
     card.className = 'court-card' + (alive ? '' : ' deceased');
-    const initial = m.data.name ? m.data.name[0] : '?';
+    const name = esc(m.data.name);
     const avatar = m.portrait
-      ? `<img class="court-avatar-img" src="assets/portraits/${m.portrait}.png" alt="${m.data.name}">`
-      : `<div class="court-avatar">${initial}</div>`;
-    const loyaltyLine = m.data.loyalty !== undefined ? `<div>Věrnost: ${m.data.loyalty}</div>` : (m.extra ? `<div>${m.extra}</div>` : '');
+      ? `<img class="court-avatar-img" src="assets/portraits/${m.portrait}.png" alt="${name}">`
+      : `<div class="court-avatar">${esc(m.data.name ? m.data.name[0] : '?')}</div>`;
+    const detail = m.data.loyalty !== undefined ? `Věrnost ${m.data.loyalty}` : esc(m.extra || '');
     card.innerHTML = `
       ${avatar}
-      <strong>${m.data.name}${alive ? '' : ' †'}</strong>
       <div class="role">${m.role}</div>
-      <div>Věk: ${m.data.age}</div>
-      ${loyaltyLine}
+      <strong>${name}${alive ? '' : ' †'}</strong>
+      <div>${m.data.age} let · ${detail}</div>
     `;
     grid.appendChild(card);
   }
@@ -268,8 +386,8 @@ export function renderCourtPanel(state) {
   grid.parentElement.querySelector('.ruler-status')?.remove();
   const traitsHost = document.createElement('div');
   traitsHost.className = 'ruler-status';
-  traitsHost.innerHTML = '<h4 class="gothic">Vlastnosti vládce</h4>' + TRAIT_DEFS.map((t) =>
-    `<div class="trait-row"><span>${t.icon} ${t.label}</span><span>${state.ruler.traits[t.key]}</span></div>`
+  traitsHost.innerHTML = '<h4>Vlastnosti vládce</h4>' + TRAIT_DEFS.map((t) =>
+    `<div class="trait-row"><span>${t.icon}${t.label}</span><span>${state.ruler.traits[t.key]}</span></div>`
   ).join('');
   grid.after(traitsHost);
 }
@@ -279,11 +397,10 @@ export function renderCourtPanel(state) {
 export function renderChroniclePanel(state) {
   const log = document.getElementById('chronicle-log');
   log.innerHTML = '';
-  const entries = [...state.chronicle].reverse();
-  for (const entry of entries) {
+  for (const entry of [...state.chronicle].reverse()) {
     const div = document.createElement('div');
     div.className = 'chronicle-entry';
-    div.innerHTML = `<span class="entry-date">${SEASONS[entry.season]} ${entry.year}</span>${entry.text}`;
+    div.innerHTML = `<span class="entry-date">${SEASONS[entry.season]} · rok ${entry.year}</span>${esc(entry.text)}`;
     log.appendChild(div);
   }
 }
@@ -302,6 +419,10 @@ export function closePanels() {
   document.getElementById('panel-overlay').classList.remove('dim');
 }
 
+export function isPanelOpen() {
+  return document.querySelector('.side-panel.open') !== null;
+}
+
 // ---------- ending screen ----------
 
 const ENDING_TITLES = {
@@ -314,14 +435,13 @@ const ENDING_TITLES = {
 export function renderEndingScreen(state, gameOver) {
   document.getElementById('ending-title').textContent = ENDING_TITLES[gameOver.type] || 'Konec';
   document.getElementById('ending-text').textContent = gameOver.text;
-  const stats = document.getElementById('ending-stats');
   const years = state.turn > 0 ? Math.ceil(state.turn / SEASONS.length) : 0;
-  stats.innerHTML = [
+  document.getElementById('ending-stats').innerHTML = [
     ['Dynastie', state.dynastyName],
-    ['Let vlády celkem', years],
-    ['Počet generací', state.generation],
+    ['Let vlády', years],
+    ['Generací', state.generation],
     ['Zlato', state.resources.gold],
     ['Stabilita', state.resources.stability],
     ['Prestiž', state.resources.prestige],
-  ].map(([label, value]) => `<div><span>${label}</span><span>${value}</span></div>`).join('');
+  ].map(([label, value]) => `<div><span>${label}</span><span>${esc(value)}</span></div>`).join('');
 }

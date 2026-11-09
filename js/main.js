@@ -2,25 +2,27 @@ import { createNewGame, saveGame, listSaves, loadGame, loadMostRecentSave, delet
 import { advanceTurn, resolveChoice, resolveRouteChoice, checkEndConditions } from './engine.js';
 import {
   showScreen, renderResourceBar, updateBookTabFlags, renderTurnSummary, renderEventCard,
-  renderMapPanel, renderCourtPanel, renderChroniclePanel, openPanel, closePanels,
-  renderEndingScreen, toast, setTypewriterEnabled, skipTypewriter, setMusicMuted, triggerCardEntrance,
+  renderMapPanel, renderCourtPanel, renderChroniclePanel, openPanel, closePanels, isPanelOpen,
+  renderEndingScreen, toast, setTypewriterEnabled, skipTypewriter, setMusicMuted,
+  renderReignInfo, renderCharacterPlaque, renderOutcome, renderQuietSeason, renderStaticIcons,
+  resetResourceMemory, esc,
 } from './ui.js';
 
 let currentState = null;
 let activeEvent = null;
+let awaitingChoice = false;
 let pendingRulerName = '';
 let pendingDynastyName = '';
 
 const settings = loadSettings();
 setTypewriterEnabled(settings.typewriter);
 setMusicMuted(settings.musicMuted);
+renderStaticIcons();
 
-function applyMood(state) {
-  document.body.className = 'mood-' + state.scenario;
-}
-
-function refreshAllPanels() {
+function refreshAllPanels(bumpedTrait = null) {
   renderResourceBar(currentState);
+  renderReignInfo(currentState);
+  renderCharacterPlaque(currentState, bumpedTrait);
   updateBookTabFlags(currentState);
   renderMapPanel(currentState, onProvinceClick);
   renderCourtPanel(currentState);
@@ -31,9 +33,9 @@ function onProvinceClick(provinceId) {
   const detail = document.getElementById('map-province-detail');
   const province = currentState.provinces.find((p) => p.id === provinceId);
   if (!province) return;
-  detail.innerHTML = province.isCapital
-    ? `<em>${province.name} je vaše hlavní město.</em>`
-    : `<em>${province.name} je jednou z vašich pěti provincií.</em>`;
+  detail.textContent = province.isCapital
+    ? `${province.name} je vaše hlavní město.`
+    : `${province.name} je jednou z vašich pěti provincií.`;
 }
 
 function endGame(gameOver) {
@@ -45,34 +47,35 @@ function endGame(gameOver) {
 
 function presentEvent(event) {
   activeEvent = event;
+  awaitingChoice = true;
   renderEventCard(currentState, event, {
     onChoiceSelected: handleChoiceSelected,
     onRouteSelected: handleRouteSelected,
   });
 }
 
-function afterResolution(traitGained) {
-  if (traitGained) {
-    const label = { strength: 'Síla', eloquence: 'Výřečnost', intelligence: 'Inteligence', patience: 'Trpělivost' }[traitGained];
-    toast(`+1 ${label}`);
-  }
+const TRAIT_LABELS = { strength: 'Síla', eloquence: 'Výřečnost', intelligence: 'Inteligence', patience: 'Trpělivost' };
+
+function showOutcome(result) {
+  awaitingChoice = false;
+  if (result.traitGained) toast(`+1 ${TRAIT_LABELS[result.traitGained]}`);
   saveGame(currentState);
+  refreshAllPanels(result.traitGained);
   const gameOver = checkEndConditions(currentState);
-  if (gameOver) {
-    endGame(gameOver);
-    return;
-  }
-  runNextTurn();
+  renderOutcome(currentState, result, () => {
+    if (gameOver) endGame(gameOver);
+    else runNextTurn();
+  });
 }
 
 function handleChoiceSelected(index) {
-  const result = resolveChoice(currentState, activeEvent, index);
-  afterResolution(result.traitGained);
+  if (!awaitingChoice) return;
+  showOutcome(resolveChoice(currentState, activeEvent, index));
 }
 
 function handleRouteSelected(terrainKey) {
-  resolveRouteChoice(currentState, activeEvent, terrainKey);
-  afterResolution(null);
+  if (!awaitingChoice) return;
+  showOutcome(resolveRouteChoice(currentState, activeEvent, terrainKey));
 }
 
 function runNextTurn() {
@@ -93,19 +96,16 @@ function runNextTurn() {
   if (result.event) {
     presentEvent(result.event);
   } else {
-    triggerCardEntrance();
-    document.getElementById('event-image').hidden = true;
-    document.getElementById('event-title').textContent = 'Klidné období';
-    document.getElementById('event-text').textContent = 'Království si tento sezónu oddechlo od velkých rozhodnutí.';
-    document.getElementById('choice-list').innerHTML = '<button class="choice-button" id="btn-next-season"><span>Pokračovat do dalšího období</span></button>';
-    document.getElementById('btn-next-season').addEventListener('click', runNextTurn);
+    awaitingChoice = false;
+    renderQuietSeason(runNextTurn);
   }
 }
 
 function startGame(state) {
   currentState = state;
   activeEvent = null;
-  applyMood(state);
+  resetResourceMemory();
+  document.body.className = 'mood-' + state.scenario;
   showScreen('screen-game');
   refreshAllPanels();
   runNextTurn();
@@ -115,7 +115,7 @@ function renderSaveSlotList() {
   const host = document.getElementById('save-slot-list');
   const saves = listSaves();
   if (!saves.length) {
-    host.innerHTML = '<p>Žádné uložené hry.</p>';
+    host.innerHTML = '<p>Archiv je zatím prázdný.</p>';
     return;
   }
   host.innerHTML = '';
@@ -124,12 +124,12 @@ function renderSaveSlotList() {
     row.className = 'province-card';
     const date = new Date(s.savedAt).toLocaleString('cs-CZ');
     row.innerHTML = `
-      <strong>${s.dynastyName} — ${s.rulerName}</strong>
-      <div>Rok ${s.year}, generace ${s.generation}</div>
-      <div style="font-size:.8rem;color:var(--color-ink-soft)">${date}</div>
+      <strong>${esc(s.rulerName)} ${esc(s.dynastyName)}</strong>
+      <div>Rok ${s.year} · ${s.generation}. generace</div>
+      <div class="hint">${date}</div>
       <div class="dialog-actions">
-        <button class="seal-button" data-load="${s.slotId}">Načíst</button>
-        <button class="seal-button" data-delete="${s.slotId}">Smazat</button>
+        <button class="seal-button ghost" data-delete="${esc(s.slotId)}">Smazat</button>
+        <button class="seal-button primary" data-load="${esc(s.slotId)}">Načíst</button>
       </div>
     `;
     host.appendChild(row);
@@ -152,13 +152,14 @@ function wireActions() {
   document.addEventListener('click', (e) => {
     const actionEl = e.target.closest('[data-action]');
     if (!actionEl) return;
-    const action = actionEl.dataset.action;
 
-    switch (action) {
+    switch (actionEl.dataset.action) {
       case 'goto-new-game':
         showScreen('screen-new-game');
+        document.getElementById('input-ruler-name').focus();
         break;
       case 'back-to-menu':
+        closePanels();
         showScreen('screen-menu');
         break;
       case 'back-to-new-game':
@@ -166,8 +167,8 @@ function wireActions() {
         break;
       case 'continue-game': {
         const state = loadMostRecentSave();
-        if (state) startGame(state);
-        else toast('Žádná uložená hra.');
+        if (state && !state.gameOver) startGame(state);
+        else toast('Žádná rozehraná kronika.');
         break;
       }
       case 'goto-load-game':
@@ -204,8 +205,7 @@ function wireActions() {
         toast('Tento scénář se ještě připravuje.');
         return;
       }
-      const state = createNewGame(pendingRulerName, pendingDynastyName);
-      startGame(state);
+      startGame(createNewGame(pendingRulerName, pendingDynastyName));
     });
   });
 
@@ -234,23 +234,64 @@ function wireActions() {
   document.getElementById('panel-overlay').addEventListener('click', (e) => {
     if (e.target.id === 'panel-overlay') closePanels();
   });
+
+  document.getElementById('input-dynasty-name').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.querySelector('[data-action="goto-scenario-select"]').click();
+  });
 }
 
-// ---------- ambient polish: menu parallax + UI click sound ----------
+// ---------- keyboard: 1-4 choose, Enter/Space continue or finish text, Esc close panel ----------
 
-function wireMenuParallax() {
-  const parallaxEl = document.getElementById('menu-art-parallax');
+function wireKeyboard() {
+  document.addEventListener('keydown', (e) => {
+    if (!document.getElementById('screen-game').classList.contains('active')) return;
+    if (e.target.matches('input, textarea')) return;
+
+    if (e.key === 'Escape') {
+      closePanels();
+      return;
+    }
+    if (isPanelOpen()) return;
+
+    const buttons = [...document.querySelectorAll('#choice-list .choice-button')];
+    if (/^[1-9]$/.test(e.key)) {
+      const btn = buttons[Number(e.key) - 1];
+      if (btn && !btn.classList.contains('continue-button')) {
+        skipTypewriter();
+        btn.click();
+      }
+      return;
+    }
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (skipTypewriter()) return;
+      const cont = buttons.find((b) => b.classList.contains('continue-button'));
+      if (cont) cont.click();
+    }
+  });
+}
+
+// ---------- ambient polish: menu slideshow + parallax, UI click sound ----------
+
+function wireMenuAmbience() {
+  const backdrop = document.getElementById('menu-art-parallax');
   const menuScreen = document.getElementById('screen-menu');
-  if (!parallaxEl || !menuScreen) return;
+  const slides = [...backdrop.querySelectorAll('.menu-slide')];
+  let current = 0;
+  setInterval(() => {
+    if (!menuScreen.classList.contains('active')) return;
+    slides[current].classList.remove('active');
+    current = (current + 1) % slides.length;
+    slides[current].classList.add('active');
+  }, 9000);
+
   menuScreen.addEventListener('mousemove', (e) => {
-    const rect = parallaxEl.getBoundingClientRect();
-    const relX = (e.clientX - rect.left) / rect.width - 0.5;
-    const relY = (e.clientY - rect.top) / rect.height - 0.5;
-    const maxShift = 10;
-    parallaxEl.style.transform = `translate(${-relX * maxShift}px, ${-relY * maxShift}px)`;
+    const relX = e.clientX / window.innerWidth - 0.5;
+    const relY = e.clientY / window.innerHeight - 0.5;
+    backdrop.style.transform = `translate(${-relX * 18}px, ${-relY * 12}px)`;
   });
   menuScreen.addEventListener('mouseleave', () => {
-    parallaxEl.style.transform = 'translate(0, 0)';
+    backdrop.style.transform = 'translate(0, 0)';
   });
 }
 
@@ -263,16 +304,16 @@ function playClickSound() {
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(520, now);
-    osc.frequency.exponentialRampToValueAtTime(220, now + 0.08);
-    gain.gain.setValueAtTime(0.07, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+    osc.frequency.setValueAtTime(440, now);
+    osc.frequency.exponentialRampToValueAtTime(180, now + 0.09);
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
     osc.start(now);
-    osc.stop(now + 0.1);
+    osc.stop(now + 0.11);
   } catch {
-    // Web Audio unavailable — fail silently, click sound is a non-essential flourish.
+    // Web Audio unavailable — the click is a non-essential flourish.
   }
 }
 
@@ -283,6 +324,7 @@ function wireClickSound() {
 }
 
 wireActions();
-wireMenuParallax();
+wireKeyboard();
+wireMenuAmbience();
 wireClickSound();
 showScreen('screen-menu');

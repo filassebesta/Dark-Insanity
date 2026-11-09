@@ -5,6 +5,13 @@ Claude negeneruje obrázky, takže tenhle dokument je zadání pro externí obr�
 vygeneruješ, ořízneš a uložíš pod názvy souborů z manifestu na konci — kód se pak
 bude odkazovat přímo na tyhle cesty.
 
+> **Vizuální směr (od v0.2):** tlumená malířská dark-fantasy v duchu *The Life
+> and Suffering of Sir Brante* — olejomalba s viditelným tahem štětce, zemité
+> barvy (okr, rez, olivová, prašně modrá), melancholické světlo. Původní
+> černobílý rytinový styl je opuštěný; starý obrázek menu je archivovaný v
+> `assets/_source/menu_background_engraving.png`. Hlavní menu se teď skládá
+> v kódu (titulek + položky jsou HTML), takže pozadí menu nesmí obsahovat text.
+
 **Většina promptů je psaná jako sprite sheet** — jeden prompt = jedno vygenerování =
 víc hotových assetů po oříznutí. Cílem je co nejmíň jednotlivých generování.
 Jen tři věci musí zůstat samostatné, protože se nedají smysluplně naskládat
@@ -31,19 +38,50 @@ u SDXL/Flux do negative promptu.
 ## 1. {STYLE} — základní stylový blok (vlož do KAŽDÉHO promptu níže)
 
 ```
-dark medieval chronicle illustration, renaissance copperplate engraving style,
-intricate crosshatched ink linework in the tradition of Albrecht Dürer and
-Gustave Doré, aged sepia parchment color palette with a single muted blood-red
-accent, weathered antique paper texture, ornate gothic border details, dramatic
-chiaroscuro lighting, hand-drawn woodcut aesthetic, monochrome ink with sepia
-wash --no color photo, 3D render, cartoon, anime, flat cel-shading, modern
-clothing, smooth digital art, text, watermark, signature
+dark-fantasy narrative RPG illustration painted in muted oil, visible loose
+brushwork, desaturated earthy palette of ochre, rust, olive green and dusty
+slate blue, soft dramatic chiaroscuro lighting, melancholic late-medieval
+European atmosphere, realistic proportions, subtle canvas texture, cinematic
+composition in the style of "The Life and Suffering of Sir Brante" --no anime,
+cartoon, 3D render, photo, neon colors, oversaturated, smooth airbrushed
+digital art, text, letters, watermark, signature
 ```
 
-Červenou barvu drž jen na výrazných akcentech (koruny, krev, praporce). Zbytek
-zůstává sépiová rytina.
+Sytější barva jen na výrazných akcentech (krev, koruny, praporce, plamen
+svíce). Zbytek drž tlumený a zemitý — UI kolem obrázků je tmavě hnědé se
+zlatými linkami a čtecí stránkou v barvě starého papíru.
 
-## 1c. Bílé pozadí u malých ikon → skutečná průhlednost přes remove.bg
+## 1d. Pozadí hlavního menu a výchozí scéna (nové od v0.2)
+
+Tyhle dva obrázky jsou teď nejdůležitější pro celkový dojem — zatím je
+nahrazují koláže složené z malého hradu ze starého sheetu.
+
+**`assets/ui/menu_castle.jpg`** — 16:9 (ideálně 2560×1440), BEZ textu
+```
+a lonely gothic royal castle on a distant ridge at dusk, seen across a dark
+valley, storm clouds parting with warm golden light behind the towers, a
+single lit window, mist in the valley, vast empty sky occupying the upper
+half, composition weighted to the right third so the left third stays dark
+and calm for menu text, {STYLE}
+```
+
+**`assets/events/scene_default.jpg`** — 11:12 (na výšku, ideálně 1650×1800),
+BEZ textu — použije se u eventů bez vlastní ilustrace
+```
+a vertical painting of the same gothic royal castle seen from the road below
+at dusk, banners on the towers, warm light in the gate, muddy road leading
+toward it in the lower third, dark foreground suitable for overlaid text,
+{STYLE}
+```
+
+## 1c. Ikony
+
+Ikony zdrojů, vlastností a terénu jsou od v0.2 **ručně kreslené SVG v kódu**
+(`js/icons.js`) a přebírají zlatou/inkoustovou barvu z CSS. Sheety v sekcích
+7–9 (`map_icons_sheet`, `resources_sheet`, `traits_sheet`) proto už nejsou
+nutné — generuj je jen pokud budeš chtít ikony malované místo liniových.
+
+### Bílé pozadí u malých ikon → skutečná průhlednost přes remove.bg
 
 Malé ikony, které se v UI zobrazují volně vedle textu (zdroje, vlastnosti,
 terén/mapa — sekce 7–9), NEMAJÍ "parchment background" v promptu, i když
@@ -68,10 +106,10 @@ kolem nich je žádoucí, ne na škodu.
 
 ## 1b. Scénářové nálady (modifikátor {STYLE} podle obtížnosti)
 
-- **Panovník** (bohatší): `, warmer golden highlights, richer ink depth`
+- **Panovník** (bohatší): `, warmer golden candlelight, richer paint depth`
 - **Šlechtic** (neutrální): beze změny, čistý {STYLE}
 - **Sedlák** (syrovější): `, more desaturated palette, gritty muted earth
-  tones, harsher rougher linework, colder shadows`
+  tones, rougher brushwork, colder shadows`
 
 ---
 
@@ -108,7 +146,7 @@ by side, isolated on a plain solid white background intended to be removed
 for a transparent PNG — no texture, no gradient, no shadow on the
 background itself: on the left, fine grey hair strands with soft wrinkle
 linework and faint age spots; on the right, dark ominous smoke and storm
-clouds swirling upward — engraving crosshatch linework, subtle and
+clouds swirling upward — painted texture, subtle and
 semi-transparent, {STYLE}
 ```
 Ořež: levá polovina → `assets/ui/aging_overlay.png` (vykresluje se přes
@@ -123,7 +161,7 @@ portrét vládce podle věku), pravá polovina → `assets/map/unrest_overlay.pn
 ```
 a reference sheet with three separate full-figure character illustrations
 arranged side by side, each clearly separated by empty space, same
-engraving style and lighting throughout: (1) a weary crowned king in ornate
+painted style and lighting throughout: (1) a weary crowned king in ornate
 robes standing before his throne, hand on the pommel of a sword; (2) a
 young minor noble in modest fine armor and a house tabard standing at the
 gate of a small keep; (3) a barefoot peasant in ragged homespun clothes
@@ -169,7 +207,7 @@ Ořež panely 1–5 → `portraits/ruler_tier1_peasant.png`,
 ```
 a character reference sheet with 6 distinct bust portraits arranged evenly
 in a 3x2 grid, each in its own cell with clear spacing, three-quarter
-angle, consistent engraving style and lighting across all: (1) a young
+angle, consistent painted style and lighting across all: (1) a young
 noble heir in fine but understated clothing, uncertain youthful
 expression; (2) a queen consort in an embroidered gown and modest jeweled
 circlet, calm composed expression; (3) a king consort in a fine doublet and
@@ -261,7 +299,7 @@ hodinami z main menu.)*
 **`assets/events/events_sheet_a.png`** — grid 2×2, 4 scény
 ```
 a reference sheet of 4 wide illustrated scenes arranged in a 2x2 grid, each
-scene clearly separated, consistent engraving style and lighting
+scene clearly separated, consistent painted style and lighting
 throughout: (1) a gothic throne room during a royal audience, a petitioner
 kneeling before the throne, courtiers watching from shadows, tall
 stained-glass windows; (2) a war council, armored commanders leaning over a
@@ -279,7 +317,7 @@ Ořež grid → `events/scene_throne_audience.png`, `scene_war_council.png`,
 **`assets/events/events_sheet_b.png`** — grid 2×2, 4 scény
 ```
 a reference sheet of 4 wide illustrated scenes arranged in a 2x2 grid, each
-scene clearly separated, consistent engraving style and lighting
+scene clearly separated, consistent painted style and lighting
 throughout: (1) a narrow forest road at dusk, shadowy bandit figures
 emerging from dense trees to ambush a small traveling party; (2) a damp
 stone dungeon cell lit by a single torch, chains on the wall, a shadowy
@@ -298,7 +336,7 @@ Ořež grid → `events/scene_forest_ambush.png`, `scene_dungeon.png`,
 **`assets/endings/major_moments_sheet.png`** — grid, 5 panelů, každý 4:5
 ```
 a reference sheet of 5 tall dramatic full-scene illustrations arranged
-evenly in a grid, each clearly separated, consistent engraving style
+evenly in a grid, each clearly separated, consistent painted style
 throughout: (1) a fallen crowned king lying at the foot of his own throne,
 a bloodied blade nearby, candles guttering out, somber tragic composition;
 (2) enemy foreign banners raised over a captured castle gate, the
@@ -326,6 +364,7 @@ přirozené smrti stářím, ne jako běžný náhodný event.)*
 assets/
   ui/
     parchment_bg.png            ← samostatné generování
+    menu_castle.jpg              ← samostatné generování (pozadí menu, sekce 1d)
     ui_elements_sheet.png        ← ořež na frame_ornate.png + divider_skull.png
     frame_ornate.png
     divider_skull.png
@@ -365,6 +404,7 @@ assets/
     resources_sheet.png            ← už sheet, ořež na 7 jednotlivých ikon dle potřeby v kódu
     traits_sheet.png                ← už sheet, ořež na 4 jednotlivé ikony dle potřeby v kódu
   events/
+    scene_default.jpg             ← samostatné generování (výchozí scéna, sekce 1d)
     events_sheet_a.png              ← ořež na scene_throne_audience/war_council/market/feast
     scene_throne_audience.png
     scene_war_council.png

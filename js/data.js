@@ -1,25 +1,24 @@
 // Static definitions shared by state/engine/ui.
-// Icons are emoji placeholders (tinted sepia via CSS) standing in for the
-// hand-drawn icon sheets described in docs/visual-prompts.md — swap the
-// `.icon` rendering in ui.js once real cropped assets exist.
+
+import { ICONS } from './icons.js';
 
 export const SEASONS = ['Jaro', 'Léto', 'Podzim', 'Zima'];
 
 export const RESOURCE_DEFS = [
-  { key: 'gold', label: 'Zlato', icon: '🪙', critical: 10 },
-  { key: 'food', label: 'Jídlo', icon: '🌾', critical: 15 },
-  { key: 'army', label: 'Vojsko', icon: '⚔️', critical: 10 },
-  { key: 'stability', label: 'Stabilita', icon: '🏛️', critical: 15 },
-  { key: 'legitimacy', label: 'Legitimita', icon: '👑', critical: 15 },
-  { key: 'faith', label: 'Víra', icon: '⛪', critical: 10 },
-  { key: 'prestige', label: 'Prestiž', icon: '🎖️', critical: 5 },
+  { key: 'gold', label: 'Zlato', icon: ICONS.gold, critical: 10 },
+  { key: 'food', label: 'Jídlo', icon: ICONS.food, critical: 15 },
+  { key: 'army', label: 'Vojsko', icon: ICONS.army, critical: 10 },
+  { key: 'stability', label: 'Stabilita', icon: ICONS.stability, critical: 15 },
+  { key: 'legitimacy', label: 'Legitimita', icon: ICONS.legitimacy, critical: 15 },
+  { key: 'faith', label: 'Víra', icon: ICONS.faith, critical: 10 },
+  { key: 'prestige', label: 'Prestiž', icon: ICONS.prestige, critical: 5 },
 ];
 
 export const TRAIT_DEFS = [
-  { key: 'strength', label: 'Síla', icon: '💪' },
-  { key: 'eloquence', label: 'Výřečnost', icon: '🗣️' },
-  { key: 'intelligence', label: 'Inteligence', icon: '📖' },
-  { key: 'patience', label: 'Trpělivost', icon: '⏳' },
+  { key: 'strength', label: 'Síla', icon: ICONS.strength },
+  { key: 'eloquence', label: 'Výřečnost', icon: ICONS.eloquence },
+  { key: 'intelligence', label: 'Inteligence', icon: ICONS.intelligence },
+  { key: 'patience', label: 'Trpělivost', icon: ICONS.patience },
 ];
 
 // Ruler status tiers — see docs/visual-prompts.md section 4b. Panovník
@@ -35,9 +34,9 @@ export const STATUS_TIERS = [
 ];
 
 export const TERRAIN_DEFS = {
-  forest: { key: 'forest', label: 'Lesní stezka', icon: '🌲', riskLabel: 'přepadení bandity', baseRisk: 0.45 },
-  mountain: { key: 'mountain', label: 'Horský průsmyk', icon: '⛰️', riskLabel: 'sesuv a únava', baseRisk: 0.25 },
-  traderoute: { key: 'traderoute', label: 'Obchodní cesta', icon: '🛤️', riskLabel: 'zdržení a mýto', baseRisk: 0.10 },
+  forest: { key: 'forest', label: 'Lesní stezka', icon: ICONS.forest, riskLabel: 'přepadení bandity', baseRisk: 0.45 },
+  mountain: { key: 'mountain', label: 'Horský průsmyk', icon: ICONS.mountain, riskLabel: 'sesuv a únava', baseRisk: 0.25 },
+  traderoute: { key: 'traderoute', label: 'Obchodní cesta', icon: ICONS.traderoute, riskLabel: 'zdržení a mýto', baseRisk: 0.10 },
 };
 
 // Placeholder province names/heraldry — real lore/names are a future spec
