@@ -683,7 +683,7 @@ kbd {
 .save-slot-list p { color: var(--ink-soft); font-style: italic; }
 
 /* ---------- endings ---------- */
-.ending-screen::before { filter: blur(3px) saturate(.6) brightness(.35); animation: endingZoom 20s ease-out forwards; }
+.ending-screen::before { filter: blur(2px) saturate(.75) brightness(.55); animation: endingZoom 20s ease-out forwards; }
 @keyframes endingZoom { from { transform: scale(1.15); } to { transform: scale(1); } }
 .ending-panel { width: min(640px, 92vw); text-align: center; color: var(--paper); animation: cardEnter 1s var(--ease-out) .3s both; }
 .ending-title {

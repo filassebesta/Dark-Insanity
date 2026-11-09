@@ -268,7 +268,13 @@ function makeChoiceButton(index, iconHtml, label, tagHtml) {
 export function renderEventCard(state, event, handlers) {
   triggerCardEntrance();
   resetOutcomeBlocks();
-  setSceneImage([`assets/events/${event.id}.jpg`, `assets/events/${event.id}.png`, event.image]);
+  const g = state.ruler.gender === 'female' ? 'female' : 'male';
+  setSceneImage([
+    `assets/events/${event.id}_${g}.jpg`, // optional variant matching the ruler's gender
+    `assets/events/${event.id}.jpg`,
+    `assets/events/${event.id}.png`,
+    event.image,
+  ]);
   document.getElementById('event-title').textContent = event.title;
   const choiceList = document.getElementById('choice-list');
   choiceList.innerHTML = '';
@@ -451,7 +457,8 @@ export function renderEndingScreen(state, gameOver) {
   const screen = document.getElementById('screen-ending');
   screen.style.removeProperty('--backdrop');
   firstExistingImage([`assets/endings/ending_${gameOver.type}.jpg`, `assets/endings/ending_${gameOver.type}.png`], null).then((src) => {
-    if (src) screen.style.setProperty('--backdrop', `url("${src}")`);
+    // absolute URL: a url() inside a custom property resolves against the stylesheet, not the page
+    if (src) screen.style.setProperty('--backdrop', `url("${new URL(src, document.baseURI).href}")`);
   });
   document.getElementById('ending-title').textContent = ENDING_TITLES[gameOver.type] || 'Konec';
   document.getElementById('ending-text').textContent = gameOver.text;

@@ -78,12 +78,19 @@ letters, watermark or signature.
 | ❌ | `chancellor_male.jpg`, `chancellor_female.jpg` | 4:5 | 1024 × 1280 | Dvůr | 6.5, 6.6 |
 | ❌ | `marshal_male.jpg`, `marshal_female.jpg` | 4:5 | 1024 × 1280 | Dvůr | 6.7, 6.8 |
 | ❌ | `spymaster_male.jpg`, `spymaster_female.jpg` | 4:5 | 1024 × 1280 | Dvůr | 6.9, 6.10 |
-| ❌ | 9 × `<id_eventu>.jpg` | 1:1 | 2048 × 2048 | Scéna konkrétní události | 3.1 – 3.9 |
-| ❌ | `quiet_season.jpg` | 1:1 | 2048 × 2048 | Scéna „Klidné období“ | 3.10 |
-| ❌ | `ending_death.jpg`, `ending_conquest.jpg`, `ending_collapse.jpg`, `ending_golden_age.jpg` | 16:9 | 1920 × 1080 | Konec hry | 5.1 – 5.4 |
-| ❌ | `scenario_panovnik.jpg`, `scenario_slechtic.jpg`, `scenario_sedlak.jpg` | 3:2 | 1200 × 800 | Karty výběru scénáře | 4.1 – 4.3 |
+| ✅ | 9 × `<id_eventu>.jpg` | 1:1 | 2048 × 2048 | Scéna konkrétní události | 3.1 – 3.9 |
+| ✅ | `quiet_season.jpg` | 1:1 | 2048 × 2048 | Scéna „Klidné období“ | 3.10 |
+| ✅ | `ending_death.jpg`, `ending_conquest.jpg`, `ending_collapse.jpg`, `ending_golden_age.jpg` | 16:9 | 1920 × 1080 | Konec hry | 5.1 – 5.4 |
+| ✅ | `scenario_panovnik.jpg`, `scenario_sedlak.jpg` | 3:2 | 1200 × 800 | Karty výběru scénáře | 4.1, 4.3 |
+| ❌ | `scenario_slechtic.jpg` | 3:2 | 1200 × 800 | Karta scénáře Šlechtic | 4.2 |
 
-Celkem chybí **32 obrázků**. Gemini obvykle vrací kolem 1024 px na delší
+Celkem chybí **13 obrázků**.
+
+**Volitelné varianty pro královnu:** scény `rada_manzela`, `varovani_kancelere`
+a `zprava_spehmistra` ukazují krále. Když nahraješ `<název>_female.jpg`
+(např. `zprava_spehmistra_female.jpg`), hra ho použije, když vládne královna.
+V Gemini stačí ke staré scéně napsat: *„Same image, but the ruler is a
+crowned queen instead of a king.“* Gemini obvykle vrací kolem 1024 px na delší
 straně — to nevadí, na cílové rozlišení to dotáhnu já. Důležitý je
 **poměr stran a kompozice**.
 
@@ -741,7 +748,7 @@ or signature.
 |------|--------------|-------------------|
 | Portrét vládce | `assets/portraits/ruler_king_{male,female}.jpg` (+ `_old` od 55 let) | zlaté iniciály jména |
 | Portrét dvora | `assets/portraits/{heir,spouse,chancellor,marshal,spymaster}_{male,female}.jpg` | zlaté iniciály jména |
-| Scéna události | `assets/events/<id_eventu>.jpg` (nebo `.png`) | `scene_default.jpg` |
+| Scéna události | `assets/events/<id_eventu>.jpg` (u královny nejdřív `<id_eventu>_female.jpg`) | `scene_default.jpg` |
 | Klidné období | `assets/events/quiet_season.jpg` | `scene_default.jpg` |
 | Výchozí scéna | `assets/events/scene_default.jpg` | tmavé malířské pozadí |
 | Pozadí obrazovek | `assets/ui/backdrop.jpg` | tmavé pozadí |
