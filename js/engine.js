@@ -161,11 +161,6 @@ export function computeSuccessChance(state, choice) {
   return Math.max(0.05, Math.min(0.95, chance));
 }
 
-export function previewVisibleEffects(choice) {
-  if (choice.isRoll) return null; // hidden until resolved by design
-  return choice.effects || {};
-}
-
 function markEventSeen(state, event) {
   state.usedEvents = state.usedEvents || [];
   if (!state.usedEvents.includes(event.id)) state.usedEvents.push(event.id);

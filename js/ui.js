@@ -1,5 +1,5 @@
 import { RESOURCE_DEFS, TRAIT_DEFS, STATUS_TIERS, TERRAIN_DEFS, SEASONS } from './data.js';
-import { interpolate, previewVisibleEffects, computeSuccessChance } from './engine.js';
+import { interpolate, computeSuccessChance } from './engine.js';
 import { ICONS } from './icons.js';
 import { playMusic, setAllMuted } from './audio.js';
 import { rulerPortraitCandidates, memberPortraitCandidates, portraitImg } from './character.js';
@@ -209,20 +209,6 @@ function hintIcon(hintType, hintKey) {
   return found ? found.icon : ICONS.unknown;
 }
 
-function renderChoicePreview(deltaEffects) {
-  const el = document.getElementById('choice-preview');
-  if (!deltaEffects || !Object.keys(deltaEffects).length) {
-    el.innerHTML = '';
-    return;
-  }
-  el.innerHTML = Object.entries(deltaEffects).map(([key, delta]) => {
-    const def = RESOURCE_DEFS.find((d) => d.key === key);
-    if (!def || !delta) return '';
-    const cls = delta > 0 ? 'delta-pos' : 'delta-neg';
-    return `<span class="${cls}">${def.icon}${delta > 0 ? '+' : ''}${delta} ${def.label}</span>`;
-  }).join('');
-}
-
 export function triggerCardEntrance() {
   const card = document.getElementById('event-card');
   card.classList.remove('event-enter');
@@ -258,7 +244,6 @@ export function renderEventCard(state, event, handlers) {
   document.getElementById('event-title').textContent = event.title;
   const choiceList = document.getElementById('choice-list');
   choiceList.innerHTML = '';
-  renderChoicePreview(null);
 
   typewrite(document.getElementById('event-text'), interpolate(state, event.text));
 
@@ -287,16 +272,8 @@ export function renderEventCard(state, event, handlers) {
       ].filter(Boolean).join(' + ');
       tag = `<span class="risk-tag" title="Šance na úspěch závisí na: ${basis || 'náhodě'}">${basis ? `${esc(basis)} · ` : ''}${pct} %</span>`;
     }
-    const gain = choice.traitGain || (choice.isRoll && choice.onSuccess && choice.onSuccess.traitGain);
-    if (gain) {
-      const g = TRAIT_DEFS.find((d) => d.key === gain);
-      tag += `<span class="grow-tag" title="${choice.isRoll ? 'Při úspěchu' : 'Touto volbou'} se zlepší ${g.label}">${g.icon}rozvíjí</span>`;
-    }
+    // what a choice costs or brings stays hidden until it is made
     const btn = makeChoiceButton(index, hintIcon(choice.hintType, choice.hintKey), choice.label, tag);
-    const preview = () => renderChoicePreview(previewVisibleEffects(choice));
-    btn.addEventListener('mouseenter', preview);
-    btn.addEventListener('focus', preview);
-    btn.addEventListener('mouseleave', () => renderChoicePreview(null));
     btn.addEventListener('click', () => handlers.onChoiceSelected(index));
     choiceList.appendChild(btn);
   });
@@ -312,7 +289,6 @@ const OUTCOME_LABELS = {
 export function renderOutcome(state, result, onContinue) {
   triggerCardEntrance();
   document.getElementById('event-extra').innerHTML = '';
-  renderChoicePreview(null);
 
   const labelEl = document.getElementById('outcome-label');
   const label = OUTCOME_LABELS[result.outcome];
