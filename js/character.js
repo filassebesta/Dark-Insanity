@@ -1,7 +1,9 @@
 // Ruler avatar / character sheet ("Postava").
 // Portraits are optional files; missing ones fall back gracefully to an initial.
 
-import { TRAIT_DEFS, STATUS_TIERS } from './data.js';
+import { TRAIT_DEFS, STATUS_TIERS, SEASONS } from './data.js';
+import { traitBonuses } from './engine.js';
+import { biography, loyaltyLabel, roleLabel } from './court.js';
 import { esc } from './ui.js';
 
 const TIER_SLUGS = [null, 'peasant', 'freeman', 'minor_noble', 'noble', 'king'];
@@ -91,13 +93,26 @@ export function renderCharacterSheet(state) {
       </div>`;
   }).join('');
 
+  // what the traits do every season (see traitBonuses in engine.js)
+  const b = traitBonuses(state);
+  const sign = (v) => (v > 0 ? `+${v}` : `${v}`);
+  const influence = [
+    ['strength', b.order, `${sign(b.order)} k pořádku v provinciích (méně nepokojů)`],
+    ['eloquence', b.loyalty, `${sign(b.loyalty)} k věrnosti provincií`],
+    ['intelligence', b.gold, `${sign(b.gold)} zlata do pokladny každé období`],
+    ['patience', b.calm, `${sign(b.calm)} k trpělivosti s nepokoji, než se otřese stabilita`],
+  ].map(([key, val, text]) => {
+    const t = TRAIT_DEFS.find((d) => d.key === key);
+    return `<li class="${val > 0 ? 'pos' : val < 0 ? 'neg' : ''}">${t.icon}<b>${t.label}</b><span>${val === 0 ? 'průměrná, bez zvláštního vlivu' : text}</span></li>`;
+  }).join('');
+
   const family = ['spouse', 'heir'].map((role) => {
     const c = state[role];
     if (!c) return '';
     const alive = c.alive !== false;
     const initial = esc(c.name ? c.name[0] : '?');
     return `
-      <div class="cs-member${alive ? '' : ' deceased'}">
+      <div class="cs-member${alive ? '' : ' deceased'}" data-person="${role}" role="button" tabindex="0" title="Zobrazit detail">
         <span class="cs-mini">${initial}</span>
         ${portraitImg(memberPortraitCandidates(c, role), c.name, 'cs-mini-img')}
         <div>
@@ -133,6 +148,8 @@ export function renderCharacterSheet(state) {
       <div class="cs-ladder">${ladder}</div>
       <h4 class="cs-section">Vlastnosti</h4>
       <div class="cs-traits">${traits}</div>
+      <h4 class="cs-section">Vliv na vládu</h4>
+      <ul class="cs-influence">${influence}</ul>
       <h4 class="cs-section">Rodina</h4>
       <div class="cs-family">${family}</div>
       ${ancestors ? `<h4 class="cs-section cs-gap">Předkové</h4><ul class="cs-ancestors">${ancestors}</ul>` : ''}
@@ -157,4 +174,62 @@ export function closeCharacter() {
 
 export function isCharacterOpen() {
   return document.getElementById('character-view').classList.contains('open');
+}
+
+// ---------- court member detail ("person") ----------
+
+const OUTCOME_WORDS = { success: 'úspěch', failure: 'nezdar', danger: 'nebezpečí', safe: 'bez úhony' };
+
+export function renderPersonSheet(state, role) {
+  const c = state[role];
+  if (!c) return;
+  const alive = c.alive !== false;
+  const title = roleLabel(role, c.gender);
+  const history = (c.history || []).slice().reverse();
+  const him = c.gender === 'female' ? 'ji' : 'ho';
+  const rows = history.map((h) => {
+    const delta = h.delta === null || h.delta === undefined ? ''
+      : `<span class="ph-delta ${h.delta > 0 ? 'pos' : 'neg'}">věrnost ${h.delta > 0 ? '+' : ''}${h.delta}</span>`;
+    const outcome = OUTCOME_WORDS[h.outcome] ? ` <em>(${OUTCOME_WORDS[h.outcome]})</em>` : '';
+    return `<li>
+      <span class="ph-date">${SEASONS[h.season]} · rok ${h.year}</span>
+      <strong>${esc(h.title)}</strong>
+      ${h.choice ? `<span class="ph-choice">Rozhodnutí: ${esc(h.choice)}${outcome}</span>` : ''}
+      ${delta}
+    </li>`;
+  }).join('');
+
+  document.getElementById('person-sheet').innerHTML = `
+    <div class="ps-portrait${alive ? '' : ' deceased'}">
+      <span class="cs-initial">${esc(c.name ? c.name[0] : '?')}</span>
+      ${portraitImg(memberPortraitCandidates(c, role), c.name, 'ps-portrait-img')}
+    </div>
+    <div class="ps-info">
+      <span class="panel-overline">${esc(title)}${alive ? '' : ' · zesnul' + (c.gender === 'female' ? 'á' : 'ý')}</span>
+      <h2 class="ps-name">${esc(c.name)}</h2>
+      <div class="ps-meta">${c.age} let · <span class="ps-loyal">${loyaltyLabel(c.loyalty, c.gender)}</span></div>
+      <div class="ps-bar"><span style="width:${c.loyalty}%"></span><b>věrnost ${c.loyalty}</b></div>
+      <p class="ps-bio">${esc(biography(c, role, state.dynastyName))}</p>
+      <h4 class="ps-section">Co ${him} ovlivnilo</h4>
+      ${rows ? `<ul class="ps-history">${rows}</ul>` : `<p class="ps-empty">Zatím žádné tvé rozhodnutí ${him} nezasáhlo. Až se ${c.gender === 'female' ? 'jí' : 'ho'} nějaké týkat, uvidíš ho tady.</p>`}
+    </div>
+  `;
+}
+
+export function openPerson(state, role) {
+  renderPersonSheet(state, role);
+  const view = document.getElementById('person-view');
+  view.classList.add('open');
+  view.setAttribute('aria-hidden', 'false');
+  view.querySelector('.person-card').scrollTop = 0;
+}
+
+export function closePerson() {
+  const view = document.getElementById('person-view');
+  view.classList.remove('open');
+  view.setAttribute('aria-hidden', 'true');
+}
+
+export function isPersonOpen() {
+  return document.getElementById('person-view').classList.contains('open');
 }

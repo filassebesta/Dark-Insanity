@@ -4,11 +4,11 @@ import {
   showScreen, renderResourceBar, updateBookTabFlags, renderTurnSummary, renderEventCard,
   renderCourtPanel, renderChroniclePanel, openPanel, closePanels, isPanelOpen,
   renderEndingScreen, toast, setTypewriterEnabled, skipTypewriter, setMusicMuted,
-  renderReignInfo, renderCharacterPlaque, renderOutcome, renderQuietSeason, renderStaticIcons,
+  renderReignInfo, renderCharacterPlaque, renderOutcome, renderStaticIcons,
   resetResourceMemory, esc, upgradeScenarioArt,
 } from './ui.js';
 import { openMap, closeMap, isMapOpen, wireMapChrome } from './map.js';
-import { openCharacter, closeCharacter, isCharacterOpen } from './character.js';
+import { openCharacter, closeCharacter, isCharacterOpen, openPerson, closePerson, isPersonOpen } from './character.js';
 import { playMusic, setMusicVolume } from './audio.js';
 
 let currentState = null;
@@ -38,10 +38,11 @@ function closeOverlays() {
   closePanels();
   closeMap();
   closeCharacter();
+  closePerson();
 }
 
 function isOverlayOpen() {
-  return isPanelOpen() || isMapOpen() || isCharacterOpen();
+  return isPanelOpen() || isMapOpen() || isCharacterOpen() || isPersonOpen();
 }
 
 function openRouteMap() {
@@ -56,18 +57,18 @@ function openRouteMap() {
 
 function endGame(gameOver) {
   closeOverlays();
-  playMusic(BATTLE_ENDINGS.includes(gameOver.type) ? 'battle' : null);
+  playMusic(BATTLE_ENDINGS.includes(gameOver.type) ? 'battle' : 'menu');
   currentState.gameOver = gameOver;
   saveGame(currentState);
   renderEndingScreen(currentState, gameOver);
   showScreen('screen-ending');
 }
 
-// Fights and wars get the battle theme; everything else in-game is quiet.
+// The main theme plays throughout; fights and wars switch to the battle theme.
 const BATTLE_ENDINGS = ['conquest', 'collapse'];
 
 function presentEvent(event) {
-  playMusic(event.music || null);
+  playMusic(event.music || 'menu'); // the main theme runs through the whole game
   activeEvent = event;
   awaitingChoice = true;
   renderEventCard(currentState, event, {
@@ -117,17 +118,11 @@ function runNextTurn() {
 
   renderTurnSummary(result.turnSummary);
 
-  if (result.event) {
-    presentEvent(result.event);
-  } else {
-    awaitingChoice = false;
-    playMusic(null);
-    renderQuietSeason(runNextTurn);
-  }
+  presentEvent(result.event); // the engine falls back to the quiet-season event
 }
 
 function startGame(state) {
-  playMusic(null);
+  playMusic('menu');
   currentState = state;
   activeEvent = null;
   resetResourceMemory();
@@ -229,6 +224,9 @@ function wireActions() {
       case 'close-character':
         closeCharacter();
         break;
+      case 'close-person':
+        closePerson();
+        break;
       case 'toggle-music':
         settings.musicMuted = !settings.musicMuted;
         setMusicMuted(settings.musicMuted);
@@ -266,6 +264,21 @@ function wireActions() {
       if (panel === 'chronicle') renderChroniclePanel(currentState);
       openPanel(panel);
     });
+  });
+
+  // court cards (Dvůr) and family in the character sheet open the person detail
+  document.addEventListener('click', (e) => {
+    const personEl = e.target.closest('[data-person]');
+    if (!personEl || !currentState) return;
+    closeOverlays();
+    openPerson(currentState, personEl.dataset.person);
+  });
+  document.addEventListener('keydown', (e) => {
+    const personEl = e.target.closest && e.target.closest('[data-person]');
+    if (personEl && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); personEl.click(); }
+  });
+  document.getElementById('person-view').addEventListener('click', (e) => {
+    if (e.target.id === 'person-view') closePerson();
   });
 
   document.getElementById('character-plaque').addEventListener('click', () => {

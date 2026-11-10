@@ -175,6 +175,7 @@
         <button class="panel-close" data-action="close-panel" aria-label="Zavřít">✕</button>
         <span class="panel-overline">Rod a rádci</span>
         <h3 class="panel-title">Dvůr</h3>
+        <p class="panel-hint">Klikni na člena dvora a dozvíš se, kdo to je a co ho ovlivnilo.</p>
         <div id="court-grid" class="court-grid"></div>
       </div>
       <div id="panel-chronicle" class="side-panel">
@@ -197,6 +198,13 @@
       <div class="map-body">
         <div class="map-canvas"></div>
         <aside class="map-sidebar"></aside>
+      </div>
+    </div>
+
+    <div id="person-view" class="person-view" aria-hidden="true">
+      <div class="person-card">
+        <button class="icon-button person-close" data-action="close-person" aria-label="Zavřít">✕</button>
+        <div id="person-sheet" class="person-sheet"></div>
       </div>
     </div>
 

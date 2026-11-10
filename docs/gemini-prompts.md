@@ -84,8 +84,26 @@ letters, watermark or signature.
 | ✅ | `scenario_panovnik.jpg`, `scenario_sedlak.jpg` | 3:2 | 1200 × 800 | Karty výběru scénáře | 4.1, 4.3 |
 | ✅ | `scenario_slechtic.jpg` | 3:2 | 1200 × 800 | Karta scénáře Šlechtic | 4.2 |
 | ✅ | `kingdom_map.jpg` | 3:2 | 2400 × 1600 | Podklad interaktivní mapy | 9 |
+| ❌ | `pohranicni_najezd.jpg` | 1:1 | 2048 × 2048 | Nájezd na hranici | 10 |
+| ❌ | `valka_s_markami.jpg` | 1:1 | 2048 × 2048 | Válka s Marcemi | 10 |
+| ❌ | `vzpoura_v_provincii.jpg` | 1:1 | 2048 × 2048 | Vzpoura | 10 |
+| ❌ | `lapkove_ve_hvozdu.jpg` | 1:1 | 2048 × 2048 | Lapkové ve hvozdu | 10 |
+| ❌ | `hladomor.jpg` | 1:1 | 2048 × 2048 | Hladomor | 10 |
+| ❌ | `atentat.jpg` | 1:1 | 2048 × 2048 | Dýka ve tmě | 10 |
+| ❌ | `soud_se_spiklenci.jpg` | 1:1 | 2048 × 2048 | Soud se spiklenci | 10 |
+| ❌ | `zaval_v_dole.jpg` | 1:1 | 2048 × 2048 | Zával v dole | 10 |
+| ❌ | `mor_v_pristavu.jpg` | 1:1 | 2048 × 2048 | Mor v přístavu | 10 |
+| ❌ | `kupci_z_jihu.jpg` | 1:1 | 2048 × 2048 | Kupci z jihu | 10 |
+| ❌ | `bohata_uroda.jpg` | 1:1 | 2048 × 2048 | Bohatá úroda | 10 |
+| ❌ | `kruta_zima.jpg` | 1:1 | 2048 × 2048 | Krutá zima | 10 |
+| ❌ | `vychova_dedice.jpg` | 1:1 | 2048 × 2048 | Výchova dědice | 10 |
+| ❌ | `dedic_dospel.jpg` | 1:1 | 2048 × 2048 | Dědic dospěl | 10 |
+| ❌ | `smrt_radce.jpg` | 1:1 | 2048 × 2048 | Smrt rádce | 10 |
+| ❌ | `nespokojeny_radce.jpg` | 1:1 | 2048 × 2048 | Nespokojený rádce | 10 |
+| ❌ | `biskupuv_desatek.jpg` | 1:1 | 2048 × 2048 | Biskupův desátek | 10 |
+| ❌ | `turnaj.jpg` | 1:1 | 2048 × 2048 | Turnaj | 10 |
 
-**Všechny obrázky jsou hotové a ve hře.** Zbývají jen volitelné varianty níže.
+Chybí **18 obrázků pro nové události** (sekce 10). Do té doby tyto události ukazují výchozí scénu.
 
 **Volitelné varianty pro královnu:** scény `rada_manzela`, `varovani_kancelere`
 a `zprava_spehmistra` ukazují krále. Když nahraješ `<název>_female.jpg`
@@ -827,3 +845,40 @@ průhledné. Najetí myší provincii zvýrazní, kliknutí ukáže detail. Zoom
 vrstvy (věrnost, nepokoje, posádky, cesty), ikony míst a volba cesty
 k vazalovi zůstanou stejné jako teď.
 
+---
+
+## 10. Scény nových událostí (18 ks)
+
+Rozlišení u všech: **1:1, cíl 2048 × 2048**. Kompozice jako v sekci 3:
+hlavní motiv uprostřed a nahoře, **spodní třetina tmavší a klidná**.
+Ke každému promptu přidej na konec stylový blok z úvodu tohoto souboru
+(nebo přilož `assets/events/scene_default.jpg` a napiš *„Match the
+painting style of the attached image.“*).
+
+Formát promptu:
+
+```
+Square painting, aspect ratio 1:1. <POPIS ZE SEZNAMU NÍŽE> The lower third
+is dark and calm. <STYLOVÝ BLOK>
+```
+
+| Soubor | Událost | Popis pro Gemini |
+|---|---|---|
+| `pohranicni_najezd.jpg` | Nájezd na hranici | Horsemen raiders setting fire to a wooden barn at the edge of a dark pine forest at dusk, villagers fleeing with a cow, smoke and embers in the air. |
+| `valka_s_markami.jpg` | Válka s Marcemi | Two medieval armies clashing on a muddy field at the edge of a dark forest, spears and banners without symbols, a grizzled marshal on horseback in the foreground, smoke and grey sky. |
+| `vzpoura_v_provincii.jpg` | Vzpoura | Angry peasants with torches, pitchforks and scythes gathered in a muddy village square at night, a tax collector's cart overturned and burning. |
+| `lapkove_ve_hvozdu.jpg` | Lapkové ve hvozdu | Hooded bandits with bows ambushing a merchant cart on a narrow road through a dark pine forest, fallen crates, a frightened horse. |
+| `hladomor.jpg` | Hladomor | A crowd of starving, ragged villagers in winter waiting before a castle gate, empty baskets, thin children, grey snowy light. |
+| `atentat.jpg` | Dýka ve tmě | A dark royal bedchamber at night, a hooded assassin raising a dagger in the candlelight beside a canopy bed, the ruler starting awake. |
+| `soud_se_spiklenci.jpg` | Soud se spiklenci | Chained noblemen kneeling before an empty throne in a cold stone hall, guards with halberds, courtiers watching from the shadows. |
+| `zaval_v_dole.jpg` | Zával v dole | The collapsed entrance of a mountain mine, miners digging through rubble by lantern light, wives waiting with shawls in the cold. |
+| `mor_v_pristavu.jpg` | Mor v přístavu | A plague-stricken harbour quarter, sick sailors lying on the quay, a monk in a dark habit tending them, ships with furled sails in the mist. |
+| `kupci_z_jihu.jpg` | Kupci z jihu | Richly dressed southern merchants unloading spices, silk and chests of gold from a ship onto a stone quay, curious townsfolk watching. |
+| `bohata_uroda.jpg` | Bohatá úroda | Overflowing barns and golden wheat sheaves at harvest time, peasants loading heavy carts, warm late-afternoon light over the fields. |
+| `kruta_zima.jpg` | Krutá zima | A frozen river and snowed-in village in a harsh winter, people carrying firewood through deep snow, smoke from a few chimneys, pale cold light. |
+| `vychova_dedice.jpg` | Výchova dědice | A young noble heir practising with a wooden sword in a castle courtyard under the eye of a grizzled marshal, an old chancellor with books watching from an arcade. |
+| `dedic_dospel.jpg` | Dědic dospěl | A sixteen-year-old heir in fine clothes standing before the throne hall at a coming-of-age ceremony, courtiers and a bishop in attendance, banners overhead. |
+| `smrt_radce.jpg` | Smrt rádce | An old royal adviser lying in state on a bier in a small chapel, candles, a chain of office laid on the chest, mourners in dark clothes. |
+| `nespokojeny_radce.jpg` | Nespokojený rádce | A royal adviser whispering with two shadowy noblemen in a dim castle corridor, glancing over the shoulder, a half-open door with light behind. |
+| `biskupuv_desatek.jpg` | Biskupův desátek | A stern bishop in rich vestments presenting a parchment demand in a throne hall, priests behind him, a chest of coins on the floor. |
+| `turnaj.jpg` | Turnaj | A medieval tournament below castle walls, two knights charging with lances, colourful but muted pennants, crowds on wooden stands, dust in the air. |

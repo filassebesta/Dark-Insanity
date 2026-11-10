@@ -3,6 +3,7 @@ import { interpolate, previewVisibleEffects, computeSuccessChance } from './engi
 import { ICONS } from './icons.js';
 import { playMusic, setAllMuted } from './audio.js';
 import { rulerPortraitCandidates, memberPortraitCandidates, portraitImg } from './character.js';
+import { roleLabel, loyaltyLabel } from './court.js';
 
 const DEFAULT_SCENE = 'assets/events/scene_default.jpg';
 
@@ -20,7 +21,7 @@ export function setTypewriterEnabled(enabled) {
 export function showScreen(id) {
   document.querySelectorAll('.screen').forEach((el) => el.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  // menu theme in the menus; in-game music is chosen per event (see main.js)
+  // main theme in the menus; in-game the event decides (see main.js)
   if (id !== 'screen-game' && id !== 'screen-ending') playMusic('menu');
 }
 
@@ -278,7 +279,18 @@ export function renderEventCard(state, event, handlers) {
     let tag = '';
     if (choice.isRoll) {
       const pct = Math.round(computeSuccessChance(state, choice) * 100);
-      tag = `<span class="risk-tag">${pct}% úspěch</span>`;
+      const trait = TRAIT_DEFS.find((d) => d.key === choice.traitKey);
+      const res = RESOURCE_DEFS.find((d) => d.key === choice.resourceKey);
+      const basis = [
+        trait ? `${trait.label} ${state.ruler.traits[trait.key]}` : '',
+        res ? `${res.label} ${state.resources[res.key]}` : '',
+      ].filter(Boolean).join(' + ');
+      tag = `<span class="risk-tag" title="Šance na úspěch závisí na: ${basis || 'náhodě'}">${basis ? `${esc(basis)} · ` : ''}${pct} %</span>`;
+    }
+    const gain = choice.traitGain || (choice.isRoll && choice.onSuccess && choice.onSuccess.traitGain);
+    if (gain) {
+      const g = TRAIT_DEFS.find((d) => d.key === gain);
+      tag += `<span class="grow-tag" title="${choice.isRoll ? 'Při úspěchu' : 'Touto volbou'} se zlepší ${g.label}">${g.icon}rozvíjí</span>`;
     }
     const btn = makeChoiceButton(index, hintIcon(choice.hintType, choice.hintKey), choice.label, tag);
     const preview = () => renderChoicePreview(previewVisibleEffects(choice));
@@ -322,6 +334,9 @@ export function renderOutcome(state, result, onContinue) {
     const t = TRAIT_DEFS.find((d) => d.key === result.traitGained);
     chips.push(`<span class="effect-chip trait">${t.icon}+1 ${t.label}</span>`);
   }
+  for (const note of result.notes || []) {
+    chips.push(`<span class="effect-chip note ${note.tone}">${esc(note.text)}</span>`);
+  }
   const effectsEl = document.getElementById('outcome-effects');
   effectsEl.innerHTML = chips.map((c, i) => c.replace('class="effect-chip', `style="animation-delay:${0.25 + i * 0.08}s" class="effect-chip`)).join('');
   effectsEl.hidden = chips.length === 0;
@@ -337,22 +352,6 @@ export function renderOutcome(state, result, onContinue) {
   typewrite(document.getElementById('event-text'), result.text || 'Rozhodnutí bylo učiněno.');
 }
 
-export function renderQuietSeason(onContinue) {
-  triggerCardEntrance();
-  resetOutcomeBlocks();
-  renderChoicePreview(null);
-  setSceneImage(['assets/events/quiet_season.jpg']);
-  document.getElementById('event-title').textContent = 'Klidné období';
-  typewrite(document.getElementById('event-text'), 'Království si tuto sezónu oddechlo od velkých rozhodnutí. Pole dozrávají, kupci přicházejí a odcházejí a kronikář nemá mnoho co zapsat.');
-  const choiceList = document.getElementById('choice-list');
-  choiceList.innerHTML = '';
-  const btn = document.createElement('button');
-  btn.className = 'choice-button continue-button';
-  btn.textContent = 'Další období';
-  btn.addEventListener('click', onContinue);
-  choiceList.appendChild(btn);
-}
-
 // ---------- court panel ----------
 
 export function renderCourtPanel(state) {
@@ -361,19 +360,19 @@ export function renderCourtPanel(state) {
   const f = (c, male, female) => (c.gender === 'female' ? female : male);
   const members = [
     { data: state.ruler, role: f(state.ruler, 'Vládce', 'Vládkyně'), extra: tierLabel(state.ruler), portraits: rulerPortraitCandidates(state.ruler) },
-    { data: state.heir, role: f(state.heir, 'Dědic', 'Dědička'), portraits: memberPortraitCandidates(state.heir, 'heir') },
-    { data: state.spouse, role: f(state.spouse, 'Manžel', 'Manželka'), portraits: memberPortraitCandidates(state.spouse, 'spouse') },
-    { data: state.chancellor, role: f(state.chancellor, 'Kancléř', 'Kancléřka'), portraits: memberPortraitCandidates(state.chancellor, 'chancellor') },
-    { data: state.marshal, role: f(state.marshal, 'Maršál', 'Maršálka'), portraits: memberPortraitCandidates(state.marshal, 'marshal') },
-    { data: state.spymaster, role: f(state.spymaster, 'Špehmistr', 'Špehmistryně'), portraits: memberPortraitCandidates(state.spymaster, 'spymaster') },
+    ...['heir', 'spouse', 'chancellor', 'marshal', 'spymaster'].map((r) => (
+      { data: state[r], role: roleLabel(r, state[r].gender), portraits: memberPortraitCandidates(state[r], r), person: r })),
   ];
   for (const m of members) {
-    const card = document.createElement('div');
+    const card = document.createElement('button');
     const alive = m.data.alive !== false;
     card.className = 'court-card' + (alive ? '' : ' deceased');
+    if (m.person) card.dataset.person = m.person;
+    else card.dataset.action = 'open-character';
+    card.title = 'Zobrazit detail';
     const name = esc(m.data.name);
     const avatar = `<div class="court-avatar">${esc(m.data.name ? m.data.name[0] : '?')}${portraitImg(m.portraits, m.data.name, 'court-avatar-img')}</div>`;
-    const detail = m.data.loyalty !== undefined ? `Věrnost ${m.data.loyalty}` : esc(m.extra || '');
+    const detail = m.data.loyalty !== undefined ? `${loyaltyLabel(m.data.loyalty, m.data.gender)} · ${m.data.loyalty}` : esc(m.extra || '');
     card.innerHTML = `
       ${avatar}
       <div class="role">${m.role}</div>
