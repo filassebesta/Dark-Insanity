@@ -88,7 +88,7 @@ export function resolveRouteChoice(state, event, terrainKey) {
   const text = branch.chronicle ? interpolate(state, branch.chronicle) : '';
   if (text) state.chronicle.push(makeChronicleEntry(state, text));
   state.usedEvents.push(event.id);
-  return { outcome: danger ? 'danger' : 'safe', effects: branch.effects || {}, traitGained: null, text };
+  return { outcome: danger ? 'danger' : 'safe', effects: branch.effects || {}, traitGained: null, text, terrainKey };
 }
 
 export function pickNextEvent(state) {

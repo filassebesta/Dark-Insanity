@@ -226,14 +226,15 @@ kbd {
   border-radius: 4px;
   transition: background .2s ease, box-shadow .2s ease, filter .2s ease;
 }
-.menu-hotspot:hover, .menu-hotspot:focus-visible {
-  background: rgba(122, 32, 32, .12);
-  box-shadow: 0 0 16px rgba(122, 32, 32, .3) inset;
-  filter: brightness(1.12);
+.menu-hotspot:hover, .menu-hotspot:focus, .menu-hotspot:focus-visible, .menu-hotspot:active {
+  background: transparent;
+  box-shadow: none;
   outline: none;
 }
-.menu-hotspot:active { filter: brightness(.95); }
+.menu-hotspot { -webkit-tap-highlight-color: transparent; }
 .music-toggle { position: absolute; top: 3%; right: 4%; z-index: 3; }
+
+.game-music-toggle { margin-left: -.4rem; }
 
 /* ---------- forms ---------- */
 .field { display: flex; flex-direction: column; gap: .35rem; margin-bottom: 1.1rem; text-align: left; }
@@ -958,6 +959,23 @@ kbd {
   transition: color .2s ease, border-color .2s ease, background .2s ease;
 }
 .map-link:hover { color: var(--blood); border-color: var(--blood); background: rgba(138,44,38,.05); }
+
+/* ---------- music volume (options) ---------- */
+.volume-field span { display: flex; justify-content: space-between; align-items: baseline; }
+.volume-field output { font-family: var(--font-body); font-size: 1rem; letter-spacing: 0; text-transform: none; color: var(--ink); }
+.volume-field input[type="range"] {
+  -webkit-appearance: none; appearance: none; width: 100%; height: 4px; margin: .7rem 0 .2rem; cursor: pointer;
+  background: linear-gradient(90deg, var(--blood) var(--fill, 60%), rgba(90,70,45,.25) var(--fill, 60%));
+}
+.volume-field input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--paper); border: 2px solid var(--blood); box-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+.volume-field input[type="range"]::-moz-range-thumb {
+  width: 16px; height: 16px; border-radius: 50%; background: var(--paper); border: 2px solid var(--blood);
+}
+.volume-field input[type="range"]:focus { outline: none; }
+.volume-field input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px rgba(200,164,106,.6); }
 
 /* ---------- gender toggle (new game) ---------- */
 .gender-toggle { display: flex; gap: .5rem; }

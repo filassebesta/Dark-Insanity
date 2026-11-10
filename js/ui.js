@@ -1,6 +1,7 @@
 import { RESOURCE_DEFS, TRAIT_DEFS, STATUS_TIERS, TERRAIN_DEFS, SEASONS } from './data.js';
 import { interpolate, previewVisibleEffects, computeSuccessChance } from './engine.js';
 import { ICONS } from './icons.js';
+import { playMusic, setAllMuted } from './audio.js';
 import { rulerPortraitCandidates, memberPortraitCandidates, portraitImg } from './character.js';
 
 const DEFAULT_SCENE = 'assets/events/scene_default.jpg';
@@ -19,41 +20,19 @@ export function setTypewriterEnabled(enabled) {
 export function showScreen(id) {
   document.querySelectorAll('.screen').forEach((el) => el.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  syncMenuMusic(id === 'screen-menu');
+  // menu theme in the menus; in-game music is chosen per event (see main.js)
+  if (id !== 'screen-game' && id !== 'screen-ending') playMusic('menu');
 }
 
-// ---------- menu music ----------
-
-let musicUnlockBound = false;
-
-function syncMenuMusic(shouldPlay) {
-  const music = document.getElementById('menu-music');
-  if (!music) return;
-  if (!shouldPlay) {
-    music.pause();
-    return;
-  }
-  music.play().catch(() => {
-    if (musicUnlockBound) return;
-    musicUnlockBound = true;
-    const unlock = () => {
-      if (document.getElementById('screen-menu').classList.contains('active')) music.play().catch(() => {});
-      document.removeEventListener('click', unlock);
-      document.removeEventListener('keydown', unlock);
-    };
-    document.addEventListener('click', unlock);
-    document.addEventListener('keydown', unlock);
-  });
-}
+// ---------- music state shown in the UI ----------
 
 export function setMusicMuted(muted) {
-  const music = document.getElementById('menu-music');
-  if (music) music.muted = muted;
-  const btn = document.getElementById('music-toggle');
-  if (btn) {
+  setAllMuted(muted);
+  document.querySelectorAll('[data-action="toggle-music"]').forEach((btn) => {
     btn.innerHTML = muted ? ICONS.mute : ICONS.sound;
-    btn.title = muted ? 'Zapnout zvuk' : 'Ztlumit zvuk';
-  }
+    btn.title = muted ? 'Zapnout hudbu' : 'Ztlumit hudbu';
+    btn.setAttribute('aria-label', btn.title);
+  });
 }
 
 /** Swap in dedicated scenario-card art when the files exist (assets/ui/scenario_<key>.jpg). */

@@ -135,9 +135,9 @@ export function deleteSave(slotId) {
 
 export function loadSettings() {
   try {
-    return { typewriter: true, musicMuted: false, ...JSON.parse(localStorage.getItem(SETTINGS_KEY)) };
+    return { typewriter: true, musicMuted: false, musicVolume: 60, ...JSON.parse(localStorage.getItem(SETTINGS_KEY)) };
   } catch {
-    return { typewriter: true, musicMuted: false };
+    return { typewriter: true, musicMuted: false, musicVolume: 60 };
   }
 }
 

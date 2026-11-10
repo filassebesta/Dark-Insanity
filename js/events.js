@@ -70,6 +70,7 @@ export const EVENTS = [
 
   {
     id: 'rvaci_v_krcme',
+    music: 'battle',
     title: 'Rváči v krčmě',
     text: 'Skupina opilých žoldnéřů rozbíjí krčmu v hlavním městě a odmítá poslechnout stráže. Čekají na tvé rozhodnutí.',
     choices: [

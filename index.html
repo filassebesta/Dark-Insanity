@@ -30,6 +30,7 @@
   </section>
 
   <audio id="menu-music" src="assets/audio/main_menu_theme.mp3" loop preload="auto"></audio>
+  <audio id="battle-music" src="assets/audio/battle_theme.mp3" loop preload="none"></audio>
 
   <!-- NEW GAME: dynasty naming -->
   <section id="screen-new-game" class="screen backdrop-screen">
@@ -114,6 +115,10 @@
         <input id="input-typewriter-toggle" type="checkbox" checked>
         <span>Postupné psaní textu</span>
       </label>
+      <label class="field volume-field">
+        <span>Hlasitost hudby <output id="music-volume-value">60 %</output></span>
+        <input id="input-music-volume" type="range" min="0" max="100" step="5" value="60">
+      </label>
       <p class="hint">Ovládání: <kbd>1</kbd>–<kbd>4</kbd> volba, <kbd>Enter</kbd> pokračovat / dočíst text, <kbd>M</kbd> mapa, <kbd>P</kbd> postava, <kbd>Esc</kbd> zavřít panel.</p>
       <div class="dialog-actions">
         <button class="seal-button ghost" data-action="back-to-menu">Zpět</button>
@@ -126,6 +131,7 @@
     <header id="resource-bar" class="top-bar">
       <div class="top-bar-left">
         <button class="icon-button menu-return-button" data-action="back-to-menu" title="Zpět do menu" aria-label="Zpět do menu"></button>
+        <button class="icon-button game-music-toggle" data-action="toggle-music" aria-label="Ztlumit hudbu" title="Ztlumit hudbu"></button>
         <div class="reign-info">
           <span id="reign-name" class="reign-name"></span>
           <span id="reign-date" class="reign-date"></span>

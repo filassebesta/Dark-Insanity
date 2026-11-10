@@ -9,6 +9,7 @@ import {
 } from './ui.js';
 import { openMap, closeMap, isMapOpen, wireMapChrome } from './map.js';
 import { openCharacter, closeCharacter, isCharacterOpen } from './character.js';
+import { playMusic, setMusicVolume } from './audio.js';
 
 let currentState = null;
 let activeEvent = null;
@@ -19,6 +20,7 @@ let pendingGender = 'male';
 
 const settings = loadSettings();
 setTypewriterEnabled(settings.typewriter);
+setMusicVolume(settings.musicVolume / 100);
 setMusicMuted(settings.musicMuted);
 renderStaticIcons();
 upgradeScenarioArt();
@@ -54,13 +56,18 @@ function openRouteMap() {
 
 function endGame(gameOver) {
   closeOverlays();
+  playMusic(BATTLE_ENDINGS.includes(gameOver.type) ? 'battle' : null);
   currentState.gameOver = gameOver;
   saveGame(currentState);
   renderEndingScreen(currentState, gameOver);
   showScreen('screen-ending');
 }
 
+// Fights and wars get the battle theme; everything else in-game is quiet.
+const BATTLE_ENDINGS = ['conquest', 'collapse'];
+
 function presentEvent(event) {
+  playMusic(event.music || null);
   activeEvent = event;
   awaitingChoice = true;
   renderEventCard(currentState, event, {
@@ -90,7 +97,9 @@ function handleChoiceSelected(index) {
 
 function handleRouteSelected(terrainKey) {
   if (!awaitingChoice) return;
-  showOutcome(resolveRouteChoice(currentState, activeEvent, terrainKey));
+  const result = resolveRouteChoice(currentState, activeEvent, terrainKey);
+  if (result.outcome === 'danger' && result.terrainKey === 'forest') playMusic('battle'); // bandit ambush
+  showOutcome(result);
 }
 
 function runNextTurn() {
@@ -112,11 +121,13 @@ function runNextTurn() {
     presentEvent(result.event);
   } else {
     awaitingChoice = false;
+    playMusic(null);
     renderQuietSeason(runNextTurn);
   }
 }
 
 function startGame(state) {
+  playMusic(null);
   currentState = state;
   activeEvent = null;
   resetResourceMemory();
@@ -274,6 +285,25 @@ function wireActions() {
   });
   document.getElementById('input-typewriter-toggle').checked = settings.typewriter;
 
+  const volumeInput = document.getElementById('input-music-volume');
+  const volumeLabel = document.getElementById('music-volume-value');
+  const showVolume = () => {
+    volumeInput.value = settings.musicVolume;
+    volumeLabel.textContent = `${settings.musicVolume} %`;
+    volumeInput.style.setProperty('--fill', `${settings.musicVolume}%`);
+  };
+  volumeInput.addEventListener('input', () => {
+    settings.musicVolume = Number(volumeInput.value);
+    setMusicVolume(settings.musicVolume / 100);
+    if (settings.musicMuted && settings.musicVolume > 0) {
+      settings.musicMuted = false;
+      setMusicMuted(false);
+    }
+    showVolume();
+    saveSettings(settings);
+  });
+  showVolume();
+
   document.getElementById('panel-overlay').addEventListener('click', (e) => {
     if (e.target.id === 'panel-overlay') closePanels();
   });
@@ -342,7 +372,7 @@ function wireMenuAmbience() {
 
 let audioCtx = null;
 function playClickSound() {
-  if (settings.musicMuted) return;
+  if (settings.musicMuted || !settings.musicVolume) return;
   try {
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
     const now = audioCtx.currentTime;
@@ -351,7 +381,7 @@ function playClickSound() {
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(440, now);
     osc.frequency.exponentialRampToValueAtTime(180, now + 0.09);
-    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.setValueAtTime(0.06 * (settings.musicVolume / 100), now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
