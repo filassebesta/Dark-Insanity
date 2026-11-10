@@ -102,8 +102,63 @@ letters, watermark or signature.
 | ❌ | `nespokojeny_radce.jpg` | 1:1 | 2048 × 2048 | Nespokojený rádce | 10 |
 | ❌ | `biskupuv_desatek.jpg` | 1:1 | 2048 × 2048 | Biskupův desátek | 10 |
 | ❌ | `turnaj.jpg` | 1:1 | 2048 × 2048 | Turnaj | 10 |
+| ❌ | `cizi_vyslanec.jpg` | 1:1 | 2048 × 2048 | Vyslanec z Marek | 11 |
+| ❌ | `nemoc_vladce.jpg` | 1:1 | 2048 × 2048 | Horečka | 11 |
+| ❌ | `dvorni_blazen.jpg` | 1:1 | 2048 × 2048 | Dvorní šašek | 11 |
+| ❌ | `spor_radcu.jpg` | 1:1 | 2048 × 2048 | Spor rádců | 11 |
+| ❌ | `dedic_v_dluzich.jpg` | 1:1 | 2048 × 2048 | Dluhy dědice | 11 |
+| ❌ | `krest_ditete.jpg` | 1:1 | 2048 × 2048 | Narození dítěte | 11 |
+| ❌ | `portret_vladce.jpg` | 1:1 | 2048 × 2048 | Malíř u dvora | 11 |
+| ❌ | `zrada_spehmistra.jpg` | 1:1 | 2048 × 2048 | Dvojí hra | 11 |
+| ❌ | `prosba_ucitele.jpg` | 1:1 | 2048 × 2048 | Prosba starého učitele | 11 |
+| ❌ | `hostina_slechty.jpg` | 1:1 | 2048 × 2048 | Žádost o hostinu | 11 |
+| ❌ | `vazal_odmita_vojaky.jpg` | 1:1 | 2048 × 2048 | Vazal odmítá vojáky | 11 |
+| ❌ | `spor_o_panstvi.jpg` | 1:1 | 2048 × 2048 | Spor o dědictví | 11 |
+| ❌ | `slechta_odmita_dan.jpg` | 1:1 | 2048 × 2048 | Šlechta odmítá daň | 11 |
+| ❌ | `potulny_rytir.jpg` | 1:1 | 2048 × 2048 | Rytíř bez pána | 11 |
+| ❌ | `souboj_slechticu.jpg` | 1:1 | 2048 × 2048 | Souboj na život a na smrt | 11 |
+| ❌ | `hrabe_utlacuje.jpg` | 1:1 | 2048 × 2048 | Krutý hrabě | 11 |
+| ❌ | `zastava_lesa.jpg` | 1:1 | 2048 × 2048 | Půjčka od kláštera | 11 |
+| ❌ | `pretendent.jpg` | 1:1 | 2048 × 2048 | Pretendent | 11 |
+| ❌ | `stavka_cechu.jpg` | 1:1 | 2048 × 2048 | Stávka cechů | 11 |
+| ❌ | `pozar_mesta.jpg` | 1:1 | 2048 × 2048 | Požár | 11 |
+| ❌ | `carodejnice.jpg` | 1:1 | 2048 × 2048 | Čarodějnice | 11 |
+| ❌ | `poutnik_zazrak.jpg` | 1:1 | 2048 × 2048 | Zázrak u kláštera | 11 |
+| ❌ | `zebravy_prorok.jpg` | 1:1 | 2048 × 2048 | Žebravý prorok | 11 |
+| ❌ | `trh_v_brode.jpg` | 1:1 | 2048 × 2048 | Velký trh v Brodě | 11 |
+| ❌ | `most_pres_brodnici.jpg` | 1:1 | 2048 × 2048 | Most přes Brodnici | 11 |
+| ❌ | `uprchlici.jpg` | 1:1 | 2048 × 2048 | Uprchlíci z Marek | 11 |
+| ❌ | `lichvar.jpg` | 1:1 | 2048 × 2048 | Lichvář | 11 |
+| ❌ | `lichvar_splatka.jpg` | 1:1 | 2048 × 2048 | Den splátky | 11 |
+| ❌ | `katedrala.jpg` | 1:1 | 2048 × 2048 | Katedrála | 11 |
+| ❌ | `kacirska_sekta.jpg` | 1:1 | 2048 × 2048 | Sekta v horách | 11 |
+| ❌ | `relikvie.jpg` | 1:1 | 2048 × 2048 | Relikvie | 11 |
+| ❌ | `opat_v_rade.jpg` | 1:1 | 2048 × 2048 | Opat žádá místo v radě | 11 |
+| ❌ | `zatmeni.jpg` | 1:1 | 2048 × 2048 | Zatmění slunce | 11 |
+| ❌ | `zajaty_syn_markrabiho.jpg` | 1:1 | 2048 × 2048 | Vzácný zajatec | 11 |
+| ❌ | `pirati.jpg` | 1:1 | 2048 × 2048 | Piráti u pobřeží | 11 |
+| ❌ | `dezerteri.jpg` | 1:1 | 2048 × 2048 | Dezertéři | 11 |
+| ❌ | `zvedove_v_horach.jpg` | 1:1 | 2048 × 2048 | Hlášení zvědů | 11 |
+| ❌ | `obleheni.jpg` | 1:1 | 2048 × 2048 | Obléhání | 11 |
+| ❌ | `zold.jpg` | 1:1 | 2048 × 2048 | Žold | 11 |
+| ❌ | `nove_kuse.jpg` | 1:1 | 2048 × 2048 | Nové kuše | 11 |
+| ❌ | `hranicni_kamen.jpg` | 1:1 | 2048 × 2048 | Posunutý hraniční kámen | 11 |
+| ❌ | `povoden.jpg` | 1:1 | 2048 × 2048 | Povodeň | 11 |
+| ❌ | `sucho.jpg` | 1:1 | 2048 × 2048 | Sucho | 11 |
+| ❌ | `vlci.jpg` | 1:1 | 2048 × 2048 | Vlci | 11 |
+| ❌ | `stribrna_zila.jpg` | 1:1 | 2048 × 2048 | Stříbrná žíla | 11 |
+| ❌ | `kobylky.jpg` | 1:1 | 2048 × 2048 | Kobylky | 11 |
+| ❌ | `spor_rybaru.jpg` | 1:1 | 2048 × 2048 | Spor o rybolov | 11 |
+| ❌ | `zlodej_v_pokladne.jpg` | 1:1 | 2048 × 2048 | Zloděj v pokladně | 11 |
+| ❌ | `vyroci_vlady.jpg` | 1:1 | 2048 × 2048 | Výročí vlády | 11 |
+| ❌ | `skola_ucencu.jpg` | 1:1 | 2048 × 2048 | Škola učenců | 11 |
+| ❌ | `cizi_princezna.jpg` | 1:1 | 2048 × 2048 | Nabídka sňatku | 11 |
+| ❌ | `zahada_v_lese.jpg` | 1:1 | 2048 × 2048 | Zmizelí myslivci | 11 |
+| ❌ | `kupecka_gilda.jpg` | 1:1 | 2048 × 2048 | Kupecká gilda | 11 |
+| ❌ | `stary_rytir_umira.jpg` | 1:1 | 2048 × 2048 | Poslední přání | 11 |
+| ❌ | `ztracena_listina.jpg` | 1:1 | 2048 × 2048 | Ztracená listina | 11 |
 
-Chybí **18 obrázků pro nové události** (sekce 10). Do té doby tyto události ukazují výchozí scénu.
+Chybí **73 obrázků pro nové události** (sekce 10 a 11). Do té doby tyto události ukazují výchozí scénu.
 
 **Volitelné varianty pro královnu:** scény `rada_manzela`, `varovani_kancelere`
 a `zprava_spehmistra` ukazují krále. Když nahraješ `<název>_female.jpg`
@@ -882,3 +937,77 @@ is dark and calm. <STYLOVÝ BLOK>
 | `nespokojeny_radce.jpg` | Nespokojený rádce | A royal adviser whispering with two shadowy noblemen in a dim castle corridor, glancing over the shoulder, a half-open door with light behind. |
 | `biskupuv_desatek.jpg` | Biskupův desátek | A stern bishop in rich vestments presenting a parchment demand in a throne hall, priests behind him, a chest of coins on the floor. |
 | `turnaj.jpg` | Turnaj | A medieval tournament below castle walls, two knights charging with lances, colourful but muted pennants, crowds on wooden stands, dust in the air. |
+
+---
+
+## 11. Scény druhé sady událostí (55 ks)
+
+Stejný postup jako v sekci 10: **1:1, cíl 2048 × 2048**, motiv uprostřed
+a nahoře, **spodní třetina tmavší a klidná**. Na konec každého promptu
+přidej stylový blok z úvodu, nebo přilož `assets/events/scene_default.jpg`
+s větou *„Match the painting style of the attached image.“*
+
+Formát promptu:
+
+```
+Square painting, aspect ratio 1:1. <POPIS ZE SEZNAMU NÍŽE> The lower third
+is dark and calm. <STYLOVÝ BLOK>
+```
+
+| Soubor | Událost | Popis pro Gemini |
+|---|---|---|
+| `cizi_vyslanec.jpg` | Vyslanec z Marek | A foreign envoy in black velvet bowing before a throne in a stone hall, holding a sealed marriage contract, courtiers watching suspiciously. |
+| `nemoc_vladce.jpg` | Horečka | A feverish king lying in a canopy bed by candlelight, a physician with leeches, a monk praying and a southern merchant holding a small vial. |
+| `dvorni_blazen.jpg` | Dvorní šašek | A court jester in motley mocking a red-faced count at a long feast table, nobles laughing, candles and goblets. |
+| `spor_radcu.jpg` | Spor rádců | An old chancellor with a ledger and a grizzled marshal in armour arguing across a council table, the ruler sitting between them. |
+| `dedic_v_dluzich.jpg` | Dluhy dědice | A young noble heir at a tavern table with dice and empty purses, grim merchants standing over him in a smoky room. |
+| `krest_ditete.jpg` | Narození dítěte | A newborn baby being baptised at a stone font in a candlelit castle chapel, the noble family and a priest around it. |
+| `portret_vladce.jpg` | Malíř u dvora | A painter at an easel painting a crowned ruler sitting stiffly on a throne in a sunlit hall, apprentices mixing pigments. |
+| `zrada_spehmistra.jpg` | Dvojí hra | A hooded spymaster secretly handing a sealed letter to a foreign rider at night behind the castle stables, a lantern half covered. |
+| `prosba_ucitele.jpg` | Prosba starého učitele | An old grey-bearded teacher kneeling and pleading before a throne, a chained young man behind him between two guards. |
+| `hostina_slechty.jpg` | Žádost o hostinu | A great medieval feast in a torch-lit hall, roasted deer, wine, musicians and dancing nobles at long tables. |
+| `vazal_odmita_vojaky.jpg` | Vazal odmítá vojáky | A royal messenger reading a refusal letter at the gate of a lonely hill castle, the vassal watching smugly from the battlements. |
+| `spor_o_panstvi.jpg` | Spor o dědictví | Two noble cousins arguing over a map of an estate on a table before the throne, each with armed retainers behind him. |
+| `slechta_odmita_dan.jpg` | Šlechta odmítá daň | A crowd of angry noblemen in furs gathered in a throne hall, their spokesman throwing a tax decree to the floor. |
+| `potulny_rytir.jpg` | Rytíř bez pána | A famous wandering knight in battered armour standing at a castle gate with his horse, helmet under his arm, rain falling. |
+| `souboj_slechticu.jpg` | Souboj na život a na smrt | Two young noblemen fighting a sword duel at dawn on a misty meadow, seconds and a few courtiers watching. |
+| `hrabe_utlacuje.jpg` | Krutý hrabě | Ragged peasants kneeling and begging before a throne, one showing bruises, a cruel count in rich clothes standing aside with contempt. |
+| `zastava_lesa.jpg` | Půjčka od kláštera | A smiling abbot offering a chest of coins to the ruler in a cloister, a map of a forest spread on the table between them. |
+| `pretendent.jpg` | Pretendent | A charismatic young man in a worn cloak preaching to a crowd on a seaside village square, claiming a crown he holds up in his hand. |
+| `stavka_cechu.jpg` | Stávka cechů | Closed workshops in a medieval town street, guild craftsmen with tools standing in protest with banners without letters. |
+| `pozar_mesta.jpg` | Požár | A wooden town quarter burning at night below a castle, people fleeing and soldiers passing buckets of water in a chain. |
+| `carodejnice.jpg` | Čarodějnice | An old herbalist woman dragged by angry villagers before the castle gate, a priest pointing at her, a pale crowd behind. |
+| `poutnik_zazrak.jpg` | Zázrak u kláštera | Pilgrims kneeling before a weeping stone statue of a saint in a cliff-top monastery, candles and offerings, sea mist behind. |
+| `zebravy_prorok.jpg` | Žebravý prorok | A ragged prophet with wild eyes preaching doom from the steps of a fountain on a town square, a growing crowd listening. |
+| `trh_v_brode.jpg` | Velký trh v Brodě | A busy autumn market in a river town, stalls of grain and cloth, merchants and carts crossing a wooden bridge. |
+| `most_pres_brodnici.jpg` | Most přes Brodnici | Masons building a new stone bridge across a wide river, wooden scaffolding and cranes, carts waiting on the bank. |
+| `uprchlici.jpg` | Uprchlíci z Marek | Hundreds of refugees with bundles and children waiting at a border palisade at the edge of a dark forest, guards blocking the road. |
+| `lichvar.jpg` | Lichvář | A wealthy moneylender with rings on his fingers counting gold coins on a table by candlelight, a contract and a quill ready. |
+| `lichvar_splatka.jpg` | Den splátky | The moneylender presenting a long debt contract to the ruler in a dim treasury, nearly empty chests behind them. |
+| `katedrala.jpg` | Katedrála | A bishop unrolling plans of a vast cathedral before the ruler, masons laying the first foundation stones in the background. |
+| `kacirska_sekta.jpg` | Sekta v horách | Miners gathered at night around a fire in a mountain village listening to a wild-haired preacher, rocky peaks behind. |
+| `relikvie.jpg` | Relikvie | A southern merchant opening a golden reliquary on a velvet cloth before the ruler and a bishop, candlelight on the gold. |
+| `opat_v_rade.jpg` | Opat žádá místo v radě | An abbot in a black habit standing at the royal council table, the chancellor scowling beside him. |
+| `zatmeni.jpg` | Zatmění slunce | A solar eclipse darkening the sky over a medieval town, terrified people running to a church, birds scattering. |
+| `zajaty_syn_markrabiho.jpg` | Vzácný zajatec | A proud young nobleman prisoner sitting in a castle tower room, guards at the door, a window with a view of the forest. |
+| `pirati.jpg` | Piráti u pobřeží | Pirate ships with dark sails attacking a fishing village and merchant ships near a rocky coast, smoke rising. |
+| `dezerteri.jpg` | Dezertéři | Ragged deserting soldiers plundering a farmstead, carrying sacks and chickens, a farmer's family hiding by the fence. |
+| `zvedove_v_horach.jpg` | Hlášení zvědů | Two scouts lying on a rocky ridge looking down at many campfires of a foreign army in a mountain valley at dusk. |
+| `obleheni.jpg` | Obléhání | A besieged city with siege engines and an enemy camp below its walls, defenders on the battlements, smoke and catapult stones. |
+| `zold.jpg` | Žold | Angry soldiers gathered before a castle gate demanding pay, a grizzled marshal trying to calm them. |
+| `nove_kuse.jpg` | Nové kuše | A foreign armourer demonstrating a heavy crossbow in a castle courtyard, a pierced breastplate on a target post. |
+| `hranicni_kamen.jpg` | Posunutý hraniční kámen | Forest hunters pointing at a moved boundary stone in a forest clearing, fresh earth around it, dawn mist. |
+| `povoden.jpg` | Povodeň | A flooded river overflowing fields and a mill, villagers stacking sacks into a dam, rain and grey sky. |
+| `sucho.jpg` | Sucho | Cracked dry fields and yellow withered wheat under a hot pale sky, peasants carrying water buckets from a shrinking river. |
+| `vlci.jpg` | Vlci | A pack of wolves in a snowy forest at the edge of a village, a hunter with a spear and hounds facing them. |
+| `stribrna_zila.jpg` | Stříbrná žíla | Miners in a lantern-lit tunnel discovering a glittering vein of silver in the rock, faces lit with excitement. |
+| `kobylky.jpg` | Kobylky | A dark swarm of locusts descending on golden wheat fields, peasants lighting smoky fires to drive them away. |
+| `spor_rybaru.jpg` | Spor o rybolov | Fishermen and monks arguing on a rocky beach beside boats and nets, a cliff-top monastery above the bay. |
+| `zlodej_v_pokladne.jpg` | Zloděj v pokladně | A shadowy figure taking coins from a royal treasury chest by candlelight, ledgers and keys on a table. |
+| `vyroci_vlady.jpg` | Výročí vlády | A royal jubilee celebration on a town square, banners, musicians and crowds cheering the ruler on a balcony. |
+| `skola_ucencu.jpg` | Škola učenců | Foreign scholars teaching young students in a stone room full of books, maps and an astronomical instrument. |
+| `cizi_princezna.jpg` | Nabídka sňatku | Foreign envoys presenting a painted miniature portrait and a marriage proposal to the young heir in a throne hall. |
+| `zahada_v_lese.jpg` | Zmizelí myslivci | A deep dark forest with mist between the trees, a hunter's abandoned bow and lantern lying on the moss. |
+| `kupecka_gilda.jpg` | Kupecká gilda | Rich merchants in fur-trimmed robes signing a charter around a table in a guild hall, scales and sacks of coin. |
+| `stary_rytir_umira.jpg` | Poslední přání | An old knight on his deathbed in a simple room, his sword on the blanket, the ruler sitting beside him holding his hand. |
+| `ztracena_listina.jpg` | Ztracená listina | An archivist and the ruler examining an ancient sealed charter by candlelight in a dusty archive full of scrolls. |

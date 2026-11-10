@@ -23,7 +23,9 @@
 // replaceCourt {loyalty, minAge, maxAge}; roll choices may add resourceKey and
 // resourceScale so e.g. the size of the army changes the odds of a battle.
 
-export const EVENTS = [
+import { MORE_EVENTS } from './events_more.js';
+
+const BASE_EVENTS = [
   {
     id: 'soud_o_mez',
     title: 'Spor dvou sedláků',
@@ -823,6 +825,8 @@ export const EVENTS = [
     ],
   },
 ];
+
+export const EVENTS = [...BASE_EVENTS, ...MORE_EVENTS];
 
 // Picked when no other event is due (or now and then by chance): a calm season
 // still lets the ruler spend it on something.
