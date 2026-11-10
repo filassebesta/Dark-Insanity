@@ -83,8 +83,9 @@ letters, watermark or signature.
 | ✅ | `ending_death.jpg`, `ending_conquest.jpg`, `ending_collapse.jpg`, `ending_golden_age.jpg` | 16:9 | 1920 × 1080 | Konec hry | 5.1 – 5.4 |
 | ✅ | `scenario_panovnik.jpg`, `scenario_sedlak.jpg` | 3:2 | 1200 × 800 | Karty výběru scénáře | 4.1, 4.3 |
 | ❌ | `scenario_slechtic.jpg` | 3:2 | 1200 × 800 | Karta scénáře Šlechtic | 4.2 |
+| ❌ | `kingdom_map.jpg` | 3:2 | 2400 × 1600 | Podklad interaktivní mapy | 9 |
 
-Celkem chybí **13 obrázků**.
+Celkem chybí **14 obrázků**.
 
 **Volitelné varianty pro královnu:** scény `rada_manzela`, `varovani_kancelere`
 a `zprava_spehmistra` ukazují krále. Když nahraješ `<název>_female.jpg`
@@ -757,3 +758,67 @@ or signature.
 
 Nahrávej ideálně do `assets/_incoming/` (nebo do `docs/` jako minule) —
 já soubory zpracuji a přesunu.
+
+---
+
+## 9. Mapa království — `kingdom_map.jpg`
+
+Rozlišení: **3:2, cíl 2400 × 1600** (Gemini vrátí menší, nevadí)
+**Kde se zobrazí:** jako malovaný podklad interaktivní mapy. Všechno klikací
+(hranice provincií, názvy, ikony míst, cesty k vazalovi, kouř nepokojů,
+posádky, kompas) dál kreslí hra **přes obrázek**. Obrázek proto musí
+**sedět na rozložení** a **nesmí v něm být žádný text, ikony ani kompas**.
+
+**Postup:**
+1. Stáhni z GitHubu předlohu **`docs/map_layout_guide.png`** (barevné
+   plochy = provincie, modrá čára = řeka, hrady a města = značky).
+2. V Gemini přilož **předlohu** a k ní jako stylovou kotvu jeden portrét
+   vládce (`assets/portraits/ruler_king_male.jpg`).
+3. Vlož prompt níže. Když Gemini posune pobřeží nebo řeku, napiš mu:
+   *„Keep the coastline, river and region shapes exactly as in the layout
+   image.“* Drobné posuny vyrovnám v kódu já.
+
+```
+Paint an illustrated fantasy kingdom map, aspect ratio 3:2, seen from above
+like an old hand-painted map on aged parchment. Follow the FIRST attached
+image exactly as the layout: keep the same coastline, the same river, the
+same positions of the castles and towns and the same shapes of the five
+regions. Use the second attached image only as the painting style reference.
+
+Layout to follow:
+- Grey-blue sea on the left side and along the whole bottom and bottom-right,
+  painted with soft waves.
+- Left region (coastal march): windswept grassy hills and cliffs along the
+  sea, a small harbour town on the coast in the middle, a lonely stone abbey
+  on a cliff further south.
+- Top region (iron ridge): a band of rocky grey mountains with a mine
+  entrance and spoil heaps in the middle.
+- Right region (border forest): a dense dark pine and oak forest with a small
+  hunters' village in its middle.
+- Centre (crown land): fertile plains with a large royal stone castle in the
+  exact centre, villages around it.
+- Bottom region (grain lands): golden wheat fields and meadows, a market town
+  where the river meets the road.
+- A river flows from the mountains at the top down through the centre to the
+  sea at the bottom.
+- Dirt roads connect the royal castle with the harbour, the abbey and the
+  market town. A watchtower stands in the mountain pass on the edge of the
+  forest. A separate vassal castle stands alone in the far top-right corner
+  outside the kingdom; beyond the kingdom the land is plain pale parchment.
+- Region borders only as very faint natural transitions, no drawn borders.
+
+Style: muted oil painting on parchment with visible brushwork, desaturated
+earthy palette of ochre, olive green, rust and dusty slate blue, soft light
+from the top-left, small detailed painted buildings and trees, slightly
+weathered paper edges, similar in mood to "The Life and Suffering of Sir
+Brante". Avoid: any text, letters, names, labels, numbers, compass rose,
+legend, cartouche, frame, border lines, icons, grid, 3D render, photography,
+oversaturated colours, cartoon style, watermark or signature.
+```
+
+**Co s mapou udělám já:** obrázek vložím jako spodní vrstvu mapy ve hře.
+Současné kreslené stromy, hory a pole skryju a hranice provincií udělám
+průhledné. Najetí myší provincii zvýrazní, kliknutí ukáže detail. Zoom, posun,
+vrstvy (věrnost, nepokoje, posádky, cesty), ikony míst a volba cesty
+k vazalovi zůstanou stejné jako teď.
+
