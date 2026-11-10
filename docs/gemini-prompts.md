@@ -65,27 +65,27 @@ letters, watermark or signature.
 
 ## 1. Přehled — co je hotové a co chybí
 
-✅ = hotovo a ve hře · ❌ = chybí (pořadí = doporučená priorita)
+✅ = hotovo a ve hře · ❌ = chybí
 
 | Stav | Soubor | Poměr | Cílové rozlišení | Kde se zobrazí | Prompt |
 |---|---|---|---|---|---|
 | ✅ | `ruler_king_male.jpg`, `ruler_king_female.jpg` | 4:5 | 1024 × 1280 | Postava, plaketa, Dvůr | 2.1, 2.2 |
 | ✅ | `ruler_king_male_old.jpg`, `ruler_king_female_old.jpg` | 4:5 | 1024 × 1280 | Postava od 55 let | 2.3, 2.4 |
-| ❌ | `scene_default.jpg` | 1:1 | 2048 × 2048 | Scéna, když událost nemá vlastní obrázek | 7.1 |
-| ❌ | `backdrop.jpg` | 16:9 | 1920 × 1080 | Rozmazané pozadí: nová hra, výběr scénáře, načtení, možnosti | 7.2 |
-| ❌ | `heir_male.jpg`, `heir_female.jpg` | 4:5 | 1024 × 1280 | Dvůr, Postava → Rodina | 6.1, 6.2 |
-| ❌ | `spouse_male.jpg`, `spouse_female.jpg` | 4:5 | 1024 × 1280 | Dvůr, Postava → Rodina | 6.3, 6.4 |
-| ❌ | `chancellor_male.jpg`, `chancellor_female.jpg` | 4:5 | 1024 × 1280 | Dvůr | 6.5, 6.6 |
-| ❌ | `marshal_male.jpg`, `marshal_female.jpg` | 4:5 | 1024 × 1280 | Dvůr | 6.7, 6.8 |
-| ❌ | `spymaster_male.jpg`, `spymaster_female.jpg` | 4:5 | 1024 × 1280 | Dvůr | 6.9, 6.10 |
+| ✅ | `scene_default.jpg` | 1:1 | 2048 × 2048 | Scéna, když událost nemá vlastní obrázek | 7.1 |
+| ✅ | `backdrop.jpg` | 16:9 | 1920 × 1080 | Rozmazané pozadí: nová hra, výběr scénáře, načtení, možnosti | 7.2 |
+| ✅ | `heir_male.jpg`, `heir_female.jpg` | 4:5 | 1024 × 1280 | Dvůr, Postava → Rodina | 6.1, 6.2 |
+| ✅ | `spouse_male.jpg`, `spouse_female.jpg` | 4:5 | 1024 × 1280 | Dvůr, Postava → Rodina | 6.3, 6.4 |
+| ✅ | `chancellor_male.jpg`, `chancellor_female.jpg` | 4:5 | 1024 × 1280 | Dvůr | 6.5, 6.6 |
+| ✅ | `marshal_male.jpg`, `marshal_female.jpg` | 4:5 | 1024 × 1280 | Dvůr | 6.7, 6.8 |
+| ✅ | `spymaster_male.jpg`, `spymaster_female.jpg` | 4:5 | 1024 × 1280 | Dvůr | 6.9, 6.10 |
 | ✅ | 9 × `<id_eventu>.jpg` | 1:1 | 2048 × 2048 | Scéna konkrétní události | 3.1 – 3.9 |
 | ✅ | `quiet_season.jpg` | 1:1 | 2048 × 2048 | Scéna „Klidné období“ | 3.10 |
 | ✅ | `ending_death.jpg`, `ending_conquest.jpg`, `ending_collapse.jpg`, `ending_golden_age.jpg` | 16:9 | 1920 × 1080 | Konec hry | 5.1 – 5.4 |
 | ✅ | `scenario_panovnik.jpg`, `scenario_sedlak.jpg` | 3:2 | 1200 × 800 | Karty výběru scénáře | 4.1, 4.3 |
-| ❌ | `scenario_slechtic.jpg` | 3:2 | 1200 × 800 | Karta scénáře Šlechtic | 4.2 |
-| ❌ | `kingdom_map.jpg` | 3:2 | 2400 × 1600 | Podklad interaktivní mapy | 9 |
+| ✅ | `scenario_slechtic.jpg` | 3:2 | 1200 × 800 | Karta scénáře Šlechtic | 4.2 |
+| ✅ | `kingdom_map.jpg` | 3:2 | 2400 × 1600 | Podklad interaktivní mapy | 9 |
 
-Celkem chybí **14 obrázků**.
+**Všechny obrázky jsou hotové a ve hře.** Zbývají jen volitelné varianty níže.
 
 **Volitelné varianty pro královnu:** scény `rada_manzela`, `varovani_kancelere`
 a `zprava_spehmistra` ukazují krále. Když nahraješ `<název>_female.jpg`
@@ -815,6 +815,11 @@ Brante". Avoid: any text, letters, names, labels, numbers, compass rose,
 legend, cartouche, frame, border lines, icons, grid, 3D render, photography,
 oversaturated colours, cartoon style, watermark or signature.
 ```
+
+> ✅ **Hotovo:** malovaná mapa je ve hře (`assets/map/kingdom_map.jpg`).
+> Gemini ji nenamaloval přesně podle předlohy, proto jsou souřadnice
+> provincií, míst a cest v `js/map.js` obkreslené přímo z obrázku. Když budeš
+> mapu někdy generovat znovu, souřadnice bude potřeba upravit.
 
 **Co s mapou udělám já:** obrázek vložím jako spodní vrstvu mapy ve hře.
 Současné kreslené stromy, hory a pole skryju a hranice provincií udělám
