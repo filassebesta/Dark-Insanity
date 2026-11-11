@@ -362,7 +362,7 @@ export const NOBLE_EVENTS = [
         label: 'Vznést nárok na trůn',
         requires: (s) => s.ruler.statusTier >= 4 || s.flags.royal_match,
         hintType: 'resource', hintKey: 'legitimacy',
-        isRoll: true, baseChance: -0.12, traitKey: 'eloquence', traitScale: 0.02, resourceKey: 'legitimacy', resourceScale: 0.8,
+        isRoll: true, baseChance: -0.17, traitKey: 'eloquence', traitScale: 0.02, resourceKey: 'legitimacy', resourceScale: 0.8,
         chanceBonus: (s) => allies(s) * 0.08 + (s.flags.royal_match ? 0.25 : 0)
           + (!s.king.heir || !s.king.heir.alive || s.king.heir.age < 16 ? 0.1 : 0) + (s.resources.favor - 50) / 400,
         onSuccess: { endGame: 'crowned', chronicle: 'Šlechta se sklonila. Koruna dosedla na hlavu z rodu {dynastyName}.' },
@@ -372,7 +372,7 @@ export const NOBLE_EVENTS = [
         label: 'Povstat se zbraní v ruce',
         requires: (s) => s.noble.plot >= 2,
         hintType: 'resource', hintKey: 'army',
-        isRoll: true, baseChance: -0.05, traitKey: 'strength', traitScale: 0.03, resourceKey: 'army', resourceScale: 0.7,
+        isRoll: true, baseChance: -0.1, traitKey: 'strength', traitScale: 0.03, resourceKey: 'army', resourceScale: 0.7,
         chanceBonus: (s) => allies(s) * 0.07 + s.noble.plot * 0.04,
         onSuccess: { endGame: 'crowned', chronicle: 'Spiklenci otevřeli brány a vojsko rodu {dynastyName} vtáhlo do Vlčího Údělu. Koruna má nového nositele.' },
         onFailure: { endGame: 'executed', chronicle: 'Povstání bylo potlačeno dřív, než začalo.' },

@@ -26,6 +26,8 @@
 import { MORE_EVENTS } from './events_more.js';
 import { NOBLE_EVENTS, NOBLE_QUIET_EVENT } from './events_noble.js';
 import { CRISIS_EVENTS, ECHO_EVENTS, attachEchoHooks } from './events_echoes.js';
+import { COURT_EVENTS } from './events_court.js';
+import { PEASANT_EVENTS, PEASANT_CRISES, PEASANT_ECHOES, PEASANT_QUIET_EVENT } from './events_peasant.js';
 
 const BASE_EVENTS = [
   {
@@ -659,6 +661,7 @@ const BASE_EVENTS = [
         hintType: 'resource', hintKey: 'army',
         effects: { prestige: 3, army: 2 },
         courtEffects: { heir: { loyalty: 5 }, marshal: { loyalty: 8 } },
+        heirTraits: { strength: 2 },
         chronicle: 'Dědic tráví dny na cvičišti s maršálem. Ruce má od meče samé mozoly a vojáci ho mají rádi.',
       },
       {
@@ -666,6 +669,7 @@ const BASE_EVENTS = [
         hintType: 'trait', hintKey: 'intelligence',
         effects: { legitimacy: 3, gold: 3 },
         courtEffects: { heir: { loyalty: 5 }, chancellor: { loyalty: 8 } },
+        heirTraits: { intelligence: 2 },
         chronicle: 'Dědic sedí s kancléřem nad listinami a účty. Ví, kolik stojí pytel obilí i válka.',
       },
       {
@@ -673,6 +677,7 @@ const BASE_EVENTS = [
         hintType: 'resource', hintKey: 'faith',
         effects: { faith: 6 },
         courtEffects: { heir: { loyalty: -5 } },
+        heirTraits: { patience: 1, eloquence: 1 },
         chronicle: 'Dědic odešel k mnichům na útes. Naučí se číst, psát a modlit se — a možná i pokoře.',
       },
     ],
@@ -692,13 +697,14 @@ const BASE_EVENTS = [
         effects: { legitimacy: 8, prestige: 4, gold: 12 },
         courtEffects: { heir: { loyalty: -4 } },
         hiddenEffects: { setFlag: 'heir_married' },
+        heirTraits: { eloquence: 1 },
         chronicle: 'Dědic byl zasnouben s potomkem mocného sousedního rodu. Věno naplnilo pokladnu a spojenectví posílilo trůn.',
       },
       {
         label: 'Svěřit dědici velení posádky na hranici',
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.55, resourceKey: 'army', resourceScale: 0.3,
-        onSuccess: { effects: { prestige: 8, army: 3 }, courtEffects: { heir: { loyalty: 12 } }, provinceEffects: { 'sokoli-hvozd': { garrison: 10 } }, chronicle: 'Dědic se na hranici osvědčil. Vojáci za ním půjdou, až jednou usedne na trůn.' },
+        onSuccess: { effects: { prestige: 8, army: 3 }, courtEffects: { heir: { loyalty: 12 } }, provinceEffects: { 'sokoli-hvozd': { garrison: 10 } }, heirTraits: { strength: 2 }, chronicle: 'Dědic se na hranici osvědčil. Vojáci za ním půjdou, až jednou usedne na trůn.' },
         onFailure: { effects: { prestige: -5 }, courtEffects: { heir: { loyalty: -6 } }, chronicle: 'Velení bylo nad dědicovy síly. Vrátil se ke dvoru zahanbený a zatrpklý.' },
       },
       {
@@ -706,6 +712,7 @@ const BASE_EVENTS = [
         hintType: 'trait', hintKey: 'patience',
         effects: { stability: 2 },
         courtEffects: { heir: { loyalty: 8 } },
+        heirTraits: { intelligence: 1, patience: 1 },
         chronicle: 'Dědic zůstal u dvora a učí se vládnout přímo od svého rodiče.',
       },
     ],
@@ -828,7 +835,7 @@ const BASE_EVENTS = [
   },
 ];
 
-export const EVENTS = attachEchoHooks([...BASE_EVENTS, ...MORE_EVENTS, ...NOBLE_EVENTS, ...CRISIS_EVENTS, ...ECHO_EVENTS]);
+export const EVENTS = attachEchoHooks([...BASE_EVENTS, ...MORE_EVENTS, ...NOBLE_EVENTS, ...COURT_EVENTS, ...PEASANT_EVENTS, ...CRISIS_EVENTS, ...PEASANT_CRISES, ...ECHO_EVENTS, ...PEASANT_ECHOES]);
 
 // Picked when no other event is due (or now and then by chance): a calm season
 // still lets the ruler spend it on something.
@@ -868,4 +875,4 @@ export const QUIET_EVENT = {
   ],
 };
 
-export const QUIET_EVENTS = { panovnik: QUIET_EVENT, slechtic: NOBLE_QUIET_EVENT };
+export const QUIET_EVENTS = { panovnik: QUIET_EVENT, slechtic: NOBLE_QUIET_EVENT, sedlak: PEASANT_QUIET_EVENT };

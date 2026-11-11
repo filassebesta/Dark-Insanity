@@ -3,7 +3,7 @@
 
 import { TRAIT_DEFS, STATUS_TIERS, SEASONS, tierTitle } from './data.js';
 import { traitBonuses, reignEpithet } from './engine.js';
-import { biography, loyaltyLabel, roleLabel } from './court.js';
+import { biography, loyaltyLabel, roleLabel, quirkLabel, quirkText } from './court.js';
 import { esc } from './ui.js';
 
 const TIER_SLUGS = [null, 'peasant', 'freeman', 'minor_noble', 'noble', 'king'];
@@ -47,8 +47,9 @@ window.__portraitFallback = (img) => {
 };
 
 /** Court member portrait files: assets/portraits/<role>_<male|female>.jpg (or .png). */
-export function memberPortraitCandidates(c, role) {
-  const base = `assets/portraits/${role}_${c.gender === 'male' ? 'male' : 'female'}`;
+export function memberPortraitCandidates(c, role, scenario) {
+  // a peasant's household has its own faces (s_<role>_<gender>), never the royal court's
+  const base = `assets/portraits/${scenario === 'sedlak' ? 's_' : ''}${role}_${c.gender === 'male' ? 'male' : 'female'}`;
   return [`${base}.jpg`, `${base}.png`];
 }
 
@@ -109,7 +110,7 @@ export function renderCharacterSheet(state) {
     return `
       <div class="cs-member${alive ? '' : ' deceased'}" data-person="${role}" role="button" tabindex="0" title="Zobrazit detail">
         <span class="cs-mini">${initial}</span>
-        ${portraitImg(memberPortraitCandidates(c, role), c.name, 'cs-mini-img')}
+        ${portraitImg(memberPortraitCandidates(c, role, state.scenario), c.name, 'cs-mini-img')}
         <div>
           <span>${ROLE_LABEL[role](c.gender)}</span>
           <strong>${esc(c.name)}${alive ? '' : ' †'}</strong>
@@ -140,16 +141,16 @@ export function renderCharacterSheet(state) {
         ${portraitImg(rulerPortraitCandidates(r), r.name, 'cs-portrait-img')}
         <div class="cs-aging"></div>
       </div>
-      <p class="cs-portrait-note">${r.age >= OLD_AGE ? 'Léta vlády se do tváře vepsala.' : state.scenario === 'slechtic' ? `Portrét ${r.gender === 'female' ? 'paní' : 'pána'} rodu ${esc(state.dynastyName)}.` : 'Portrét z doby nástupu na trůn.'}</p>
+      <p class="cs-portrait-note">${r.age >= OLD_AGE ? (state.scenario === 'sedlak' ? 'Léta práce se do tváře vepsala.' : 'Léta vlády se do tváře vepsala.') : state.scenario === 'slechtic' ? `Portrét ${r.gender === 'female' ? 'paní' : 'pána'} rodu ${esc(state.dynastyName)}.` : state.scenario === 'sedlak' ? `${r.gender === 'female' ? 'Hospodyně' : 'Hospodář'} z Lipnice.` : 'Portrét z doby nástupu na trůn.'}</p>
     </div>
     <div class="cs-info">
       <span class="panel-overline">${esc(title)} · ${state.generation}. generace</span>
       <h2 class="cs-name">${esc(r.name)}</h2>
-      <div class="cs-dynasty">z dynastie ${esc(state.dynastyName)}</div>
+      <div class="cs-dynasty">${state.scenario === 'panovnik' ? 'z dynastie' : 'z rodu'} ${esc(state.dynastyName)}</div>
       ${epithetLine}
       <div class="cs-facts">
         <div><span>Věk</span><strong>${r.age}</strong></div>
-        <div><span>${state.scenario === 'slechtic' ? 'V čele rodu' : 'Vláda'}</span><strong>${years} ${yearsWord(years)}</strong></div>
+        <div><span>${state.scenario === 'slechtic' ? 'V čele rodu' : state.scenario === 'sedlak' ? 'Na gruntu' : 'Vláda'}</span><strong>${years} ${yearsWord(years)}</strong></div>
         <div><span>Rok</span><strong>${state.year}</strong></div>
       </div>
       <h4 class="cs-section">Postavení</h4>
@@ -210,16 +211,20 @@ export function renderPersonSheet(state, role) {
   document.getElementById('person-sheet').innerHTML = `
     <div class="ps-portrait${alive ? '' : ' deceased'}">
       <span class="cs-initial">${esc(c.name ? c.name[0] : '?')}</span>
-      ${portraitImg(memberPortraitCandidates(c, role), c.name, 'ps-portrait-img')}
+      ${portraitImg(memberPortraitCandidates(c, role, state.scenario), c.name, 'ps-portrait-img')}
     </div>
     <div class="ps-info">
       <span class="panel-overline">${esc(title)}${alive ? '' : ' · zesnul' + (c.gender === 'female' ? 'á' : 'ý')}</span>
       <h2 class="ps-name">${esc(c.name)}</h2>
       <div class="ps-meta">${c.age} let · <span class="ps-loyal">${loyaltyLabel(c.loyalty, c.gender)}</span></div>
       <div class="ps-bar"><span style="width:${c.loyalty}%"></span><b>věrnost ${c.loyalty}</b></div>
-      <p class="ps-bio">${esc(biography(c, role, state.dynastyName))}</p>
+      <p class="ps-bio">${esc(biography(c, role, state.dynastyName, state.scenario))}</p>
+      ${c.quirk ? `<div class="ps-quirk"><b>Povaha: ${esc(quirkLabel(c))}</b><span>${esc(quirkText(c, role))}</span></div>` : ''}
+      ${role === 'heir' && c.traits ? `<h4 class="ps-section">Vlastnosti ${c.gender === 'female' ? 'dědičky' : 'dědice'}</h4>
+        <p class="ps-note">S těmito vlastnostmi jednou převezme vládu. Utváří je výchova a léta dospívání.</p>
+        <div class="ps-traits">${TRAIT_DEFS.map((t) => `<div>${t.icon}<span>${t.label}</span><b>${c.traits[t.key]}</b></div>`).join('')}</div>` : ''}
       <h4 class="ps-section">Co ${him} ovlivnilo</h4>
-      ${rows ? `<ul class="ps-history">${rows}</ul>` : `<p class="ps-empty">Zatím žádné tvé rozhodnutí ${him} nezasáhlo. Až se ${c.gender === 'female' ? 'jí' : 'ho'} nějaké týkat, uvidíš ho tady.</p>`}
+      ${rows ? `<ul class="ps-history">${rows}</ul>` : `<p class="ps-empty">Zatím žádné tvé rozhodnutí ${him} nezasáhlo. Až se ${c.gender === 'female' ? 'jí' : 'ho'} nějaké bude týkat, uvidíš ho tady.</p>`}
     </div>
   `;
 }

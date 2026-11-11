@@ -1,7 +1,7 @@
-import { SEASONS, TERRAIN_DEFS, NOBLE_HOUSES, clamp, randomName, randInt, tierTitle } from './data.js';
-import { makeChronicleEntry } from './state.js';
+import { SEASONS, TERRAIN_DEFS, NOBLE_HOUSES, PEASANT_HOME, clamp, randomName, randInt, tierTitle } from './data.js';
+import { makeChronicleEntry, inheritTraits } from './state.js';
 import { EVENTS, QUIET_EVENTS } from './events.js';
-import { roleLabel } from './court.js';
+import { roleLabel, QUIRK_ROLES, randomQuirk, quirkLabel } from './court.js';
 
 const TRAIT_MIN = 1;
 const TRAIT_MAX = 10;
@@ -40,6 +40,15 @@ export function interpolate(state, text) {
       'house.seat': state.provinces.find((p) => p.id === house.def.seat).name,
     });
   }
+  const lord = lordOf(state);
+  if (lord) {
+    Object.assign(dict, {
+      'lord.name': lord.name, 'lord.title': lord.gender === 'female' ? 'paní' : 'pán',
+      'lord.Title': lord.gender === 'female' ? 'Paní' : 'Pán',
+      'lord.house': NOBLE_HOUSES.find((d) => d.id === PEASANT_HOME.house).name,
+      village: PEASANT_HOME.village,
+    });
+  }
   if (king) {
     const kh = king.heir || {};
     Object.assign(dict, {
@@ -55,9 +64,13 @@ export function interpolate(state, text) {
     dict[`${role}.title`] = t.toLowerCase();
   }
   // gendered word forms: {R:přijel|přijela} follows the ruler, {H:...} the house head in context
-  const genderOf = { R: state.ruler.gender, H: house ? house.head.gender : 'male' };
+  const genderOf = {
+    R: state.ruler.gender, H: house ? house.head.gender : 'male',
+    T: target ? target.gender : 'male', D: state.heir ? state.heir.gender : 'male',
+    L: lord ? lord.gender : 'male', M: state.spouse ? state.spouse.gender : 'male',
+  };
   return text
-    .replace(/\{([RH]):([^|{}]*)\|([^|{}]*)\}/g, (m, who, male, female) => (genderOf[who] === 'female' ? female : male))
+    .replace(/\{([RHTDLM]):([^|{}]*)\|([^|{}]*)\}/g, (m, who, male, female) => (genderOf[who] === 'female' ? female : male))
     .replace(/\{([\w.]+)\}/g, (m, key) => (key in dict ? dict[key] : m));
 }
 
@@ -65,6 +78,17 @@ export function interpolate(state, text) {
 
 export function isNoble(state) {
   return state.scenario === 'slechtic';
+}
+
+export function isPeasant(state) {
+  return state.scenario === 'sedlak';
+}
+
+/** The peasant's lord: the head of the house that owns the village. */
+export function lordOf(state) {
+  if (!isPeasant(state) || !state.houses) return null;
+  const h = state.houses.find((x) => x.id === PEASANT_HOME.house);
+  return h ? h.head : null;
 }
 
 /** Provinces the player actually rules (all of them as king, the home estate as a noble). */
@@ -183,11 +207,58 @@ function applyCourtReplacement(state, spec, notes, meta) {
     role, name: randomName(gender), gender,
     age: randInt(spec.minAge ?? 30, spec.maxAge ?? 50),
     loyalty: clamp((spec.loyalty ?? 60) + randInt(-5, 5)), alive: true,
+    ...(QUIRK_ROLES.includes(role) ? { quirk: randomQuirk() } : {}),
     history: [{ year: state.year, season: state.seasonIndex, title: 'Jmenování do úřadu', choice: meta?.label || '', outcome: 'normal', delta: null }],
   };
   if (meta) meta.replaced = true;
   const fem = state[role].gender === 'female';
-  notes.push({ text: `${fem ? 'Nová' : 'Nový'} ${roleLabel(role, state[role].gender, state.scenario).toLowerCase()}: ${state[role].name}`, tone: 'pos' });
+  const quirk = quirkLabel(state[role]);
+  notes.push({ text: `${fem ? 'Nová' : 'Nový'} ${roleLabel(role, state[role].gender, state.scenario).toLowerCase()}: ${state[role].name}${quirk ? ` (${quirk.toLowerCase()})` : ''}`, tone: 'pos' });
+}
+
+const TRAIT_NAMES = { strength: 'síla', eloquence: 'výřečnost', intelligence: 'inteligence', patience: 'trpělivost' };
+
+// heirTraits: { strength: 2, ... } — upbringing shapes the next ruler
+function applyHeirTraits(state, fx, notes) {
+  if (!fx || !state.heir || state.heir.alive === false) return;
+  state.heir.traits = state.heir.traits || inheritTraits();
+  for (const [k, v] of Object.entries(fx)) {
+    state.heir.traits[k] = clampTrait(state.heir.traits[k] + v);
+    notes.push({ text: `${state.heir.name}: ${TRAIT_NAMES[k]} ${v > 0 ? '+' : ''}${v}`, tone: v > 0 ? 'pos' : 'neg' });
+  }
+}
+
+/** Fills in what older saves lack: adviser quirks and the heir's own traits. */
+export function ensureCourtData(state) {
+  for (const role of QUIRK_ROLES) {
+    if (state[role] && !state[role].quirk) state[role].quirk = randomQuirk();
+  }
+  if (state.heir && !state.heir.traits) state.heir.traits = inheritTraits(state.ruler.traits);
+}
+
+// Yearly weight of personalities, and the heir slowly growing up.
+function applyQuirks(state) {
+  const r = state.resources;
+  for (const role of QUIRK_ROLES) {
+    const c = state[role];
+    if (!c || c.alive === false) continue;
+    if (c.quirk === 'oddany') c.loyalty = Math.min(90, c.loyalty + 2);
+    if (c.quirk === 'ctizadostivy' && r.prestige < 40) c.loyalty = clamp(c.loyalty - 3);
+    if (c.quirk === 'chamtivy') r.gold = clamp(r.gold - 2);
+    if (c.quirk === 'zbozny') r.faith = clamp(r.faith + 2);
+  }
+  const h = state.heir;
+  if (h && h.alive !== false && h.age >= 6 && h.age <= 18 && Math.random() < 0.3) {
+    h.traits = h.traits || inheritTraits();
+    const keys = Object.keys(h.traits);
+    const k = keys[randInt(0, keys.length - 1)];
+    h.traits[k] = clampTrait(h.traits[k] + 1);
+  }
+}
+
+function capable(state, role) {
+  const c = state[role];
+  return !!c && c.alive !== false && c.quirk === 'schopny';
 }
 
 // houseEffects: { <houseId> | 'target' | '*' | 'allies': { attitude, power, ally, married } }
@@ -239,6 +310,8 @@ function applyNobleEffects(state, fx, notes) {
 export const NOBLE_ENDINGS = {
   crowned: (s) => `${s.ruler.name} z rodu ${s.dynastyName} usedá na trůn. Rod, který začínal s jedinou tvrzí na pobřeží, teď vládne celé zemi.`,
   executed: (s) => `Spiknutí bylo odhaleno. ${s.ruler.name} končí na popravišti a jméno rodu ${s.dynastyName} je vymazáno z listin.`,
+  ennobled: (s) => `${s.ruler.name} z rodu ${s.dynastyName} {R:povstal|povstala} jako {R:šlechtic|šlechtična}. Rod, který oral cizí pole, bude mít vlastní erb a vlastní tvrz.`,
+  expelled: (s) => `Pán ztratil s rodem ${s.dynastyName} trpělivost. Grunt dostal jiný hospodář a ${s.ruler.name} odchází s rodinou a uzlíkem na cestu, která nikam nevede.`,
   exile: (s) => `Král ztratil s rodem ${s.dynastyName} trpělivost. Panství bylo zabaveno a ${s.ruler.name} odchází s rodinou do vyhnanství.`,
 };
 
@@ -268,13 +341,14 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
     notes.push({ text: `Nový panovník: ${state.king.name}`, tone: 'pos' });
   }
   if (branch.endGame && NOBLE_ENDINGS[branch.endGame]) {
-    state.gameOver = { type: branch.endGame, text: NOBLE_ENDINGS[branch.endGame](state) };
+    state.gameOver = { type: branch.endGame, text: interpolate(state, NOBLE_ENDINGS[branch.endGame](state)) };
   }
   applyEffects(state, branch.effects);
   applyHiddenEffects(state, branch.hiddenEffects);
   applyProvinceEffects(state, branch.provinceEffects, notes);
   applyCourtEffects(state, branch.courtEffects, notes, touched);
   applyCourtReplacement(state, branch.replaceCourt, notes, meta);
+  applyHeirTraits(state, branch.heirTraits, notes);
   recordCourtHistory(state, meta, touched, outcome);
   scheduleEcho(state, branch.echo, meta);
   tallyReign(state, branch, meta, outcome);
@@ -315,16 +389,74 @@ function takeDueEcho(state) {
   return null;
 }
 
+// ---------- decrees: one deliberate act a year, issued from the map ----------
+
+// prov = effects on the chosen province; effects = on the realm's resources
+export const DECREES = {
+  garrison: { label: 'Posílit posádku', text: 'Naverbovat a vyzbrojit muže pro místní posádku.', effects: { gold: -10 }, prov: { garrison: 15, unrest: -4 } },
+  relief: { label: 'Odpustit dávky', text: 'Na rok odpustit kraji část dávek.', effects: { gold: -8 }, prov: { loyalty: 10, unrest: -10 } },
+  develop: { label: 'Zvelebit kraj', text: 'Cesty, mlýny a tržiště. Vyplatí se až časem.', effects: { gold: -15 }, prov: { wealth: 8 } },
+  shrine: { label: 'Postavit kapli', text: 'Kaple a kněz pro kraj, který po nich volá.', effects: { gold: -8, faith: 4 }, prov: { loyalty: 4 } },
+  levy: { label: 'Vybrat mimořádnou daň', text: 'Zlato hned, nevole na dlouho.', effects: { gold: 12 }, prov: { loyalty: -8, unrest: 10 } },
+  muster: { label: 'Odvést muže do vojska', text: 'Mladí muži z kraje půjdou pod korouhev.', effects: { army: 6 }, prov: { wealth: -4, unrest: 6 } },
+};
+
+// a peasant has no province to command, only the farm and the village
+export const FARM_DECREES = {
+  clear: { label: 'Vyklučit kus lesa', text: 'Nové pole za cenu potu a jedné zimy.', effects: { stability: 6, food: 3, army: -2 } },
+  market: { label: 'Prodat přebytky na trhu', text: 'Obilí a sýry na trh do Brodné.', effects: { food: -10, gold: 6 } },
+  cattle: { label: 'Přikoupit dobytek', text: 'Kráva navíc znamená mléko i tah.', effects: { gold: -10, food: 4, stability: 5 } },
+  neighbours: { label: 'Pomoci sousedům', text: 'Půjčit ruce a sdílet zásoby.', effects: { food: -5, prestige: 6 } },
+  lord: { label: 'Přilepšit pánovi', text: 'Dar navíc pro panský dvůr.', effects: { gold: -6, favor: 8 } },
+};
+
+export function decreeList(state) {
+  return state.scenario === 'sedlak' ? FARM_DECREES : DECREES;
+}
+
+/** True when this year's decree has not yet been issued. */
+export function decreeAvailable(state) {
+  return !state.gameOver && state.decreeYear !== state.year;
+}
+
+export function canAffordDecree(state, key) {
+  const d = decreeList(state)[key];
+  if (!d) return false;
+  return Object.entries(d.effects || {}).every(([k, v]) => v >= 0 || (state.resources[k] ?? 0) + v >= 0);
+}
+
+/** Issues a decree; returns notes, or null when it cannot be issued. */
+export function issueDecree(state, key, provinceId) {
+  const d = decreeList(state)[key];
+  if (!d || !decreeAvailable(state) || !canAffordDecree(state, key)) return null;
+  const notes = [];
+  if (d.prov) {
+    const prov = ownProvinces(state).find((p) => p.id === provinceId);
+    if (!prov) return null;
+    applyProvinceEffects(state, { [prov.id]: d.prov }, notes);
+  }
+  applyEffects(state, d.effects);
+  state.decreeYear = state.year;
+  const where = d.prov ? ` (${state.provinces.find((p) => p.id === provinceId).name.replace(/ \(.*\)$/, '')})` : '';
+  state.chronicle.push(makeChronicleEntry(state, `Výnos roku ${state.year}: ${d.label}${where}.`));
+  return notes;
+}
+
 // ---------- crises: what happens when a resource runs out ----------
 
+const RULERS = ['panovnik', 'slechtic'];
 const CRISES = [
-  { key: 'food', max: 3, event: 'krize_hlad' },
-  { key: 'gold', max: 2, event: 'krize_pokladna' },
-  { key: 'favor', max: 10, event: 'krize_nemilost', scenario: 'slechtic' },
-  { key: 'army', max: 5, event: 'krize_vojsko' },
-  { key: 'legitimacy', max: 8, event: 'krize_uchvatitel', scenario: 'panovnik' },
-  { key: 'faith', max: 8, event: 'krize_vira' },
-  { key: 'prestige', max: 5, event: 'krize_posmech' },
+  { key: 'food', max: 3, event: 'krize_hlad', scenarios: RULERS },
+  { key: 'gold', max: 2, event: 'krize_pokladna', scenarios: RULERS },
+  { key: 'favor', max: 10, event: 'krize_nemilost', scenarios: ['slechtic'] },
+  { key: 'army', max: 5, event: 'krize_vojsko', scenarios: RULERS },
+  { key: 'legitimacy', max: 8, event: 'krize_uchvatitel', scenarios: ['panovnik'] },
+  { key: 'faith', max: 8, event: 'krize_vira', scenarios: RULERS },
+  { key: 'prestige', max: 5, event: 'krize_posmech', scenarios: RULERS },
+  // a peasant's crises: hunger, empty purse, and the lord's patience running out
+  { key: 'food', max: 3, event: 'krize_s_hlad', scenarios: ['sedlak'] },
+  { key: 'gold', max: 1, event: 'krize_s_bida', scenarios: ['sedlak'] },
+  { key: 'favor', max: 10, event: 'krize_s_nemilost', scenarios: ['sedlak'] },
 ];
 const CRISIS_COOLDOWN = 12;
 
@@ -332,7 +464,7 @@ function raiseCrisis(state) {
   if (state.pendingEvent) return;
   const history = state.eventHistory || {};
   for (const c of CRISES) {
-    if (c.scenario && c.scenario !== state.scenario) continue;
+    if (!c.scenarios.includes(state.scenario)) continue;
     const value = state.resources[c.key];
     if (value === undefined || value > c.max) continue;
     if (history[c.event] !== undefined && state.turn - history[c.event] < CRISIS_COOLDOWN) continue;
@@ -353,7 +485,7 @@ function reignOf(state) {
 }
 
 function tallyReign(state, branch, meta, outcome) {
-  if (!meta || !meta.event || /^(quiet_season|n_klidne_obdobi)$/.test(meta.event.id)) return;
+  if (!meta || !meta.event || /^(quiet_season|n_klidne_obdobi|s_klidne_obdobi)$/.test(meta.event.id)) return;
   const reign = reignOf(state);
   let weight = 0;
   for (const [k, v] of Object.entries(branch.effects || {})) {
@@ -439,6 +571,10 @@ export function computeSuccessChance(state, choice) {
   // optional resource weight, e.g. a battle depends on the size of the army
   if (choice.resourceKey) chance += ((state.resources[choice.resourceKey] ?? 50) - 50) / 100 * (choice.resourceScale ?? 0.4);
   if (choice.chanceBonus) chance += choice.chanceBonus(state); // e.g. allies backing a claim
+  // a capable adviser helps in their own field
+  if (choice.resourceKey === 'army' && capable(state, 'marshal')) chance += 0.06;
+  if (choice.traitKey === 'intelligence' && capable(state, 'spymaster')) chance += 0.06;
+  if (choice.traitKey === 'eloquence' && capable(state, 'spouse')) chance += 0.06;
   return Math.max(0.05, Math.min(0.95, chance));
 }
 
@@ -491,7 +627,7 @@ const DEFAULT_COOLDOWN = 10; // turns (two and a half years) before an event can
 const QUIET_CHANCE = 0.12;
 
 function eventAvailable(state, e) {
-  if ((e.scenario || 'panovnik') !== state.scenario) return false;
+  if (!(e.scenarios || [e.scenario || 'panovnik']).includes(state.scenario)) return false;
   if (e.forced) return false; // only ever raised by the engine (state.pendingEvent)
   if (e.oneTime && (state.usedEvents || []).includes(e.id)) return false;
   const last = (state.eventHistory || {})[e.id];
@@ -537,7 +673,34 @@ export function pickNextEvent(state) {
   return event;
 }
 
+// A peasant lives off the farm: the land (Grunt) and the hands that work it (Čeleď).
+// Every autumn the lord takes his due: labour and grain from a serf, coin from a freeman.
+function processPeasantEconomy(state) {
+  const r = state.resources;
+  const free = state.ruler.statusTier >= 2;
+  const SEASON_FOOD = [-2, 1, 7, -6];
+  let goldIncome = Math.round(r.stability / 35) - 1 + traitBonuses(state).gold
+    + (capable(state, 'chancellor') ? 1 : 0) + (state.flags.s_rychtar ? 1 : 0);
+  let foodIncome = Math.round((r.stability + r.army) / 35) - 2 + SEASON_FOOD[state.seasonIndex];
+  if (state.seasonIndex === 2) {
+    foodIncome -= free ? 2 : 5;
+    goldIncome -= free ? 3 : 1;
+  }
+  r.gold = clamp(r.gold + goldIncome);
+  r.food = clamp(r.food + foodIncome);
+  if (r.army < 15 && state.turn % 2 === 0) r.stability = clamp(r.stability - 1); // too few hands for the fields
+  else if (r.food >= 20 && r.favor >= 40 && r.stability < 65 && state.turn % 2 === 1) r.stability = clamp(r.stability + 1);
+  if (r.food <= 5) r.stability = clamp(r.stability - 5);
+  if (r.prestige > 50 && state.turn % 2 === 1) r.prestige -= 1;
+  if (r.faith !== 50 && state.turn % 3 === 0) r.faith += r.faith > 50 ? -1 : 1;
+  // a lord forgets good service quickly and remembers nothing else
+  if (r.favor > 40 && state.turn % 2 === 0) r.favor -= 1;
+  driftNoble(state);
+  return { goldIncome, foodIncome };
+}
+
 function processTurnEconomy(state) {
+  if (isPeasant(state)) return processPeasantEconomy(state);
   const lands = ownProvinces(state);
   const totalWealth = lands.reduce((s, p) => s + p.wealth, 0);
   const totalUnrest = lands.reduce((s, p) => s + p.unrest, 0);
@@ -546,7 +709,7 @@ function processTurnEconomy(state) {
   const SEASON_FOOD = isNoble(state) ? [-2, 0, 6, -5] : [-3, 0, 8, -7]; // jaro, léto, podzim, zima
   const [goldDiv, armyGoldDiv, foodDiv, armyFoodDiv] = isNoble(state) ? [11, 14, 16, 20] : [50, 15, 80, 25];
   const tierBonus = isNoble(state) && state.ruler.statusTier >= 4 ? 2 : 0;
-  const goldIncome = Math.round(totalWealth / goldDiv) - Math.round(state.resources.army / armyGoldDiv) - 1 + traitBonuses(state).gold + tierBonus;
+  const goldIncome = (capable(state, 'chancellor') ? 1 : 0) + Math.round(totalWealth / goldDiv) - Math.round(state.resources.army / armyGoldDiv) - 1 + traitBonuses(state).gold + tierBonus;
   const foodIncome = Math.round(totalWealth / foodDiv) - Math.round(state.resources.army / armyFoodDiv) + SEASON_FOOD[state.seasonIndex];
   state.resources.gold = clamp(state.resources.gold + goldIncome);
   state.resources.food = clamp(state.resources.food + foodIncome);
@@ -623,7 +786,13 @@ function ageNobleWorld(state) {
     const chance = k.age < 60 ? 0.01 : Math.min(0.45, (k.age - 58) * 0.03);
     if (Math.random() < chance) {
       k.alive = false;
-      state.pendingEvent = 'n_smrt_krale';
+      if (isNoble(state)) state.pendingEvent = 'n_smrt_krale';
+      else {
+        // far from the throne, a king's death is news, not a choice
+        const oldName = k.name;
+        crownNewKing(state);
+        state.chronicle.push(makeChronicleEntry(state, `Zemřel král ${oldName}. Na trůn usedá ${state.king.name}.`));
+      }
     }
   }
   for (const h of state.houses) {
@@ -646,7 +815,8 @@ function ageCharacters(state) {
   state.chancellor.age += 1;
   state.marshal.age += 1;
   state.spymaster.age += 1;
-  if (isNoble(state)) ageNobleWorld(state);
+  applyQuirks(state);
+  if (state.king && state.houses) ageNobleWorld(state);
 }
 
 function checkNaturalDeath(state) {
@@ -662,10 +832,12 @@ function generateSuccessorHousehold(state) {
   state.heir = {
     role: 'heir', name: randomName(heirGender), gender: heirGender,
     age: randInt(1, 6), loyalty: clamp(70 + randInt(-10, 10)), alive: true,
+    traits: inheritTraits(state.ruler.traits),
   };
   state.spouse = {
     role: 'spouse', name: randomName(spouseGender), gender: spouseGender,
     age: randInt(24, 36), loyalty: clamp(65 + randInt(-10, 10)), alive: true,
+    quirk: randomQuirk(),
   };
 }
 
@@ -687,12 +859,13 @@ function handleSuccession(state) {
       deeds: reignOf(state).deeds,
     });
     state.reign = newReign();
-    state.chronicle.push(makeChronicleEntry(state, `${oldName}${state.pastRulers.at(-1).epithet ? ` ${state.pastRulers.at(-1).epithet}` : ''} umírá stářím. ${isNoble(state) ? 'Panství' : 'Korunu'} přebírá ${newRulerName}.`));
+    state.chronicle.push(makeChronicleEntry(state, `${oldName}${state.pastRulers.at(-1).epithet ? ` ${state.pastRulers.at(-1).epithet}` : ''} umírá stářím. ${isPeasant(state) ? 'Grunt' : isNoble(state) ? 'Panství' : 'Korunu'} přebírá ${newRulerName}.`));
     state.ruler = {
       name: newRulerName,
       gender: state.heir.gender,
       age: state.heir.age,
-      traits: { strength: 5, eloquence: 5, intelligence: 5, patience: 5 },
+      // the heir brings the traits their upbringing gave them
+      traits: state.heir.traits ? { ...state.heir.traits } : { strength: 5, eloquence: 5, intelligence: 5, patience: 5 },
       statusTier: state.ruler.statusTier,
       alive: true,
       reignStartTurn: state.turn,
@@ -703,9 +876,11 @@ function handleSuccession(state) {
     return true;
   }
   state.gameOver = {
-    type: 'collapse',
+    type: isPeasant(state) ? 'ruined' : 'collapse',
     reason: 'dynasty-extinct',
-    text: isNoble(state)
+    text: isPeasant(state)
+      ? `${state.ruler.name} umírá bez žijícího dědice. Rod ${state.dynastyName} vymírá a grunt dostane pán někomu jinému.`
+      : isNoble(state)
       ? `${state.ruler.name} umírá bez žijícího dědice. Rod ${state.dynastyName} vymírá a jeho panství připadá koruně.`
       : `${state.ruler.name} umírá bez žijícího dědice. Dynastie ${state.dynastyName} vymírá a království se hroutí do chaosu.`,
   };
@@ -713,7 +888,7 @@ function handleSuccession(state) {
 }
 
 function updateGoldenAgeStreak(state) {
-  if (isNoble(state)) return; // a noble wins by taking the throne instead
+  if (state.scenario !== 'panovnik') return; // a noble wins by taking the throne, a peasant by nobility
   const r = state.resources;
   const held = state.provinces.filter((p) => !p.lost);
   const avgUnrest = held.reduce((sum, p) => sum + p.unrest, 0) / (held.length || 1);
@@ -724,6 +899,13 @@ function updateGoldenAgeStreak(state) {
 
 export function checkEndConditions(state) {
   if (state.gameOver) return state.gameOver;
+  if (isPeasant(state)) {
+    if (state.resources.favor <= 0) return { type: 'expelled', text: NOBLE_ENDINGS.expelled(state) };
+    if (state.resources.stability <= 0) {
+      return { type: 'ruined', reason: 'stability', text: `Grunt zpustl. Pole zarostla, dobytek pošel a rod ${state.dynastyName} odchází žebrat po cestách.` };
+    }
+    return null;
+  }
   if (isNoble(state)) {
     if (state.resources.favor <= 0) return { type: 'exile', text: NOBLE_ENDINGS.exile(state) };
     if (!ownProvinces(state).length) {
@@ -750,6 +932,7 @@ export function checkEndConditions(state) {
 
 // Advances one round (season). Returns { turnSummary, event, successionOccurred, gameOver }.
 export function advanceTurn(state) {
+  ensureCourtData(state);
   state.turn += 1;
   state.seasonIndex = state.turn % SEASONS.length;
   if (state.seasonIndex === 0) state.year += 1;
@@ -769,7 +952,8 @@ export function advanceTurn(state) {
   updateGoldenAgeStreak(state);
 
   const seasonLabel = SEASONS[state.seasonIndex];
-  const turnSummary = `${seasonLabel} roku ${state.year}. Příjem: ${goldIncome >= 0 ? '+' : ''}${goldIncome} zlata, ${foodIncome >= 0 ? '+' : ''}${foodIncome} jídla.${deathCheckText}`;
+  const [goldWord, foodWord] = isPeasant(state) ? ['grošů', 'zásob'] : ['zlata', 'jídla'];
+  const turnSummary = `${seasonLabel} roku ${state.year}. Příjem: ${goldIncome >= 0 ? '+' : ''}${goldIncome} ${goldWord}, ${foodIncome >= 0 ? '+' : ''}${foodIncome} ${foodWord}.${deathCheckText}`;
   state.chronicle.push(makeChronicleEntry(state, turnSummary));
 
   const gameOver = checkEndConditions(state);

@@ -2,7 +2,7 @@
 
 Vygenerováno z `js/events*.js`. Jména v hranatých závorkách hra doplní podle aktuálního stavu.
 
-Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí · Krize: 7 · Ozvěny rozhodnutí: 17.
+Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí · Scénář **Sedlák**: 33 událostí (+ 3 krize, 2 ozvěny) · Krize: 7 · Ozvěny rozhodnutí: 17 · Povahy rádců a výchova: 5.
 
 ## Scénář Panovník
 
@@ -1155,3 +1155,351 @@ Vrátí se po letech, když hráč dříve zvolil uvedenou možnost.
 1. Ulevit jim od roboty
 2. Rozehnat je družinou
 3. Vydat jim výběrčího
+
+## Scénář Sedlák
+
+Poddaný na gruntu ve vsi Lipnice. Cíl: svoboda (svobodník) a pak erb (drobný šlechtic), poté hra pokračuje jako Šlechtic.
+
+### 1. Robota  `s_robota`
+
+> Panský dráb obchází ves s holí v ruce. Na panském poli se žne a [lord.title] [lord.name] chce tři dny roboty navíc. Tvé vlastní obilí přitom stojí na poli a čeká.
+
+1. Jít a odvést poctivou práci
+2. Poslat místo sebe čeleď
+3. Vymluvit se na nemoc
+
+### 2. Dráb si přišel  `s_drab`
+
+> Panský dráb stojí na zápraží a tvrdí, že dávky jsou letos vyšší. Na listině nic takového není, ale on číst umí a ty ne. Aspoň si to myslí.
+
+1. Zaplatit, ať je pokoj
+2. Trvat na tom, co stojí v listině
+3. Vyhodit ho ze dvora
+
+### 3. Pán projíždí vsí  `s_pan_navsteva`
+
+> [lord.Title] [lord.name] projíždí s družinou vsí Lipnice a zastavil se právě u tvého gruntu. Koně jsou žízniví, družina hladová a pánův pohled zkoumá tvou stodolu.
+
+1. Pohostit družinu tím nejlepším
+2. Schovat dobrou úrodu a ukázat bídu
+3. Postěžovat si na drába
+
+### 4. Panský hon  `s_pansky_hon`
+
+> Panský hon se řítí přes tvé pole. Psi, koně a pánovi hosté dupou v obilí, které mělo živit tvou rodinu přes zimu.
+
+1. Protestovat u pána
+2. Mlčet a sbírat, co zbylo
+3. Nabídnout se jako honec za groš
+
+### 5. Jelen v panském lese  `s_pytlactvi`
+
+> Zásoby docházejí a v panském lese se pase jelen. Stačí jedna noc, jedna smyčka a nikdo se to nedozví. Za pytláctví se ale věší.
+
+1. Jít v noci do lesa
+2. Požádat pána o obilí na dluh
+3. Utáhnout opasky
+
+### 6. Sedláci se bouří  `s_povstani`
+
+> V okolních vsích se sedláci bouří proti robotě. Vůdce povstání čeká v krčmě u [spymaster.name] a hledá muže, kteří se nebojí. Kdo se přidá, může vyhrát svobodu. Nebo provaz.
+
+1. Přidat se k povstání
+2. Zůstat stranou
+3. Udat vůdce pánovi
+
+### 7. Nový rychtář  `s_rychtar_volba`
+
+> Starý rychtář už nevidí ani na listinu, natož na sousedy. Ves volí nového a několik hlasů padlo i na tebe. Rychtář má od pána groš a od vsi starosti.
+
+1. Ucházet se o úřad
+2. Podpořit souseda
+
+### 8. Trh v Brodné  `s_trh`
+
+> V Brodné je velký trh. Kupci z jihu, kováři, dobytkáři i šejdíři. S trochou štěstí se tu dá vydělat. S trochou smůly přijít o všechno.
+
+1. Prodat tele
+2. Koupit nový pluh
+3. Smlouvat o lepší kus dobytka
+
+### 9. Krupobití  `s_krupobiti`
+
+> Z černého mraku se sypaly kroupy velké jako holubí vejce. Obilí leží rozmlácené v blátě a do žní daleko.
+
+1. Rychle zasít znovu
+2. Prosit pána o odpuštění dávek
+3. Uspořádat procesí za dobrou úrodu
+
+### 10. Slabé žně  `s_spatna_uroda`
+
+> Letošní žně jsou slabé. Sýpka se plní pomalu a zima bude dlouhá. Čeleď se ptá, jestli přes zimu dostane najíst.
+
+1. Propustit část čeledi
+2. Prodat krávu
+3. Vydržet a šetřit
+
+### 11. Hoří stodola  `s_pozar_stodoly`
+
+> V noci chytila stodola. Jestli od lucerny, od blesku, nebo od souseda Hrubého, se kterým se léta přeš o mez, nikdo neví.
+
+1. Postavit ji znovu se sousedy
+2. Postavit ji sám bez cizí pomoci
+3. Obvinit souseda Hrubého
+
+### 12. Vlci u ovčína  `s_vlci`
+
+> Za mrazivých nocí chodí vlci až k ovčínu. Dvě ovce už chybí a psi se bojí vyjít ven.
+
+1. Počkat na ně s kopím
+2. Nastražit oka a jámy
+3. Zavřít stádo a čekat na jaro
+
+### 13. Mor v kraji  `s_mor`
+
+> Z Brodné přišla zpráva, kterou nikdo nechtěl slyšet: mor. Ve vedlejší vsi už zvoní umíráček každý den.
+
+1. Zavřít grunt a nikoho nepouštět
+2. Utéct s rodinou do lesa
+3. Pomáhat nemocným ve vsi
+
+### 14. Mlynář šidí  `s_mlynar`
+
+> Z pytle obilí se vrátilo míň mouky, než by mělo. Mlynář krčí rameny: mlýn prý ztrácí. Jenže jen tvoje obilí.
+
+1. Postavit se mu na mlýnici
+2. Vozit obilí do jiného mlýna
+3. Mlčet
+
+### 15. Cizí osivo  `s_kramar`
+
+> Potulný kramář nabízí osivo z jihu. Prý roste dvakrát rychleji a snese sucho i mráz. Prý.
+
+1. Koupit a zkusit to
+2. Poslat ho dál
+
+### 16. Hrnec v brázdě  `s_poklad`
+
+> Pluh zavadil o něco tvrdého. V brázdě leží rozbitý hliněný hrnec a v něm stříbrné mince s tváří krále, kterého nikdo nepamatuje. Všechno, co je v zemi, patří pánovi.
+
+1. Nechat si ho a mlčet
+2. Odevzdat ho pánovi
+3. Darovat ho kostelu
+
+### 17. Peníze na dluh  `s_lichvar`
+
+> Lichvář z Brodné nabízí půjčku. Dvacet grošů hned, splatit za dva roky. O úroku se mluví potichu.
+
+1. Půjčku vzít
+2. Odmítnout
+
+### 18. Lichvář je zpátky  `s_lichvar_splatka`
+
+> Lichvář stojí na zápraží s knihou pod paží. Dvacet grošů se za dva roky proměnilo ve třicet.
+
+1. Splatit všechno
+2. Vyjednat odklad
+3. Dát mu do zástavy pole
+
+### 19. Horečka  `s_nemoc_ditete`
+
+> [heir.name] leží v horečce a nepoznává ani vlastní mámu. Do rána se rozhodne. Pomoc je drahá, a ta nejlevnější je kořenářka za lesem.
+
+1. Poslat pro kořenářku
+2. Pozvat faráře k modlitbám
+3. Přivést ranhojiče z Brodné
+
+### 20. Čemu se bude učit  `s_vychova`
+
+> [heir.name] dorůstá. [marshal.Title] [marshal.name] nabízí učení v kovárně, farář místo v klášterní škole a doma je práce pro dva.
+
+1. Do učení v kovárně
+2. Do klášterní školy
+3. Nechat doma na gruntu
+
+### 21. Svatba ve vsi  `s_svatba`
+
+> Sousedova dcera se vdává a celá ves je pozvaná. Kdo vystrojí hostinu nebo přinese bohatý dar, o tom se bude mluvit do příštích žní.
+
+1. Nabídnout dvůr a stoly na hostinu
+2. Přinést pěkný dar
+3. Zůstat doma u práce
+
+### 22. Mez se posunula  `s_spor_o_mez`
+
+> Soused Hrubý přeoral mez o dobré tři brázdy. Tvrdí, že tam vždycky byla. Kámen, který ji značil, se nějak ztratil.
+
+1. Jít za rychtářem
+2. Vyřídit si to s Hrubým po svém
+3. Ustoupit, pro pár brázd se nehádat
+
+### 23. Pomluva  `s_carodejnictvi`
+
+> Sousedce pošla kráva a ves si šeptá, že [spouse.name] byl večer u jejího chléva. Farář se ptá, kdo v rodě [dynastyName] umí zaříkávat.
+
+1. Postavit se pomluvě před celou vsí
+2. Zaplatit faráři za mši a svěcenou vodu
+3. Nechat to na faráři
+
+### 24. Večer v krčmě  `s_krcma`
+
+> V krčmě se pije, hraje v kostky a mluví. [spymaster.Title] [spymaster.name] ti nalévá a mrkne: kdo si dnes připlatí, ten zítra něco ví.
+
+1. Zaplatit pár piv a poslouchat
+2. Zahrát si v kostky
+3. Jít domů včas
+
+### 25. Nový zvon  `s_zvon`
+
+> Starý zvon na kostelíku praskl. Farář obchází ves a vybírá na nový. Kdo přispěje nejvíc, toho jméno bude vyryto na okraji zvonu.
+
+1. Přispět štědře
+2. Odpracovat to při stavbě
+3. Nedat nic
+
+### 26. Desátek  `s_desatek`
+
+> Farář přišel pro desátek. Každý desátý snop patří kostelu, tak to bylo vždycky. Letos je ale snopů málo a farář tlustý.
+
+1. Zaplatit celý desátek
+2. Vyjednat polovinu
+3. Odmítnout
+
+### 27. Odvod  `s_odvod`
+
+> Král [king.name] táhne do války a [lord.title] [lord.name] musí dodat muže. Z každého gruntu jednoho. Kdo půjde, může se vrátit s kořistí, se slávou, nebo vůbec.
+
+1. Jít osobně
+2. Poslat čeledína
+3. Vykoupit se
+
+### 28. Bitva  `s_bitva`
+
+> Pod korouhví krále stojíš v první řadě sedláků s kopím v ruce. Naproti se řadí jezdci v železe. Rytíři za vašimi zády čekají, kdo uteče první.
+
+1. Vrhnout se do první řady
+2. Vrhnout se do první řady
+3. Držet se vzadu a přežít
+4. Plenit nepřátelský tábor
+
+### 29. Výkup z poddanství  `s_vykup`
+
+> V truhle pod postelí leží víc grošů, než kdy rod [dynastyName] měl. Za ně se dá koupit to nejcennější: svoboda. [lord.Title] [lord.name] je ochoten jednat.
+
+1. Zaplatit pánovi plnou cenu
+2. Smlouvat o cenu
+3. Ještě počkat
+
+### 30. Pole na prodej  `s_pole`
+
+> Sousední grunt zůstal bez hospodáře a pole jdou na prodej. Svobodný člověk smí kupovat půdu. Poddaný o tom může jen snít.
+
+1. Koupit pole
+2. Nechat to být
+
+### 31. Zemanský statek  `s_zemansky_statek`
+
+> Starý zeman z Pobřežní marky zemřel bez dědiců a jeho tvrz je na prodej i s právem erbu. Kdo ji koupí a dostane královo potvrzení, bude šlechtic. Peníze máš. Královská kancelář ale sedlákům nerada věří.
+
+1. Koupit tvrz a žádat o erb
+2. Ještě ne
+
+### 32. Rytířský pás  `s_pasovani`
+
+> Královský maršál si pamatuje svobodného sedláka z bitvy. Na králův pokyn tě zve ke dvoru: kdo bojuje jako rytíř, může jím být. Za pás se ale platí věrnou službou koruně.
+
+1. Pokleknout a přijmout pás
+2. Odmítnout, grunt je víc než meč
+
+### 33. Všední dny  `s_klidne_obdobi`
+
+> Nic zvláštního se neděje. Dráb nechodí, nebe je klidné a práce na gruntu je pořád dost. Čemu se [ruler.name] letos věnuje?
+
+1. Pracovat na poli od tmy do tmy
+2. Opravit stavení a ohrady
+3. Chodit mezi sousedy
+4. Naučit se počítat od rychtáře
+
+### Krize a ozvěny sedláka
+
+### 1. Prázdná komora  `krize_s_hlad`
+
+> V komoře nezbyl ani pytel mouky. Děti pláčou hlady a čeleď se dívá ke dveřím.
+
+1. Porazit krávu
+2. Prosit pána o obilí
+3. Propustit čeleď
+
+### 2. Ani groš  `krize_s_bida`
+
+> Měšec je prázdný a do pánovy pokladny se platí v grošech, ne v pláči.
+
+1. Prodat dobytek
+2. Najmout se na panský dvůr za mzdu
+3. Půjčit si od rychtáře
+
+### 3. Hrozba vyhnání  `krize_s_nemilost`
+
+> Dráb přinesl vzkaz: [lord.title] [lord.name] má rodu [dynastyName] dost. Ještě jedna stížnost a grunt dostane jiný hospodář.
+
+1. Jít na panský dvůr a prosit
+2. Přinést pánovi dar
+3. Odvést robotu navíc
+
+### 4. Kdo viděl hrnec  `ozvena_s_poklad`
+
+> Krčmářův syn tenkrát pásl husy u tvého pole a viděl, co jsi vyoral. Teď chce podíl. Jinak to řekne drábovi.
+
+1. Zaplatit mu za mlčení
+2. Zapírat
+3. Přiznat se pánovi
+
+### 5. Jidáš z Lipnice  `ozvena_s_udavac`
+
+> Ves nezapomněla, kdo udal vůdce povstání. Na vratech je namalovaný provaz, v kostele si nikdo nesedne vedle tebe a dnes ráno ležel na prahu mrtvý pes.
+
+1. Uspořádat hostinu pro celou ves
+2. Požádat pána o ochranu
+3. Snést to
+
+## Povahy rádců a výchova dědice
+
+Události podle povahy rádců běží ve všech scénářích, výchova dědice je u šlechtice.
+
+### 1. Ruka v truhle  `q_chamtivost`
+
+> Z truhly s penězi rodu [dynastyName] mizí víc, než by se dalo svést na myši. Stopy vedou k jedinému člověku: [target.role] [target.name]. Prý si to jen půjčil.
+
+1. Odpustit a dát najevo, že víš
+2. Zabavit ukradené i s úroky
+3. Zbavit úřadu
+
+### 2. Zaslouží si víc  `q_ctizadost`
+
+> [target.role] [target.name] žádá odměnu za léta služby: půdu, čest a místo, kde ho uvidí každý. A nenápadně dává najevo, že jinde by si ho vážili víc.
+
+1. Vyhovět a štědře odměnit
+2. Odmítnout
+3. Slíbit odměnu později
+
+### 3. Odvážný plán  `q_odvaha`
+
+> [target.role] [target.name] navrhuje udeřit na lapky ve hvozdu dřív, než udeří oni. Plán je odvážný až drzý a [target.name] se už nemůže dočkat.
+
+1. Svolit
+2. Zakázat to
+
+### 4. Věrné srdce  `q_oddanost`
+
+> [target.role] [target.name] přišel v noci s lucernou. Zaslechl rozhovor, který neměl slyšet: někdo z vlastních lidí donáší cizím. Jméno prozradí, ale prosí o milost pro jeho rodinu.
+
+1. Udělit milost rodině
+2. Potrestat celou rodinu
+
+### 5. Kde se bude dědic učit  `n_vychova_dedice`
+
+> [heir.name] dorůstá a rod [dynastyName] musí rozhodnout, kde se bude dědic učit. Může jít jako panoš ke královskému dvoru, učit se u purkrabího správě panství, nebo vyrůst v družině mezi meči.
+
+1. Poslat dědice ke královskému dvoru
+2. Učit se správě panství
+3. Vycvičit dědice v družině

@@ -3,7 +3,7 @@
 // 1264x848 painting; zoom/pan works by animating the SVG viewBox.
 
 import { TERRAIN_DEFS, NOBLE_HOUSES } from './data.js';
-import { attitudeLabel } from './engine.js';
+import { attitudeLabel, decreeList, decreeAvailable, canAffordDecree, issueDecree } from './engine.js';
 import { esc } from './ui.js';
 
 const W = 1264;
@@ -307,6 +307,37 @@ function compass(x, y) {
   </g>`;
 }
 
+// ---------- decrees (one a year) ----------
+
+const RES_SHORT = { gold: 'zlato', food: 'jídlo', army: 'vojsko', stability: 'stabilita', faith: 'víra', prestige: 'prestiž', favor: 'přízeň', legitimacy: 'legitimita' };
+const PROV_SHORT = { garrison: 'posádka', loyalty: 'věrnost', unrest: 'nepokoje', wealth: 'bohatství' };
+const PEASANT_RES = { gold: 'groše', food: 'zásoby', army: 'čeleď', stability: 'grunt', prestige: 'pověst', favor: 'přízeň pána' };
+
+function decreeChips(d) {
+  const sign = (v) => (v > 0 ? `+${v}` : `${v}`);
+  const names = state.scenario === 'sedlak' ? { ...RES_SHORT, ...PEASANT_RES } : RES_SHORT;
+  const chips = [
+    ...Object.entries(d.effects || {}).map(([k, v]) => [`${names[k] || k} ${sign(v)}`, k === 'unrest' ? v < 0 : v > 0]),
+    ...Object.entries(d.prov || {}).map(([k, v]) => [`${PROV_SHORT[k]} ${sign(v)}`, k === 'unrest' ? v < 0 : v > 0]),
+  ];
+  return chips.map(([t, good]) => `<i class="${good ? 'pos' : 'neg'}">${esc(t)}</i>`).join('');
+}
+
+function decreeBlock(provinceId = '') {
+  if (!decreeAvailable(state)) {
+    return state.scenario === 'sedlak'
+      ? `<h4 class="map-sub">Práce na gruntu</h4><p class="map-desc">Letošní práce už je naplánovaná. Další můžeš naplánovat v roce ${state.year + 1}.</p>`
+      : `<h4 class="map-sub">Výnos</h4><p class="map-desc">Letošní výnos už byl vydán. Další můžeš vydat v roce ${state.year + 1}.</p>`;
+  }
+  const list = decreeList(state);
+  return `<h4 class="map-sub">${state.scenario === 'sedlak' ? 'Práce na gruntu' : 'Výnos'} <small>· jednou za rok</small></h4>
+    <div class="decree-list">${Object.entries(list).map(([k, d]) => `
+      <button class="decree" data-decree="${k}" data-decree-prov="${provinceId}"${canAffordDecree(state, k) ? '' : ' disabled title="Na tohle nemáš."'}>
+        <b>${esc(d.label)}</b><span>${esc(d.text)}</span><em>${decreeChips(d)}</em>
+      </button>`).join('')}
+    </div>`;
+}
+
 // ---------- sidebar ----------
 
 function sidebar(html) {
@@ -330,6 +361,7 @@ function verdict(prov) {
 
 function showOverview() {
   if (state.scenario === 'slechtic') return showNobleOverview();
+  if (state.scenario === 'sedlak') return showPeasantOverview();
   const provs = state.provinces.filter((p) => PROVINCES[p.id]);
   const avg = (k) => Math.round(provs.reduce((s, p) => s + p[k], 0) / provs.length);
   const worst = [...provs].sort((a, b) => b.unrest - a.unrest)[0];
@@ -348,6 +380,7 @@ function showOverview() {
         return `<button class="map-chip" data-goto-province="${p.id}"><span>${esc(PROVINCES[p.id].label)}</span><em class="${cls}">${v}</em></button>`;
       }).join('')}
     </div>
+    ${decreeAvailable(state) ? '<p class="map-decree-hint">Letos můžeš vydat jeden výnos. Klikni na provincii.</p>' : ''}
     ${worst && worst.unrest >= 45 ? `<p class="map-warning">Nejvíc to vře v provincii <strong>${esc(PROVINCES[worst.id].label)}</strong> (nepokoje ${worst.unrest}).</p>` : ''}
     <h4 class="map-sub">Legenda</h4>
     <ul class="map-legend">
@@ -376,7 +409,8 @@ function showNobleOverview() {
     </div>
     ${own ? `<h4 class="map-sub">Tvé panství</h4>
       ${statRow('Věrnost', own.loyalty, 'loyalty')}${statRow('Nepokoje', own.unrest, 'unrest')}
-      ${statRow('Bohatství', own.wealth, 'wealth')}${statRow('Posádka', own.garrison, 'garrison')}` : ''}
+      ${statRow('Bohatství', own.wealth, 'wealth')}${statRow('Posádka', own.garrison, 'garrison')}
+      ${decreeBlock(own.id)}` : ''}
     <h4 class="map-sub">Legenda</h4>
     <ul class="map-legend">
       <li><span class="lg-dot"></span>Zlatý bod = místo, na které jde kliknout</li>
@@ -386,7 +420,29 @@ function showNobleOverview() {
   `);
 }
 
+function showPeasantOverview() {
+  const home = state.peasant || { village: 'Lipnice', province: 'brodna' };
+  const r = state.resources;
+  sidebar(`
+    <span class="panel-overline">Kraj ${esc(PROVINCES[home.province].label)}</span>
+    <h3 class="panel-title">Ves ${esc(home.village)}</h3>
+    <p class="map-desc">Tvůj grunt stojí ve vsi ${esc(home.village)} v kraji Brodná, na panství pánů z Bílé Brány. Zbytek země drží král a velké rody. Klikni na kraj a uvidíš, komu patří.</p>
+    ${statRow('Grunt', r.stability, 'wealth')}
+    ${statRow('Přízeň pána', r.favor, 'loyalty')}
+    ${statRow('Pověst ve vsi', r.prestige, 'garrison')}
+    ${decreeBlock()}
+    <h4 class="map-sub">Země</h4>
+    <div class="map-chip-list">
+      ${state.provinces.map((p) => {
+        const f = foreignOwner(p.id);
+        return `<button class="map-chip" data-goto-province="${p.id}"><span>${esc(PROVINCES[p.id].label)}</span><em>${p.id === home.province ? 'tvůj kraj' : f ? esc(f.label) : ''}</em></button>`;
+      }).join('')}
+    </div>
+  `);
+}
+
 function showForeignProvince(id, f) {
+  if (state.scenario === 'sedlak') return showPeasantProvince(id, f);
   const p = PROVINCES[id];
   const features = Object.entries(FEATURES).filter(([, x]) => x.province === id);
   const h = f.house;
@@ -401,6 +457,22 @@ function showForeignProvince(id, f) {
     ${features.length ? `<h4 class="map-sub">Místa</h4><div class="map-chip-list">
       ${features.map(([fid, x]) => `<button class="map-chip" data-goto-feature="${fid}"><span>${esc(x.name)}</span><em>${esc(x.kind)}</em></button>`).join('')}
     </div>` : ''}
+    <button class="map-back" data-overview>← Celá země</button>
+  `);
+}
+
+// a peasant sees who rules a land, not its politics
+function showPeasantProvince(id, f) {
+  const p = PROVINCES[id];
+  const home = state.peasant || { village: 'Lipnice', province: 'brodna' };
+  const h = f.house;
+  sidebar(`
+    <span class="panel-overline">${f.kind === 'crown' ? 'Korunní země' : 'Panství velkého rodu'}</span>
+    <h3 class="panel-title">${esc(p.label)}</h3>
+    <span class="map-verdict ${id === home.province ? 'good' : 'warn'}">${esc(f.name)}</span>
+    <p class="map-desc">${esc(h ? f.def.text : p.text)}</p>
+    ${h ? `<p class="map-desc"><strong>${h.head.gender === 'female' ? 'Paní' : 'Pán'} ${esc(h.head.name)}</strong>, ${h.head.age} let</p>` : `<p class="map-desc">Vládne tu král ${esc(state.king ? state.king.name : '')}.</p>`}
+    ${id === home.province ? `<p class="map-decree-hint">Tady, ve vsi ${esc(home.village)}, stojí tvůj grunt.</p>` : ''}
     <button class="map-back" data-overview>← Celá země</button>
   `);
 }
@@ -421,6 +493,7 @@ function showProvince(id) {
     ${statRow('Nepokoje', prov.unrest, 'unrest')}
     ${statRow('Bohatství', prov.wealth, 'wealth')}
     ${statRow('Posádka', prov.garrison, 'garrison')}
+    ${prov.lost ? '' : decreeBlock(id)}
     ${features.length ? `<h4 class="map-sub">Místa</h4><div class="map-chip-list">
       ${features.map(([fid, f]) => `<button class="map-chip" data-goto-feature="${fid}"><span>${esc(f.name)}</span><em>${esc(f.kind)}</em></button>`).join('')}
     </div>` : ''}
@@ -693,6 +766,18 @@ export function wireMapChrome() {
     if (t.closest('[data-overview]')) {
       selectThing(null);
       animateTo({ x: 0, y: 0, w: W, h: H });
+      return;
+    }
+    const decree = t.closest('[data-decree]');
+    if (decree && !decree.disabled) {
+      const notes = issueDecree(state, decree.dataset.decree, decree.dataset.decreeProv);
+      if (notes) {
+        document.dispatchEvent(new CustomEvent('kingdom:decree', { detail: { label: decreeList(state)[decree.dataset.decree].label, notes } }));
+        const keep = selected;
+        selected = null;
+        if (keep) selectThing(keep);
+        else showOverview();
+      }
       return;
     }
     const choose = t.closest('[data-choose-route]');

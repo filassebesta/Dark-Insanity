@@ -1,4 +1,4 @@
-import { createNewGame, crownNoble, saveGame, listSaves, loadGame, loadMostRecentSave, deleteSave, loadSettings, saveSettings } from './state.js';
+import { createNewGame, crownNoble, ennoblePeasant, saveGame, listSaves, loadGame, loadMostRecentSave, deleteSave, loadSettings, saveSettings } from './state.js';
 import { advanceTurn, resolveChoice, resolveRouteChoice, checkEndConditions } from './engine.js';
 import {
   showScreen, renderResourceBar, updateBookTabFlags, renderTurnSummary, renderEventCard,
@@ -66,7 +66,7 @@ function endGame(gameOver) {
 }
 
 // The main theme plays throughout; fights and wars switch to the battle theme.
-const BATTLE_ENDINGS = ['conquest', 'collapse', 'executed'];
+const BATTLE_ENDINGS = ['conquest', 'collapse', 'executed', 'ruined'];
 
 function presentEvent(event) {
   playMusic(event.music || 'menu'); // the main theme runs through the whole game
@@ -234,6 +234,12 @@ function wireActions() {
           crownNoble(currentState);
           saveGame(currentState);
           toast(`${currentState.ruler.name} usedá na trůn.`);
+          startGame(currentState);
+        } else if (currentState && currentState.gameOver && currentState.gameOver.type === 'ennobled') {
+          // the peasant earned a coat of arms: the save carries on as the Šlechtic scenario
+          ennoblePeasant(currentState);
+          saveGame(currentState);
+          toast(`${currentState.ruler.name} přebírá tvrz v Pobřežní marce.`);
           startGame(currentState);
         }
         break;
@@ -421,6 +427,14 @@ function wireClickSound() {
     if (e.target.closest('button')) playClickSound();
   });
 }
+
+// a decree issued on the map: save, refresh the bars and tell the player
+document.addEventListener('kingdom:decree', (e) => {
+  if (!currentState) return;
+  saveGame(currentState);
+  refreshAllPanels();
+  toast(`${currentState.scenario === 'sedlak' ? 'Naplánováno' : 'Výnos vydán'}: ${e.detail.label}`);
+});
 
 wireActions();
 wireMapChrome();

@@ -67,6 +67,8 @@ letters, watermark or signature.
 
 ✅ = hotovo a ve hře · ❌ = chybí
 
+> ❌ **Chybí: všechno ze sekce 14** (scénář Sedlák: 8 portrétů sedláka, 10 portrétů rodiny a vsi, 3 konce; volitelně 38 scén sedláka a 5 scén rádců).
+
 | Stav | Soubor | Poměr | Cílové rozlišení | Kde se zobrazí | Prompt |
 |---|---|---|---|---|---|
 | ✅ | `ruler_king_male.jpg`, `ruler_king_female.jpg` | 4:5 | 1024 × 1280 | Postava, plaketa, Dvůr | 2.1, 2.2 |
@@ -1181,3 +1183,147 @@ Stejný styl i formát jako v sekcích 10 až 12. Generuj dávkově, po pěti a�
 | `ozvena_n_pisatel.jpg` | Bedýnka bez erbu | `n_nalezeny_dopis` | A plain unmarked wooden box opened on a table by candlelight, revealing a letter and lists of names and sums. |
 | `ozvena_n_pomsta.jpg` | Krev za krev | `n_spiklenci_zvou` | A hooded assassin with a dagger climbing the wall of a fort at night, a confidant watching from a shadowed window. |
 | `ozvena_n_rychtar.jpg` | Cepy pod hradbami | `n_robota` | Angry peasants with flails and pitchforks led by a village reeve gathered beneath the walls of a small fort at dusk. |
+
+---
+
+## 14. Scénář Sedlák a nové mechaniky
+
+Sedlák je ve hře hotový a hratelný. Dokud tyhle obrázky nenahraješ, portréty
+ukazují zlaté iniciály a scény si půjčují obrázek z podobné události.
+
+**Priorita:** 14.1 a 14.2 (portréty) a 14.3 (konce) jsou nejdůležitější, bez
+nich je sedlák „bez tváře“. Scény 14.4 a 14.5 jsou vylepšení: hra už teď
+ukazuje půjčené obrázky, takže nespěchají.
+
+### 14.0 Dávkový prompt (pro AI bez přístupu k repozitáři)
+
+Zkopíruj celý blok, pod něj vlož řádky z tabulky (název souboru + popis)
+a pošli najednou. Ideálně 5 až 10 obrázků v jedné dávce.
+
+```
+Generate one separate image for each line below. Each line has a file name
+and a description. Return every image as its own file named exactly as the
+file name. Do not combine images into a grid or sprite sheet.
+
+Format for files starting with "ruler_" or "s_" and ending in _male/_female
+(portraits): aspect ratio 4:5, 1024 x 1280. Chest-up portrait, slightly
+turned, plain dark umber background fading to black, warm side light, the
+face in the upper third of the frame, centred, with a little headroom.
+
+Format for files starting with "ending_": aspect ratio 16:9, 1920 x 1080,
+wide cinematic painting, the centre of the image calm enough for text.
+
+Format for all other files (event scenes): aspect ratio 1:1, 2048 x 2048,
+main subject in the centre and upper part, the lower third darker and calm.
+
+Style for every image: painted in the style of a dark-fantasy narrative RPG,
+muted oil painting with visible loose brushwork and subtle canvas texture,
+desaturated earthy palette of ochre, rust, olive green and dusty slate blue,
+soft dramatic chiaroscuro lighting, melancholic late-medieval Central
+European atmosphere, realistic proportions, similar in mood to "The Life and
+Suffering of Sir Brante". Strong colour only on small accents. Avoid: anime,
+cartoon, 3D render, photography, oversaturated colours, airbrushed digital
+art, any text, letters, watermark or signature.
+
+Images:
+```
+
+### 14.1 Portréty sedláka (avatar) — 4:5, cíl 1024 × 1280
+
+Hra je bere podle postavení: poddaný sedlák (`peasant`), po výkupu nebo
+hrdinství svobodník (`freeman`). Od 55 let se ukáže stará verze (`_old`).
+U starých verzí přilož mladou a připiš *„the same person as in the attached
+image, 30 years older“*.
+
+| Soubor | Popis pro Gemini |
+|---|---|
+| `ruler_peasant_male.jpg` | A late-medieval Central European peasant man of about 22, a serf, sunburnt and lean, short unkempt brown hair, light stubble, stubborn hopeful eyes, a coarse undyed linen shirt and a patched brown wool tunic, a rope belt. |
+| `ruler_peasant_female.jpg` | A late-medieval Central European peasant woman of about 22, a serf, sunburnt with strong hands, brown hair tied under a plain linen kerchief, stubborn hopeful eyes, a coarse undyed linen blouse and a patched brown wool dress. |
+| `ruler_peasant_male_old.jpg` | The same peasant man about 60 years old, weathered deeply lined face, grey beard, bent shoulders, the same coarse wool clothes, worn but proud. |
+| `ruler_peasant_female_old.jpg` | The same peasant woman about 60 years old, weathered deeply lined face, grey hair under a linen kerchief, the same coarse wool clothes, worn but proud. |
+| `ruler_freeman_male.jpg` | A late-medieval free farmer of about 35, well fed and confident, trimmed beard, a good dark green wool coat with leather buttons, a leather belt with a small purse and a knife, the look of a man who owes no one. |
+| `ruler_freeman_female.jpg` | A late-medieval free farmer's wife and head of the farm, about 35, confident and shrewd, hair in a neat white linen coif, a good dark green wool dress with a leather girdle and a small purse. |
+| `ruler_freeman_male_old.jpg` | The same free farmer about 60, grey beard, lined face, the same good wool coat, a walking staff, calm authority. |
+| `ruler_freeman_female_old.jpg` | The same free farmer woman about 60, grey hair under a linen coif, lined face, the same good wool dress, calm authority. |
+
+### 14.2 Rodina a ves — 4:5, cíl 1024 × 1280
+
+Místo kancléře, maršála a špehmistra má sedlák rychtáře, kováře a krčmáře.
+Rodina (manžel/manželka, dědic) má vlastní selské portréty. Hra pohlaví losuje,
+proto vždy obě verze.
+
+| Soubor | Popis pro Gemini |
+|---|---|
+| `s_chancellor_male.jpg` | A village reeve (rychtář) of about 55, grey-bearded and stern, a dark brown wool coat, a wax tablet and a small wooden seal on a cord around his neck. |
+| `s_chancellor_female.jpg` | A village reeve woman of about 55, stern and clever, grey hair under a dark linen coif, a dark brown wool dress, a small wooden seal on a cord around her neck. |
+| `s_marshal_male.jpg` | A village blacksmith of about 40, broad-shouldered, soot on his face and forearms, a leather apron over a rough shirt, a heavy hammer resting on his shoulder. |
+| `s_marshal_female.jpg` | A village blacksmith woman of about 40, strong and broad-shouldered, soot on her face and arms, hair tied back, a leather apron over a rough shirt, holding tongs. |
+| `s_spymaster_male.jpg` | A village innkeeper of about 45, round-faced and sly, a knowing smile, a stained apron, holding a wooden tankard, a smoky tavern glow behind him. |
+| `s_spymaster_female.jpg` | A village innkeeper woman of about 45, sharp-eyed and sly, a knowing smile, a stained apron, holding a jug of beer, a smoky tavern glow behind her. |
+| `s_spouse_male.jpg` | A young peasant husband of about 25, honest tired face, short hair, a coarse wool tunic, a scythe handle visible at his shoulder. |
+| `s_spouse_female.jpg` | A young peasant wife of about 22, gentle but tough, brown hair braided under a linen kerchief, a coarse wool dress, flour on her hands. |
+| `s_heir_male.jpg` | A peasant boy of about 10, barefoot farm child with a dirty face, tousled hair, curious bright eyes, a patched linen shirt. |
+| `s_heir_female.jpg` | A peasant girl of about 10, barefoot farm child with a dirty face, a messy braid, curious bright eyes, a patched linen dress. |
+
+### 14.3 Konce scénáře Sedlák — 16:9, cíl 1920 × 1080
+
+| Soubor | Konec | Popis pro Gemini |
+|---|---|---|
+| `ending_ennobled.jpg` | Erb a tvrz | A former peasant kneeling in plain clothes before a knight who touches his shoulder with a sword, a newly painted coat of arms on a shield leaning nearby, villagers watching from the edge of a castle courtyard. |
+| `ending_expelled.jpg` | Vyhnání z gruntu | A peasant family with a small handcart and bundles walking away from their farm along a muddy road at dusk, a lord's bailiff watching from the gate. |
+| `ending_ruined.jpg` | Zpustlý grunt | An abandoned peasant farmstead with a collapsed roof, overgrown fields and a broken plough, crows on the fence, grey autumn sky. |
+
+### 14.4 Scény sedláka — 1:1, cíl 2048 × 2048
+
+| Soubor | Událost | Popis pro Gemini |
+|---|---|---|
+| `s_robota.jpg` | Robota | Serfs reaping a lord's wheat field under the eye of a bailiff with a stick, their own small unharvested field visible in the distance. |
+| `s_drab.jpg` | Dráb si přišel | A smug bailiff with a stick and a parchment standing at the door of a peasant cottage, demanding coins from a peasant family. |
+| `s_pan_navsteva.jpg` | Pán projíždí vsí | A lord on horseback with a small retinue stopping in front of a peasant farmstead, the peasant family bowing in the muddy yard. |
+| `s_pansky_hon.jpg` | Panský hon | A noble hunting party with hounds and horses galloping through a peasant's ripe wheat field, a peasant raising his hands in despair. |
+| `s_pytlactvi.jpg` | Jelen v panském lese | A peasant setting a snare at night in a dark forest, a stag in the moonlit clearing beyond. |
+| `s_povstani.jpg` | Sedláci se bouří | Peasants with flails, scythes and torches gathering secretly in a village tavern at night around a rebel leader. |
+| `s_rychtar_volba.jpg` | Nový rychtář | Villagers gathered under a linden tree on the village green, raising hands to choose a new reeve, an old reeve holding a wooden seal. |
+| `s_trh.jpg` | Trh v Brodné | A busy small-town market with cattle, carts and stalls of grain and iron tools, a peasant haggling over a cow. |
+| `s_krupobiti.jpg` | Krupobití | A violent hailstorm over a wheat field, flattened grain in the mud, a peasant family watching helplessly from a doorway. |
+| `s_spatna_uroda.jpg` | Slabé žně | A thin poor harvest on a small field, a few sheaves, a worried peasant family counting sacks in a half-empty barn. |
+| `s_pozar_stodoly.jpg` | Hoří stodola | A wooden barn burning at night beside a peasant cottage, villagers with buckets forming a line, sparks in the sky. |
+| `s_vlci.jpg` | Vlci u ovčína | Wolves circling a wooden sheep pen in a snowy night, a peasant with a lantern and a spear at the gate. |
+| `s_mor.jpg` | Mor v kraji | A plague-stricken village, a cart with shrouded bodies, a priest with a bell, doors marked with chalk crosses. |
+| `s_mlynar.jpg` | Mlynář šidí | A sly miller weighing a sack of flour inside a watermill, a suspicious peasant watching the scales. |
+| `s_kramar.jpg` | Cizí osivo | A travelling peddler with a loaded mule showing a pouch of strange seeds to a peasant at a farm gate. |
+| `s_poklad.jpg` | Hrnec v brázdě | A peasant kneeling in a freshly ploughed furrow, uncovering a broken clay pot full of old silver coins. |
+| `s_lichvar.jpg` | Peníze na dluh | A moneylender in a fur-trimmed coat counting coins on a table for a nervous peasant, a ledger open beside him. |
+| `s_lichvar_splatka.jpg` | Lichvář je zpátky | A moneylender with a ledger and two thugs at a peasant's door, the family's cow being led away. |
+| `s_nemoc_ditete.jpg` | Horečka | A sick child in a straw bed in a dark cottage, a mother holding a candle, an old herb woman preparing a brew. |
+| `s_vychova.jpg` | Čemu se bude učit | A peasant child standing between a blacksmith at an anvil and a monk holding a book, a farm in the background. |
+| `s_svatba.jpg` | Svatba ve vsi | A village wedding feast in a farmyard, long tables, musicians with bagpipes and fiddles, dancing villagers. |
+| `s_spor_o_mez.jpg` | Mez se posunula | Two peasants arguing over a field boundary marked by a missing stone, a ploughed strip between them. |
+| `s_carodejnictvi.jpg` | Pomluva | Villagers whispering and pointing at a peasant woman by a dead cow in a barn, a priest approaching. |
+| `s_krcma.jpg` | Večer v krčmě | A smoky village tavern, peasants drinking and playing dice at a rough table, an innkeeper leaning over to whisper. |
+| `s_zvon.jpg` | Nový zvon | Villagers and a priest lifting a new bronze bell into a small wooden church tower with ropes. |
+| `s_desatek.jpg` | Desátek | A fat village priest with a cart collecting sheaves of grain as tithe from a reluctant peasant family. |
+| `s_odvod.jpg` | Odvod | A royal recruiter reading a levy order in a village square, young peasant men lining up with spears, mothers crying. |
+| `s_bitva.jpg` | Bitva | Peasant levies with spears in the front line of a battle, armoured knights charging toward them, banners and smoke. |
+| `s_vykup.jpg` | Výkup z poddanství | A peasant placing a heavy purse on a lord's table, the lord pressing his seal onto a parchment of freedom. |
+| `s_pole.jpg` | Pole na prodej | A free farmer walking the boundary of a new field with a reeve, measuring with a rod, a deed in hand. |
+| `s_zemansky_statek.jpg` | Zemanský statek | A small old stone manor house on the coast with a tower, a free farmer and a royal clerk looking at it. |
+| `s_pasovani.jpg` | Rytířský pás | A royal marshal girding a kneeling commoner with a knight's belt and sword in a castle hall, nobles watching with suspicion. |
+| `s_klidne_obdobi.jpg` | Všední dny | A peaceful farmstead in Lipnice village on a summer evening, a peasant family working in the field, a church tower in the distance. |
+| `krize_s_hlad.jpg` | Prázdná komora | An empty pantry in a peasant cottage, a starving family around an empty pot, children with hollow cheeks. |
+| `krize_s_bida.jpg` | Ani groš | A peasant turning out an empty purse on a bare table, a bailiff waiting at the door. |
+| `krize_s_nemilost.jpg` | Hrozba vyhnání | A bailiff nailing a notice to the door of a peasant cottage, the family watching in fear. |
+| `ozvena_s_poklad.jpg` | Kdo viděl hrnec | A sly boy whispering to a peasant at a fence, pointing at the threshold of a cottage. |
+| `ozvena_s_udavac.jpg` | Jidáš z Lipnice | A painted rope on the door of a peasant cottage, villagers turning their backs in the village street. |
+
+### 14.5 Scény rádců a výchovy — 1:1, cíl 2048 × 2048
+
+Patří k novým povahám rádců (všechny scénáře) a k výchově dědice u šlechtice.
+
+| Soubor | Událost | Popis pro Gemini |
+|---|---|---|
+| `q_chamtivost.jpg` | Ruka v truhle | A counsellor caught at night with his hand in an open treasure chest, a guard with a lantern in the doorway. |
+| `q_ctizadost.jpg` | Zaslouží si víc | An ambitious counsellor in fine robes standing proudly before a seated ruler, gesturing at a map of lands he wants. |
+| `q_odvaha.jpg` | Odvážný plán | A bold commander pointing at a forest on a war table map, eager soldiers behind him, candlelight. |
+| `q_oddanost.jpg` | Věrné srdce | A loyal counsellor with a lantern whispering a warning to a ruler in a dark castle corridor at night. |
+| `n_vychova_dedice.jpg` | Kde se bude dědic učit | A young noble heir in a castle courtyard between a knight with a practice sword and a steward with account books. |

@@ -5,15 +5,15 @@ import { ICONS } from './icons.js';
 export const SEASONS = ['Jaro', 'Léto', 'Podzim', 'Zima'];
 
 export const RESOURCE_DEFS = [
-  { key: 'gold', label: 'Zlato', icon: ICONS.gold, critical: 10 },
-  { key: 'food', label: 'Jídlo', icon: ICONS.food, critical: 15 },
-  { key: 'army', label: 'Vojsko', icon: ICONS.army, critical: 10 },
-  { key: 'stability', label: 'Stabilita', icon: ICONS.stability, critical: 15 },
+  { key: 'gold', label: 'Zlato', icon: ICONS.gold, critical: 10, labels: { sedlak: 'Groše' } },
+  { key: 'food', label: 'Jídlo', icon: ICONS.food, critical: 15, labels: { sedlak: 'Zásoby' } },
+  { key: 'army', label: 'Vojsko', icon: ICONS.army, critical: 10, labels: { sedlak: 'Čeleď' } },
+  { key: 'stability', label: 'Stabilita', icon: ICONS.stability, critical: 15, labels: { sedlak: 'Grunt' } },
   { key: 'legitimacy', label: 'Legitimita', icon: ICONS.legitimacy, critical: 15, labels: { slechtic: 'Nárok na trůn' } },
   { key: 'faith', label: 'Víra', icon: ICONS.faith, critical: 10 },
-  { key: 'prestige', label: 'Prestiž', icon: ICONS.prestige, critical: 5 },
-  // Šlechtic only: the king's goodwill; at zero the king takes the estate away
-  { key: 'favor', label: 'Přízeň krále', icon: ICONS.favor, critical: 15 },
+  { key: 'prestige', label: 'Prestiž', icon: ICONS.prestige, critical: 5, labels: { sedlak: 'Pověst' } },
+  // Šlechtic: the king's goodwill, Sedlák: the lord's; at zero the land is taken away
+  { key: 'favor', label: 'Přízeň krále', icon: ICONS.favor, critical: 15, labels: { sedlak: 'Přízeň pána' } },
 ];
 
 /** Resource label as the current scenario calls it (legitimacy = claim to the throne for a noble). */
@@ -60,6 +60,9 @@ export const NOBLE_HOUSES = [
     text: 'Hrdý pohraniční rod, který stráží hranici s Marcemi. Věrní, prchliví a nebezpeční, když se cítí uraženi.' },
 ];
 export const NOBLE_HOME = 'pobrezni-mark';
+
+// Sedlák scenario: a farm in the village of Lipnice, on the lands of the lords of Bílá Brána.
+export const PEASANT_HOME = { village: 'Lipnice', province: 'brodna', house: 'brana' };
 
 export const TERRAIN_DEFS = {
   forest: { key: 'forest', label: 'Lesní stezka', icon: ICONS.forest, riskLabel: 'přepadení bandity', baseRisk: 0.45 },

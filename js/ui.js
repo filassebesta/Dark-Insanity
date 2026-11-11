@@ -1,9 +1,10 @@
 import { RESOURCE_DEFS, TRAIT_DEFS, TERRAIN_DEFS, SEASONS, NOBLE_HOUSES, resourceLabel, activeResourceDefs, tierTitle } from './data.js';
-import { interpolate, computeSuccessChance, attitudeLabel, ownProvinces, reignEpithet } from './engine.js';
+import { interpolate, computeSuccessChance, attitudeLabel, ownProvinces, reignEpithet, decreeAvailable } from './engine.js';
 import { ICONS } from './icons.js';
 import { playMusic, setAllMuted } from './audio.js';
 import { rulerPortraitCandidates, memberPortraitCandidates, portraitImg } from './character.js';
-import { roleLabel, loyaltyLabel } from './court.js';
+import { roleLabel, loyaltyLabel, quirkLabel } from './court.js';
+import { councilAdvice } from './council.js';
 
 const DEFAULT_SCENE = 'assets/events/scene_default.jpg';
 
@@ -138,8 +139,21 @@ export function updateBookTabFlags(state) {
   if (state.houses) housesTab.classList.toggle('flagged', state.resources.favor <= 25 || state.houses.some((h) => h.attitude < 25));
   const anyDisloyal = [state.heir, state.spouse, state.chancellor, state.marshal, state.spymaster]
     .some((c) => c.alive && c.loyalty <= 25);
-  document.querySelector('.book-tab[data-panel="map"]').classList.toggle('flagged', anyUnrest);
-  document.querySelector('.book-tab[data-panel="court"]').classList.toggle('flagged', anyDisloyal);
+  const mapTab = document.querySelector('.book-tab[data-panel="map"]');
+  mapTab.classList.toggle('flagged', anyUnrest);
+  mapTab.classList.toggle('has-decree', decreeAvailable(state));
+  mapTab.title = decreeAvailable(state) ? 'Letos můžeš vydat výnos' : '';
+  const courtTab = document.querySelector('.book-tab[data-panel="court"]');
+  courtTab.classList.toggle('flagged', anyDisloyal);
+  // a peasant has a family and neighbours, not a court
+  const peasant = state.scenario === 'sedlak';
+  courtTab.textContent = peasant ? 'Rodina' : 'Dvůr';
+  document.getElementById('court-title').textContent = peasant ? 'Rodina a ves' : 'Dvůr';
+  document.getElementById('court-overline').textContent = peasant ? 'Rod a sousedé' : 'Rod a rádci';
+  document.getElementById('court-hint').textContent = peasant
+    ? 'Klikni na člena rodiny nebo souseda a dozvíš se, kdo to je a co ho ovlivnilo.'
+    : 'Klikni na člena dvora a dozvíš se, kdo to je a co ho ovlivnilo.';
+  mapTab.title = decreeAvailable(state) ? (peasant ? 'Letos můžeš naplánovat práci na gruntu' : 'Letos můžeš vydat výnos') : '';
 }
 
 // ---------- character plaque (bottom of the scene) ----------
@@ -221,6 +235,7 @@ export function triggerCardEntrance() {
 
 function resetOutcomeBlocks() {
   document.getElementById('event-extra').innerHTML = '';
+  clearCouncil();
   document.getElementById('outcome-label').hidden = true;
   document.getElementById('outcome-effects').hidden = true;
   document.getElementById('outcome-effects').innerHTML = '';
@@ -264,8 +279,10 @@ export function renderEventCard(state, event, handlers) {
   }
 
   let shown = 0;
+  const shownAt = {};
   event.choices.forEach((choice, index) => {
     if (choice.requires && !choice.requires(state)) return; // e.g. needs a secret or a conspiracy
+    shownAt[index] = shown;
     let tag = '';
     if (choice.isRoll) {
       const pct = Math.round(computeSuccessChance(state, choice) * 100);
@@ -282,6 +299,35 @@ export function renderEventCard(state, event, handlers) {
     btn.addEventListener('click', () => handlers.onChoiceSelected(index));
     choiceList.appendChild(btn);
   });
+  renderCouncil(state, event, shownAt);
+}
+
+// ---------- the council: advisers recommend a choice (see council.js) ----------
+
+function clearCouncil() {
+  const el = document.getElementById('event-council');
+  el.innerHTML = '';
+  el.hidden = true;
+}
+
+function renderCouncil(state, event, shownAt) {
+  const el = document.getElementById('event-council');
+  const advice = councilAdvice(state, event);
+  if (!advice.length) { clearCouncil(); return; }
+  el.innerHTML = `<span class="council-title">Rada</span>` + advice.map((a) => {
+    const c = a.person;
+    const role = roleLabel(a.role, c.gender, state.scenario);
+    const choice = event.choices[a.index];
+    return `<div class="council-row" data-person="${a.role}" role="button" tabindex="0" title="${esc(role)} ${esc(c.name)} · ${esc(loyaltyLabel(c.loyalty, c.gender))}${c.quirk ? ' · ' + esc(quirkLabel(c)) : ''}">
+      <div class="council-avatar">${esc(c.name[0])}${portraitImg(memberPortraitCandidates(c, a.role, state.scenario), c.name, 'council-avatar-img')}</div>
+      <div class="council-body">
+        <span class="council-who">${esc(role)} ${esc(c.name)} <em>${esc(loyaltyLabel(c.loyalty, c.gender).toLowerCase())}</em></span>
+        <span class="council-line">„${esc(a.line)}“</span>
+        <span class="council-pick">Doporučuje: <b>${shownAt[a.index] + 1}. ${esc(choice.label)}</b></span>
+      </div>
+    </div>`;
+  }).join('');
+  el.hidden = false;
 }
 
 // An echo names the old decision it comes from; a crisis says what ran out.
@@ -315,6 +361,7 @@ const OUTCOME_LABELS = {
 
 export function renderOutcome(state, result, onContinue) {
   triggerCardEntrance();
+  clearCouncil();
   document.getElementById('event-extra').innerHTML = '';
 
   const labelEl = document.getElementById('outcome-label');
@@ -362,9 +409,9 @@ export function renderCourtPanel(state) {
   grid.innerHTML = '';
   const f = (c, male, female) => (c.gender === 'female' ? female : male);
   const members = [
-    { data: state.ruler, role: f(state.ruler, 'Vládce', 'Vládkyně'), extra: tierLabel(state.ruler), portraits: rulerPortraitCandidates(state.ruler) },
+    { data: state.ruler, role: state.scenario === 'sedlak' ? f(state.ruler, 'Hospodář', 'Hospodyně') : f(state.ruler, 'Vládce', 'Vládkyně'), extra: tierLabel(state.ruler), portraits: rulerPortraitCandidates(state.ruler) },
     ...['heir', 'spouse', 'chancellor', 'marshal', 'spymaster'].map((r) => (
-      { data: state[r], role: roleLabel(r, state[r].gender, state.scenario), portraits: memberPortraitCandidates(state[r], r), person: r })),
+      { data: state[r], role: roleLabel(r, state[r].gender, state.scenario), portraits: memberPortraitCandidates(state[r], r, state.scenario), person: r })),
   ];
   for (const m of members) {
     const card = document.createElement('button');
@@ -381,6 +428,8 @@ export function renderCourtPanel(state) {
       <div class="role">${m.role}</div>
       <strong>${name}${alive ? '' : ' †'}</strong>
       <div>${m.data.age} let · ${detail}</div>
+      ${m.data.quirk ? `<div class="court-quirk">${esc(quirkLabel(m.data))}</div>` : ''}
+      ${m.person === 'heir' && m.data.traits ? `<div class="court-quirk">${TRAIT_DEFS.map((t) => `${t.icon}${m.data.traits[t.key]}`).join(' ')}</div>` : ''}
     `;
     grid.appendChild(card);
   }
@@ -402,7 +451,7 @@ function bar(value, cls) {
 
 export function renderHousesPanel(state) {
   const host = document.getElementById('houses-list');
-  if (!host || !state.houses) return;
+  if (!host || !state.houses || !state.noble) return; // the houses panel belongs to the noble scenario
   const k = state.king;
   const kh = k.heir && k.heir.alive ? k.heir : null;
   const kingCard = `
@@ -483,7 +532,13 @@ const ENDING_TITLES = {
   crowned: 'Korunovace',
   executed: 'Poprava',
   exile: 'Vyhnanství',
+  ennobled: 'Erb a tvrz',
+  expelled: 'Vyhnání z gruntu',
+  ruined: 'Zpustlý grunt',
 };
+
+// endings after which the same save carries on one step higher
+const CONTINUE_LABELS = { crowned: 'Vládnout jako panovník', ennobled: 'Pokračovat jako šlechtic' };
 
 export function renderEndingScreen(state, gameOver) {
   const screen = document.getElementById('screen-ending');
@@ -498,11 +553,13 @@ export function renderEndingScreen(state, gameOver) {
   const epithetEl = document.getElementById('ending-epithet');
   epithetEl.hidden = !epithet;
   if (epithet) epithetEl.textContent = `Kronika zapíše: ${state.ruler.name} ${epithet.word}, ${epithet.reason}.`;
-  document.getElementById('ending-continue').hidden = gameOver.type !== 'crowned';
+  const cont = document.getElementById('ending-continue');
+  cont.hidden = !CONTINUE_LABELS[gameOver.type];
+  if (CONTINUE_LABELS[gameOver.type]) cont.textContent = CONTINUE_LABELS[gameOver.type];
   const years = state.turn > 0 ? Math.ceil(state.turn / SEASONS.length) : 0;
   document.getElementById('ending-stats').innerHTML = [
     ['Dynastie', state.dynastyName],
-    [state.scenario === 'slechtic' ? 'Let rodu' : 'Let vlády', years],
+    [state.scenario === 'panovnik' ? 'Let vlády' : 'Let rodu', years],
     ['Generací', state.generation],
     ['Zlato', state.resources.gold],
     ['Stabilita', state.resources.stability],

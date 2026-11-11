@@ -87,8 +87,16 @@ const NOBLE_ROLE_LABELS = {
   spymaster: ['Důvěrník', 'Důvěrnice'],
 };
 
+// a peasant's council is the village: the reeve, the smith and the innkeeper
+const PEASANT_ROLE_LABELS = {
+  chancellor: ['Rychtář', 'Rychtářka'],
+  marshal: ['Kovář', 'Kovářka'],
+  spymaster: ['Krčmář', 'Krčmářka'],
+};
+
 export function roleLabel(role, gender, scenario) {
-  const pair = (scenario === 'slechtic' && NOBLE_ROLE_LABELS[role]) || ROLE_LABELS[role];
+  const pair = (scenario === 'slechtic' && NOBLE_ROLE_LABELS[role])
+    || (scenario === 'sedlak' && PEASANT_ROLE_LABELS[role]) || ROLE_LABELS[role];
   return pair ? pair[gender === 'female' ? 1 : 0] : '';
 }
 
@@ -102,9 +110,72 @@ function hash(str) {
   return h >>> 0;
 }
 
+const PEASANT_BIOS = {
+  chancellor: {
+    origin: [
+      'Rychtářem je ve vsi Lipnice už patnáct let a zná každou mez i každý dluh.',
+      'Je {synem|dcerou} bývalého rychtáře a úřad zdědil{|a} spolu s pečetidlem a hádkami sousedů.',
+      'Kdysi sloužil{|a} jako písař na panském dvoře, umí číst a dává to znát.',
+    ],
+    nature: [
+      'Je spravedliv{ý|á}, ale nikdy ne zadarmo.',
+      'S pánem mluví uctivě a se sousedy přísně. Někdy je to obráceně, když nikdo neposlouchá.',
+      'Všechno si zapisuje. Hlavně to, kdo komu co slíbil.',
+    ],
+  },
+  marshal: {
+    origin: [
+      'Kovárna u potoka patří {jeho|její} rodině odnepaměti.',
+      'Přišel{|a} do vsi jako tovaryš a zůstal{|a}, protože nikdo jiný neuměl okovat koně.',
+      'Sloužil{|a} kdysi v panské zbrojnici a umí víc než jen podkovy.',
+    ],
+    nature: [
+      'Má ruce jako lopaty a srdce na dlani.',
+      'Mluví málo a hlasitě. Když praští do kovadliny, ves ztichne.',
+      'Kdyby přišlo na nejhorší, ves by šla za {ním|ní}.',
+    ],
+  },
+  spymaster: {
+    origin: [
+      'Krčma na návsi je {jeho|její} a s ní i všechno, co se v ní kdy řeklo.',
+      'Je {synem|dcerou} formana a o světě za vsí ví víc než celá ves dohromady.',
+      'Do Lipnice se přiženil{|a} a od první svatby nalévá pivo i drby.',
+    ],
+    nature: [
+      'Pamatuje si, kdo kolik vypil a kdo co při tom řekl.',
+      'Usmívá se na všechny a nevěří nikomu.',
+      'Za korbel piva ti prozradí cizí tajemství. Za dva i tvoje.',
+    ],
+  },
+  heir: {
+    origin: [
+      'Narodil{|a} se v době žní přímo na poli, jak to u sedláků chodí.',
+      'Je nadějí rodu {dynasty}, který chce jednou přestat být poddaný.',
+      'Vyrůstá mezi chlévem a polem a o hradech zná jen pohádky.',
+    ],
+    nature: [
+      'Je zvídav{ý|á} a ptá se na věci, na které by se dítě ze vsi ptát nemělo.',
+      'Je tich{ý|á} a pracovit{ý|á}, za pluhem vydrží do tmy.',
+      'Je divok{ý|á} a neposedn{ý|á}, sousedé si na {něj|ni} stěžují každý týden.',
+    ],
+  },
+  spouse: {
+    origin: [
+      'Pochází ze sousední vsi a přinesl{|a} věno: krávu, truhlu a dobré jméno.',
+      'Je {synem|dcerou} mlynáře a ví, kolik váží pytel mouky i lidské slovo.',
+      'Vyrůstal{|a} na samotě u lesa a nebojí se ničeho kromě pána.',
+    ],
+    nature: [
+      'Je chytřejší, než si ves myslí, a dává si pozor, aby to tak zůstalo.',
+      'Pracuje od tmy do tmy a nikdy si nestěžuje. Skoro nikdy.',
+      'Je laskav{ý|á} k čeledi a nemilosrdn{ý|á} ke každému, kdo ohrozí rod.',
+    ],
+  },
+};
+
 /** Background story of a court member; stable for the same person (seeded by name and role). */
-export function biography(c, role, dynastyName) {
-  const pool = BIOS[role];
+export function biography(c, role, dynastyName, scenario) {
+  const pool = (scenario === 'sedlak' && PEASANT_BIOS[role]) || BIOS[role];
   if (!pool) return '';
   const h = hash(`${c.name}|${role}`);
   const origin = pool.origin[h % pool.origin.length];
@@ -122,3 +193,64 @@ export function loyaltyLabel(loyalty, gender) {
 }
 
 export const COURT_ROLES = ['heir', 'spouse', 'chancellor', 'marshal', 'spymaster'];
+
+// ---------- personalities ----------
+// Every adviser (and the spouse) has one quirk. Yearly effects live in engine.js
+// (applyQuirks), the bias in council advice in council.js.
+
+export const QUIRKS = {
+  oddany: {
+    label: ['Oddaný', 'Oddaná'],
+    text: 'Věrnost {mu|jí} jde od srdce. V radě nikdy nelže a {jeho|její} věrnost každý rok sama trochu roste.',
+  },
+  ctizadostivy: {
+    label: ['Ctižádostivý', 'Ctižádostivá'],
+    text: 'Chce víc, než má. Když rod nemá slávu (prestiž pod 40), {jeho|její} věrnost každý rok klesá a v radě myslí hlavně na sebe.',
+  },
+  chamtivy: {
+    label: ['Chamtivý', 'Chamtivá'],
+    text: 'Lepí se {mu|jí} ruce. Každý rok zmizí z pokladny trocha zlata a v radě doporučuje to, co vynáší.',
+  },
+  schopny: {
+    label: ['Schopný', 'Schopná'],
+    text: 'Ve svém oboru nemá sobě rovného. {ROLE}',
+  },
+  opatrny: {
+    label: ['Opatrný', 'Opatrná'],
+    text: 'Nesnáší riziko. V radě vždy sáhne po jistější cestě, i když vynese méně.',
+  },
+  odvazny: {
+    label: ['Odvážný', 'Odvážná'],
+    text: 'Riskuje rád. V radě sází na odvahu a štěstí, a někdy to vyjde.',
+  },
+  zbozny: {
+    label: ['Zbožný', 'Zbožná'],
+    text: 'Církev {mu|jí} naslouchá. Každý rok díky {němu|ní} trochu vzroste víra.',
+  },
+};
+
+// what a capable member adds in their own field
+export const CAPABLE_BONUS = {
+  chancellor: '+1 zlata každé období.',
+  marshal: 'Lepší šance v každém střetu, kde rozhoduje vojsko.',
+  spymaster: 'Lepší šance, kde rozhoduje inteligence.',
+  spouse: 'Lepší šance, kde rozhoduje výřečnost.',
+};
+
+export const QUIRK_ROLES = ['chancellor', 'marshal', 'spymaster', 'spouse'];
+
+export function randomQuirk() {
+  const keys = Object.keys(QUIRKS);
+  return keys[Math.floor(Math.random() * keys.length)];
+}
+
+export function quirkLabel(c) {
+  const q = c && QUIRKS[c.quirk];
+  return q ? q.label[c.gender === 'female' ? 1 : 0] : '';
+}
+
+export function quirkText(c, role) {
+  const q = c && QUIRKS[c.quirk];
+  if (!q) return '';
+  return gendered(q.text, c.gender).replace('{ROLE}', CAPABLE_BONUS[role] || '');
+}

@@ -81,12 +81,12 @@
             <span class="scenario-desc">Začínáš s jedinou tvrzí na pobřeží. Získej přízeň krále, přechytrač soupeřící rody a natáhni se po koruně.</span>
           </span>
         </button>
-        <button class="scenario-card locked" data-scenario="sedlak">
+        <button class="scenario-card" data-scenario="sedlak">
           <span class="scenario-art"></span>
           <span class="scenario-body">
             <strong>Sedlák</strong>
             <span class="scenario-diff">Těžké</span>
-            <span class="scenario-desc">Připravuje se.</span>
+            <span class="scenario-desc">Jsi poddaný na cizím gruntu. Vykup se ze služby, proslav se a vybojuj si erb. Pak můžeš pokračovat jako šlechtic.</span>
           </span>
         </button>
       </div>
@@ -164,6 +164,7 @@
           <div id="turn-summary" class="turn-summary"></div>
           <div id="outcome-label" class="outcome-label" hidden></div>
           <p id="event-text" class="event-text"></p>
+          <div id="event-council" class="council" hidden></div>
           <div id="outcome-effects" class="outcome-effects" hidden></div>
           <div id="choice-list" class="choice-list"></div>
           <div id="event-extra" class="event-extra"></div>
@@ -174,9 +175,9 @@
     <div id="panel-overlay" class="panel-overlay">
       <div id="panel-court" class="side-panel">
         <button class="panel-close" data-action="close-panel" aria-label="Zavřít">✕</button>
-        <span class="panel-overline">Rod a rádci</span>
-        <h3 class="panel-title">Dvůr</h3>
-        <p class="panel-hint">Klikni na člena dvora a dozvíš se, kdo to je a co ho ovlivnilo.</p>
+        <span class="panel-overline" id="court-overline">Rod a rádci</span>
+        <h3 class="panel-title" id="court-title">Dvůr</h3>
+        <p class="panel-hint" id="court-hint">Klikni na člena dvora a dozvíš se, kdo to je a co ho ovlivnilo.</p>
         <div id="court-grid" class="court-grid"></div>
       </div>
       <div id="panel-houses" class="side-panel">

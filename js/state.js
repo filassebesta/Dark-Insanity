@@ -1,4 +1,5 @@
-import { RESOURCE_DEFS, PROVINCE_TEMPLATES, NOBLE_HOUSES, NOBLE_HOME, randInt, randomName, clamp } from './data.js';
+import { RESOURCE_DEFS, PROVINCE_TEMPLATES, NOBLE_HOUSES, NOBLE_HOME, PEASANT_HOME, randInt, randomName, clamp } from './data.js';
+import { QUIRK_ROLES, randomQuirk } from './court.js';
 
 const SAVE_PREFIX = 'insanityKingdom.save.';
 const SAVE_INDEX_KEY = 'insanityKingdom.saveIndex';
@@ -13,7 +14,19 @@ function newCharacter(role, { gender, minAge, maxAge, loyalty = 60 } = {}) {
     age: randInt(minAge ?? 20, maxAge ?? 40),
     loyalty: clamp(loyalty + randInt(-10, 10)),
     alive: true,
+    ...(QUIRK_ROLES.includes(role) ? { quirk: randomQuirk() } : {}),
+    ...(role === 'heir' ? { traits: inheritTraits() } : {}),
   };
+}
+
+/** A child's traits: around average, leaning toward the parent's strengths. */
+export function inheritTraits(parent) {
+  const t = {};
+  for (const key of ['strength', 'eloquence', 'intelligence', 'patience']) {
+    const lean = parent ? Math.round((parent[key] - 5) / 3) : 0;
+    t[key] = Math.max(2, Math.min(8, 4 + randInt(0, 2) + lean));
+  }
+  return t;
 }
 
 function initialResources() {
@@ -39,9 +52,9 @@ function initialProvinces() {
 }
 
 export function createNewGame(rulerName, dynastyName, gender, scenario = 'panovnik') {
-  return scenario === 'slechtic'
-    ? createNobleGame(rulerName, dynastyName, gender)
-    : createKingGame(rulerName, dynastyName, gender);
+  if (scenario === 'slechtic') return createNobleGame(rulerName, dynastyName, gender);
+  if (scenario === 'sedlak') return createPeasantGame(rulerName, dynastyName, gender);
+  return createKingGame(rulerName, dynastyName, gender);
 }
 
 function createKingGame(rulerName, dynastyName, gender) {
@@ -94,8 +107,15 @@ function createNobleGame(rulerName, dynastyName, gender) {
   state.heir.age = randInt(2, 6);
   state.spouse.age = randInt(22, 30);
   state.resources = { gold: 30, food: 45, army: 25, stability: 60, legitimacy: 12, faith: 50, prestige: 25, favor: 55 };
+  createWorld(state, 'player');
+  state.noble = { province: NOBLE_HOME, plot: 0, secrets: 0 };
+  return state;
+}
+
+/** The realm around a noble or a peasant: the king, the three great houses and who holds which land. */
+function createWorld(state, homeOwner) {
   // every province exists on the map, but only the home estate is the player's
-  const owners = { capital: 'crown', [NOBLE_HOME]: 'player' };
+  const owners = { capital: 'crown', [NOBLE_HOME]: homeOwner };
   for (const h of NOBLE_HOUSES) owners[h.seat] = h.id;
   for (const p of state.provinces) {
     p.owner = owners[p.id];
@@ -116,7 +136,44 @@ function createNobleGame(rulerName, dynastyName, gender) {
       head: { name: randomName(g), gender: g, age: randInt(38, 62) },
     };
   });
+}
+
+// ---------- Sedlák: a peasant farm in Lipnice, under the lords of Bílá Brána ----------
+
+function createPeasantGame(rulerName, dynastyName, gender) {
+  const state = createKingGame(rulerName, dynastyName, gender);
+  state.scenario = 'sedlak';
+  state.ruler.statusTier = 1;
+  state.ruler.age = 22;
+  state.heir.age = randInt(1, 4);
+  state.spouse.age = randInt(19, 25);
+  state.chancellor.age = randInt(45, 60);
+  state.marshal.age = randInt(30, 50);
+  state.spymaster.age = randInt(30, 50);
+  state.resources = { gold: 10, food: 40, army: 30, stability: 55, faith: 55, prestige: 20, favor: 50 };
+  createWorld(state, 'crown');
+  state.king.age = randInt(38, 48); // a peasant's life is long enough to outlive one king, not three
+  state.peasant = { ...PEASANT_HOME };
+  return state;
+}
+
+/** The peasant became a noble: the save continues as the Šlechtic scenario with a fief on the coast. */
+export function ennoblePeasant(state) {
+  state.scenario = 'slechtic';
+  state.ruler.statusTier = 3;
+  const r = state.resources;
+  state.resources = {
+    gold: Math.max(r.gold, 25), food: Math.max(r.food, 35), army: Math.max(r.army, 22), stability: 60,
+    legitimacy: 10, faith: r.faith, prestige: clamp(r.prestige / 2 + 10), favor: 58,
+  };
+  const home = state.provinces.find((p) => p.id === NOBLE_HOME);
+  Object.assign(home, { owner: 'player', loyalty: 55, unrest: 25, wealth: 42, garrison: 30 });
   state.noble = { province: NOBLE_HOME, plot: 0, secrets: 0 };
+  for (const h of state.houses) h.attitude = clamp(h.attitude - 8); // the old houses look down on an upstart
+  delete state.peasant;
+  state.gameOver = null;
+  const f = state.ruler.gender === 'female';
+  state.chronicle.push(makeChronicleEntry(state, `${state.ruler.name} z rodu ${state.dynastyName} ${f ? 'byla povýšena' : 'byl povýšen'} do šlechtického stavu a ${f ? 'dostala' : 'dostal'} v léno tvrz v Pobřežní marce. Rod, který oral cizí pole, má teď vlastní.`));
   return state;
 }
 
