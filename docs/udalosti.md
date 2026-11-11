@@ -2,7 +2,7 @@
 
 Vygenerováno z `js/events*.js`. Jména v hranatých závorkách hra doplní podle aktuálního stavu.
 
-Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí · Scénář **Sedlák**: 33 událostí (+ 3 krize, 2 ozvěny) · Krize: 7 · Ozvěny rozhodnutí: 17 · Povahy rádců a výchova: 5 · Obchod: 6 · Stavby: 16 (12 království, 4 grunt) · Zranění: 3 · Ambice: 1 (nabídka cílů).
+Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí · Scénář **Sedlák**: 33 událostí (+ 3 krize, 2 ozvěny) · Krize: 7 · Ozvěny rozhodnutí: 17 · Povahy rádců a výchova: 5 · Obchod: 6 · Stavby: 16 (12 království, 4 grunt) · Zranění: 3 · Ambice: 1 (nabídka cílů) · Válka: 10.
 
 ## Scénář Panovník
 
@@ -1719,3 +1719,87 @@ Přijdou, jen když je vládce zraněný (`js/events_injury.js`). Zranění samo
 > Je čas se zastavit a rozhodnout, kam dál. Dny plynou jeden za druhým a kdo nemá cíl, toho nesou. [vládce] ví, že na všechno síly nestačí — a že lidé si pamatují ty, kdo něco slíbili a dokázali.
 
 Nabídne tři ze 19 cílů podle scénáře (`js/ambitions.js`) a volbu „Žít ze dne na den a nic nesvazovat slibem“. Nezabírá období: po ní hned přijde běžná událost.
+
+## Válečná tažení
+
+Přijdou jen během tažení, které hráč vypraví na mapě (záložka Válka, `js/war.js`): jedna událost za každé období v poli, na konci triumf nebo porážka.
+
+### 1. Bitva v poli  `w_bitva`
+
+> Za úsvitu stojí na protějším návrší [nepřítel]. [velitel] objíždí řady a [počet] mužů čeká na rozkaz. Jedna bitva může rozhodnout celé tažení — nebo ho ukončit.
+
+1. Udeřit čelně *(riskantní volba)*
+2. Obejít je lesem a vpadnout do boku *(riskantní volba)*
+3. Opevnit tábor a čekat, až zaútočí oni
+
+### 2. Pod hradbami  `w_obleh`
+
+> Poslední pevnost [v cíli tažení] stojí. Za hradbami se drží [nepřítel] a podle zběhů jim dochází voda. Tesaři se ptají, jestli mají stavět žebříky, nebo kopat.
+
+1. Vzít hradby útokem *(riskantní volba)*
+2. Vyhladovět je
+3. Podkopat hradby *(riskantní volba)*
+
+### 3. Úplavice v táboře  `w_nemoc`
+
+> V táboře se šíří úplavice. Ráno nevstalo dvacet mužů, večer jich bylo čtyřicet. Kdo ještě stojí, dívá se směrem k domovu.
+
+1. Spálit nakažené stany
+2. Poslat nemocné domů
+3. Nechat ranhojiče pracovat *(riskantní volba)*
+
+### 4. Dezertéři  `w_dezerce`
+
+> Stráže chytily šest mužů, kteří v noci utíkali z tábora. Prý mají doma hladové děti a pole bez rukou. Celé vojsko čeká, co s nimi bude.
+
+1. Pověsit je před nastoupeným vojskem
+2. Přidat vojsku žold *(jen někdy)*
+3. Nechat je jít
+
+### 5. Posel s bílou korouhví  `w_mir`
+
+> Z nepřátelského tábora přijel posel s bílou korouhví. Nepřítel nabízí výkupné a mír dřív, než tažení dojde do konce. Muži by šli rádi domů, ale vítězství je na dosah.
+
+1. Přijmout výkupné a mír
+2. Bojovat dál
+3. Žádat dvojnásobek *(riskantní volba)*
+
+### 6. Hladové vojsko  `w_zasoby`
+
+> Vozy se zásobami nedorazily a vojáci jedí řemení. Kolem tábora jsou vsi s plnými stodolami — a kus cesty za zády domov.
+
+1. Plenit okolní vsi
+2. Poslat vozy ze sýpek *(jen někdy)*
+3. Stáhnout vojsko domů
+
+### 7. Hrdina z řad pěšáků  `w_hrdina`
+
+> Mladý pěšák sám zastavil nepřátelský výpad a vynesl z boje raněného praporečníka. Celé vojsko o něm mluví. Možná je to právě to, co muži potřebují.
+
+1. Pasovat ho na rytíře před celým vojskem
+2. Dát mu měšec zlata *(jen někdy)*
+3. Poslat ho v čele příštího útoku *(riskantní volba)*
+
+### 8. Zvěd s mapou  `w_zved`
+
+> Do tábora přišel muž, který tvrdí, že zná tajnou cestu nepříteli do týlu. Mapu ukáže, ale ne zadarmo. Může to být zlato — nebo past.
+
+1. Zaplatit mu *(jen někdy)*
+2. Vyslechnout ho na mučidlech *(riskantní volba)*
+3. Poslat ho pryč, může to být past
+
+### 9. Vítězné vojsko se vrací  `w_triumf`
+
+> Vojsko se vrací z tažení ([cíl]). Prapory jsou potrhané, ale vlají vysoko, a za vojskem se táhnou vozy s kořistí. Lidé lemují cestu a čekají, co vrchnost udělá.
+
+1. Uspořádat triumfální průvod *(jen někdy)*
+2. Rozdělit kořist mezi vojáky
+3. Poslat muže hned na pole
+
+### 10. Po porážce  `w_porazka`
+
+> Z tažení ([cíl]) se vrací jen zbytek vojska. Vdovy stojí u brány a hledají známé tváře. Někdo musí za porážku odpovídat — nebo ji aspoň unést.
+
+1. Postarat se o vdovy a sirotky *(jen někdy)*
+2. Najít viníka mezi veliteli
+3. Unést to mlčky

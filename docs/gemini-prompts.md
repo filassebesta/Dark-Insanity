@@ -1481,3 +1481,22 @@ Formát a dávkový prompt jako v sekci 14.0. Zatím se používají půjčené 
 | `z_ranhojic.jpg` | Rána, která se nehojí | `nemoc_vladce` | A feverish wounded ruler on a bed with bloody bandages, a learned physician with a case of instruments on one side and an old herb woman on the other, candlelight. |
 | `z_nahrada.jpg` | Řemeslník s nabídkou | `nove_kuse` | A craftsman unwrapping a carved wooden leg and an iron hand with hinges on a workbench before a seated nobleman, a workshop full of tools. |
 | `z_posmech.jpg` | Smích za zády | `dvorni_blazen` | A jester at a castle feast hobbling with a broomstick tied to his knee and a patch over one eye, guests laughing and then falling silent toward the head of the table. |
+
+---
+
+## 19. Válečná tažení (volitelné scény, 1:1, cíl 2048 × 2048)
+
+Formát a dávkový prompt jako v sekci 14.0. Zatím se používají půjčené obrázky.
+
+| Soubor | Událost | Teď používá | Popis pro Gemini |
+|---|---|---|---|
+| `w_bitva.jpg` | Bitva v poli | `valka_s_markami` | Two medieval armies facing each other across a misty valley at dawn, banners, a commander riding along the front line. |
+| `w_obleh.jpg` | Pod hradbami | `obleheni` | A siege camp before stone walls, ladders and a battering ram being built, sappers digging a tunnel, smoke over the fortress. |
+| `w_nemoc.jpg` | Úplavice v táboře | `mor_v_pristavu` | A grim army camp with sick soldiers lying in tents, a barber-surgeon with a lantern, graves dug at the edge of the woods. |
+| `w_dezerce.jpg` | Dezertéři | `dezerteri` | Captured deserters kneeling in front of assembled soldiers in a muddy camp, an officer deciding their fate. |
+| `w_mir.jpg` | Posel s bílou korouhví | `cizi_vyslanec` | An enemy envoy on horseback with a white banner approaching a war tent, guards watching warily. |
+| `w_zasoby.jpg` | Hladové vojsko | `hladomor` | Hungry soldiers around a cold campfire chewing on leather, empty supply wagons, a burnt village in the distance. |
+| `w_hrdina.jpg` | Hrdina z řad pěšáků | `potulny_rytir` | A young foot soldier kneeling to be knighted on a battlefield in front of cheering troops. |
+| `w_zved.jpg` | Zvěd s mapou | `zprava_spehmistra` | A hooded scout unrolling a rough map by candlelight in a commander's tent. |
+| `w_triumf.jpg` | Vítězné vojsko se vrací | `vojenska_prehlidka` | A victorious army marching through a town gate with torn banners and carts of plunder, townsfolk throwing flowers. |
+| `w_porazka.jpg` | Po porážce | `stary_rytir_umira` | The remnants of a beaten army limping home through a town gate, widows searching the faces of the returning men. |

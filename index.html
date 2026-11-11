@@ -119,7 +119,7 @@
         <span>Hlasitost hudby <output id="music-volume-value">60 %</output></span>
         <input id="input-music-volume" type="range" min="0" max="100" step="5" value="60">
       </label>
-      <p class="hint">Ovládání: <kbd>1</kbd>–<kbd>4</kbd> volba, <kbd>Enter</kbd> pokračovat / dočíst text, <kbd>M</kbd> mapa, <kbd>P</kbd> postava, <kbd>Esc</kbd> zavřít panel.</p>
+      <p class="hint">Ovládání: <kbd>1</kbd>–<kbd>4</kbd> volba, <kbd>Enter</kbd> pokračovat / dočíst text, <kbd>M</kbd> mapa, <kbd>P</kbd> postava, <kbd>O</kbd> obchod, <kbd>V</kbd> válka, <kbd>Esc</kbd> zavřít panel.</p>
       <div class="options-extra">
         <button class="seal-button ghost" data-action="goto-hall">Síň slávy</button>
       </div>
@@ -145,6 +145,7 @@
         <button class="book-tab" data-panel="character">Postava</button>
         <button class="book-tab" data-panel="map">Mapa</button>
         <button class="book-tab" data-panel="trade">Obchod</button>
+        <button class="book-tab" data-panel="war">Válka</button>
         <button class="book-tab" data-panel="court">Dvůr</button>
         <button class="book-tab" data-panel="houses" hidden>Rody</button>
         <button class="book-tab" data-panel="chronicle">Kronika</button>
@@ -165,6 +166,7 @@
 
       <main id="event-card" class="story-panel">
         <div class="story-inner">
+          <div id="war-bar" class="war-bar" hidden></div>
           <div id="ambition-bar" class="ambition-bar" hidden></div>
           <div id="turn-summary" class="turn-summary"></div>
           <ul id="trade-news" class="trade-news" hidden></ul>

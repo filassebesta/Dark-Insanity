@@ -1513,3 +1513,43 @@ kbd {
 
 /* the blurred backdrop reaches 20px past the edges; clip it sideways so phones get no horizontal scroll */
 .backdrop-screen { overflow-x: clip; }
+
+/* ---------- war (js/war.js) ---------- */
+.map-war .war-target { display: none; cursor: pointer; }
+.map-war.show .war-target { display: inline; }
+.war-target .wt-hit { fill: transparent; }
+.war-target .wt-ring { fill: rgba(122,36,24,.82); stroke: #f3d9a4; stroke-width: 2; }
+.war-target.active .wt-ring { fill: #9c2a1c; stroke-width: 3; animation: ringPulse 1.8s ease-in-out infinite; }
+.war-target .wt-swords { stroke: #f8e6c0; stroke-width: 2.6; stroke-linecap: round; fill: none; pointer-events: none; }
+.war-target .wt-label { font-family: var(--font-caps); font-size: 15px; font-weight: 700; fill: #f6e3b0; text-anchor: middle; paint-order: stroke; stroke: rgba(30,18,10,.9); stroke-width: 4px; pointer-events: none; }
+.war-route { fill: none; stroke: #9c2a1c; stroke-width: 3.5; stroke-dasharray: 10 7; opacity: .85; pointer-events: none; animation: warMarch 1.4s linear infinite; }
+@keyframes warMarch { to { stroke-dashoffset: -17; } }
+.war-army { cursor: pointer; }
+.war-army .wa-hit { fill: transparent; }
+.war-army .wa-pole { stroke: #2b2118; stroke-width: 2.6; }
+.war-army .wa-flag { fill: #9c2a1c; stroke: #2b2118; stroke-width: 1.4; animation: flagWave 2.2s ease-in-out infinite; transform-box: fill-box; transform-origin: left center; }
+.war-army .wa-base { fill: #2b2118; stroke: #f6d27c; stroke-width: 1.6; }
+.war-army .wa-men { font-family: var(--font-caps); font-size: 10px; font-weight: 700; fill: #f6e3b0; text-anchor: middle; pointer-events: none; }
+.map-chip.on { border-color: #9c2a1c; background: rgba(156,42,28,.08); }
+.war-reward { font-size: .95rem; }
+.war-note { font-size: .9rem; color: var(--ink-soft); font-style: italic; }
+.trade-estimate b.good { color: var(--olive); }
+.trade-estimate b.warn { color: #a8823f; }
+.trade-estimate b.bad { color: var(--rust); }
+.war-recall { margin-top: 1rem; }
+.war-recall.confirm { border-color: #8a2c26; color: #8a2c26; background: rgba(138,44,38,.08); }
+
+.war-bar { display: grid; grid-template-columns: auto 1fr; gap: .1rem .8rem; align-items: baseline; padding: .65rem .9rem; margin-bottom: 1.1rem; border: 1px solid rgba(120,40,30,.3); border-left: 3px solid #9c2a1c; background: rgba(156,42,28,.07); }
+.war-bar[hidden] { display: none; }
+.war-bar strong { font-family: var(--font-display); font-weight: 400; font-size: 1.08rem; color: var(--blood); }
+.war-tracks { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; gap: .2rem .6rem; align-items: center; margin-top: .3rem; font-size: .8rem; color: var(--ink-faint); }
+.war-tracks .amb-track { grid-column: auto; margin: 0; }
+.war-tracks b { font-weight: 600; color: var(--ink-soft); min-width: 2.6em; text-align: right; }
+.amb-track.morale i { background: linear-gradient(90deg, #6f8a4a, #9cbc6c); }
+.war-bar.urgent .amb-track.morale i { background: #a8452f; }
+
+/* seven book tabs: a little tighter so the resources keep one line on laptop screens */
+@media (max-width: 1600px) {
+  .book-tab { padding: .45rem .55rem; letter-spacing: .1em; font-size: .9rem; }
+  .resource-chips { gap: .3rem .85rem; }
+}

@@ -39,6 +39,12 @@ export const AMBITIONS = {
     metric: (s) => stat(s, 'battlesWon'),
     reward: { effects: { prestige: 6, army: 4 } }, trait: 'strength',
   },
+  tazeni: {
+    name: 'Vítězné tažení', goal: 1, kind: 'gain', years: 5, scenarios: REALM, unit: 'vyhraných tažení',
+    text: 'Vyhrát válečné tažení (záložka Válka).',
+    metric: (s) => stat(s, 'warsWon'),
+    reward: { effects: { prestige: 5, legitimacy: 2 } }, trait: 'strength',
+  },
   zbozny: {
     name: 'Bohulibá vláda', goal: 80, kind: 'reach', years: 4, scenarios: REALM, unit: 'víry',
     text: 'Pozvednout víru v zemi na osmdesát.',

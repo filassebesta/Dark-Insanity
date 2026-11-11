@@ -4,6 +4,7 @@
 import { ambitionProgress, AMBITIONS } from './ambitions.js';
 import { ACHIEVEMENTS, unlockedAchievements } from './achievements.js';
 import { esc } from './ui.js';
+import { warTarget, oddsLabel } from './war.js';
 
 const SEASON_GEN = ['jara', 'léta', 'podzimu', 'zimy'];
 
@@ -28,6 +29,26 @@ export function renderAmbitionBar(state) {
     <span class="amb-goal">${esc(p.def.text)}</span>
     <span class="amb-track"><i style="width:${Math.round(p.pct * 100)}%"></i></span>
     <span class="amb-state">${esc(p.label)} · ${esc(untilText(state, p.deadline))}</span>`;
+}
+
+/** The ribbon of a running campaign above the story. */
+export function renderWarBar(state) {
+  const el = document.getElementById('war-bar');
+  if (!el) return;
+  const w = state && state.war;
+  el.hidden = !w;
+  if (!w) { el.innerHTML = ''; return; }
+  const t = warTarget(state);
+  const leader = w.leader === 'ruler' ? state.ruler.name : state.marshal.name;
+  const marching = state.turn < w.arrive;
+  const [odds] = oddsLabel(state, w.target, w.power);
+  el.classList.toggle('urgent', w.morale < 30);
+  el.innerHTML = `
+    <span class="amb-over">Tažení</span>
+    <strong>${esc(t.name)}</strong>
+    <span class="amb-goal">${marching ? 'Vojsko je na pochodu.' : `V poli ${w.seasons}. období.`} Velí ${esc(leader)}, ${w.power} mužů · ${esc(odds.toLowerCase())}.</span>
+    <span class="war-tracks"><span>Postup</span><span class="amb-track"><i style="width:${w.progress}%"></i></span><b>${w.progress} %</b>
+      <span>Morálka</span><span class="amb-track morale"><i style="width:${w.morale}%"></i></span><b>${w.morale}</b></span>`;
 }
 
 /** Ambition section of the character sheet: the goal now and the ones before. */

@@ -80,6 +80,8 @@ musí být aktivní, jinak je mapa skrytá. Screenshoty ukládat mimo repozitá�
 | `js/events_echoes.js` | krize (vyčerpané zdroje) a ozvěny rozhodnutí + tabulka `ECHO_HOOKS` |
 | `js/events_court.js` | události podle povah rádců + výchova dědice u šlechtice |
 | `js/events_trade.js` | přepadení karavany, piráti, cizí kupec, clo, hlad na severu, vlastní loď |
+| `js/war.js` | válečná tažení: cíle, vojsko v poli, zásoby, morálka, postup, konec tažení, tributy (bez DOM) |
+| `js/events_war.js` | 8 událostí v poli (bitva, obléhání, úplavice, dezertéři, mír, hlad, hrdina, zvěd) + triumf a porážka |
 | `js/ambitions.js` | ambice: cíle vládce s termínem, postup, odměna, nesplnění (bez DOM) |
 | `js/events_ambition.js` | událost „Čeho chceš dosáhnout“ (nabídka tří ambicí, `free: true`) |
 | `js/achievements.js` | Síň slávy: 28 úspěchů napříč všemi hrami (localStorage) |
@@ -188,6 +190,15 @@ obchodní `trade`, `tradeOffer`, `tradeMod`, `tradeStock`.
 - Větve `heal`, `treat`, `worsen`, `aid` léčí, ošetřují, zhoršují a dávají náhradu.
 - Zranění se ukazují na plaketě (červeně snížené vlastnosti, „bez nohy“), v listu postavy (sekce Zranění) a v Síni předků; trvalé zranění může dát přídomek (Jednooký, Chromá…).
 
+### Válečná tažení
+- Záložka **Válka** (klávesa **V**, vrstva mapy „Válka“) u Panovníka a Šlechtice; Sedlák války nevede.
+- Cíle (`warTargets`): Východní marky (síla 1,3, tribut 3 zlata/období na 6 let), Severní pustiny (0,9, zima, kožešiny a malý tribut), Jižní říše (1,6, nájezd po moři, kořist), **znovudobytí ztraceného kraje** (bez něj nepřijde zlatý věk) a u Šlechtice **soukromá válka** proti rodu, který není spojenec ani příbuzný (kořist, rod oslabí, král se mračí).
+- Hráč volí velikost (15/25/40 mužů z vojska, doma musí zůstat aspoň 8) a velitele: vládce osobně (morálka +, šance +8 %, riziko zranění, doma chybí: stabilita −1 každé 2. období), nebo maršál.
+- `state.war`: pochod 1–2 období, pak v poli každé období +6 % postupu a jedna válečná událost (`state.pendingEvent`), větve `war: { progress, morale, power, won, wound, end }`. Vojsko jí `ceil(muži/8)` jídla za období; dlouhá válka a zima berou morálku.
+- Konec: 100 % postupu = vítězství (událost `w_triumf`), morálka 0 nebo ≤ 2 muži = porážka (`w_porazka`), mír z události, nebo odvolání (prestiž −3). Mezi taženími 8 období odpočinku.
+- Šance (`warBonus`): poměr mužů k síle nepřítele, morálka, velitel. Rozumný hráč s celou hotovostí vyhraje nebo uzavře mír téměř vždy, s malým oddílem je to hazard.
+- Simulace botů tažení nezačínají, takže vyvážení bez války je beze změny. Bot, který válčí pořád a volí náhodně, ale Panovníka vyčerpá (kolapsy ~60 %).
+
 ### Ambice a Síň slávy
 - **Ambice** (`ambitions.js`): zhruba jednou za 1–2 roky (pokud žádná neběží) přijde událost `ambice` se třemi cíli podle scénáře (19 ambicí: stavby, povýšení sídla, pokladna, bitvy, víra, prestiž, klid v krajích, obchod, výchova dědice, legitimita, královská přízeň, spojenectví, a 8 selských). Druh `gain` (přírůstek od začátku), `reach` (dosáhnout), `below` (nejvýš). Splnění: odměna (větev události) + bod vlastnosti; nesplnění v termínu: prestiž −2 (sedlák −1). Nový vládce začíná bez ambice.
 - Událost s `free: true` nezabírá období: po ní hned přijde běžná událost téhož období (`nextEventSameSeason` v `main.js`). Jinak by nabídka ubírala události a měnila vyvážení.
@@ -270,5 +281,6 @@ a šance rytířské bitvy (Sedlák), ekonomika v `processPeasantEconomy` a `pro
 - Jedinečná jména i u nové generace dvora (při nástupnictví se mohou opakovat).
 - Rada zatím nezná budoucí důsledky kromě dluhů (příznaky jako `loan_taken`); šlo by ji naučit víc.
 - Případně ukládání do více slotů s přehledem scénáře a přídomku vládce.
+- Válka: ztráta kraje může přijít i jako protiútok po porážce; spojenci, kteří pošlou posily; obrázky válečných scén (sekce 19 promptů).
 - Ambice: víc cílů a ambice pro dědice a rádce; úspěchy za konkrétní rozhodnutí v událostech.
 - Stavění: rada, která doporučuje stavby, další události o stavbách (hlavně pro Sedláka), ozvěny navázané na stavby a obrázky budov (sekce 16 promptů).

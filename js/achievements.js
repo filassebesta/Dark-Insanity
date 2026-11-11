@@ -35,6 +35,9 @@ export const ACHIEVEMENTS = [
   { key: 'mistr', group: 'Stavby', name: 'Cizí mistr', text: 'Vzít do služby mistra stavitele.', test: (s) => !!(s.flags && s.flags.mistr_stavitel) },
   // deeds
   { key: 'vojevudce', group: 'Činy', name: 'Vojevůdce', text: 'Vyhrát v jedné kronice deset bitev.', test: (s) => stat(s, 'battlesWon') >= 10 },
+  { key: 'dobyvatel', group: 'Činy', name: 'Vítězné tažení', text: 'Vyhrát válečné tažení.', test: (s) => stat(s, 'warsWon') >= 1 },
+  { key: 'znovudobyti', group: 'Činy', name: 'Co bylo ztraceno', text: 'Znovu dobýt ztracený kraj.', test: (s) => stat(s, 'reconquered') >= 1 },
+  { key: 'tribut', group: 'Činy', name: 'Poplatníci koruny', text: 'Přinutit cizí zemi platit tribut.', test: (s) => (s.tributes || []).length > 0 },
   { key: 'kupec', group: 'Činy', name: 'Kupecký rod', text: 'Dovést domů patnáct karavan a lodí.', test: (s) => stat(s, 'delivered') >= 15 },
   { key: 'truhla', group: 'Činy', name: 'Plná truhla', text: 'Mít v pokladně sto.', test: (s) => s.resources.gold >= 100 },
   { key: 'svatost', group: 'Činy', name: 'Svatá vláda', text: 'Dosáhnout víry devadesát pět.', test: (s) => (s.resources.faith || 0) >= 95 },

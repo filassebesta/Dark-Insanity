@@ -11,7 +11,7 @@ import { openMap, closeMap, isMapOpen, wireMapChrome, closeTownIfOpen } from './
 import { openCharacter, closeCharacter, isCharacterOpen, openPerson, closePerson, isPersonOpen } from './character.js';
 import { playMusic, setMusicVolume } from './audio.js';
 import { checkAchievements } from './achievements.js';
-import { renderAmbitionBar, renderHall, renderEndingAchievements, announceAchievement } from './fame.js';
+import { renderAmbitionBar, renderWarBar, renderHall, renderEndingAchievements, announceAchievement } from './fame.js';
 
 let currentState = null;
 let activeEvent = null;
@@ -36,6 +36,7 @@ function refreshAllPanels(bumpedTrait = null) {
   renderChroniclePanel(currentState);
   renderHousesPanel(currentState);
   renderAmbitionBar(currentState);
+  renderWarBar(currentState);
 }
 
 // achievements earned by what just happened go to the Hall of Fame
@@ -312,6 +313,10 @@ function wireActions() {
         openMap(currentState, { layer: 'trade' });
         return;
       }
+      if (panel === 'war') {
+        openMap(currentState, { layer: 'war' });
+        return;
+      }
       if (panel === 'character') {
         openCharacter(currentState);
         return;
@@ -405,6 +410,11 @@ function wireKeyboard() {
       else { closeOverlays(); openMap(currentState, { layer: 'trade' }); }
       return;
     }
+    if ((e.key === 'v' || e.key === 'V') && currentState && currentState.scenario !== 'sedlak') {
+      if (isMapOpen()) closeMap();
+      else { closeOverlays(); openMap(currentState, { layer: 'war' }); }
+      return;
+    }
     if (e.key === 'p' || e.key === 'P') {
       if (isCharacterOpen()) closeCharacter();
       else { closeOverlays(); openCharacter(currentState); }
@@ -476,6 +486,14 @@ function wireClickSound() {
 
 // a trade on the map (sale, purchase, caravan sent): save and refresh
 document.addEventListener('kingdom:trade', (e) => {
+  if (!currentState) return;
+  saveGame(currentState);
+  refreshAllPanels();
+  if (e.detail.message) toast(e.detail.message);
+});
+
+// a campaign started or recalled on the map
+document.addEventListener('kingdom:war', (e) => {
   if (!currentState) return;
   saveGame(currentState);
   refreshAllPanels();

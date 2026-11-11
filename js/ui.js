@@ -137,6 +137,7 @@ export function updateBookTabFlags(state) {
   const anyUnrest = ownProvinces(state).some((p) => p.unrest >= 70);
   const housesTab = document.querySelector('.book-tab[data-panel="houses"]');
   housesTab.hidden = state.scenario !== 'slechtic';
+  document.querySelector('.book-tab[data-panel="war"]').hidden = state.scenario === 'sedlak'; // a peasant wages no wars
   if (state.houses) housesTab.classList.toggle('flagged', state.resources.favor <= 25 || state.houses.some((h) => h.attitude < 25));
   const anyDisloyal = [state.heir, state.spouse, state.chancellor, state.marshal, state.spymaster]
     .some((c) => c.alive && c.loyalty <= 25);
@@ -172,7 +173,7 @@ export function renderCharacterPlaque(state, bumpedTrait = null) {
     <div class="plaque-portrait" data-action="open-character" title="Zobrazit postavu">${initial}${portraitImg(rulerPortraitCandidates(r), r.name)}</div>
     <div class="plaque-id">
       <span class="plaque-name">${esc(r.name)}</span>
-      <span class="plaque-sub">${esc(tierLabel(r))} · ${r.age} let${hurt.length ? ` · <em class="plaque-hurt">${esc(hurt.join(', '))}</em>` : ''}</span>
+      <span class="plaque-sub">${esc(tierLabel(r))} · ${r.age} let${state.war && state.war.leader === 'ruler' ? ' · <em class="plaque-hurt">v poli</em>' : ''}${hurt.length ? ` · <em class="plaque-hurt">${esc(hurt.join(', '))}</em>` : ''}</span>
     </div>
     <div class="plaque-traits">
       ${TRAIT_DEFS.map((t) => {

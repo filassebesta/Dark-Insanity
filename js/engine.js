@@ -9,6 +9,7 @@ import {
   injuryEpithetScores, INJURY_EPITHETS, lastingInjuryNames, STRENGTH_FAIL_INJURY,
 } from './injuries.js';
 import { readyToOffer, startAmbition, skipAmbition, settleAmbition, dropAmbition, FAILURE } from './ambitions.js';
+import { processWar, applyWarEffects, warTokens } from './war.js';
 
 const TRAIT_MIN = 1;
 const TRAIT_MAX = 10;
@@ -49,6 +50,7 @@ export function interpolate(state, text) {
   }
   Object.assign(dict, cargoTokens(state));
   Object.assign(dict, injuryTokens(state));
+  Object.assign(dict, warTokens(state));
   const town = ctx.town && settlementDef(ctx.town);
   if (town) {
     // {town.name} Brod, {town.loc} v Brodu, {town.Loc} V Brodu
@@ -388,6 +390,7 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
     if (a) notes.push({ text: `Ambice: ${a.name} (do ${a.years} let)`, tone: 'pos' });
   }
   if (branch.ambitionSkip) skipAmbition(state);
+  applyWarEffects(state, branch.war, notes); // a war event moves the campaign
   recordCourtHistory(state, meta, touched, outcome);
   scheduleEcho(state, branch.echo, meta);
   tallyReign(state, branch, meta, outcome);
@@ -899,6 +902,7 @@ function generateSuccessorHousehold(state) {
 
 function handleSuccession(state, cause = 'stářím') {
   dropAmbition(state); // the new ruler sets their own goals
+  if (state.war && state.war.leader === 'ruler') state.war.leader = 'marshal'; // the marshal takes over the campaign
   if (state.heir.alive) {
     const oldName = state.ruler.name;
     const newRulerName = state.heir.name;
@@ -1056,6 +1060,8 @@ export function advanceTurn(state) {
   }
 
   raiseCrisis(state);
+  // the army in the field: supplies, the end of a campaign, the season's war event
+  tradeNews.unshift(...processWar(state));
   // now and then the ruler is asked to set a goal for the coming years
   if (!state.pendingEvent && readyToOffer(state)) state.pendingEvent = 'ambice';
   const event = pickNextEvent(state);

@@ -13,6 +13,9 @@ import {
   PEASANT_VILLAGE, townIdFor, townOf, levelName, currentProject, ownsTown, startBuilding, startUpgrade, cancelProject, demolish,
 } from './build.js';
 import { renderTownPlan, townSidebar } from './town.js';
+import {
+  warTargets, warBlock, startWar, recallWar, warTarget, marchShare, warOrigin, oddsLabel, leaderLabel, SIZES,
+} from './war.js';
 
 const W = 1264;
 const H = 848;
@@ -100,6 +103,7 @@ const LAYERS = [
   { key: 'garrison', label: 'Posádky' },
   { key: 'routes', label: 'Cesty' },
   { key: 'trade', label: 'Obchod' },
+  { key: 'war', label: 'Válka' },
 ];
 
 // ---------- helpers ----------
@@ -157,7 +161,8 @@ let options = {};
 let view = { x: 0, y: 0, w: W, h: H };
 let animFrame = null;
 let selected = null;
-const layers = { loyalty: false, unrest: true, garrison: false, routes: false, trade: false };
+const layers = { loyalty: false, unrest: true, garrison: false, routes: false, trade: false, war: false };
+let warForm = { target: null, size: 'medium', leader: 'marshal' };
 let tradeForm = { dest: null, good: null, qty: 1, escort: false };
 let drag = null;
 let suppressClick = false;
@@ -172,6 +177,8 @@ export function openMap(gameState, opts = {}) {
   options = opts;
   host = document.getElementById('map-view');
   if (opts.layer) layers[opts.layer] = true;
+  if (opts.layer === 'war') layers.trade = false;
+  if (opts.layer === 'trade') layers.war = false;
   render();
   host.classList.add('open');
   host.setAttribute('aria-hidden', 'false');
@@ -208,7 +215,7 @@ export function closeMap() {
 // ---------- rendering ----------
 
 function render() {
-  host.querySelector('.map-layer-toggles').innerHTML = LAYERS.map((l) =>
+  host.querySelector('.map-layer-toggles').innerHTML = LAYERS.filter((l) => l.key !== 'war' || state.scenario !== 'sedlak').map((l) =>
     `<button class="map-toggle${layers[l.key] ? ' on' : ''}" data-layer="${l.key}">${l.label}</button>`).join('');
 
   const canvas = host.querySelector('.map-canvas');
@@ -229,6 +236,7 @@ function render() {
       <g class="map-labels">${Object.entries(PROVINCES).map(([id, p]) => provinceLabel(id, p)).join('')}</g>
       <g class="map-features">${Object.entries(FEATURES).map(([id, f]) => featureMarker(id, f)).join('')}</g>
       <g class="map-markets${layers.trade ? ' show' : ''}">${marketMarkers()}</g>
+      <g class="map-war${layers.war ? ' show' : ''}${state.war ? ' active' : ''}">${warLayer()}</g>
 
       <text class="map-natural sea-label" x="128" y="520" transform="rotate(-84 128 520)">Šedé moře</text>
       <text class="map-natural sea-label" x="960" y="760">Šedé moře</text>
@@ -608,6 +616,7 @@ function verdict(prov) {
 }
 
 function showOverview() {
+  if (layers.war && state.scenario !== 'sedlak') return showWarOverview();
   if (layers.trade) return showTradeOverview();
   if (state.scenario === 'slechtic') return showNobleOverview();
   if (state.scenario === 'sedlak') return showPeasantOverview();
@@ -795,6 +804,152 @@ function showRoute(key) {
   `);
 }
 
+// ---------- war (see war.js) ----------
+
+function targetPoint(t) {
+  if (t.at) return t.at;
+  const p = t.province && PROVINCES[t.province];
+  // away from the province's own name and from its towns
+  if (t.province === 'brodna') return [455, 705];
+  return p ? p.garrisonAt : [W / 2, H / 2];
+}
+
+function warPath(t) {
+  const from = warOrigin(state);
+  const to = targetPoint(t);
+  const mid = [(from[0] + to[0]) / 2 + (to[1] - from[1]) * 0.12, (from[1] + to[1]) / 2 - (to[0] - from[0]) * 0.12];
+  return [from, mid, to];
+}
+
+function warLayer() {
+  const targets = warTargets(state);
+  const marks = Object.entries(targets).map(([key, t]) => {
+    const [x, y] = targetPoint(t);
+    const active = (state.war && state.war.target === key) || warForm.target === key;
+    return `<g class="war-target${active ? ' active' : ''}" data-war-target="${key}" transform="translate(${x} ${y})">
+      <circle class="wt-hit" r="30"/><circle class="wt-ring" r="17"/>
+      <path class="wt-swords" d="M-8 -8L8 8M8 -8L-8 8M-10 -4l4 -4M10 -4l-4 -4"/>
+      ${t.province ? '' : `<text class="wt-label" y="${y < 100 ? 36 : -24}" style="text-anchor:${x > 1100 ? 'end' : x < 200 ? 'start' : 'middle'}" x="${x > 1100 ? 14 : x < 200 ? -14 : 0}">${esc(t.name.replace(/^(Znovudobytí|Soukromá válka): /, ''))}</text>`}
+    </g>`;
+  }).join('');
+  let army = '';
+  const t = warTarget(state);
+  if (state.war && t && !t.gone) {
+    const pts = warPath(t);
+    // at the target the army camps just short of it, so the banner stays visible
+    const [x, y] = pointAlong(pts, Math.min(0.84, marchShare(state)));
+    army = `<path class="war-route" d="${smoothPath(pts)}"/>
+      <g class="war-army" data-war-army transform="translate(${x.toFixed(0)} ${y.toFixed(0)})">
+        <circle class="wa-hit" r="26"/>
+        <path class="wa-pole" d="M0 12V-26"/><path class="wa-flag" d="M0 -26h22l-6 7 6 7H0z"/>
+        <circle class="wa-base" r="9" cy="12"/><text class="wa-men" y="16">${state.war.power}</text>
+      </g>`;
+  }
+  return marks + army;
+}
+
+const SIZE_LABEL = { small: 'Oddíl', medium: 'Vojsko', large: 'Celá hotovost' };
+
+function showWarOverview() {
+  if (state.war) return showWarStatus();
+  const targets = warTargets(state);
+  const keys = Object.keys(targets);
+  if (!warForm.target || !targets[warForm.target]) warForm.target = keys[0] || null;
+  const rest = state.turn < (state.warNext || 0) ? `<p class="map-warning">Vojsko se zotavuje z minulého tažení. Další můžeš vypravit ${etaText(state.warNext)}.</p>` : '';
+  const t = targets[warForm.target];
+  const men = SIZES[warForm.size];
+  const why = t ? warBlock(state, warForm.target, warForm.size) : 'Není proti komu táhnout.';
+  const [odds, tone] = t ? oddsLabel(state, warForm.target, men) : ['', ''];
+  const tributes = (state.tributes || []).map((x) => `<li>${esc(x.from[0].toUpperCase() + x.from.slice(1))}: ${x.gold} zlata za období, do ${etaText(x.until, 'gen')}</li>`).join('');
+  sidebar(`
+    <span class="panel-overline">Válka</span>
+    <h3 class="panel-title">Tažení</h3>
+    <p class="map-desc">Vypravit vojsko je velké rozhodnutí. Tažení trvá několik období, vojsko jí ze sýpek a každé období v poli přinese bitvu, obléhání nebo jiné zkoušky. Klikni na cíl na mapě.</p>
+    ${rest}
+    <h4 class="map-sub">Cíle</h4>
+    <div class="map-chip-list">${keys.map((k) => `<button class="map-chip${k === warForm.target ? ' on' : ''}" data-war-target="${k}"><span>${esc(targets[k].name)}</span><em>${targets[k].march} obd. pochodu</em></button>`).join('') || '<p class="map-desc">Žádný cíl.</p>'}</div>
+    ${t ? `
+      <h4 class="map-sub">${esc(t.name)}</h4>
+      <p class="map-desc">${esc(t.text)}</p>
+      <p class="map-desc war-reward"><b>Vítězství přinese:</b> ${esc(t.reward)}.</p>
+      <h4 class="map-sub">Kolik mužů</h4>
+      <div class="trade-goods">${Object.entries(SIZES).map(([k, n]) => `<button class="trade-chip${k === warForm.size ? ' on' : ''}" data-war-size="${k}">${SIZE_LABEL[k]} <small>${n}</small></button>`).join('')}</div>
+      <h4 class="map-sub">Kdo povede</h4>
+      <div class="trade-goods">
+        <button class="trade-chip${warForm.leader === 'marshal' ? ' on' : ''}" data-war-leader="marshal">${esc(state.marshal.name)} <small>maršál</small></button>
+        <button class="trade-chip${warForm.leader === 'ruler' ? ' on' : ''}" data-war-leader="ruler">${esc(state.ruler.name)} <small>osobně</small></button>
+      </div>
+      <p class="map-desc war-note">${warForm.leader === 'ruler' ? 'Vládce v čele zvedá morálku i šance, ale může být zraněn a doma bude chybět.' : 'Maršál vede bez rizika pro vládce, muži ale bojují s menším zápalem.'}</p>
+      <div class="trade-estimate">
+        <span>Síly: <b class="${tone}">${odds}</b> · doma zůstane ${Math.max(0, state.resources.army - men)} vojska</span>
+        <span>Zásoby: ${Math.ceil(men / 8)} jídla za období · v sýpkách ${state.resources.food}</span>
+      </div>
+      ${why ? `<p class="map-warning">${esc(why)}</p>` : ''}
+      <button class="seal-button primary map-choose" data-war-start${why ? ' disabled' : ''}>Vytáhnout do pole</button>` : ''}
+    ${tributes ? `<h4 class="map-sub">Tributy</h4><ul class="trade-log">${tributes}</ul>` : ''}
+  `);
+}
+
+function showWarStatus() {
+  const w = state.war;
+  const t = warTarget(state);
+  const leader = w.leader === 'ruler' ? state.ruler.name : state.marshal.name;
+  const marching = state.turn < w.arrive;
+  const [odds, tone] = oddsLabel(state, w.target, w.power);
+  sidebar(`
+    <span class="panel-overline">Vojsko v poli</span>
+    <h3 class="panel-title">${esc(t.name)}</h3>
+    <span class="map-verdict ${marching ? 'warn' : 'good'}">${marching ? `Na pochodu · na místě ${etaText(w.arrive)}` : `V poli ${w.seasons} ${w.seasons === 1 ? 'období' : 'období'}`}</span>
+    <p class="map-desc">Velí ${esc(leader)} (${leaderLabel(w.leader)}). ${esc(t.text)}</p>
+    ${statRow('Postup', w.progress, 'wealth')}
+    ${statRow('Morálka', w.morale, 'loyalty')}
+    <div class="trade-estimate">
+      <span>Mužů v poli: <b>${w.power}</b> · <b class="${tone}">${odds}</b></span>
+      <span>Spotřeba: ${Math.ceil(w.power / 8)} jídla za období · v sýpkách ${state.resources.food}</span>
+    </div>
+    <p class="map-desc war-note">Tažení vyhraješ při plném postupu. Když morálka klesne na nulu nebo padnou skoro všichni muži, je prohráno.</p>
+    <button class="trade-mini war-recall" data-war-recall>Odvolat vojsko domů</button>
+  `);
+}
+
+function handleWar(t) {
+  const target = t.closest('[data-war-target]');
+  if (target) { warForm.target = target.dataset.warTarget; refreshWar(); return true; }
+  const size = t.closest('[data-war-size]');
+  if (size) { warForm.size = size.dataset.warSize; showWarOverview(); return true; }
+  const leader = t.closest('[data-war-leader]');
+  if (leader) { warForm.leader = leader.dataset.warLeader; showWarOverview(); return true; }
+  const start = t.closest('[data-war-start]');
+  if (start) {
+    if (!start.disabled) {
+      const res = startWar(state, warForm.target, warForm.size, warForm.leader);
+      refreshWar();
+      document.dispatchEvent(new CustomEvent('kingdom:war', { detail: { message: res.error || res.message } }));
+    }
+    return true;
+  }
+  const recall = t.closest('[data-war-recall]');
+  if (recall) {
+    if (!recall.dataset.confirm) { recall.dataset.confirm = '1'; recall.textContent = 'Opravdu odvolat? Stojí to prestiž. Klikni znovu.'; recall.classList.add('confirm'); return true; }
+    const res = recallWar(state);
+    refreshWar();
+    document.dispatchEvent(new CustomEvent('kingdom:war', { detail: { message: res.error || res.message } }));
+    return true;
+  }
+  return false;
+}
+
+function refreshWar() {
+  const keepView = { ...view };
+  layers.war = true;
+  layers.trade = false;
+  render();
+  view = keepView;
+  applyView();
+  selected = null;
+  showOverview();
+}
+
 // ---------- selection + view ----------
 
 function selectThing(sel) {
@@ -896,6 +1051,15 @@ function hideTooltip() {
 }
 
 function tooltipFor(target) {
+  if (target.closest('[data-war-army]') && state.war) {
+    const t = warTarget(state);
+    return `<strong>Vojsko · ${state.war.power} mužů</strong><span>${esc(t.name)} · postup ${state.war.progress} % · morálka ${state.war.morale}</span>`;
+  }
+  const warEl = target.closest('[data-war-target]');
+  if (warEl && layers.war) {
+    const t = warTargets(state)[warEl.dataset.warTarget];
+    if (t) return `<strong>${esc(t.name)}</strong><span>${t.march} obd. pochodu · ${esc(t.reward)}</span>`;
+  }
   const marketEl = target.closest('[data-market]');
   const caravanEl = target.closest('[data-caravan]');
   if (caravanEl) {
@@ -986,6 +1150,9 @@ function wireInteractions(canvas) {
       if (c) return selectThing({ type: 'market', id: c.dest });
     }
     if (marketEl) return selectThing({ type: 'market', id: marketEl.dataset.market });
+    if (e.target.closest('[data-war-army]')) { refreshWar(); return; }
+    const warEl = e.target.closest('[data-war-target]');
+    if (warEl && layers.war) { warForm.target = warEl.dataset.warTarget; refreshWar(); return; }
     const featEl = e.target.closest('[data-feature]');
     const routeEl = e.target.closest('[data-route]');
     const provEl = e.target.closest('[data-province]');
@@ -1122,9 +1289,13 @@ export function wireMapChrome() {
   mapView.addEventListener('click', (e) => {
     const t = e.target;
     if (town && handleTownClick(t)) return;
+    if (!t.closest('.map-svg') && handleWar(t)) return;
     const layerBtn = t.closest('[data-layer]');
     if (layerBtn) {
       layers[layerBtn.dataset.layer] = !layers[layerBtn.dataset.layer];
+      // trade and war each take the sidebar: one at a time
+      if (layerBtn.dataset.layer === 'war' && layers.war) layers.trade = false;
+      if (layerBtn.dataset.layer === 'trade' && layers.trade) layers.war = false;
       const keep = selected;
       const keepView = { ...view };
       render();
