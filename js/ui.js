@@ -183,6 +183,13 @@ export function renderTurnSummary(text) {
   document.getElementById('turn-summary').textContent = text || '';
 }
 
+/** News from the roads this season: caravans back home, broken orders. */
+export function renderTradeNews(lines) {
+  const el = document.getElementById('trade-news');
+  el.innerHTML = (lines || []).map((l) => `<li>${esc(l)}</li>`).join('');
+  el.hidden = !(lines && lines.length);
+}
+
 const imageProbe = new Map();
 function probeImage(src) {
   if (!imageProbe.has(src)) {

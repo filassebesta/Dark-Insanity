@@ -5,7 +5,7 @@ import {
   renderCourtPanel, renderChroniclePanel, openPanel, closePanels, isPanelOpen,
   renderEndingScreen, toast, setTypewriterEnabled, skipTypewriter, setMusicMuted,
   renderReignInfo, renderCharacterPlaque, renderOutcome, renderStaticIcons,
-  resetResourceMemory, esc, upgradeScenarioArt, renderHousesPanel,
+  resetResourceMemory, esc, upgradeScenarioArt, renderHousesPanel, renderTradeNews,
 } from './ui.js';
 import { openMap, closeMap, isMapOpen, wireMapChrome } from './map.js';
 import { openCharacter, closeCharacter, isCharacterOpen, openPerson, closePerson, isPersonOpen } from './character.js';
@@ -118,6 +118,7 @@ function runNextTurn() {
   }
 
   renderTurnSummary(result.turnSummary);
+  renderTradeNews(result.tradeNews);
 
   presentEvent(result.event); // the engine falls back to the quiet-season event
 }
@@ -272,6 +273,10 @@ function wireActions() {
         else openMap(currentState);
         return;
       }
+      if (panel === 'trade') {
+        openMap(currentState, { layer: 'trade' });
+        return;
+      }
       if (panel === 'character') {
         openCharacter(currentState);
         return;
@@ -359,6 +364,11 @@ function wireKeyboard() {
       else { closeOverlays(); document.querySelector('.book-tab[data-panel="map"]').click(); }
       return;
     }
+    if (e.key === 'o' || e.key === 'O') {
+      if (isMapOpen()) closeMap();
+      else { closeOverlays(); openMap(currentState, { layer: 'trade' }); }
+      return;
+    }
     if (e.key === 'p' || e.key === 'P') {
       if (isCharacterOpen()) closeCharacter();
       else { closeOverlays(); openCharacter(currentState); }
@@ -427,6 +437,14 @@ function wireClickSound() {
     if (e.target.closest('button')) playClickSound();
   });
 }
+
+// a trade on the map (sale, purchase, caravan sent): save and refresh
+document.addEventListener('kingdom:trade', (e) => {
+  if (!currentState) return;
+  saveGame(currentState);
+  refreshAllPanels();
+  if (e.detail.message) toast(e.detail.message);
+});
 
 // a decree issued on the map: save, refresh the bars and tell the player
 document.addEventListener('kingdom:decree', (e) => {

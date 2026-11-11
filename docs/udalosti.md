@@ -2,7 +2,7 @@
 
 Vygenerováno z `js/events*.js`. Jména v hranatých závorkách hra doplní podle aktuálního stavu.
 
-Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí · Scénář **Sedlák**: 33 událostí (+ 3 krize, 2 ozvěny) · Krize: 7 · Ozvěny rozhodnutí: 17 · Povahy rádců a výchova: 5.
+Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí · Scénář **Sedlák**: 33 událostí (+ 3 krize, 2 ozvěny) · Krize: 7 · Ozvěny rozhodnutí: 17 · Povahy rádců a výchova: 5 · Obchod: 6.
 
 ## Scénář Panovník
 
@@ -1503,3 +1503,54 @@ Události podle povahy rádců běží ve všech scénářích, výchova dědice
 1. Poslat dědice ke královskému dvoru
 2. Učit se správě panství
 3. Vycvičit dědice v družině
+
+## Obchod (všechny scénáře)
+
+Přepadení karavany a pirátů přijde samo, když se náklad cestou dostane do nesnází. Ostatní události se objeví, až začneš obchodovat.
+
+### 1. Přepadená karavana  `o_prepadeni`
+
+> Karavanu s nákladem [cargo.load] cestou [cargo.to] zastavili [cargo.danger]. Vozky drží v šachu a chtějí výkupné: [cargo.ransom], jinak si vezmou všechno. [cargo.escort]
+
+1. Zaplatit výkupné
+2. Poslat ozbrojence
+3. Odepsat náklad
+
+### 2. Piráti na obzoru  `o_pirati`
+
+> Loď s nákladem [cargo.load] plující [cargo.to] dostihly pirátské plachty. Kapitán posílá rychlý člun: piráti chtějí [cargo.ransom] za volnou plavbu, jinak loď přepadnou. [cargo.escort]
+
+1. Zaplatit pirátům
+2. Bránit loď
+3. Zkusit jim uplout
+
+### 3. Kupec s plným měšcem  `o_cizi_kupec`
+
+> Do Brodu dorazil cizí kupec a ptá se po [cargo.good]. Slyšel, že ho máš ve skladu: [cargo.load]. Nabízí [cargo.offer] za všechno najednou, a hned.
+
+1. Prodat
+2. Smlouvat o víc
+3. Neprodávat
+
+### 4. Nové clo  `o_clo`
+
+> Markrabata z Východních marek zvedla clo na všechno zboží, které přijíždí přes hvozd. Kupci skřípou zuby a ceny v markách padají.
+
+1. Smířit se s tím
+2. Vyjednat výjimku
+3. Obrátit obchod jinam
+
+### 5. Hlad za horami  `o_hlad_na_severu`
+
+> Ze Severních pustin přicházejí zprávy o hladu. Kdo tam teď doveze obilí, dostane zaplaceno stříbrem. Nebo vděčností, pokud ho daruje.
+
+1. Využít toho a prodávat draze
+2. Poslat obilí jako dar
+3. Nevšímat si toho
+
+### 6. Vlastní loď  `o_lod`
+
+> Loďař z Přístavu Mark nabízí postavit pevnou loď s vysokými boky, jakou piráti neradi napadají. Bude to stát hodně dřeva, hodně zlata a celý rok.
+
+1. Loď postavit
+2. Spokojit se s pronajatými loděmi

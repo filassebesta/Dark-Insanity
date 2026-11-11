@@ -1327,3 +1327,19 @@ Patří k novým povahám rádců (všechny scénáře) a k výchově dědice u 
 | `q_odvaha.jpg` | Odvážný plán | A bold commander pointing at a forest on a war table map, eager soldiers behind him, candlelight. |
 | `q_oddanost.jpg` | Věrné srdce | A loyal counsellor with a lantern whispering a warning to a ruler in a dark castle corridor at night. |
 | `n_vychova_dedice.jpg` | Kde se bude dědic učit | A young noble heir in a castle courtyard between a knight with a practice sword and a steward with account books. |
+
+---
+
+## 15. Obchod (volitelné scény, 1:1, cíl 2048 × 2048)
+
+Obchodní události už fungují s půjčenými obrázky. Vlastní obrázky je jen vylepší.
+Formát a dávkový prompt jsou stejné jako v sekci 14.0.
+
+| Soubor | Událost | Teď používá | Popis pro Gemini |
+|---|---|---|---|
+| `o_prepadeni.jpg` | Přepadená karavana | `lapkove_ve_hvozdu` | Bandits stopping a column of loaded merchant wagons on a forest road, drivers with raised hands, a bandit leader holding up a purse demanding ransom. |
+| `o_pirati.jpg` | Piráti na obzoru | `pirati` | A heavy merchant cog on a grey stormy sea, a black-sailed pirate ship closing in, a small boat rowing between them with a messenger. |
+| `o_cizi_kupec.jpg` | Kupec s plným měšcem | `kupci_z_jihu` | A rich foreign merchant in a long embroidered southern robe inspecting stacked goods in a market warehouse, offering a heavy purse. |
+| `o_clo.jpg` | Nové clo | `cizi_vyslanec` | A border toll gate with a barrier pole at the edge of a dark forest, foreign guards collecting coins from a waiting line of merchant wagons. |
+| `o_hlad_na_severu.jpg` | Hlad za horami | `hladomor` | Starving northern villagers in furs waiting at a snowy mountain pass as a caravan of grain wagons comes up the road. |
+| `o_lod.jpg` | Vlastní loď | `kupecka_gilda` | Shipwrights building a high-sided wooden merchant ship on slipways in a small harbour, ropes, scaffolding and gulls. |

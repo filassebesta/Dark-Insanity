@@ -2,6 +2,7 @@ import { SEASONS, TERRAIN_DEFS, NOBLE_HOUSES, PEASANT_HOME, clamp, randomName, r
 import { makeChronicleEntry, inheritTraits } from './state.js';
 import { EVENTS, QUIET_EVENTS } from './events.js';
 import { roleLabel, QUIRK_ROLES, randomQuirk, quirkLabel } from './court.js';
+import { processTrade, resolveIncident, resolveOffer, addTradeMod, ensureTrade, cargoTokens, GOODS, MAX_STOCK } from './trade.js';
 
 const TRAIT_MIN = 1;
 const TRAIT_MAX = 10;
@@ -40,6 +41,7 @@ export function interpolate(state, text) {
       'house.seat': state.provinces.find((p) => p.id === house.def.seat).name,
     });
   }
+  Object.assign(dict, cargoTokens(state));
   const lord = lordOf(state);
   if (lord) {
     Object.assign(dict, {
@@ -228,6 +230,23 @@ function applyHeirTraits(state, fx, notes) {
   }
 }
 
+// trade / tradeOffer / tradeMod / tradeStock (see events_trade.js)
+function applyTradeEffects(state, branch, notes) {
+  if (branch.trade) resolveIncident(state, branch.trade, notes);
+  if (branch.tradeOffer !== undefined) {
+    if (branch.tradeOffer > 0) resolveOffer(state, branch.tradeOffer, notes);
+    else state.tradeCtx = null;
+  }
+  if (branch.tradeMod) addTradeMod(state, branch.tradeMod);
+  if (branch.tradeStock) {
+    const t = ensureTrade(state);
+    for (const [g, n] of Object.entries(branch.tradeStock)) {
+      t.stock[g] = Math.max(0, Math.min(MAX_STOCK, t.stock[g] + n));
+      notes.push({ text: `Sklad: ${GOODS[g].name.toLowerCase()} ${n > 0 ? '+' : ''}${n}`, tone: n > 0 ? 'pos' : 'neg' });
+    }
+  }
+}
+
 /** Fills in what older saves lack: adviser quirks and the heir's own traits. */
 export function ensureCourtData(state) {
   for (const role of QUIRK_ROLES) {
@@ -349,6 +368,7 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
   applyCourtEffects(state, branch.courtEffects, notes, touched);
   applyCourtReplacement(state, branch.replaceCourt, notes, meta);
   applyHeirTraits(state, branch.heirTraits, notes);
+  applyTradeEffects(state, branch, notes);
   recordCourtHistory(state, meta, touched, outcome);
   scheduleEcho(state, branch.echo, meta);
   tallyReign(state, branch, meta, outcome);
@@ -664,6 +684,7 @@ export function pickNextEvent(state) {
     roll -= e.weight ?? 1;
     if (roll <= 0) { event = e; break; }
   }
+  if (event.onPick) event.onPick(state); // e.g. a buyer asking for whatever fills the warehouse
   if (event.target) {
     const t = event.target(state);
     if (state.provinces.some((p) => p.id === t)) state.eventContext = { province: t };
@@ -950,6 +971,7 @@ export function advanceTurn(state) {
   }
 
   updateGoldenAgeStreak(state);
+  const tradeNews = processTrade(state);
 
   const seasonLabel = SEASONS[state.seasonIndex];
   const [goldWord, foodWord] = isPeasant(state) ? ['grošů', 'zásob'] : ['zlata', 'jídla'];
@@ -965,5 +987,5 @@ export function advanceTurn(state) {
   raiseCrisis(state);
   const event = pickNextEvent(state);
   state.currentEvent = event ? event.id : null;
-  return { turnSummary, event, successionOccurred, gameOver: null };
+  return { turnSummary, event, successionOccurred, gameOver: null, tradeNews };
 }

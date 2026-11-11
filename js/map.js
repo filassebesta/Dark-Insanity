@@ -2,8 +2,12 @@
 // with clickable SVG overlays. Coordinates are pixels of the original
 // 1264x848 painting; zoom/pan works by animating the SVG viewBox.
 
-import { TERRAIN_DEFS, NOBLE_HOUSES } from './data.js';
-import { attitudeLabel, decreeList, decreeAvailable, canAffordDecree, issueDecree } from './engine.js';
+import { TERRAIN_DEFS, NOBLE_HOUSES, SEASONS } from './data.js';
+import { attitudeLabel, decreeList, decreeAvailable, canAffordDecree, issueDecree, interpolate } from './engine.js';
+import {
+  GOODS, MARKETS, MAX_STOCK, ESCORT_ARMY, ensureTrade, routeFor, originPoint, marketAccess, price, riskOf,
+  caravanFee, canSend, sendCaravan, sellAtHome, buyAtHome, convertFood, loadText,
+} from './trade.js';
 import { esc } from './ui.js';
 
 const W = 1264;
@@ -88,6 +92,7 @@ const LAYERS = [
   { key: 'unrest', label: 'Nepokoje' },
   { key: 'garrison', label: 'Posádky' },
   { key: 'routes', label: 'Cesty' },
+  { key: 'trade', label: 'Obchod' },
 ];
 
 // ---------- helpers ----------
@@ -145,7 +150,8 @@ let options = {};
 let view = { x: 0, y: 0, w: W, h: H };
 let animFrame = null;
 let selected = null;
-const layers = { loyalty: false, unrest: true, garrison: false, routes: false };
+const layers = { loyalty: false, unrest: true, garrison: false, routes: false, trade: false };
+let tradeForm = { dest: null, good: null, qty: 1, escort: false };
 let drag = null;
 let suppressClick = false;
 
@@ -199,9 +205,11 @@ function render() {
       <text class="map-natural river-label"><textPath href="#map-river-path" startOffset="30%">Brodnice</textPath></text>
 
       <g class="map-routes${layers.routes ? ' show' : ''}">${Object.entries(ROUTES).map(([key, r]) => routePath(key, r)).join('')}</g>
+      <g class="map-trade${layers.trade ? ' show' : ''}">${tradeLayer()}</g>
       <g class="map-overlays">${overlays()}</g>
       <g class="map-labels">${Object.entries(PROVINCES).map(([id, p]) => provinceLabel(id, p)).join('')}</g>
       <g class="map-features">${Object.entries(FEATURES).map(([id, f]) => featureMarker(id, f)).join('')}</g>
+      <g class="map-markets${layers.trade ? ' show' : ''}">${marketMarkers()}</g>
 
       <text class="map-natural sea-label" x="128" y="520" transform="rotate(-84 128 520)">Šedé moře</text>
       <text class="map-natural sea-label" x="960" y="760">Šedé moře</text>
@@ -338,6 +346,214 @@ function decreeBlock(provinceId = '') {
     </div>`;
 }
 
+// ---------- trade layer (see trade.js) ----------
+
+function marketsShown() {
+  return Object.entries(MARKETS).filter(([, m]) => !m.scenarios || m.scenarios.includes(state.scenario));
+}
+
+function pointAlong(pts, f) {
+  const seg = [];
+  let total = 0;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const d = Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]);
+    seg.push(d);
+    total += d;
+  }
+  let left = total * f;
+  for (let i = 0; i < seg.length; i++) {
+    if (left <= seg[i]) {
+      const k = seg[i] ? left / seg[i] : 0;
+      return [pts[i][0] + (pts[i + 1][0] - pts[i][0]) * k, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * k];
+    }
+    left -= seg[i];
+  }
+  return pts[pts.length - 1];
+}
+
+// 'loc' = "v zimě roku 3" (when it comes back), 'gen' = "zimy roku 3" (until when)
+const SEASON_LOC = ['na jaře', 'v létě', 'na podzim', 'v zimě'];
+const SEASON_GEN = ['jara', 'léta', 'podzimu', 'zimy'];
+function etaText(turn, form = 'loc') {
+  const ahead = turn - state.turn;
+  const year = state.year + Math.floor((state.seasonIndex + ahead) / 4);
+  return `${(form === 'gen' ? SEASON_GEN : SEASON_LOC)[turn % 4]} roku ${year}`;
+}
+
+function tradeLayer() {
+  const t = ensureTrade(state);
+  const routes = marketsShown().filter(([, m]) => !m.home).map(([id, m]) => {
+    const blocked = marketAccess(state, id);
+    return `<path class="trade-route${m.sea ? ' sea' : ''}${blocked ? ' blocked' : ''}" d="${smoothPath(routeFor(state, id))}"/>`;
+  }).join('');
+  const caravans = t.caravans.map((c) => {
+    const span = Math.max(1, c.arrive - c.depart);
+    const f = c.held ? 0.8 : Math.max(0.12, Math.min(0.9, (state.turn - c.depart + 0.5) / span));
+    const [x, y] = pointAlong(routeFor(state, c.dest), f);
+    const shape = c.sea
+      ? '<path d="M-14 0h28l-6 8h-16z"/><path d="M0 -18v18M0 -18l11 14H0" class="sail"/>'
+      : '<rect x="-13" y="-9" width="26" height="12" rx="2"/><circle cx="-7" cy="6" r="4.5"/><circle cx="7" cy="6" r="4.5"/>';
+    return `<g class="map-caravan${c.held ? ' held' : ''}" data-caravan="${c.id}" transform="translate(${x.toFixed(0)} ${y.toFixed(0)})"><circle class="c-hit" r="22"/>${shape}</g>`;
+  }).join('');
+  const [ox, oy] = originPoint(state);
+  const origin = `<g class="trade-origin" transform="translate(${ox} ${oy})"><rect x="-9" y="-9" width="18" height="18" transform="rotate(45)"/></g>`;
+  return routes + origin + caravans;
+}
+
+function marketMarkers() {
+  return marketsShown().map(([id, m]) => {
+    const [x, y] = m.at;
+    const blocked = marketAccess(state, id);
+    return `<g class="map-market${blocked ? ' blocked' : ''}${selected && selected.type === 'market' && selected.id === id ? ' active' : ''}" data-market="${id}" transform="translate(${x} ${y})">
+      <circle class="m-hit" r="30"/><circle class="m-ring" r="15"/><path class="m-coin" d="M-6 -3h12M-6 3h12M0 -8v16"/>
+      <text class="m-label" y="${y < 80 ? 36 : -24}" x="${x > 1100 ? 12 : x < 200 ? -12 : 0}" style="text-anchor:${x > 1100 ? 'end' : x < 200 ? 'start' : 'middle'}">${esc(m.name)}</text>
+    </g>`;
+  }).join('');
+}
+
+function stockRows() {
+  const t = ensureTrade(state);
+  return Object.entries(GOODS).map(([g, def]) =>
+    `<div class="trade-stock-row${t.stock[g] ? '' : ' empty'}"><span>${esc(def.name)}</span><div class="stat-bar"><div class="stat-bar-fill wealth" style="width:${(t.stock[g] / MAX_STOCK) * 100}%"></div></div><b>${t.stock[g]}</b></div>`).join('');
+}
+
+function contractList(filterDest) {
+  const t = ensureTrade(state);
+  const list = t.contracts.filter((c) => !filterDest || c.dest === filterDest);
+  if (!list.length) return '';
+  const coin = state.scenario === 'sedlak' ? 'grošů' : 'zlata';
+  return `<h4 class="map-sub">Zakázky</h4><ul class="trade-contracts">${list.map((c) => `
+    <li class="${c.obligation ? 'obligation' : ''}">
+      <b>${esc(interpolate(state, c.giver))} ${esc(loadText(c.qty, c.good))}</b>
+      <span>${esc(MARKETS[c.dest].to)} do ${etaText(c.until, 'gen')} · odměna ${c.reward} ${coin}${c.favor ? ` a přízeň +${c.favor}` : ''}${c.prestige ? ` a prestiž +${c.prestige}` : ''}</span>
+      <em>${c.taken ? 'Náklad je na cestě.' : c.obligation ? 'Nesplnění stojí přízeň.' : 'Nabídka bez závazku.'}</em>
+    </li>`).join('')}</ul>`;
+}
+
+function showTradeOverview() {
+  const t = ensureTrade(state);
+  sidebar(`
+    <span class="panel-overline">Obchod</span>
+    <h3 class="panel-title">Sklad a karavany</h3>
+    <p class="map-desc">${state.scenario === 'sedlak' ? 'Co grunt vypěstuje navíc, můžeš prodat v Brodu nebo odvézt pánovi. Svobodný sedlák si může koupit místo v kupecké karavaně do ciziny.' : 'Tvé země plní sklad zbožím. Prodej ho hned v Brodu, nebo ho pošli karavanou či lodí do ciziny, kde platí víc, ale cesta trvá a hrozí přepadení.'} Klikni na trh na mapě.</p>
+    <h4 class="map-sub">Sklad <small>· nejvýš ${MAX_STOCK} vozů od každého</small></h4>
+    <div class="trade-stock">${stockRows()}</div>
+    <h4 class="map-sub">Na cestě</h4>
+    ${t.caravans.length ? `<ul class="trade-caravans">${t.caravans.map((c) => `
+      <li data-goto-market="${c.dest}"><b>${c.sea ? 'Loď' : 'Karavana'} · ${esc(loadText(c.qty, c.good))}</b><span>${esc(MARKETS[c.dest].to)}${c.escort ? ' · s doprovodem' : ''} · ${c.held ? '<em class="bad">přepadena!</em>' : `návrat ${etaText(c.arrive)}`}</span></li>`).join('')}</ul>`
+      : '<p class="map-desc">Žádná karavana není na cestě.</p>'}
+    ${contractList()}
+    <h4 class="map-sub">Trhy</h4>
+    <div class="map-chip-list">${marketsShown().map(([id, m]) => {
+      const blocked = marketAccess(state, id);
+      return `<button class="map-chip" data-goto-market="${id}"><span>${esc(m.name)}</span><em class="${blocked ? 'bad' : 'good'}">${m.home ? 'prodej hned' : blocked ? 'nedostupné' : `${m.days} obd. · riziko ${Math.round(riskOf(state, id, false) * 100)} %`}</em></button>`;
+    }).join('')}</div>
+    ${t.log.length ? `<h4 class="map-sub">Z obchodní knihy</h4><ul class="trade-log">${t.log.slice(0, 4).map((l) => `<li>${esc(l.text)}</li>`).join('')}</ul>` : ''}
+    <p class="map-desc trade-coin">V pokladně: <b>${state.resources.gold}</b> ${state.scenario === 'sedlak' ? 'grošů' : 'zlata'}</p>
+  `);
+}
+
+function showMarket(dest) {
+  const t = ensureTrade(state);
+  const m = MARKETS[dest];
+  const blocked = marketAccess(state, dest);
+  const coin = state.scenario === 'sedlak' ? 'grošů' : 'zlata';
+  const rows = Object.keys(GOODS).filter((g) => m.sell[g] || m.buy?.[g]).map((g) => {
+    const sell = m.sell[g] ? price(state, dest, g) : null;
+    const buy = m.buy?.[g] ? price(state, dest, g, 'buy') : null;
+    const trend = m.sell[g] ? (t.drift[dest]?.[g] || 1) : 1;
+    const arrow = trend > 1.1 ? '<i class="up">▲</i>' : trend < 0.9 ? '<i class="down">▼</i>' : '';
+    const actions = m.home && !blocked ? `
+      <button class="trade-mini" data-trade="sell" data-good="${g}" data-n="1"${t.stock[g] && sell ? '' : ' disabled'}>Prodat 1</button>
+      <button class="trade-mini" data-trade="sell" data-good="${g}" data-n="${t.stock[g]}"${t.stock[g] > 1 && sell ? '' : ' disabled'}>Vše</button>
+      ${buy ? `<button class="trade-mini" data-trade="buy" data-good="${g}" data-dest="${dest}"${state.resources.gold >= buy && t.stock[g] < MAX_STOCK ? '' : ' disabled'}>Koupit</button>` : ''}`
+      : buy && !blocked ? `<button class="trade-mini" data-trade="buy" data-good="${g}" data-dest="${dest}"${state.resources.gold >= buy && t.stock[g] < MAX_STOCK ? '' : ' disabled'}>Koupit</button>` : '';
+    return `<tr><td>${esc(GOODS[g].name)}</td><td>${sell ? `${sell}${arrow}` : '–'}</td><td>${buy || '–'}</td><td>${t.stock[g]}</td><td class="trade-act">${actions}</td></tr>`;
+  }).join('');
+  let form = '';
+  if (!m.home && !blocked) {
+    const goods = Object.keys(GOODS).filter((g) => m.sell[g] && t.stock[g] > 0);
+    if (tradeForm.dest !== dest || !goods.includes(tradeForm.good)) tradeForm = { dest, good: goods[0] || null, qty: Math.min(3, t.stock[goods[0]] || 1), escort: false };
+    const f = tradeForm;
+    if (!goods.length) {
+      form = `<p class="map-desc">Ve skladu nemáš nic, co by se tu dalo prodat.</p>`;
+    } else {
+      f.qty = Math.max(1, Math.min(f.qty, t.stock[f.good]));
+      const value = f.qty * price(state, dest, f.good);
+      const fee = caravanFee(state, dest, f.qty) + (f.escort ? 1 : 0);
+      const contract = t.contracts.find((c) => c.dest === dest && c.good === f.good && c.qty <= f.qty && !c.taken);
+      const why = canSend(state, dest, f.good, f.qty, f.escort);
+      form = `
+        <h4 class="map-sub">Vypravit ${m.sea ? 'loď' : 'karavanu'}</h4>
+        <div class="trade-form">
+          <div class="trade-goods">${goods.map((g) => `<button class="trade-chip${g === f.good ? ' on' : ''}" data-trade="good" data-good="${g}">${esc(GOODS[g].name)} <small>${t.stock[g]}</small></button>`).join('')}</div>
+          <div class="trade-qty">
+            <button class="trade-mini" data-trade="qty" data-n="-1">−</button>
+            <b>${esc(loadText(f.qty, f.good))}</b>
+            <button class="trade-mini" data-trade="qty" data-n="1">+</button>
+          </div>
+          <label class="trade-escort"><button class="trade-chip${f.escort ? ' on' : ''}" data-trade="escort">${f.escort ? '✓ ' : ''}Ozbrojený doprovod</button><span>${ESCORT_ARMY} muži na cestu, poloviční riziko</span></label>
+          <div class="trade-estimate">
+            <span>Odhad výnosu <b>${contract ? contract.reward : value} ${coin}</b>${contract ? ' (zakázka)' : ''}${m.favor && !contract ? (f.qty >= 3 ? ` a přízeň +${Math.min(6, Math.floor(f.qty / 2))}` : ' · přízeň až od 3 vozů') : ''}</span>
+            <span>Poplatky <b>${fee}</b> · riziko <b>${Math.round(riskOf(state, dest, f.escort) * 100)} %</b> · návrat <b>${etaText(state.turn + m.days)}</b></span>
+          </div>
+          ${why ? `<p class="map-warning">${esc(why)}</p>` : ''}
+          <button class="seal-button primary map-choose" data-trade="send"${why ? ' disabled' : ''}>Vyslat ${m.sea ? 'loď' : 'karavanu'}</button>
+        </div>`;
+    }
+  }
+  const convert = m.home ? `
+    <h4 class="map-sub">Sýpky a sklad</h4>
+    <div class="trade-convert">
+      <button class="trade-mini" data-trade="convert-in"${state.resources.food >= 6 && t.stock.grain < MAX_STOCK ? '' : ' disabled'}>Vymlátit vůz obilí ze zásob (−6 jídla)</button>
+      <button class="trade-mini" data-trade="convert-out"${t.stock.grain ? '' : ' disabled'}>Vrátit vůz do sýpek (+4 jídla)</button>
+    </div>` : '';
+  sidebar(`
+    <span class="panel-overline">${m.home ? 'Domácí trh' : `${m.sea ? 'Přes moře' : 'Po souši'} · ${m.days} ${m.days === 1 ? 'období' : 'období'} cesty`}</span>
+    <h3 class="panel-title">${esc(m.name)}</h3>
+    ${!m.home ? `<span class="map-verdict ${m.risk > 0.2 ? 'bad' : m.risk > 0.1 ? 'warn' : 'good'}">Nebezpečí: ${esc(m.danger)} · ${Math.round(riskOf(state, dest, false) * 100)} %</span>` : ''}
+    <p class="map-desc">${esc(m.text)}</p>
+    ${blocked ? `<p class="map-warning">${esc(blocked)}</p>` : ''}
+    <table class="trade-table"><thead><tr><th>Zboží</th><th title="Kolik tu zaplatí za vůz">Platí</th><th title="Kolik tu stojí vůz">Stojí</th><th>Sklad</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+    ${convert}
+    ${form}
+    ${contractList(dest)}
+    <button class="map-back" data-overview>← Přehled obchodu</button>
+  `);
+}
+
+function refreshTradeView(message) {
+  const keepView = { ...view };
+  const keep = selected;
+  render();
+  view = keepView;
+  applyView();
+  selected = null;
+  if (keep) selectThing(keep);
+  else showOverview();
+  document.dispatchEvent(new CustomEvent('kingdom:trade', { detail: { message } }));
+}
+
+function handleTrade(btn) {
+  const kind = btn.dataset.trade;
+  const t = ensureTrade(state);
+  let message = null;
+  if (kind === 'sell') message = sellAtHome(state, btn.dataset.good, Number(btn.dataset.n));
+  else if (kind === 'buy') message = buyAtHome(state, btn.dataset.good, 1, btn.dataset.dest || 'brod');
+  else if (kind === 'convert-in') message = convertFood(state, true);
+  else if (kind === 'convert-out') message = convertFood(state, false);
+  else if (kind === 'good') { tradeForm.good = btn.dataset.good; tradeForm.qty = Math.min(tradeForm.qty, t.stock[tradeForm.good]) || 1; }
+  else if (kind === 'qty') tradeForm.qty = Math.max(1, Math.min(10, tradeForm.qty + Number(btn.dataset.n)));
+  else if (kind === 'escort') tradeForm.escort = !tradeForm.escort;
+  else if (kind === 'send') {
+    const res = sendCaravan(state, tradeForm.dest, tradeForm.good, tradeForm.qty, tradeForm.escort);
+    message = res.error || `${MARKETS[tradeForm.dest].sea ? 'Loď vyplula' : 'Karavana vyrazila'} ${MARKETS[tradeForm.dest].to}.`;
+    tradeForm.dest = null;
+  }
+  if (['good', 'qty', 'escort'].includes(kind)) { showMarket(tradeForm.dest); return; }
+  refreshTradeView(message);
+}
+
 // ---------- sidebar ----------
 
 function sidebar(html) {
@@ -360,6 +576,7 @@ function verdict(prov) {
 }
 
 function showOverview() {
+  if (layers.trade) return showTradeOverview();
   if (state.scenario === 'slechtic') return showNobleOverview();
   if (state.scenario === 'sedlak') return showPeasantOverview();
   const provs = state.provinces.filter((p) => PROVINCES[p.id]);
@@ -538,7 +755,7 @@ function showRoute(key) {
 
 function selectThing(sel) {
   selected = sel;
-  svg.querySelectorAll('.map-province.selected, .map-feature.active, .map-route.active').forEach((el) => el.classList.remove('selected', 'active'));
+  svg.querySelectorAll('.map-province.selected, .map-feature.active, .map-route.active, .map-market.active').forEach((el) => el.classList.remove('selected', 'active'));
   if (!sel) {
     showOverview();
     return;
@@ -550,6 +767,9 @@ function selectThing(sel) {
     svg.querySelector(`.map-feature[data-feature="${sel.id}"]`).classList.add('active');
     if (sel.id === 'vassal') svg.querySelector('.map-routes').classList.add('show');
     showFeature(sel.id);
+  } else if (sel.type === 'market') {
+    svg.querySelector(`.map-market[data-market="${sel.id}"]`)?.classList.add('active');
+    showMarket(sel.id);
   } else if (sel.type === 'route') {
     svg.querySelector('.map-routes').classList.add('show');
     svg.querySelector(`.map-route[data-route="${sel.id}"]`).classList.add('active');
@@ -632,6 +852,16 @@ function hideTooltip() {
 }
 
 function tooltipFor(target) {
+  const marketEl = target.closest('[data-market]');
+  const caravanEl = target.closest('[data-caravan]');
+  if (caravanEl) {
+    const c = ensureTrade(state).caravans.find((x) => String(x.id) === caravanEl.dataset.caravan);
+    if (c) return `<strong>${c.sea ? 'Loď' : 'Karavana'} · ${esc(loadText(c.qty, c.good))}</strong><span>${esc(MARKETS[c.dest].to)} · ${c.held ? 'přepadena!' : `návrat ${etaText(c.arrive)}`}</span>`;
+  }
+  if (marketEl) {
+    const m = MARKETS[marketEl.dataset.market];
+    return `<strong>${esc(m.name)}</strong><span>${m.home ? 'domácí trh, prodej hned' : `${m.days} ${m.days === 1 ? 'období' : 'období'} cesty · riziko ${Math.round(m.risk * 100)} %`}</span>`;
+  }
   const provEl = target.closest('[data-province]');
   const featEl = target.closest('[data-feature]');
   const routeEl = target.closest('[data-route]');
@@ -699,6 +929,13 @@ function wireInteractions(canvas) {
 
   svg.addEventListener('click', (e) => {
     if (suppressClick) return;
+    const marketEl = e.target.closest('[data-market]');
+    const caravanEl = e.target.closest('[data-caravan]');
+    if (caravanEl) {
+      const c = ensureTrade(state).caravans.find((x) => String(x.id) === caravanEl.dataset.caravan);
+      if (c) return selectThing({ type: 'market', id: c.dest });
+    }
+    if (marketEl) return selectThing({ type: 'market', id: marketEl.dataset.market });
     const featEl = e.target.closest('[data-feature]');
     const routeEl = e.target.closest('[data-route]');
     const provEl = e.target.closest('[data-province]');
@@ -757,6 +994,10 @@ export function wireMapChrome() {
       else showOverview();
       return;
     }
+    const tradeBtn = t.closest('[data-trade]');
+    if (tradeBtn && !tradeBtn.disabled) return handleTrade(tradeBtn);
+    const gotoMarket = t.closest('[data-goto-market]');
+    if (gotoMarket) return selectThing({ type: 'market', id: gotoMarket.dataset.gotoMarket });
     const prov = t.closest('[data-goto-province]');
     if (prov) return focusProvince(prov.dataset.gotoProvince);
     const feat = t.closest('[data-goto-feature]');
