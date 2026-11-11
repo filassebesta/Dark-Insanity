@@ -86,15 +86,15 @@ letters, watermark or signature.
 | ✅ | `kingdom_map.jpg` | 3:2 | 2400 × 1600 | Podklad interaktivní mapy | 9 |
 | ✅ | `pohranicni_najezd.jpg` | 1:1 | 2048 × 2048 | Nájezd na hranici | 10 |
 | ✅ | `valka_s_markami.jpg` | 1:1 | 2048 × 2048 | Válka s Marcemi | 10 |
-| ❌ | `vzpoura_v_provincii.jpg` | 1:1 | 2048 × 2048 | Vzpoura | 10 |
+| ✅ | `vzpoura_v_provincii.jpg` | 1:1 | 2048 × 2048 | Vzpoura | 10 |
 | ✅ | `lapkove_ve_hvozdu.jpg` | 1:1 | 2048 × 2048 | Lapkové ve hvozdu | 10 |
 | ✅ | `hladomor.jpg` | 1:1 | 2048 × 2048 | Hladomor | 10 |
-| ❌ | `atentat.jpg` | 1:1 | 2048 × 2048 | Dýka ve tmě | 10 |
-| ❌ | `soud_se_spiklenci.jpg` | 1:1 | 2048 × 2048 | Soud se spiklenci | 10 |
+| ✅ | `atentat.jpg` | 1:1 | 2048 × 2048 | Dýka ve tmě | 10 |
+| ✅ | `soud_se_spiklenci.jpg` | 1:1 | 2048 × 2048 | Soud se spiklenci | 10 |
 | ✅ | `zaval_v_dole.jpg` | 1:1 | 2048 × 2048 | Zával v dole | 10 |
-| ❌ | `mor_v_pristavu.jpg` | 1:1 | 2048 × 2048 | Mor v přístavu | 10 |
-| ❌ | `kupci_z_jihu.jpg` | 1:1 | 2048 × 2048 | Kupci z jihu | 10 |
-| ❌ | `bohata_uroda.jpg` | 1:1 | 2048 × 2048 | Bohatá úroda | 10 |
+| ✅ | `mor_v_pristavu.jpg` | 1:1 | 2048 × 2048 | Mor v přístavu | 10 |
+| ✅ | `kupci_z_jihu.jpg` | 1:1 | 2048 × 2048 | Kupci z jihu | 10 |
+| ✅ | `bohata_uroda.jpg` | 1:1 | 2048 × 2048 | Bohatá úroda | 10 |
 | ✅ | `kruta_zima.jpg` | 1:1 | 2048 × 2048 | Krutá zima | 10 |
 | ✅ | `vychova_dedice.jpg` | 1:1 | 2048 × 2048 | Výchova dědice | 10 |
 | ✅ | `dedic_dospel.jpg` | 1:1 | 2048 × 2048 | Dědic dospěl | 10 |
@@ -145,20 +145,20 @@ letters, watermark or signature.
 | ✅ | `hranicni_kamen.jpg` | 1:1 | 2048 × 2048 | Posunutý hraniční kámen | 11 |
 | ✅ | `povoden.jpg` | 1:1 | 2048 × 2048 | Povodeň | 11 |
 | ✅ | `sucho.jpg` | 1:1 | 2048 × 2048 | Sucho | 11 |
-| ❌ | `vlci.jpg` | 1:1 | 2048 × 2048 | Vlci | 11 |
-| ❌ | `stribrna_zila.jpg` | 1:1 | 2048 × 2048 | Stříbrná žíla | 11 |
-| ❌ | `kobylky.jpg` | 1:1 | 2048 × 2048 | Kobylky | 11 |
-| ❌ | `spor_rybaru.jpg` | 1:1 | 2048 × 2048 | Spor o rybolov | 11 |
-| ❌ | `zlodej_v_pokladne.jpg` | 1:1 | 2048 × 2048 | Zloděj v pokladně | 11 |
-| ❌ | `vyroci_vlady.jpg` | 1:1 | 2048 × 2048 | Výročí vlády | 11 |
-| ❌ | `skola_ucencu.jpg` | 1:1 | 2048 × 2048 | Škola učenců | 11 |
+| ✅ | `vlci.jpg` | 1:1 | 2048 × 2048 | Vlci | 11 |
+| ✅ | `stribrna_zila.jpg` | 1:1 | 2048 × 2048 | Stříbrná žíla | 11 |
+| ✅ | `kobylky.jpg` | 1:1 | 2048 × 2048 | Kobylky | 11 |
+| ✅ | `spor_rybaru.jpg` | 1:1 | 2048 × 2048 | Spor o rybolov | 11 |
+| ✅ | `zlodej_v_pokladne.jpg` | 1:1 | 2048 × 2048 | Zloděj v pokladně | 11 |
+| ✅ | `vyroci_vlady.jpg` | 1:1 | 2048 × 2048 | Výročí vlády | 11 |
+| ✅ | `skola_ucencu.jpg` | 1:1 | 2048 × 2048 | Škola učenců | 11 |
 | ✅ | `cizi_princezna.jpg` | 1:1 | 2048 × 2048 | Nabídka sňatku | 11 |
 | ✅ | `zahada_v_lese.jpg` | 1:1 | 2048 × 2048 | Zmizelí myslivci | 11 |
 | ✅ | `kupecka_gilda.jpg` | 1:1 | 2048 × 2048 | Kupecká gilda | 11 |
-| ❌ | `stary_rytir_umira.jpg` | 1:1 | 2048 × 2048 | Poslední přání | 11 |
-| ❌ | `ztracena_listina.jpg` | 1:1 | 2048 × 2048 | Ztracená listina | 11 |
+| ✅ | `stary_rytir_umira.jpg` | 1:1 | 2048 × 2048 | Poslední přání | 11 |
+| ✅ | `ztracena_listina.jpg` | 1:1 | 2048 × 2048 | Ztracená listina | 11 |
 
-Chybí **15 obrázků pro nové události** (sekce 10 a 11). Do té doby tyto události ukazují výchozí scénu.
+**Všechny scény událostí jsou hotové a ve hře**, včetně variant s královnou.
 
 **Volitelné varianty pro královnu:** scény `rada_manzela`, `varovani_kancelere`
 a `zprava_spehmistra` ukazují krále. Když nahraješ `<název>_female.jpg`
