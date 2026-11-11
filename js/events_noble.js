@@ -322,7 +322,7 @@ export const NOBLE_EVENTS = [
     scenario: S,
     cooldown: 16,
     requires: (s) => s.ruler.statusTier >= 4 && s.resources.favor >= 55 && s.heir.alive && s.heir.age >= 10
-      && s.king.alive && s.king.heir && s.king.heir.alive && !s.flags.royal_match,
+      && s.king.alive && s.king.heir && s.king.heir.alive && !s.flags.royal_match && !s.heir.spouse,
     title: 'Sňatek s korunou',
     text: 'Královo dítě, {king.heirTitle} {king.heirName}, dospívá. Kdyby se tvůj dědic {heir.name} stal jeho chotí, krev rodu {dynastyName} by jednou seděla na trůně.',
     choices: [
@@ -330,7 +330,7 @@ export const NOBLE_EVENTS = [
         label: 'Navrhnout sňatek králi',
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.25, traitKey: 'eloquence', traitScale: 0.04, resourceKey: 'favor', resourceScale: 0.6,
-        onSuccess: { effects: { legitimacy: 25, prestige: 8, favor: 4 }, hiddenEffects: { setFlag: 'royal_match' }, houseEffects: { '*': { attitude: -6 } }, chronicle: 'Král svolil. Dědic rodu {dynastyName} byl zasnouben s královým dítětem. Ostatní rody zbledly.' },
+        onSuccess: { effects: { legitimacy: 25, prestige: 8, favor: 4 }, hiddenEffects: { setFlag: 'royal_match' }, heirMarry: 'king', houseEffects: { '*': { attitude: -6 } }, chronicle: 'Král svolil. Dědic rodu {dynastyName} byl zasnouben s královým dítětem. Ostatní rody zbledly.' },
         onFailure: { effects: { favor: -6, prestige: -3 }, chronicle: 'Král nabídku odmítl s úsměvem, který bolel víc než slova.' },
       },
       {
@@ -338,7 +338,7 @@ export const NOBLE_EVENTS = [
         requires: (s) => s.resources.gold >= 30,
         hintType: 'resource', hintKey: 'gold',
         isRoll: true, baseChance: 0.45, resourceKey: 'favor', resourceScale: 0.6,
-        onSuccess: { effects: { gold: -30, legitimacy: 25, prestige: 8 }, hiddenEffects: { setFlag: 'royal_match' }, houseEffects: { '*': { attitude: -6 } }, chronicle: 'Věno přesvědčilo prázdnou královskou pokladnu. Zásnuby byly zpečetěny.' },
+        onSuccess: { effects: { gold: -30, legitimacy: 25, prestige: 8 }, hiddenEffects: { setFlag: 'royal_match' }, heirMarry: 'king', houseEffects: { '*': { attitude: -6 } }, chronicle: 'Věno přesvědčilo prázdnou královskou pokladnu. Zásnuby byly zpečetěny.' },
         onFailure: { effects: { gold: -10, favor: -4 }, chronicle: 'Král věno nepřijal. Zálohu na dary už ale rod zpátky nedostal.' },
       },
       {
@@ -493,7 +493,7 @@ export const NOBLE_EVENTS = [
     cooldown: 14,
     target: (s) => {
       const h = s.houses.filter((x) => !x.married && x.attitude >= 45).sort((a, b) => b.attitude - a.attitude)[0];
-      return h && s.heir.alive && s.heir.age >= 12 && !s.flags.royal_match ? h.id : null;
+      return h && s.heir.alive && s.heir.age >= 14 && !s.heir.spouse && !s.flags.royal_match ? h.id : null;
     },
     title: 'Sňatek mezi rody',
     text: 'Rod {house.name} nabízí sňatek: tvůj dědic {heir.name} a jejich nejmladší potomek. Věno by bylo štědré a pouto mezi rody pevné.',
@@ -504,7 +504,8 @@ export const NOBLE_EVENTS = [
         effects: { gold: 12, legitimacy: 5 },
         houseEffects: { target: { married: true, ally: true, attitude: 20 } },
         courtEffects: { heir: { loyalty: -4 } },
-        chronicle: 'Zásnuby byly zpečetěny. Dva rody se staly jednou krví.',
+        heirMarry: 'rod',
+        chronicle: 'Zásnuby byly zpečetěny. {heir.name} a {heir.spouseName}: dva rody se staly jednou krví.',
       },
       {
         label: 'Odmítnout — dědic je určen pro vyšší cíle',

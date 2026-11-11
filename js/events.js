@@ -28,6 +28,7 @@ import { NOBLE_EVENTS, NOBLE_QUIET_EVENT } from './events_noble.js';
 import { CRISIS_EVENTS, ECHO_EVENTS, attachEchoHooks } from './events_echoes.js';
 import { COURT_EVENTS } from './events_court.js';
 import { TRADE_EVENTS } from './events_trade.js';
+import { FAMILY_EVENTS } from './events_family.js';
 import { PEASANT_EVENTS, PEASANT_CRISES, PEASANT_ECHOES, PEASANT_QUIET_EVENT } from './events_peasant.js';
 
 const BASE_EVENTS = [
@@ -689,41 +690,40 @@ const BASE_EVENTS = [
     weight: 2,
     requires: (state) => state.heir.alive && state.heir.age >= 16 && !state.flags[`heir_adult_${state.heir.name}`],
     markSeen: (state) => { state.flags[`heir_adult_${state.heir.name}`] = true; }, // once per heir
-    title: 'Dědic dospěl',
-    text: 'Dědic {heir.name} dovršil šestnácti let. Je čas rozhodnout o jeho budoucnosti — a tím i o budoucnosti rodu {dynastyName}.',
+    title: '{D:Dědic dospěl|Dědička dospěla}',
+    text: '{D:Dědic|Dědička} {heir.name} {D:dovršil|dovršila} šestnácti let. Je čas rozhodnout o {D:jeho|její} budoucnosti, a tím i o budoucnosti rodu {dynastyName}.',
     choices: [
       {
         label: 'Domluvit sňatek se sousedním rodem',
+        requires: (s) => !s.heir.spouse,
         hintType: 'resource', hintKey: 'legitimacy',
         effects: { legitimacy: 8, prestige: 4, gold: 12 },
         courtEffects: { heir: { loyalty: -4 } },
-        hiddenEffects: { setFlag: 'heir_married' },
+        heirMarry: 'soused',
         heirTraits: { eloquence: 1 },
-        chronicle: 'Dědic byl zasnouben s potomkem mocného sousedního rodu. Věno naplnilo pokladnu a spojenectví posílilo trůn.',
+        chronicle: '{heir.name} {D:byl zasnouben|byla zasnoubena} s potomkem mocného sousedního rodu. Věno naplnilo pokladnu a spojenectví posílilo trůn.',
       },
       {
-        label: 'Svěřit dědici velení posádky na hranici',
+        label: 'Svěřit {D:dědici|dědičce} velení posádky na hranici',
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.55, resourceKey: 'army', resourceScale: 0.3,
-        onSuccess: { effects: { prestige: 8, army: 3 }, courtEffects: { heir: { loyalty: 12 } }, provinceEffects: { 'sokoli-hvozd': { garrison: 10 } }, heirTraits: { strength: 2 }, chronicle: 'Dědic se na hranici osvědčil. Vojáci za ním půjdou, až jednou usedne na trůn.' },
-        onFailure: { effects: { prestige: -5 }, courtEffects: { heir: { loyalty: -6 } }, chronicle: 'Velení bylo nad dědicovy síly. Vrátil se ke dvoru zahanbený a zatrpklý.' },
+        onSuccess: { effects: { prestige: 8, army: 3 }, courtEffects: { heir: { loyalty: 12 } }, provinceEffects: { 'sokoli-hvozd': { garrison: 10 } }, heirTraits: { strength: 2 }, chronicle: '{heir.name} se na hranici {D:osvědčil|osvědčila}. Vojáci za {D:ním|ní} půjdou, až jednou usedne na trůn.' },
+        onFailure: { effects: { prestige: -5 }, courtEffects: { heir: { loyalty: -6 } }, chronicle: 'Velení bylo nad síly {D:dědice|dědičky}. {D:Vrátil se|Vrátila se} ke dvoru {D:zahanbený a zatrpklý|zahanbená a zatrpklá}.' },
       },
       {
-        label: 'Ponechat ho u dvora po svém boku',
+        label: 'Ponechat {D:ho|ji} u dvora po svém boku',
         hintType: 'trait', hintKey: 'patience',
         effects: { stability: 2 },
         courtEffects: { heir: { loyalty: 8 } },
         heirTraits: { intelligence: 1, patience: 1 },
-        chronicle: 'Dědic zůstal u dvora a učí se vládnout přímo od svého rodiče.',
+        chronicle: '{heir.name} {D:zůstal|zůstala} u dvora a učí se vládnout přímo od svého rodiče.',
       },
     ],
   },
 
   {
     id: 'smrt_radce',
-    weight: 3,
-    cooldown: 4,
-    target: (state) => ['chancellor', 'marshal', 'spymaster'].find((r) => state[r].alive !== false && state[r].age >= 66) || null,
+    forced: true, vacancy: true, // raised when an adviser dies of old age (family.js)
     title: 'Smrt rádce',
     text: '{target.Old} {target.role} {target.name} {target.died} ve věku {target.age} let. Dvůr truchlí — a zároveň už se šeptá, kdo usedne na uprázdněné místo.',
     choices: [
@@ -740,6 +740,14 @@ const BASE_EVENTS = [
         effects: { prestige: -3 },
         replaceCourt: { loyalty: 78, minAge: 26, maxAge: 36 },
         chronicle: 'Vládce povýšil mladého muže z nižšího rodu. Šlechta se mračí, ale nový rádce by za korunu dal život.',
+      },
+      {
+        label: 'Nechat radu, ať si zvolí sama',
+        hintType: 'trait', hintKey: 'patience',
+        effects: { stability: 2 },
+        courtEffects: { chancellor: { loyalty: 3 }, marshal: { loyalty: 3 }, spymaster: { loyalty: 3 } },
+        replaceCourt: { loyalty: 60, minAge: 35, maxAge: 55 },
+        chronicle: 'Rada se dohodla po třech dnech hádek. Nový člen je kompromis: nikoho neurazí a nikoho nenadchne.',
       },
     ],
   },
@@ -836,7 +844,7 @@ const BASE_EVENTS = [
   },
 ];
 
-export const EVENTS = attachEchoHooks([...BASE_EVENTS, ...MORE_EVENTS, ...NOBLE_EVENTS, ...COURT_EVENTS, ...TRADE_EVENTS, ...PEASANT_EVENTS, ...CRISIS_EVENTS, ...PEASANT_CRISES, ...ECHO_EVENTS, ...PEASANT_ECHOES]);
+export const EVENTS = attachEchoHooks([...BASE_EVENTS, ...MORE_EVENTS, ...NOBLE_EVENTS, ...COURT_EVENTS, ...TRADE_EVENTS, ...PEASANT_EVENTS, ...FAMILY_EVENTS, ...CRISIS_EVENTS, ...PEASANT_CRISES, ...ECHO_EVENTS, ...PEASANT_ECHOES]);
 
 // Picked when no other event is due (or now and then by chance): a calm season
 // still lets the ruler spend it on something.

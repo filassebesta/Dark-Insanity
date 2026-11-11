@@ -5,6 +5,7 @@ import { playMusic, setAllMuted } from './audio.js';
 import { rulerPortraitCandidates, memberPortraitCandidates, portraitImg } from './character.js';
 import { roleLabel, loyaltyLabel, quirkLabel } from './court.js';
 import { councilAdvice } from './council.js';
+import { yearsText } from './family.js';
 
 const DEFAULT_SCENE = 'assets/events/scene_default.jpg';
 
@@ -265,7 +266,7 @@ export function renderEventCard(state, event, handlers) {
     `assets/events/${event.id}.png`,
     event.image,
   ]);
-  document.getElementById('event-title').textContent = event.title;
+  document.getElementById('event-title').textContent = interpolate(state, event.title);
   renderSceneEcho(state, event);
   const choiceList = document.getElementById('choice-list');
   choiceList.innerHTML = '';
@@ -302,7 +303,7 @@ export function renderEventCard(state, event, handlers) {
       tag = `<span class="risk-tag" title="Šance na úspěch závisí na: ${basis || 'náhodě'}">${basis ? `${esc(basis)} · ` : ''}${pct} %</span>`;
     }
     // what a choice costs or brings stays hidden until it is made
-    const btn = makeChoiceButton(shown++, hintIcon(choice.hintType, choice.hintKey), choice.label, tag);
+    const btn = makeChoiceButton(shown++, hintIcon(choice.hintType, choice.hintKey), esc(interpolate(state, choice.label)), tag);
     btn.addEventListener('click', () => handlers.onChoiceSelected(index));
     choiceList.appendChild(btn);
   });
@@ -326,11 +327,11 @@ function renderCouncil(state, event, shownAt) {
     const role = roleLabel(a.role, c.gender, state.scenario);
     const choice = event.choices[a.index];
     return `<div class="council-row" data-person="${a.role}" role="button" tabindex="0" title="${esc(role)} ${esc(c.name)} · ${esc(loyaltyLabel(c.loyalty, c.gender))}${c.quirk ? ' · ' + esc(quirkLabel(c)) : ''}">
-      <div class="council-avatar">${esc(c.name[0])}${portraitImg(memberPortraitCandidates(c, a.role, state.scenario), c.name, 'council-avatar-img')}</div>
+      <div class="council-avatar">${esc(c.name[0])}${portraitImg(memberPortraitCandidates(c, a.role, state.scenario, state.ruler.statusTier), c.name, 'council-avatar-img')}</div>
       <div class="council-body">
         <span class="council-who">${esc(role)} ${esc(c.name)} <em>${esc(loyaltyLabel(c.loyalty, c.gender).toLowerCase())}</em></span>
         <span class="council-line">„${esc(a.line)}“</span>
-        <span class="council-pick">Doporučuje: <b>${shownAt[a.index] + 1}. ${esc(choice.label)}</b></span>
+        <span class="council-pick">Doporučuje: <b>${shownAt[a.index] + 1}. ${esc(interpolate(state, choice.label))}</b></span>
       </div>
     </div>`;
   }).join('');
@@ -418,8 +419,8 @@ export function renderCourtPanel(state) {
   const members = [
     { data: state.ruler, role: state.scenario === 'sedlak' ? f(state.ruler, 'Hospodář', 'Hospodyně') : f(state.ruler, 'Vládce', 'Vládkyně'), extra: tierLabel(state.ruler), portraits: rulerPortraitCandidates(state.ruler) },
     ...['heir', 'spouse', 'chancellor', 'marshal', 'spymaster'].map((r) => (
-      { data: state[r], role: roleLabel(r, state[r].gender, state.scenario), portraits: memberPortraitCandidates(state[r], r, state.scenario), person: r })),
-  ];
+      { data: state[r], role: roleLabel(r, state[r].gender, state.scenario), portraits: memberPortraitCandidates(state[r], r, state.scenario, state.ruler.statusTier), person: r })),
+  ].filter((m) => !m.data.none); // no wife yet, no heir yet: nobody to show
   for (const m of members) {
     const card = document.createElement('button');
     const alive = m.data.alive !== false;
@@ -434,7 +435,7 @@ export function renderCourtPanel(state) {
       ${avatar}
       <div class="role">${m.role}</div>
       <strong>${name}${alive ? '' : ' †'}</strong>
-      <div>${m.data.age} let · ${detail}</div>
+      <div>${alive ? `${yearsText(m.data.age)} · ${detail}` : 'zesnul' + (m.data.gender === 'female' ? 'á' : 'ý')}</div>
       ${m.data.quirk ? `<div class="court-quirk">${esc(quirkLabel(m.data))}</div>` : ''}
       ${m.person === 'heir' && m.data.traits ? `<div class="court-quirk">${TRAIT_DEFS.map((t) => `${t.icon}${m.data.traits[t.key]}`).join(' ')}</div>` : ''}
     `;

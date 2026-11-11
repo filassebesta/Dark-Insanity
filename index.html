@@ -32,29 +32,30 @@
   <audio id="menu-music" src="assets/audio/main_menu_theme.mp3" loop preload="auto"></audio>
   <audio id="battle-music" src="assets/audio/battle_theme.mp3" loop preload="none"></audio>
 
-  <!-- NEW GAME: dynasty naming -->
+  <!-- NEW GAME: naming the ruler and the family (labels follow the chosen scenario, see main.js) -->
   <section id="screen-new-game" class="screen backdrop-screen">
     <div class="dialog-panel paper-panel">
-      <span class="panel-overline">Nová kronika</span>
-      <h2 class="panel-title">Založení dynastie</h2>
+      <span class="panel-overline" id="new-game-overline">Nová kronika</span>
+      <h2 class="panel-title" id="new-game-title">Založení dynastie</h2>
+      <p class="new-game-intro" id="new-game-intro"></p>
       <label class="field">
-        <span>Jméno vládce</span>
+        <span id="label-ruler-name">Jméno vládce</span>
         <input id="input-ruler-name" type="text" maxlength="24" placeholder="např. Bořivoj">
       </label>
       <div class="field">
-        <span>Vládne</span>
+        <span id="label-ruler-gender">Vládne</span>
         <div class="gender-toggle" role="radiogroup">
-          <label><input type="radio" name="ruler-gender" value="male" checked><span>Král</span></label>
-          <label><input type="radio" name="ruler-gender" value="female"><span>Královna</span></label>
+          <label><input type="radio" name="ruler-gender" value="male" checked><span id="label-gender-male">Král</span></label>
+          <label><input type="radio" name="ruler-gender" value="female"><span id="label-gender-female">Královna</span></label>
         </div>
       </div>
       <label class="field">
-        <span>Jméno dynastie</span>
+        <span id="label-dynasty-name">Jméno dynastie</span>
         <input id="input-dynasty-name" type="text" maxlength="24" placeholder="např. z Vlčí Hory">
       </label>
       <div class="dialog-actions">
-        <button class="seal-button ghost" data-action="back-to-menu">Zpět</button>
-        <button class="seal-button primary" data-action="goto-scenario-select">Pokračovat</button>
+        <button class="seal-button ghost" data-action="back-to-scenario">Zpět</button>
+        <button class="seal-button primary" data-action="start-new-game" id="start-new-game">Začít</button>
       </div>
     </div>
   </section>
@@ -90,7 +91,7 @@
           </span>
         </button>
       </div>
-      <button class="seal-button ghost light" data-action="back-to-new-game">Zpět</button>
+      <button class="seal-button ghost light" data-action="back-to-menu">Zpět</button>
     </div>
   </section>
 

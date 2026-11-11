@@ -1,5 +1,6 @@
 import { RESOURCE_DEFS, PROVINCE_TEMPLATES, NOBLE_HOUSES, NOBLE_HOME, PEASANT_HOME, randInt, randomName, clamp } from './data.js';
 import { QUIRK_ROLES, randomQuirk } from './court.js';
+import { newGameFamily } from './family.js';
 
 const SAVE_PREFIX = 'insanityKingdom.save.';
 const SAVE_INDEX_KEY = 'insanityKingdom.saveIndex';
@@ -51,10 +52,16 @@ function initialProvinces() {
   }));
 }
 
+// what the family is called when the player leaves the name empty
+const DEFAULT_DYNASTY = { panovnik: 'z Vlčí Hory', slechtic: 'z Orlí Skály', sedlak: 'Vávrů' };
+
 export function createNewGame(rulerName, dynastyName, gender, scenario = 'panovnik') {
-  if (scenario === 'slechtic') return createNobleGame(rulerName, dynastyName, gender);
-  if (scenario === 'sedlak') return createPeasantGame(rulerName, dynastyName, gender);
-  return createKingGame(rulerName, dynastyName, gender);
+  dynastyName = dynastyName || DEFAULT_DYNASTY[scenario] || DEFAULT_DYNASTY.panovnik;
+  const state = scenario === 'slechtic' ? createNobleGame(rulerName, dynastyName, gender)
+    : scenario === 'sedlak' ? createPeasantGame(rulerName, dynastyName, gender)
+      : createKingGame(rulerName, dynastyName, gender);
+  newGameFamily(state);
+  return state;
 }
 
 /** Nobody in the household shares a first name with someone else in it. */

@@ -154,23 +154,26 @@ export const MORE_EVENTS = [
 
   {
     id: 'krest_ditete',
-    cooldown: 24,
-    requires: (state) => state.spouse.alive && state.ruler.age < 50,
+    scenarios: ['panovnik', 'slechtic'],
+    weight: 4,
+    cooldown: 4,
+    // only after a real birth (family.js sets state.newborn)
+    requires: (state) => state.newborn && state.turn - state.newborn.turn < 4,
     title: 'Narození dítěte',
-    text: 'V hradní komnatě se narodilo zdravé dítě. Celý hrad je vzhůru, kněží chystají křest a šlechta posílá dary. Jak oslavit nový přírůstek rodu {dynastyName}?',
+    text: 'Rodu {dynastyName} se narodil{N:|a} {newborn.word} {newborn.name}. Celý dům je vzhůru, kněží chystají křest a sousedé posílají dary. Jak oslavit nový přírůstek?',
     choices: [
       {
-        label: 'Velká slavnost pro celé město',
+        label: 'Velká slavnost pro všechny poddané',
         hintType: 'resource', hintKey: 'prestige',
         effects: { gold: -15, prestige: 6, legitimacy: 4, stability: 2 },
         courtEffects: { spouse: { loyalty: 6 } },
-        chronicle: 'Město slavilo tři dny. Rod {dynastyName} je silnější o další krev.',
+        chronicle: 'Slavilo se tři dny. Rod {dynastyName} je silnější o další krev a {newborn.name} o první dary.',
       },
       {
-        label: 'Skromný křest v hradní kapli',
+        label: 'Skromný křest v kapli',
         hintType: 'resource', hintKey: 'faith',
         effects: { faith: 4, legitimacy: 2 },
-        chronicle: 'Dítě bylo pokřtěno v tichosti hradní kaple. Kněz chválil skromnost rodu.',
+        chronicle: '{newborn.name} {N:byl pokřtěn|byla pokřtěna} v tichosti kaple. Kněz chválil skromnost rodu.',
       },
     ],
   },
@@ -1467,7 +1470,7 @@ export const MORE_EVENTS = [
   {
     id: 'cizi_princezna',
     cooldown: 30,
-    requires: (state) => state.heir.alive && state.heir.age >= 14 && !state.flags.heir_married,
+    requires: (state) => state.heir.alive && state.heir.age >= 14 && !state.heir.spouse,
     title: 'Nabídka sňatku',
     text: 'Vzdálený král posílá posly s nabídkou: jeho dítě by se mohlo stát chotí dědice {heir.name}. Věno je štědré, ale ta země je daleko a její spory taky.',
     choices: [
@@ -1476,21 +1479,21 @@ export const MORE_EVENTS = [
         hintType: 'resource', hintKey: 'prestige',
         effects: { gold: 20, prestige: 6, legitimacy: 3 },
         courtEffects: { heir: { loyalty: -4 } },
-        hiddenEffects: { setFlag: 'heir_married' },
-        chronicle: 'Zásnuby byly zpečetěny. Věno dorazilo na dvanácti vozech.',
+        heirMarry: 'cizina',
+        chronicle: 'Zásnuby byly zpečetěny. Věno dorazilo na dvanácti vozech a s ním i {heir.spouseName}.',
       },
       {
         label: 'Zeptat se dědice, co chce',
         hintType: 'trait', hintKey: 'patience',
         effects: { stability: 1 },
         courtEffects: { heir: { loyalty: 10 } },
-        chronicle: 'Dědic nabídku odmítl a byl za to vládci vděčný. Poslové odjeli bez odpovědi, jakou chtěli.',
+        chronicle: '{heir.name} nabídku {D:odmítl a byl|odmítla a byla} za to vděčn{D:ý|á}. Poslové odjeli bez odpovědi, jakou chtěli.',
       },
       {
         label: 'Odmítnout, rod potřebuje spojence blíž',
         hintType: 'resource', hintKey: 'legitimacy',
         effects: { prestige: -2 },
-        chronicle: 'Nabídka byla zdvořile odmítnuta. Dědic zatím zůstává volný.',
+        chronicle: 'Nabídka byla zdvořile odmítnuta. {heir.name} zatím zůstává {D:volný|volná}.',
       },
     ],
   },

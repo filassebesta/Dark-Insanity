@@ -5,9 +5,16 @@ import { TRAIT_DEFS, STATUS_TIERS, SEASONS, tierTitle } from './data.js';
 import { traitBonuses, reignEpithet } from './engine.js';
 import { biography, loyaltyLabel, roleLabel, quirkLabel, quirkText } from './court.js';
 import { esc } from './ui.js';
+import { lifeStage, yearsText, ADULT_AGE } from './family.js';
 
 const TIER_SLUGS = [null, 'peasant', 'freeman', 'minor_noble', 'noble', 'king'];
 const OLD_AGE = 55;
+
+/** A child's face: the village child for a peasant or freeman family, the castle child otherwise. */
+function childPortraits(gender, tier) {
+  const base = `assets/portraits/${tier <= 2 ? 's_' : ''}heir_${gender === 'female' ? 'female' : 'male'}`;
+  return [`${base}.jpg`, `${base}.png`];
+}
 
 const TRAIT_TEXT = {
   strength: 'Rozhoduje v boji, při zastrašování a tam, kde je třeba ukázat pěst.',
@@ -23,6 +30,8 @@ const ROLE_LABEL = {
 
 /** Ordered list of portrait files to try for the ruler; the caller falls back to an initial. */
 export function rulerPortraitCandidates(ruler) {
+  // a child who inherited still has a child's face
+  if (ruler.age < ADULT_AGE) return childPortraits(ruler.gender, ruler.statusTier);
   const slug = TIER_SLUGS[ruler.statusTier] || 'king';
   const g = ruler.gender === 'female' ? 'female' : 'male';
   const base = `assets/portraits/ruler_${slug}_${g}`;
@@ -46,11 +55,24 @@ window.__portraitFallback = (img) => {
   }
 };
 
-/** Court member portrait files: assets/portraits/<role>_<male|female>.jpg (or .png). */
-export function memberPortraitCandidates(c, role, scenario) {
+/**
+ * Court member portrait files: assets/portraits/<role>_<male|female>.jpg (or .png).
+ * Family members follow their age: a grown heir gets the adult face of the family's rank
+ * (the same face they will have as ruler), an old husband or wife the aged one.
+ */
+export function memberPortraitCandidates(c, role, scenario, tier = scenario === 'sedlak' ? 1 : 5) {
+  const g = c.gender === 'male' ? 'male' : 'female';
+  const adult = `assets/portraits/ruler_${TIER_SLUGS[tier] || 'king'}_${g}`;
+  if (role === 'heir') {
+    // optional own faces for a grown heir (heir_adult_<g>, s_heir_adult_<g> for a village family)
+    const own = `assets/portraits/${tier <= 2 ? 's_' : ''}heir_adult_${g}.jpg`;
+    return c.age >= ADULT_AGE ? [own, `${adult}.jpg`, ...childPortraits(g, tier)] : childPortraits(g, tier);
+  }
   // a peasant's household has its own faces (s_<role>_<gender>), never the royal court's
-  const base = `assets/portraits/${scenario === 'sedlak' ? 's_' : ''}${role}_${c.gender === 'male' ? 'male' : 'female'}`;
-  return [`${base}.jpg`, `${base}.png`];
+  const base = `assets/portraits/${scenario === 'sedlak' ? 's_' : ''}${role}_${g}`;
+  const own = [`${base}.jpg`, `${base}.png`];
+  if (role === 'spouse' && c.age >= OLD_AGE) return [`${adult}_old.jpg`, ...own];
+  return own;
 }
 
 function reignYears(state) {
@@ -102,22 +124,7 @@ export function renderCharacterSheet(state) {
     return `<li class="${val > 0 ? 'pos' : val < 0 ? 'neg' : ''}">${t.icon}<b>${t.label}</b><span>${val === 0 ? 'průměrná, bez zvláštního vlivu' : text}</span></li>`;
   }).join('');
 
-  const family = ['spouse', 'heir'].map((role) => {
-    const c = state[role];
-    if (!c) return '';
-    const alive = c.alive !== false;
-    const initial = esc(c.name ? c.name[0] : '?');
-    return `
-      <div class="cs-member${alive ? '' : ' deceased'}" data-person="${role}" role="button" tabindex="0" title="Zobrazit detail">
-        <span class="cs-mini">${initial}</span>
-        ${portraitImg(memberPortraitCandidates(c, role, state.scenario), c.name, 'cs-mini-img')}
-        <div>
-          <span>${ROLE_LABEL[role](c.gender)}</span>
-          <strong>${esc(c.name)}${alive ? '' : ' †'}</strong>
-          <small>${c.age} let · věrnost ${c.loyalty}</small>
-        </div>
-      </div>`;
-  }).join('');
+  const family = renderFamily(state);
 
   const OUTCOME_WORD = { success: ' (úspěch)', failure: ' (nezdar)', danger: ' (nebezpečí)' };
   const ancestors = (state.pastRulers || []).slice().reverse().map((a) => {
@@ -160,7 +167,7 @@ export function renderCharacterSheet(state) {
       <h4 class="cs-section">Vliv na vládu</h4>
       <ul class="cs-influence">${influence}</ul>
       <h4 class="cs-section">Rodina</h4>
-      <div class="cs-family">${family}</div>
+      ${family}
       ${ancestors ? `<h4 class="cs-section cs-gap">Síň předků</h4><ul class="cs-ancestors">${ancestors}</ul>` : ''}
     </div>
   `;
@@ -187,7 +194,75 @@ export function isCharacterOpen() {
 
 // ---------- court member detail ("person") ----------
 
+// ---------- the family block of the character sheet ----------
+
+function memberCard(state, c, role, label) {
+  const alive = c.alive !== false;
+  return `
+      <div class="cs-member${alive ? '' : ' deceased'}" data-person="${role}" role="button" tabindex="0" title="Zobrazit detail">
+        <span class="cs-mini">${esc(c.name ? c.name[0] : '?')}</span>
+        ${portraitImg(memberPortraitCandidates(c, role, state.scenario, state.ruler.statusTier), c.name, 'cs-mini-img')}
+        <div>
+          <span>${label}</span>
+          <strong>${esc(c.name)}${alive ? '' : ' †'}</strong>
+          <small>${alive ? `${yearsText(c.age)} · ${lifeStage(c.age, c.gender)} · věrnost ${c.loyalty}` : 'zesnul' + (c.gender === 'female' ? 'á' : 'ý')}</small>
+        </div>
+      </div>`;
+}
+
+function emptyCard(label, text) {
+  return `
+      <div class="cs-member deceased">
+        <span class="cs-mini">–</span>
+        <div><span>${label}</span><strong>${text}</strong></div>
+      </div>`;
+}
+
+function relativeChip(p, word) {
+  return `<li><b>${esc(p.name)}</b> <span>${word} · ${yearsText(p.age)} · ${lifeStage(p.age, p.gender)}</span></li>`;
+}
+
+export function renderFamily(state) {
+  const r = state.ruler;
+  const fr = r.gender === 'female';
+  const sp = state.spouse;
+  const h = state.heir;
+  const cards = [];
+  if (sp && sp.alive !== false) cards.push(memberCard(state, sp, 'spouse', ROLE_LABEL.spouse(sp.gender)));
+  else if (sp && sp.name) cards.push(memberCard(state, sp, 'spouse', fr ? 'Zesnulý manžel' : 'Zesnulá manželka'));
+  else cards.push(emptyCard(fr ? 'Manžel' : 'Manželka', fr ? 'Zatím neprovdaná' : 'Zatím neženatý'));
+  if (h && h.alive !== false) cards.push(memberCard(state, h, 'heir', ROLE_LABEL.heir(h.gender)));
+  else if (h && h.name) cards.push(memberCard(state, h, 'heir', h.gender === 'female' ? 'Zesnulá dědička' : 'Zesnulý dědic'));
+  else cards.push(emptyCard('Dědic', 'Rod zatím nemá dědice'));
+
+  const rel = [];
+  if (h && h.alive !== false && h.spouse) rel.push(relativeChip(h.spouse, `${h.spouse.gender === 'female' ? 'manželka' : 'manžel'} ${h.gender === 'female' ? 'dědičky' : 'dědice'}`));
+  for (const k of (h && h.alive !== false && h.kids) || []) rel.push(relativeChip(k, k.gender === 'female' ? 'vnučka' : 'vnuk'));
+  for (const c of state.children || []) rel.push(relativeChip(c, c.gender === 'female' ? 'dcera' : 'syn'));
+  for (const c of state.siblings || []) rel.push(relativeChip(c, c.gender === 'female' ? 'sestra' : 'bratr'));
+  if (state.parent) rel.push(relativeChip(state.parent, state.parent.gender === 'female' ? 'matka, vdova' : 'otec, vdovec'));
+
+  let regency = '';
+  if (state.regent) {
+    const who = state.regent === 'parent' && state.parent ? `${state.parent.gender === 'female' ? 'matka' : 'otec'} ${state.parent.name}`
+      : state.regent === 'chancellor' ? `${roleLabel('chancellor', state.chancellor.gender, state.scenario).toLowerCase()} ${state.chancellor.name}`
+        : 'rada starších';
+    regency = `<p class="cs-regency">Do šestnácti let za ${fr ? 'ni' : 'něj'} rozhoduje ${esc(who)}. Zbývá ${yearsText(Math.max(0, ADULT_AGE - r.age))}.</p>`;
+  }
+  const relatives = rel.length ? `<ul class="cs-relatives">${rel.join('')}</ul>` : '';
+  return `${regency}<div class="cs-family">${cards.join('')}</div>${relatives}`;
+}
+
 const OUTCOME_WORDS = { success: 'úspěch', failure: 'nezdar', danger: 'nebezpečí', safe: 'bez úhony' };
+
+function heirFamilyLine(h) {
+  const parts = [];
+  if (h.spouse) parts.push(`${h.spouse.gender === 'female' ? 'Manželka' : 'Manžel'}: ${esc(h.spouse.name)} (${yearsText(h.spouse.age)})`);
+  else if (h.age >= ADULT_AGE) parts.push(h.gender === 'female' ? 'Zatím neprovdaná.' : 'Zatím neženatý.');
+  const kids = (h.kids || []).map((k) => `${esc(k.name)} (${yearsText(k.age)})`);
+  if (kids.length) parts.push(`Děti: ${kids.join(', ')}`);
+  return parts.length ? `<p class="ps-note">${parts.join(' · ')}</p>` : '';
+}
 
 export function renderPersonSheet(state, role) {
   const c = state[role];
@@ -211,14 +286,15 @@ export function renderPersonSheet(state, role) {
   document.getElementById('person-sheet').innerHTML = `
     <div class="ps-portrait${alive ? '' : ' deceased'}">
       <span class="cs-initial">${esc(c.name ? c.name[0] : '?')}</span>
-      ${portraitImg(memberPortraitCandidates(c, role, state.scenario), c.name, 'ps-portrait-img')}
+      ${portraitImg(memberPortraitCandidates(c, role, state.scenario, state.ruler.statusTier), c.name, 'ps-portrait-img')}
     </div>
     <div class="ps-info">
       <span class="panel-overline">${esc(title)}${alive ? '' : ' · zesnul' + (c.gender === 'female' ? 'á' : 'ý')}</span>
       <h2 class="ps-name">${esc(c.name)}</h2>
-      <div class="ps-meta">${c.age} let · <span class="ps-loyal">${loyaltyLabel(c.loyalty, c.gender)}</span></div>
+      <div class="ps-meta">${yearsText(c.age)} · ${lifeStage(c.age, c.gender)} · <span class="ps-loyal">${loyaltyLabel(c.loyalty, c.gender)}</span></div>
       <div class="ps-bar"><span style="width:${c.loyalty}%"></span><b>věrnost ${c.loyalty}</b></div>
       <p class="ps-bio">${esc(biography(c, role, state.dynastyName, state.scenario))}</p>
+      ${role === 'heir' && alive ? heirFamilyLine(c) : ''}
       ${c.quirk ? `<div class="ps-quirk"><b>Povaha: ${esc(quirkLabel(c))}</b><span>${esc(quirkText(c, role))}</span></div>` : ''}
       ${role === 'heir' && c.traits ? `<h4 class="ps-section">Vlastnosti ${c.gender === 'female' ? 'dědičky' : 'dědice'}</h4>
         <p class="ps-note">S těmito vlastnostmi jednou převezme vládu. Utváří je výchova a léta dospívání.</p>
