@@ -6,6 +6,7 @@ import { traitBonuses, reignEpithet } from './engine.js';
 import { biography, loyaltyLabel, roleLabel, quirkLabel, quirkText } from './court.js';
 import { esc } from './ui.js';
 import { effectiveTraits, injuriesOf, injuryFx, INJURIES } from './injuries.js';
+import { ambitionSection } from './fame.js';
 
 const TIER_SLUGS = [null, 'peasant', 'freeman', 'minor_noble', 'noble', 'king'];
 const OLD_AGE = 55;
@@ -191,6 +192,7 @@ export function renderCharacterSheet(state) {
       <div class="cs-ladder">${ladder}</div>
       <h4 class="cs-section">Vlastnosti</h4>
       <div class="cs-traits">${traits}</div>
+      ${ambitionSection(state)}
       ${injuryBlock(state)}
       <h4 class="cs-section">Vliv na vládu</h4>
       <ul class="cs-influence">${influence}</ul>

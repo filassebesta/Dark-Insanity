@@ -52,9 +52,12 @@ function initialProvinces() {
 }
 
 export function createNewGame(rulerName, dynastyName, gender, scenario = 'panovnik') {
-  if (scenario === 'slechtic') return createNobleGame(rulerName, dynastyName, gender);
-  if (scenario === 'sedlak') return createPeasantGame(rulerName, dynastyName, gender);
-  return createKingGame(rulerName, dynastyName, gender);
+  const game = scenario === 'slechtic' ? createNobleGame(rulerName, dynastyName, gender)
+    : scenario === 'sedlak' ? createPeasantGame(rulerName, dynastyName, gender)
+      : createKingGame(rulerName, dynastyName, gender);
+  game.origin = scenario; // where the house began: a peasant's line that reaches the crown earns a mark in the Hall of Fame
+  game.stats = {};
+  return game;
 }
 
 /** Nobody in the household shares a first name with someone else in it. */

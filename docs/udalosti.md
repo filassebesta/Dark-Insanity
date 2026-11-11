@@ -2,7 +2,7 @@
 
 Vygenerováno z `js/events*.js`. Jména v hranatých závorkách hra doplní podle aktuálního stavu.
 
-Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí · Scénář **Sedlák**: 33 událostí (+ 3 krize, 2 ozvěny) · Krize: 7 · Ozvěny rozhodnutí: 17 · Povahy rádců a výchova: 5 · Obchod: 6 · Stavby: 16 (12 království, 4 grunt) · Zranění: 3.
+Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí · Scénář **Sedlák**: 33 událostí (+ 3 krize, 2 ozvěny) · Krize: 7 · Ozvěny rozhodnutí: 17 · Povahy rádců a výchova: 5 · Obchod: 6 · Stavby: 16 (12 království, 4 grunt) · Zranění: 3 · Ambice: 1 (nabídka cílů).
 
 ## Scénář Panovník
 
@@ -1711,3 +1711,11 @@ Přijdou, jen když je vládce zraněný (`js/events_injury.js`). Zranění samo
 1. Dát ho zbičovat
 2. Smát se s nimi *(riskantní volba)*
 3. Přejít to mlčením
+
+## Ambice
+
+### 1. Čeho chceš dosáhnout  `ambice`
+
+> Je čas se zastavit a rozhodnout, kam dál. Dny plynou jeden za druhým a kdo nemá cíl, toho nesou. [vládce] ví, že na všechno síly nestačí — a že lidé si pamatují ty, kdo něco slíbili a dokázali.
+
+Nabídne tři ze 19 cílů podle scénáře (`js/ambitions.js`) a volbu „Žít ze dne na den a nic nesvazovat slibem“. Nezabírá období: po ní hned přijde běžná událost.

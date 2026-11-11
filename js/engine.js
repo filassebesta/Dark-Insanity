@@ -1,4 +1,4 @@
-import { SEASONS, TERRAIN_DEFS, NOBLE_HOUSES, PEASANT_HOME, clamp, randomName, randInt, tierTitle } from './data.js';
+import { SEASONS, TERRAIN_DEFS, NOBLE_HOUSES, PEASANT_HOME, clamp, randomName, randInt, tierTitle, bumpStat } from './data.js';
 import { makeChronicleEntry, inheritTraits } from './state.js';
 import { EVENTS, QUIET_EVENTS } from './events.js';
 import { roleLabel, QUIRK_ROLES, randomQuirk, quirkLabel } from './court.js';
@@ -8,6 +8,7 @@ import {
   effectiveTraits, injuryMods, injure, applyInjuryEffects, processInjuries, injuryTokens,
   injuryEpithetScores, INJURY_EPITHETS, lastingInjuryNames, STRENGTH_FAIL_INJURY,
 } from './injuries.js';
+import { readyToOffer, startAmbition, skipAmbition, settleAmbition, dropAmbition, FAILURE } from './ambitions.js';
 
 const TRAIT_MIN = 1;
 const TRAIT_MAX = 10;
@@ -382,6 +383,11 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
   applyTradeEffects(state, branch, notes);
   applyTownEffects(state, state.eventContext?.town, branch.town, notes);
   applyInjuryEffects(state, branch, notes); // wounds, cures and wooden legs
+  if (branch.ambition) {
+    const a = startAmbition(state, branch.ambition);
+    if (a) notes.push({ text: `Ambice: ${a.name} (do ${a.years} let)`, tone: 'pos' });
+  }
+  if (branch.ambitionSkip) skipAmbition(state);
   recordCourtHistory(state, meta, touched, outcome);
   scheduleEcho(state, branch.echo, meta);
   tallyReign(state, branch, meta, outcome);
@@ -532,10 +538,12 @@ function tallyReign(state, branch, meta, outcome) {
   if (outcome === 'success' || outcome === 'failure') {
     reign.rolls[outcome === 'success' ? 'won' : 'lost'] += 1;
     if (meta.battle) reign.battles[outcome === 'success' ? 'won' : 'lost'] += 1;
+    if (meta.battle && outcome === 'success') bumpStat(state, 'battlesWon');
     weight += 10;
   }
   if (branch.setTier || branch.newKing || branch.endGame) weight += 60;
   if (meta.event.forced) weight += 15;
+  if (/^krize/.test(meta.event.id)) bumpStat(state, 'crises');
   // the three weightiest decisions of a reign are what the chronicle remembers
   reign.deeds.push({ year: state.year, title: meta.event.title, choice: meta.label, outcome, weight });
   reign.deeds.sort((x, y) => y.weight - x.weight);
@@ -890,6 +898,7 @@ function generateSuccessorHousehold(state) {
 }
 
 function handleSuccession(state, cause = 'stářím') {
+  dropAmbition(state); // the new ruler sets their own goals
   if (state.heir.alive) {
     const oldName = state.ruler.name;
     const newRulerName = state.heir.name;
@@ -980,6 +989,28 @@ export function checkEndConditions(state) {
   return null;
 }
 
+// ---------- ambitions: goals the ruler sets (ambitions.js) ----------
+
+/** Pays a met ambition, punishes an expired one. Returns news lines. */
+function processAmbition(state) {
+  const done = settleAmbition(state);
+  if (!done) return [];
+  const { result, def } = done;
+  const f = state.ruler.gender === 'female';
+  if (result === 'met') {
+    applyBranch(state, def.reward, null);
+    if (def.trait) state.ruler.traits[def.trait] = clampTrait(state.ruler.traits[def.trait] + 1);
+    bumpStat(state, 'ambitionsDone');
+    const text = `Ambice splněna: ${def.name}. ${state.ruler.name} ${f ? 'dostála' : 'dostál'} svému předsevzetí a lidé to vidí.`;
+    state.chronicle.push(makeChronicleEntry(state, text));
+    return [text];
+  }
+  applyEffects(state, FAILURE[state.scenario] || FAILURE.panovnik);
+  const text = `Ambice nenaplněna: ${def.name}. Čas vypršel a předsevzetí zůstalo jen slovem.`;
+  state.chronicle.push(makeChronicleEntry(state, text));
+  return [text];
+}
+
 // Advances one round (season). Returns { turnSummary, event, successionOccurred, gameOver }.
 export function advanceTurn(state) {
   ensureCourtData(state);
@@ -1009,8 +1040,9 @@ export function advanceTurn(state) {
     }
   }
 
+  const ambitionNews = processAmbition(state);
   updateGoldenAgeStreak(state);
-  const tradeNews = [...wounds.news, ...built.news, ...processTrade(state)];
+  const tradeNews = [...wounds.news, ...ambitionNews, ...built.news, ...processTrade(state)];
 
   const seasonLabel = SEASONS[state.seasonIndex];
   const [goldWord, foodWord] = isPeasant(state) ? ['grošů', 'zásob'] : ['zlata', 'jídla'];
@@ -1024,6 +1056,8 @@ export function advanceTurn(state) {
   }
 
   raiseCrisis(state);
+  // now and then the ruler is asked to set a goal for the coming years
+  if (!state.pendingEvent && readyToOffer(state)) state.pendingEvent = 'ambice';
   const event = pickNextEvent(state);
   state.currentEvent = event ? event.id : null;
   return { turnSummary, event, successionOccurred, gameOver: null, tradeNews };

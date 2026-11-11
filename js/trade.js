@@ -8,7 +8,7 @@
 // a given load by a deadline; the king's and the lord's are obligations.
 // No DOM here — map.js draws it, engine.js runs it every season.
 
-import { clamp, randInt } from './data.js';
+import { clamp, randInt, bumpStat } from './data.js';
 import { makeChronicleEntry } from './state.js';
 
 export const GOODS = {
@@ -272,6 +272,8 @@ function deliver(state, caravan, news) {
     state.resources.prestige = clamp(state.resources.prestige + 1);
   }
   state.resources.gold = clamp(state.resources.gold + gold);
+  bumpStat(state, 'delivered');
+  bumpStat(state, 'tradeGold', gold);
   if (caravan.escort) state.resources.army = clamp(state.resources.army + ESCORT_ARMY);
   t.caravans = t.caravans.filter((c) => c.id !== caravan.id);
   const coin = state.scenario === 'sedlak' ? 'grošů' : 'zlata';

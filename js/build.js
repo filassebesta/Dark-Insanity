@@ -12,7 +12,7 @@
 // only what the player builds pays off on top.
 // No DOM here — town.js draws it, engine.js runs it every season.
 
-import { clamp } from './data.js';
+import { clamp, bumpStat } from './data.js';
 import { makeChronicleEntry } from './state.js';
 import { ensureTrade, MAX_STOCK } from './trade.js';
 
@@ -450,12 +450,14 @@ function finishBuilding(state, id, b, news) {
   for (const [k, v] of Object.entries(def.onBuild || {})) addRes(state, k, v);
   const prov = provinceOf(state, id);
   if (def.onProv && prov && !isFarm(id)) for (const [k, v] of Object.entries(def.onProv)) prov[k] = clamp((prov[k] || 0) + v);
+  bumpStat(state, 'built');
   const text = `Dostavěno ${settlementDef(id).loc}: ${def.name.toLowerCase()}.`;
   news.push(text);
   state.chronicle.push(makeChronicleEntry(state, text));
 }
 
 function finishUpgrade(state, id, town, news) {
+  bumpStat(state, 'upgrades');
   town.level = town.upgrade.to;
   town.upgrade = null;
   if (isFarm(id)) {
@@ -574,6 +576,7 @@ export function applyTownEffects(state, ctxTown, fx, notes) {
     const to = town.level + 1;
     if (to <= maxLevel(id) && upgradeSpec(id, to) && !town.upgrade) {
       town.level = to;
+      bumpStat(state, 'upgrades');
       notes.push({ text: `${def.name}: ${levelName(id, to).toLowerCase()}`, tone: 'pos' });
     }
   }
