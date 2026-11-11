@@ -80,8 +80,15 @@ const ROLE_LABELS = {
   spouse: ['Manžel', 'Manželka'],
 };
 
-export function roleLabel(role, gender) {
-  const pair = ROLE_LABELS[role];
+// a noble's household has a steward, a captain and a confidant instead of royal offices
+const NOBLE_ROLE_LABELS = {
+  chancellor: ['Purkrabí', 'Purkrabí'],
+  marshal: ['Hejtman', 'Hejtmanka'],
+  spymaster: ['Důvěrník', 'Důvěrnice'],
+};
+
+export function roleLabel(role, gender, scenario) {
+  const pair = (scenario === 'slechtic' && NOBLE_ROLE_LABELS[role]) || ROLE_LABELS[role];
   return pair ? pair[gender === 'female' ? 1 : 0] : '';
 }
 

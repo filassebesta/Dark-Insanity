@@ -2,7 +2,8 @@
 // with clickable SVG overlays. Coordinates are pixels of the original
 // 1264x848 painting; zoom/pan works by animating the SVG viewBox.
 
-import { TERRAIN_DEFS } from './data.js';
+import { TERRAIN_DEFS, NOBLE_HOUSES } from './data.js';
+import { attitudeLabel } from './engine.js';
 import { esc } from './ui.js';
 
 const W = 1264;
@@ -119,6 +120,22 @@ function mix(a, b, t) {
   return '#' + pa.map((v, i) => Math.round(v + (pb[i] - v) * t).toString(16).padStart(2, '0')).join('');
 }
 
+// ---------- ownership (Šlechtic) ----------
+
+function provState(id) {
+  return state.provinces.find((x) => x.id === id);
+}
+
+/** null for the player's own land (and always in the king scenario), otherwise who holds it. */
+function foreignOwner(id) {
+  const prov = provState(id);
+  if (!prov || !prov.owner || prov.owner === 'player') return null;
+  if (prov.owner === 'crown') return { kind: 'crown', label: 'Koruna', name: `Korunní země krále ${state.king ? state.king.name : ''}` };
+  const def = NOBLE_HOUSES.find((d) => d.id === prov.owner);
+  const house = (state.houses || []).find((h) => h.id === prov.owner);
+  return { kind: 'house', label: def.short, name: def.name, def, house };
+}
+
 // ---------- runtime state ----------
 
 let host = null;
@@ -213,14 +230,20 @@ function provinceFill(id, p) {
 function provincePolygon(id, p) {
   const prov = state.provinces.find((x) => x.id === id);
   const lost = prov && prov.lost;
-  return `<polygon class="map-province${lost ? ' lost' : ''}${layers.loyalty ? ' tinted' : ''}${selected && selected.id === id ? ' selected' : ''}" data-province="${id}"
+  const foreign = foreignOwner(id);
+  const own = state.scenario === 'slechtic' && !foreign;
+  return `<polygon class="map-province${lost ? ' lost' : ''}${layers.loyalty && !foreign ? ' tinted' : ''}${foreign ? ' foreign' : ''}${own ? ' own' : ''}${selected && selected.id === id ? ' selected' : ''}" data-province="${id}"
     points="${polyPoints(p.points)}" style="--pf:${provinceFill(id, p)}"/>`;
 }
 
 function provinceLabel(id, p) {
   const prov = state.provinces.find((x) => x.id === id);
   const [x, y] = p.labelAt;
-  const status = prov && prov.lost ? 'ztracena' : (id === 'capital' ? 'hlavní město' : p.subtitle.toLowerCase());
+  const foreign = foreignOwner(id);
+  const status = prov && prov.lost ? 'ztracena'
+    : foreign ? (foreign.kind === 'crown' ? 'korunní země' : `panství: ${foreign.label}`)
+      : state.scenario === 'slechtic' ? 'tvé panství'
+        : (id === 'capital' ? 'hlavní město' : p.subtitle.toLowerCase());
   return `<g class="map-label" data-province="${id}">
     <text class="pl-name" x="${x}" y="${y}">${esc(p.label)}</text>
     <text class="pl-sub" x="${x}" y="${y + 18}">${esc(status)}</text>
@@ -252,7 +275,7 @@ function overlays() {
     const p = PROVINCES[prov.id];
     if (!p) return '';
     let out = '';
-    if (prov.lost) return '';
+    if (prov.lost || foreignOwner(prov.id)) return ''; // only your own lands show unrest and garrisons
     const showSmoke = prov.unrest >= 70 || (layers.unrest && prov.unrest >= 30);
     if (showSmoke) {
       const k = Math.min(1, prov.unrest / 100);
@@ -306,6 +329,7 @@ function verdict(prov) {
 }
 
 function showOverview() {
+  if (state.scenario === 'slechtic') return showNobleOverview();
   const provs = state.provinces.filter((p) => PROVINCES[p.id]);
   const avg = (k) => Math.round(provs.reduce((s, p) => s + p[k], 0) / provs.length);
   const worst = [...provs].sort((a, b) => b.unrest - a.unrest)[0];
@@ -335,7 +359,55 @@ function showOverview() {
   `);
 }
 
+function showNobleOverview() {
+  const own = state.provinces.find((p) => p.owner === 'player');
+  sidebar(`
+    <span class="panel-overline">Země koruny</span>
+    <h3 class="panel-title">Kdo drží zemi</h3>
+    <p class="map-desc">Tvému rodu patří jediné panství. Zbytek země drží král a tři soupeřící rody. Klikni na provincii a uvidíš, kdo v ní vládne.</p>
+    <h4 class="map-sub">Panství</h4>
+    <div class="map-chip-list">
+      ${state.provinces.map((p) => {
+        const f = foreignOwner(p.id);
+        const att = f && f.house ? attitudeLabel(f.house.attitude) : '';
+        const tone = f && f.house ? (f.house.attitude >= 55 ? 'good' : f.house.attitude < 40 ? 'bad' : 'warn') : '';
+        return `<button class="map-chip" data-goto-province="${p.id}"><span>${esc(PROVINCES[p.id].label)}</span><em class="${tone}">${f ? esc(f.label) + (att ? ` · ${att}` : '') : 'tvé panství'}</em></button>`;
+      }).join('')}
+    </div>
+    ${own ? `<h4 class="map-sub">Tvé panství</h4>
+      ${statRow('Věrnost', own.loyalty, 'loyalty')}${statRow('Nepokoje', own.unrest, 'unrest')}
+      ${statRow('Bohatství', own.wealth, 'wealth')}${statRow('Posádka', own.garrison, 'garrison')}` : ''}
+    <h4 class="map-sub">Legenda</h4>
+    <ul class="map-legend">
+      <li><span class="lg-dot"></span>Zlatý bod = místo, na které jde kliknout</li>
+      <li><span class="lg-own"></span>Zlatý okraj = tvé panství</li>
+      <li><span class="lg-smoke"></span>Kouř = nepokoje na tvém panství</li>
+    </ul>
+  `);
+}
+
+function showForeignProvince(id, f) {
+  const p = PROVINCES[id];
+  const features = Object.entries(FEATURES).filter(([, x]) => x.province === id);
+  const h = f.house;
+  sidebar(`
+    <span class="panel-overline">${f.kind === 'crown' ? 'Korunní země' : 'Panství soupeřícího rodu'}</span>
+    <h3 class="panel-title">${esc(p.label)}</h3>
+    <span class="map-verdict ${h ? (h.attitude >= 55 ? 'good' : h.attitude < 40 ? 'bad' : 'warn') : 'warn'}">${esc(f.name)}</span>
+    <p class="map-desc">${esc(h ? f.def.text : p.text)}</p>
+    ${h ? `<p class="map-desc"><strong>${h.head.gender === 'female' ? 'Paní' : 'Pán'} ${esc(h.head.name)}</strong>, ${h.head.age} let${h.ally ? ' · spojenec tvého rodu' : ''}${h.married ? ' · spřízněni sňatkem' : ''}</p>
+      ${statRow('Vztah k tobě', h.attitude, 'loyalty')}${statRow('Moc rodu', h.power, 'garrison')}`
+      : `${statRow('Přízeň krále', state.resources.favor, 'loyalty')}`}
+    ${features.length ? `<h4 class="map-sub">Místa</h4><div class="map-chip-list">
+      ${features.map(([fid, x]) => `<button class="map-chip" data-goto-feature="${fid}"><span>${esc(x.name)}</span><em>${esc(x.kind)}</em></button>`).join('')}
+    </div>` : ''}
+    <button class="map-back" data-overview>← Celá země</button>
+  `);
+}
+
 function showProvince(id) {
+  const foreign = foreignOwner(id);
+  if (foreign) return showForeignProvince(id, foreign);
   const p = PROVINCES[id];
   const prov = state.provinces.find((x) => x.id === id);
   const [v, cls] = verdict(prov);
@@ -500,6 +572,8 @@ function tooltipFor(target) {
   }
   if (provEl) {
     const prov = state.provinces.find((x) => x.id === provEl.dataset.province);
+    const f = foreignOwner(prov.id);
+    if (f) return `<strong>${esc(PROVINCES[prov.id].label)}</strong><span>${esc(f.name)}${f.house ? ` · ${attitudeLabel(f.house.attitude)}` : ''}</span>`;
     return `<strong>${esc(PROVINCES[prov.id].label)}</strong><span>Věrnost ${prov.loyalty} · Nepokoje ${prov.unrest}</span>`;
   }
   return null;

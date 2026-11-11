@@ -1,5 +1,5 @@
-import { RESOURCE_DEFS, TRAIT_DEFS, STATUS_TIERS, TERRAIN_DEFS, SEASONS } from './data.js';
-import { interpolate, computeSuccessChance } from './engine.js';
+import { RESOURCE_DEFS, TRAIT_DEFS, TERRAIN_DEFS, SEASONS, NOBLE_HOUSES, resourceLabel, activeResourceDefs, tierTitle } from './data.js';
+import { interpolate, computeSuccessChance, attitudeLabel, ownProvinces } from './engine.js';
 import { ICONS } from './icons.js';
 import { playMusic, setAllMuted } from './audio.js';
 import { rulerPortraitCandidates, memberPortraitCandidates, portraitImg } from './character.js';
@@ -109,14 +109,14 @@ export function resetResourceMemory() {
 export function renderResourceBar(state) {
   const bar = document.getElementById('resource-chips');
   bar.innerHTML = '';
-  for (const def of RESOURCE_DEFS) {
+  for (const def of activeResourceDefs(state)) {
     const value = state.resources[def.key];
     const previous = previousResourceValues ? previousResourceValues[def.key] : value;
     const chip = document.createElement('div');
     let flashClass = '';
     if (value !== previous) flashClass = value > previous ? ' flash-pos' : ' flash-neg';
     chip.className = 'resource-chip' + (value <= def.critical ? ' critical' : '') + flashClass;
-    chip.title = def.label;
+    chip.title = resourceLabel(def, state.scenario);
     chip.style.setProperty('--chip-color', `var(--res-${def.key})`);
     chip.innerHTML = `<span class="icon">${def.icon}</span><span class="value">${value}</span>`;
     bar.appendChild(chip);
@@ -132,7 +132,10 @@ export function renderReignInfo(state) {
 }
 
 export function updateBookTabFlags(state) {
-  const anyUnrest = state.provinces.some((p) => !p.lost && p.unrest >= 70);
+  const anyUnrest = ownProvinces(state).some((p) => p.unrest >= 70);
+  const housesTab = document.querySelector('.book-tab[data-panel="houses"]');
+  housesTab.hidden = state.scenario !== 'slechtic';
+  if (state.houses) housesTab.classList.toggle('flagged', state.resources.favor <= 25 || state.houses.some((h) => h.attitude < 25));
   const anyDisloyal = [state.heir, state.spouse, state.chancellor, state.marshal, state.spymaster]
     .some((c) => c.alive && c.loyalty <= 25);
   document.querySelector('.book-tab[data-panel="map"]').classList.toggle('flagged', anyUnrest);
@@ -142,8 +145,7 @@ export function updateBookTabFlags(state) {
 // ---------- character plaque (bottom of the scene) ----------
 
 function tierLabel(r) {
-  if (r.statusTier === 5) return r.gender === 'female' ? 'Královna' : 'Král';
-  return STATUS_TIERS[r.statusTier];
+  return tierTitle(r.statusTier, r.gender);
 }
 
 export function renderCharacterPlaque(state, bumpedTrait = null) {
@@ -260,7 +262,9 @@ export function renderEventCard(state, event, handlers) {
     return;
   }
 
+  let shown = 0;
   event.choices.forEach((choice, index) => {
+    if (choice.requires && !choice.requires(state)) return; // e.g. needs a secret or a conspiracy
     let tag = '';
     if (choice.isRoll) {
       const pct = Math.round(computeSuccessChance(state, choice) * 100);
@@ -268,12 +272,12 @@ export function renderEventCard(state, event, handlers) {
       const res = RESOURCE_DEFS.find((d) => d.key === choice.resourceKey);
       const basis = [
         trait ? `${trait.label} ${state.ruler.traits[trait.key]}` : '',
-        res ? `${res.label} ${state.resources[res.key]}` : '',
+        res ? `${resourceLabel(res, state.scenario)} ${state.resources[res.key]}` : '',
       ].filter(Boolean).join(' + ');
       tag = `<span class="risk-tag" title="Šance na úspěch závisí na: ${basis || 'náhodě'}">${basis ? `${esc(basis)} · ` : ''}${pct} %</span>`;
     }
     // what a choice costs or brings stays hidden until it is made
-    const btn = makeChoiceButton(index, hintIcon(choice.hintType, choice.hintKey), choice.label, tag);
+    const btn = makeChoiceButton(shown++, hintIcon(choice.hintType, choice.hintKey), choice.label, tag);
     btn.addEventListener('click', () => handlers.onChoiceSelected(index));
     choiceList.appendChild(btn);
   });
@@ -304,7 +308,7 @@ export function renderOutcome(state, result, onContinue) {
     .filter(([key, delta]) => delta && RESOURCE_DEFS.some((d) => d.key === key))
     .map(([key, delta]) => {
       const def = RESOURCE_DEFS.find((d) => d.key === key);
-      return `<span class="effect-chip ${delta > 0 ? 'pos' : 'neg'}">${def.icon}${delta > 0 ? '+' : ''}${delta} ${def.label}</span>`;
+      return `<span class="effect-chip ${delta > 0 ? 'pos' : 'neg'}">${def.icon}${delta > 0 ? '+' : ''}${delta} ${resourceLabel(def, state.scenario)}</span>`;
     });
   if (result.traitGained) {
     const t = TRAIT_DEFS.find((d) => d.key === result.traitGained);
@@ -337,7 +341,7 @@ export function renderCourtPanel(state) {
   const members = [
     { data: state.ruler, role: f(state.ruler, 'Vládce', 'Vládkyně'), extra: tierLabel(state.ruler), portraits: rulerPortraitCandidates(state.ruler) },
     ...['heir', 'spouse', 'chancellor', 'marshal', 'spymaster'].map((r) => (
-      { data: state[r], role: roleLabel(r, state[r].gender), portraits: memberPortraitCandidates(state[r], r), person: r })),
+      { data: state[r], role: roleLabel(r, state[r].gender, state.scenario), portraits: memberPortraitCandidates(state[r], r), person: r })),
   ];
   for (const m of members) {
     const card = document.createElement('button');
@@ -365,6 +369,54 @@ export function renderCourtPanel(state) {
     `<div class="trait-row"><span>${t.icon}${t.label}</span><span>${state.ruler.traits[t.key]}</span></div>`
   ).join('');
   grid.after(traitsHost);
+}
+
+// ---------- houses panel (Šlechtic) ----------
+
+function bar(value, cls) {
+  return `<div class="stat-bar"><div class="stat-bar-fill ${cls}" style="width:${value}%"></div></div>`;
+}
+
+export function renderHousesPanel(state) {
+  const host = document.getElementById('houses-list');
+  if (!host || !state.houses) return;
+  const k = state.king;
+  const kh = k.heir && k.heir.alive ? k.heir : null;
+  const kingCard = `
+    <div class="house-card crown">
+      <div class="house-head">
+        <span class="house-crest">${ICONS.legitimacy}</span>
+        <div><span class="role">Koruna</span><strong>${k.alive ? `Král ${esc(k.name)}` : 'Trůn je prázdný'}</strong>
+        <small>${k.alive ? `${k.age} let` : ''}${kh ? ` · ${kh.gender === 'female' ? 'princezna' : 'princ'} ${esc(kh.name)} (${kh.age})` : ' · bez dědice'}</small></div>
+      </div>
+      <div class="stat-bar-row"><span class="label">Přízeň krále</span>${bar(state.resources.favor, 'loyalty')}<span>${state.resources.favor}</span></div>
+      ${state.flags.royal_match ? '<span class="house-badge gold">Zasnoubeno s korunou</span>' : ''}
+    </div>`;
+  const houses = state.houses.map((h) => {
+    const def = NOBLE_HOUSES.find((d) => d.id === h.id);
+    const seat = state.provinces.find((p) => p.id === def.seat);
+    const tone = h.attitude >= 55 ? 'good' : h.attitude < 40 ? 'bad' : 'warn';
+    return `
+      <div class="house-card">
+        <div class="house-head">
+          <span class="house-crest">${ICONS.houses}</span>
+          <div><span class="role">${esc(seat ? seat.name : '')}</span><strong>${esc(def.name)}</strong>
+          <small>${h.head.gender === 'female' ? 'Paní' : 'Pán'} ${esc(h.head.name)}, ${h.head.age} let</small></div>
+        </div>
+        <p class="house-text">${esc(def.text)}</p>
+        <div class="stat-bar-row"><span class="label">Vztah</span>${bar(h.attitude, 'loyalty')}<span class="house-att ${tone}">${attitudeLabel(h.attitude)}</span></div>
+        <div class="stat-bar-row"><span class="label">Moc rodu</span>${bar(h.power, 'garrison')}<span>${h.power}</span></div>
+        <div class="house-badges">${h.ally ? '<span class="house-badge good">Spojenec</span>' : ''}${h.married ? '<span class="house-badge gold">Sňatek</span>' : ''}</div>
+      </div>`;
+  }).join('');
+  const plot = state.noble.plot;
+  host.innerHTML = kingCard + houses + `
+    <div class="house-card intrigue">
+      <h4>Tajná hra</h4>
+      <div class="stat-bar-row"><span class="label">Spiknutí</span><div class="plot-steps">${[1, 2, 3].map((i) => `<i class="${i <= plot ? 'on' : ''}"></i>`).join('')}</div><span>${plot}/3</span></div>
+      <div class="stat-bar-row"><span class="label">Tajemství</span><span class="secrets">${'✦'.repeat(Math.min(state.noble.secrets, 8)) || '—'}</span><span>${state.noble.secrets}</span></div>
+      <p class="house-text">Cesty k trůnu: nárok po smrti krále (podpoří ho spojenci a sňatek s korunou), nebo spiknutí dovedené do konce. Spojenci zvyšují šance obou.</p>
+    </div>`;
 }
 
 // ---------- chronicle panel ----------
@@ -405,6 +457,9 @@ const ENDING_TITLES = {
   conquest: 'Dobytí',
   collapse: 'Kolaps',
   golden_age: 'Zlatý věk',
+  crowned: 'Korunovace',
+  executed: 'Poprava',
+  exile: 'Vyhnanství',
 };
 
 export function renderEndingScreen(state, gameOver) {
@@ -416,10 +471,11 @@ export function renderEndingScreen(state, gameOver) {
   });
   document.getElementById('ending-title').textContent = ENDING_TITLES[gameOver.type] || 'Konec';
   document.getElementById('ending-text').textContent = gameOver.text;
+  document.getElementById('ending-continue').hidden = gameOver.type !== 'crowned';
   const years = state.turn > 0 ? Math.ceil(state.turn / SEASONS.length) : 0;
   document.getElementById('ending-stats').innerHTML = [
     ['Dynastie', state.dynastyName],
-    ['Let vlády', years],
+    [state.scenario === 'slechtic' ? 'Let rodu' : 'Let vlády', years],
     ['Generací', state.generation],
     ['Zlato', state.resources.gold],
     ['Stabilita', state.resources.stability],

@@ -1011,3 +1011,130 @@ is dark and calm. <STYLOVÝ BLOK>
 | `kupecka_gilda.jpg` | Kupecká gilda | Rich merchants in fur-trimmed robes signing a charter around a table in a guild hall, scales and sacks of coin. |
 | `stary_rytir_umira.jpg` | Poslední přání | An old knight on his deathbed in a simple room, his sword on the blanket, the ruler sitting beside him holding his hand. |
 | `ztracena_listina.jpg` | Ztracená listina | An archivist and the ruler examining an ancient sealed charter by candlelight in a dusty archive full of scrolls. |
+
+---
+
+## 12. Scénář Šlechtic
+
+Nový scénář: hráč začíná jako drobný šlechtic s jedinou tvrzí na pobřeží
+(Pobřežní Mark) a cílem je trůn. Všechno níže je **volitelné** — hra bez
+obrázků funguje (ukáže výchozí scénu a iniciály).
+
+### 12.1 Portréty šlechtice (avatar)
+
+Hra si je načte podle postavení: drobný šlechtic (`minor_noble`) a významný
+šlechtic (`noble`). **Bez koruny** — korunu dostane až po získání trůnu.
+
+### `ruler_minor_noble_male.jpg` — Drobný šlechtic
+Rozlišení: **4:5, cíl 1024 × 1280** — přilož `ruler_king_male.jpg` jako stylovou kotvu
+
+```
+Portrait painting, aspect ratio 4:5. A young late-medieval minor nobleman of about 26, lord of a small coastal fort. Short dark hair, light stubble, determined hungry eyes, a plain dark wool doublet with a modest fur collar, a simple sword belt, no crown, no jewels except a small signet ring. Shown from the chest up, slightly
+turned, plain dark umber background fading to black, warm side light. The face
+sits in the upper third of the frame, centred, with a little headroom. Match
+the painting style, lighting and framing of the attached portrait.
+Painted in the style of a dark-fantasy narrative RPG: muted oil painting with
+visible loose brushwork and subtle canvas texture, desaturated earthy palette,
+soft dramatic chiaroscuro, realistic proportions, similar in mood to "The
+Life and Suffering of Sir Brante". Avoid: anime, cartoon, 3D render,
+photography, oversaturated colours, any text, letters, watermark or signature.
+```
+
+### `ruler_minor_noble_female.jpg` — Drobná šlechtična
+Rozlišení: **4:5, cíl 1024 × 1280** — přilož `ruler_king_male.jpg` jako stylovou kotvu
+
+```
+Portrait painting, aspect ratio 4:5. A young late-medieval minor noblewoman of about 26, lady of a small coastal fort. Dark braided hair under a simple linen coif, determined clever eyes, a plain dark green wool gown with a modest fur trim, no crown, a small signet ring. Shown from the chest up, slightly
+turned, plain dark umber background fading to black, warm side light. The face
+sits in the upper third of the frame, centred, with a little headroom. Match
+the painting style, lighting and framing of the attached portrait.
+Painted in the style of a dark-fantasy narrative RPG: muted oil painting with
+visible loose brushwork and subtle canvas texture, desaturated earthy palette,
+soft dramatic chiaroscuro, realistic proportions, similar in mood to "The
+Life and Suffering of Sir Brante". Avoid: anime, cartoon, 3D render,
+photography, oversaturated colours, any text, letters, watermark or signature.
+```
+
+### `ruler_noble_male.jpg` — Významný šlechtic
+Rozlišení: **4:5, cíl 1024 × 1280** — přilož `ruler_king_male.jpg` jako stylovou kotvu
+
+```
+Portrait painting, aspect ratio 4:5. A late-medieval great lord of about 35, risen high at the royal court. Neatly trimmed beard, proud ambitious gaze, a rich dark red velvet doublet with a heavy gold chain of office and a fur-lined mantle, no crown. Shown from the chest up, slightly
+turned, plain dark umber background fading to black, warm side light. The face
+sits in the upper third of the frame, centred, with a little headroom. Match
+the painting style, lighting and framing of the attached portrait.
+Painted in the style of a dark-fantasy narrative RPG: muted oil painting with
+visible loose brushwork and subtle canvas texture, desaturated earthy palette,
+soft dramatic chiaroscuro, realistic proportions, similar in mood to "The
+Life and Suffering of Sir Brante". Avoid: anime, cartoon, 3D render,
+photography, oversaturated colours, any text, letters, watermark or signature.
+```
+
+### `ruler_noble_female.jpg` — Významná šlechtična
+Rozlišení: **4:5, cíl 1024 × 1280** — přilož `ruler_king_male.jpg` jako stylovou kotvu
+
+```
+Portrait painting, aspect ratio 4:5. A late-medieval great lady of about 35, risen high at the royal court. Hair pinned under a jewelled net, proud ambitious gaze, a rich wine-red velvet gown with a heavy gold chain and a fur-lined mantle, no crown. Shown from the chest up, slightly
+turned, plain dark umber background fading to black, warm side light. The face
+sits in the upper third of the frame, centred, with a little headroom. Match
+the painting style, lighting and framing of the attached portrait.
+Painted in the style of a dark-fantasy narrative RPG: muted oil painting with
+visible loose brushwork and subtle canvas texture, desaturated earthy palette,
+soft dramatic chiaroscuro, realistic proportions, similar in mood to "The
+Life and Suffering of Sir Brante". Avoid: anime, cartoon, 3D render,
+photography, oversaturated colours, any text, letters, watermark or signature.
+```
+
+> Stárnutí funguje jako u krále: `ruler_minor_noble_male_old.jpg` atd. —
+> přilož mladou verzi a požádej o stejnou osobu o 30 let starší.
+
+### 12.2 Konce scénáře Šlechtic (16:9, cíl 1920 × 1080)
+
+| Soubor | Konec | Popis pro Gemini |
+|---|---|---|
+| `ending_crowned.jpg` | Korunovace | A coronation in a vast cathedral, a bishop lowering a crown onto the head of a kneeling noble, nobles and banners filling the nave, shafts of light. |
+| `ending_executed.jpg` | Poprava | An empty executioner's block on a wooden scaffold in a misty town square at dawn, a silent crowd, a raven on the beam. |
+| `ending_exile.jpg` | Vyhnanství | A noble family with a single cart leaving a small coastal fort at dawn, looking back, royal soldiers at the gate. |
+
+Pro konce použij formát: *„Wide cinematic painting, aspect ratio 16:9. <POPIS>
+The center of the image is calm enough for text.“* + stylový blok.
+
+### 12.3 Scény událostí šlechtice (1:1, cíl 2048 × 2048)
+
+Stejný formát jako v sekcích 10 a 11.
+
+| Soubor | Událost | Popis pro Gemini |
+|---|---|---|
+| `n_povolavaci_list.jpg` | Povolávací list | A royal messenger on horseback handing a sealed summons to a young minor noble at the gate of a small wooden fort on the coast, soldiers gathering. |
+| `n_kralovska_bitva.jpg` | Bitva pod královskou korouhví | A minor noble's small company charging on the flank of a large royal army on a muddy battlefield, the king watching from a hill. |
+| `n_pozvani_ke_dvoru.jpg` | Pozvání ke dvoru | A grand royal court hall full of nobles in finery, a young minor noble bowing before an aged king on his throne. |
+| `n_kralova_navsteva.jpg` | Král na návštěvě | An aged king and his retinue of riders with hounds and falcons arriving at a modest coastal wooden fort, the minor noble family bowing in the courtyard. |
+| `n_kraluv_vybirci.jpg` | Královský výběrčí | A royal tax collector with armed guards weighing coins at a table in a modest hall, the minor noble watching grimly. |
+| `n_obvineni_u_dvora.jpg` | Obvinění u dvora | A minor noble standing accused before the king's throne, a rival lord pointing an accusing finger, courtiers whispering. |
+| `n_urad_u_dvora.jpg` | Úřad u dvora | The king placing a golden chain of office around the neck of a kneeling noble, jealous lords watching. |
+| `n_povyseni.jpg` | Královská milost | A noble kneeling as the king touches his shoulder with a sword in a candlelit throne hall, granting a higher title. |
+| `n_koupe_titulu.jpg` | Titul na prodej | A royal treasurer in fine robes accepting a heavy purse of gold from a noble in a dim treasury, a sealed charter on the table. |
+| `n_nemoc_krale.jpg` | Král stůně | An aged king lying ill in a great canopy bed, physicians and courtiers whispering in the shadows, a crown on a cushion nearby. |
+| `n_kralovsky_snatek.jpg` | Sňatek s korunou | A betrothal in a royal chapel: a young noble heir and a young royal joining hands before a bishop, the king and the noble family watching. |
+| `n_smrt_krale.jpg` | Král je mrtev | A dead king lying in state in a cathedral, the crown resting on a cushion before the altar, nobles in dark cloaks eyeing it and each other. |
+| `n_prevrat.jpg` | Noc dlouhých nožů | Armed conspirators with torches entering a royal castle through an opened gate at night, a bribed guard holding the door. |
+| `n_spor_o_hranici.jpg` | Spor o mezníky | Peasants and armed retainers of two lords confronting each other over a moved boundary stone in a riverside meadow. |
+| `n_nabidka_spojenectvi.jpg` | Nabídka spojenectví | Two noble lords clasping hands over a table with a map and a sealed treaty in a modest hall, their retainers watching. |
+| `n_snatkova_nabidka.jpg` | Sňatek mezi rody | Two noble families meeting in a castle garden, a young heir and a young noble introduced shyly by their parents. |
+| `n_najezd_rodu.jpg` | Ozbrojenci na tvé půdě | Armed riders of a rival lord burning a barn and driving off cattle from a coastal village at dusk. |
+| `n_pujcka_rodu.jpg` | Žádost o půjčku | A worried rival lord asking a minor noble for a loan at a table with an open chest of coins and a quill. |
+| `n_hostina_rodu.jpg` | Hostina u sousedů | A lavish feast in a rival lord's hall, drunken nobles laughing, one guest quietly listening in the corner. |
+| `n_pomluvy.jpg` | Pomluvy | Courtiers whispering behind their hands in a castle gallery, glancing at a proud minor noble walking past. |
+| `n_nalezeny_dopis.jpg` | Dopis, který neměl být nalezen | A steward handing an intercepted letter with a broken wax seal to a minor noble by candlelight. |
+| `n_vydirani.jpg` | Tajemství v truhle | An iron chest open on a desk revealing hidden letters, a noble and a hooded confidant looking at them by candlelight. |
+| `n_spiklenci_zvou.jpg` | Pozvání do tmy | Masked noblemen meeting secretly by candlelight in an abandoned ruined chapel at night. |
+| `n_podplatit_straze.jpg` | Velitel stráží | A noble sliding a purse of gold across a table to a captain of the royal guard in a dark tavern corner. |
+| `n_spiklenec_zradil.jpg` | Jazyk, který se rozvázal | A drunk conspirator talking too loudly in a crowded tavern, a hooded figure listening nearby. |
+| `n_zradce_v_radach.jpg` | Zrádce mezi svými | A noble's steward secretly meeting a royal messenger behind the stables at night, glancing over his shoulder. |
+| `n_mlyn.jpg` | Mlýn na potoce | Builders constructing a new wooden watermill on a stream below a small coastal fort, peasants carrying sacks of grain. |
+| `n_pytlaci.jpg` | Pytláci | Gamekeepers dragging three poachers with a dead deer before a young noble in a forest clearing. |
+| `n_kamenny_hrad.jpg` | Kamenný hrad | Masons building a stone tower and walls around an old wooden fort on a coastal hill, scaffolding and cranes. |
+| `n_robota.jpg` | Robota | Peasants refusing to work in a lord's field at harvest, a bailiff with a stick shouting at them. |
+| `n_trzni_pravo.jpg` | Trhové právo | Townsfolk setting up the first market stalls in a small coastal village square, merchants arriving by cart and boat. |
+| `n_spatna_uroda.jpg` | Neúroda | Rain-ruined dark wheat fields under heavy grey clouds, peasants looking at the spoiled harvest in despair. |
+| `n_klidne_obdobi.jpg` | Klidné období (šlechtic) | A peaceful coastal estate with a small wooden fort, fishing boats, fields and a village in calm evening light. |

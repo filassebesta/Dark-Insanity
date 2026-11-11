@@ -1,11 +1,11 @@
-import { createNewGame, saveGame, listSaves, loadGame, loadMostRecentSave, deleteSave, loadSettings, saveSettings } from './state.js';
+import { createNewGame, crownNoble, saveGame, listSaves, loadGame, loadMostRecentSave, deleteSave, loadSettings, saveSettings } from './state.js';
 import { advanceTurn, resolveChoice, resolveRouteChoice, checkEndConditions } from './engine.js';
 import {
   showScreen, renderResourceBar, updateBookTabFlags, renderTurnSummary, renderEventCard,
   renderCourtPanel, renderChroniclePanel, openPanel, closePanels, isPanelOpen,
   renderEndingScreen, toast, setTypewriterEnabled, skipTypewriter, setMusicMuted,
   renderReignInfo, renderCharacterPlaque, renderOutcome, renderStaticIcons,
-  resetResourceMemory, esc, upgradeScenarioArt,
+  resetResourceMemory, esc, upgradeScenarioArt, renderHousesPanel,
 } from './ui.js';
 import { openMap, closeMap, isMapOpen, wireMapChrome } from './map.js';
 import { openCharacter, closeCharacter, isCharacterOpen, openPerson, closePerson, isPersonOpen } from './character.js';
@@ -32,6 +32,7 @@ function refreshAllPanels(bumpedTrait = null) {
   updateBookTabFlags(currentState);
   renderCourtPanel(currentState);
   renderChroniclePanel(currentState);
+  renderHousesPanel(currentState);
 }
 
 function closeOverlays() {
@@ -65,7 +66,7 @@ function endGame(gameOver) {
 }
 
 // The main theme plays throughout; fights and wars switch to the battle theme.
-const BATTLE_ENDINGS = ['conquest', 'collapse'];
+const BATTLE_ENDINGS = ['conquest', 'collapse', 'executed'];
 
 function presentEvent(event) {
   playMusic(event.music || 'menu'); // the main theme runs through the whole game
@@ -227,6 +228,15 @@ function wireActions() {
       case 'close-person':
         closePerson();
         break;
+      case 'continue-as-king':
+        // the noble took the throne: the same save carries on as the Panovník scenario
+        if (currentState && currentState.gameOver && currentState.gameOver.type === 'crowned') {
+          crownNoble(currentState);
+          saveGame(currentState);
+          toast(`${currentState.ruler.name} usedá na trůn.`);
+          startGame(currentState);
+        }
+        break;
       case 'toggle-music':
         settings.musicMuted = !settings.musicMuted;
         setMusicMuted(settings.musicMuted);
@@ -243,7 +253,7 @@ function wireActions() {
         toast('Tento scénář se ještě připravuje.');
         return;
       }
-      startGame(createNewGame(pendingRulerName, pendingDynastyName, pendingGender));
+      startGame(createNewGame(pendingRulerName, pendingDynastyName, pendingGender, card.dataset.scenario));
     });
   });
 
@@ -261,6 +271,7 @@ function wireActions() {
         return;
       }
       if (panel === 'court') renderCourtPanel(currentState);
+      if (panel === 'houses') renderHousesPanel(currentState);
       if (panel === 'chronicle') renderChroniclePanel(currentState);
       openPanel(panel);
     });

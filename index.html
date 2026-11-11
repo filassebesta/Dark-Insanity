@@ -73,12 +73,12 @@
             <span class="scenario-desc">Vládneš už hotovému království. Výzvou je udržet ho a rozšířit.</span>
           </span>
         </button>
-        <button class="scenario-card locked" data-scenario="slechtic">
+        <button class="scenario-card" data-scenario="slechtic">
           <span class="scenario-art"></span>
           <span class="scenario-body">
             <strong>Šlechtic</strong>
             <span class="scenario-diff">Střední</span>
-            <span class="scenario-desc">Připravuje se.</span>
+            <span class="scenario-desc">Začínáš s jedinou tvrzí na pobřeží. Získej přízeň krále, přechytrač soupeřící rody a natáhni se po koruně.</span>
           </span>
         </button>
         <button class="scenario-card locked" data-scenario="sedlak">
@@ -142,6 +142,7 @@
         <button class="book-tab" data-panel="character">Postava</button>
         <button class="book-tab" data-panel="map">Mapa</button>
         <button class="book-tab" data-panel="court">Dvůr</button>
+        <button class="book-tab" data-panel="houses" hidden>Rody</button>
         <button class="book-tab" data-panel="chronicle">Kronika</button>
       </nav>
     </header>
@@ -176,6 +177,12 @@
         <h3 class="panel-title">Dvůr</h3>
         <p class="panel-hint">Klikni na člena dvora a dozvíš se, kdo to je a co ho ovlivnilo.</p>
         <div id="court-grid" class="court-grid"></div>
+      </div>
+      <div id="panel-houses" class="side-panel">
+        <button class="panel-close" data-action="close-panel" aria-label="Zavřít">✕</button>
+        <span class="panel-overline">Koruna a soupeři</span>
+        <h3 class="panel-title">Rody</h3>
+        <div id="houses-list" class="houses-list"></div>
       </div>
       <div id="panel-chronicle" class="side-panel">
         <button class="panel-close" data-action="close-panel" aria-label="Zavřít">✕</button>
@@ -221,7 +228,10 @@
       <div class="hairline-ornament"><span></span>✦<span></span></div>
       <p id="ending-text" class="ending-text"></p>
       <div id="ending-stats" class="ending-stats"></div>
-      <button class="seal-button primary" data-action="back-to-menu">Zpět do menu</button>
+      <div class="dialog-actions ending-actions">
+        <button id="ending-continue" class="seal-button primary" data-action="continue-as-king" hidden>Vládnout jako panovník</button>
+        <button class="seal-button ghost light" data-action="back-to-menu">Zpět do menu</button>
+      </div>
     </div>
   </section>
 

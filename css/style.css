@@ -35,6 +35,7 @@
   --res-stability: #8ea4b4;
   --res-legitimacy: #d9b779;
   --res-faith: #a79cc4;
+  --res-favor: #c9a04a;
   --res-prestige: #cf9a7c;
 
   --font-display: 'Libre Caslon Display', 'EB Garamond', Georgia, serif;
@@ -806,6 +807,10 @@ kbd {
 .map-province.selected { fill: #f3dfa8; fill-opacity: .14; stroke: #7a1f15; stroke-width: 3.4; stroke-dasharray: none; filter: drop-shadow(0 0 6px rgba(122, 31, 21, .55)); }
 .map-province.tinted.selected { fill: var(--pf); fill-opacity: .4; }
 .map-province.lost { fill: #1d1712; fill-opacity: .55; }
+.map-province.foreign { fill: #2b2118; fill-opacity: .14; }
+.map-province.foreign:hover { fill: #2b2118; fill-opacity: .22; }
+.map-province.own { stroke: #e2b85a; stroke-width: 3.2; stroke-dasharray: none; filter: drop-shadow(0 0 5px rgba(226, 184, 90, .6)); }
+.lg-own { width: 26px; height: 14px; border: 2px solid #e2b85a; }
 .map-river-guide { fill: none; stroke: none; pointer-events: none; }
 
 .map-route .r-hit { fill: none; stroke: transparent; stroke-width: 24; cursor: pointer; }
@@ -1099,6 +1104,36 @@ kbd {
 .plaque-portrait { transition: border-color .2s ease, box-shadow .2s ease; overflow: hidden; }
 .plaque-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; transform: scale(1.75); transform-origin: 50% 32%; }
 
+
+
+/* ---------- houses panel (Šlechtic) ---------- */
+.houses-list { display: flex; flex-direction: column; gap: .9rem; }
+.house-card { padding: 1rem 1.1rem; border: 1px solid rgba(90,70,45,.22); background: rgba(255,255,255,.2); }
+.house-card.crown { border-color: var(--gold-dim); background: rgba(200,164,106,.14); }
+.house-card.intrigue { background: rgba(43,33,24,.06); }
+.house-card h4 { font-family: var(--font-caps); font-size: .78rem; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 .6rem; }
+.house-head { display: flex; gap: .8rem; align-items: center; margin-bottom: .5rem; }
+.house-head > div { display: flex; flex-direction: column; line-height: 1.25; }
+.house-head .role { font-family: var(--font-caps); font-size: .66rem; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-faint); }
+.house-head strong { font-family: var(--font-display); font-weight: 400; font-size: 1.2rem; }
+.house-head small { color: var(--ink-soft); font-size: .88rem; }
+.house-crest { width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--bg-2); color: var(--gold-bright); border: 1px solid var(--gold); }
+.house-crest .ico { width: 22px; height: 22px; }
+.house-text { font-size: .92rem; line-height: 1.45; color: var(--ink-soft); margin: .2rem 0 .6rem; }
+.house-att { font-family: var(--font-caps); font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+.house-att.good { color: var(--olive); }
+.house-att.warn { color: #a8823f; }
+.house-att.bad { color: var(--rust); }
+.house-badges { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .3rem; }
+.house-badge { font-family: var(--font-caps); font-size: .64rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; padding: .15rem .5rem; border: 1px solid currentColor; }
+.house-badge.good { color: var(--olive); }
+.house-badge.gold { color: #8a6a2c; }
+.plot-steps { display: flex; gap: 4px; flex: 1; }
+.plot-steps i { flex: 1; height: 8px; background: rgba(90,70,45,.18); }
+.plot-steps i.on { background: var(--blood); }
+.secrets { flex: 1; color: #8a6a2c; letter-spacing: .2em; }
+.ending-actions { justify-content: center; gap: 1rem; margin-top: 1rem; }
+.mood-slechtic .resource-chip[title="Přízeň krále"] .icon { color: var(--gold-bright); }
 
 /* ---------- court member detail ---------- */
 .person-view {

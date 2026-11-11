@@ -18,6 +18,8 @@ export const ICONS = {
   intelligence: svg('<path d="M3 5.5c3-1.2 6-1 9 1 3-2 6-2.2 9-1V19c-3-1.2-6-1-9 1-3-2-6-2.2-9-1z"/><path d="M12 6.5V20"/>'),
   patience: svg('<path d="M6 3h12M6 21h12"/><path d="M7.5 3c0 5 9 6.5 9 9s-9 4-9 9M16.5 3c0 5-9 6.5-9 9s9 4 9 9"/>'),
 
+  favor: svg('<circle cx="12" cy="13" r="6"/><path d="M12 10v6M9 13h6"/><path d="M9 7.5L12 3l3 4.5"/>'),
+  houses: svg('<path d="M4 21V9l4-3 4 3v12M12 21V6l4-3 4 3v15"/><path d="M2 21h20"/>'),
   forest: svg('<path d="M12 2l6 9h-3l4 6H5l4-6H6z"/><path d="M12 17v5"/>'),
   mountain: svg('<path d="M2 20l7-12 4 6 3-4 6 10z"/><path d="M7.5 10.5l1.5 1.5 1.5-1.5"/>'),
   traderoute: svg('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="1.8"/><path d="M12 4v6.2M12 13.8V20M4 12h6.2M13.8 12H20"/>'),

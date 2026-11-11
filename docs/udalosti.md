@@ -1,10 +1,10 @@
-# Insanity Kingdom — přehled událostí (scénář Panovník)
+# Insanity Kingdom — přehled událostí
 
-Vygenerováno z `js/events.js` a `js/events_more.js`. Jména v hranatých závorkách hra doplní podle aktuálního stavu.
+Vygenerováno z `js/events*.js`. Jména v hranatých závorkách hra doplní podle aktuálního stavu.
 
-Celkem **82 událostí** + klidné období.
+Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí.
 
-## Původní a první rozšíření (27)
+## Scénář Panovník
 
 ### 1. Spor dvou sedláků  `soud_o_mez`
 
@@ -217,8 +217,6 @@ Celkem **82 událostí** + klidné období.
 1. Uspořádat turnaj a sám vjet do klání *(riskantní volba)*
 2. Uspořádat turnaj jen jako hostitel
 3. Odmítnout, takové hry jsou plýtvání
-
-## Druhá sada (55)
 
 ### 28. Vyslanec z Marek  `cizi_vyslanec`
 
@@ -654,11 +652,269 @@ Celkem **82 událostí** + klidné období.
 2. Nechat ji prověřit učenci *(riskantní volba)*
 3. Vyjednat s opatem dohodu
 
-## Klidné období
-
-> Království si tuto sezónu oddechlo od velkých rozhodnutí. Pole dozrávají, kupci přicházejí a odcházejí. Jak vládce využije klidný čas?
+### Klidné období (Panovník)
 
 1. Zvelebit pole a cesty
 2. Cvičit vojsko
 3. Studovat listiny a kroniky
 4. Objíždět provincie a naslouchat lidu
+
+## Scénář Šlechtic
+
+### 1. Povolávací list  `n_povolavaci_list`
+
+> Královský posel přinesl list s pečetí krále [king]. Koruna táhne do pole a každý šlechtic má dodat muže podle velikosti svého panství.
+
+1. Poslat muže do královského vojska
+2. Vykoupit se štítným
+3. Odmítnout — panství potřebuje své muže
+
+### 2. Bitva pod královskou korouhví  `n_kralovska_bitva`
+
+> Královské vojsko se střetlo s nepřítelem na rozbahněném poli. Tvá korouhev stojí na křídle a král sleduje boj z návrší.
+
+1. Vést své muže osobně do první linie *(riskantní volba)*
+2. Držet se v záloze a šetřit muže
+3. Ukořistit nepřátelský tábor dřív než ostatní *(riskantní volba)*
+
+### 3. Pozvání ke dvoru  `n_pozvani_ke_dvoru`
+
+> Král [king] svolává šlechtu na svatodušní dvůr do Vlčího Údělu. Kdo nepřijede, jako by nebyl. Kdo přijede, musí se ukázat.
+
+1. Přijet v plné nádheře *(riskantní volba)*
+2. Přijet skromně a naslouchat
+3. Omluvit se a zůstat na panství
+
+### 4. Král na návštěvě  `n_kralova_navsteva`
+
+> Král [king] se na cestě k moři zastaví na tvém panství. S ním přijede sto jezdců, dvůr, psi a sokoli — a všichni budou chtít jíst.
+
+1. Uspořádat hostinu, na jakou se nezapomíná
+2. Pohostit krále důstojně, ale skromně
+3. Ukázat králi svou družinu na cvičišti *(riskantní volba)*
+
+### 5. Královský výběrčí  `n_kraluv_vybirci`
+
+> Královský výběrčí žádá mimořádnou berni na válku. Částka je vysoká a výběrčí se dívá po tvé pokladně, jako by ji už vážil.
+
+1. Zaplatit celou berni
+2. Zatajit část výnosů *(riskantní volba)*
+3. Odmítnout — panství je vyčerpané
+
+### 6. Obvinění u dvora  `n_obvineni_u_dvora`
+
+> Rod [rod] obvinil tvůj rod před králem ze zpronevěry královské berně. Král si tě předvolává, aby ses hájil/hájila.
+
+1. Obhájit se před králem *(riskantní volba)*
+2. Udeřit zpátky tajemstvím, které o nich víš *(jen za určitých podmínek)*
+3. Uplatit svědky
+
+### 7. Úřad u dvora  `n_urad_u_dvora`
+
+> Král [king] ti nabízí úřad nejvyššího komorníka. Přístup ke králi, ke královské pokladně — a nenávist všech, kdo o úřad stáli.
+
+1. Přijmout úřad
+2. Skromně odmítnout ve prospěch jiného rodu
+
+### 8. Královská milost  `n_povyseni`
+
+> Král [king] si předvolal [ruler] k trůnu. Za věrné služby chce rod [rod] povýšit mezi velmože země.
+
+1. Přijmout s pokorou
+2. Požádat i o další panství *(riskantní volba)*
+
+### 9. Titul na prodej  `n_koupe_titulu`
+
+> Královský pokladník naznačil, že pokladna je prázdná a že za dostatečný „dar“ by se našel titul velmože i pro rod, který o něj zatím nežádal.
+
+1. Titul koupit
+2. Odmítnout, titul se musí zasloužit
+
+### 10. Král stůně  `n_nemoc_krale`
+
+> Král [king] ulehl. Je mu [king] let a lékaři se tváří vážně. U dvora se začíná mluvit o tom, co bude dál — a kdo by mohl nosit korunu.
+
+1. Navštívit krále a ujistit ho o věrnosti
+2. Tiše začít shromažďovat příznivce
+3. Poslat králi svého lékaře *(riskantní volba)*
+
+### 11. Sňatek s korunou  `n_kralovsky_snatek`
+
+> Královo dítě, princ/princezna [king], dospívá. Kdyby se tvůj dědic [heir] stal jeho chotí, krev rodu [rod] by jednou seděla na trůně.
+
+1. Navrhnout sňatek králi *(riskantní volba)*
+2. Nabídnout k sňatku i bohaté věno *(riskantní volba)* *(jen za určitých podmínek)*
+3. Zatím vyčkat
+
+### 12. Král je mrtev  `n_smrt_krale`
+
+> Zvony Vlčího Údělu oznamují, že král [king] zemřel. Šlechta se sjíždí ke dvoru, koruna leží na polštáři v chrámu a všichni se dívají, kdo se k ní natáhne první.
+
+1. Vznést nárok na trůn *(riskantní volba)* *(jen za určitých podmínek)*
+2. Povstat se zbraní v ruce *(riskantní volba)* *(jen za určitých podmínek)*
+3. Podpořit královského nástupce
+4. Stát stranou a vyčkat
+
+### 13. Noc dlouhých nožů  `n_prevrat`
+
+> Spiknutí je připravené. Stráže na hradbách jsou podplacené, spojenci čekají na znamení a král [king] spí. Stačí jediný rozkaz.
+
+1. Udeřit dnes v noci *(riskantní volba)*
+2. Ještě vyčkat na lepší chvíli
+3. Spiknutí rozpustit a zahladit stopy
+
+### 14. Spor o mezníky  `n_spor_o_hranici`
+
+> Lidé, kterým velí pán/paní [house] z rodu [rod], v noci posunuli hraniční kameny a zabrali tvým vsím louky u řeky.
+
+1. Vytlačit je ozbrojenci *(riskantní volba)*
+2. Žalovat u krále *(riskantní volba)*
+3. Ustoupit a nechat jim louky
+
+### 15. Nabídka spojenectví  `n_nabidka_spojenectvi`
+
+> Pán/Paní [house] z rodu [rod] přijel/přijela s malým doprovodem a nabízí spojenectví. Spolu by vaše rody měly u dvora váhu, jakou žádný nemá sám.
+
+1. Uzavřít spojenectví
+2. Zdvořile odmítnout
+
+### 16. Sňatek mezi rody  `n_snatkova_nabidka`
+
+> Rod [rod] nabízí sňatek: tvůj dědic [heir] a jejich nejmladší potomek. Věno by bylo štědré a pouto mezi rody pevné.
+
+1. Přijmout sňatek
+2. Odmítnout — dědic je určen pro vyšší cíle
+
+### 17. Ozbrojenci na tvé půdě  `n_najezd_rodu`
+
+> Ozbrojenci rodu [rod] vpadli do tvých vsí, vypálili stodolu a odehnali dobytek. Tvrdí, že jen vymáhají starý dluh.
+
+1. Vyjet proti nim s družinou *(riskantní volba)*
+2. Stěžovat si u krále *(riskantní volba)*
+3. Zaplatit „dluh“ a mít klid
+
+### 18. Žádost o půjčku  `n_pujcka_rodu`
+
+> Pán/Paní [house] z rodu [rod] se ocitl/ocitla v nesnázích a žádá o půjčku. Prý to vrátí do žní. Prý.
+
+1. Půjčit bez úroku *(jen za určitých podmínek)*
+2. Půjčit za zástavu pozemků *(riskantní volba)* *(jen za určitých podmínek)*
+3. Odmítnout
+
+### 19. Hostina u sousedů  `n_hostina_rodu`
+
+> Rod [rod] zve na velkou hostinu na své sídlo. Bude tam půl šlechty země — a víno, které rozvazuje jazyky.
+
+1. Jet a získat přízeň hostitelů *(riskantní volba)*
+2. Jet a naslouchat opilým jazykům
+3. Poslat omluvu
+
+### 20. Pomluvy  `n_pomluvy`
+
+> Po dvoře se šíří pomluvy, že tvůj rod pochází z koňských handlířů a že dědic [heir] není vlastní krve. Stopa vede k rodu [rod].
+
+1. Odpovědět stejnou mincí *(riskantní volba)*
+2. Umlčet je tajemstvím, které o nich víš *(jen za určitých podmínek)*
+3. Mlčet a nechat pomluvy vyšumět
+
+### 21. Dopis, který neměl být nalezen  `n_nalezeny_dopis`
+
+> Kancléř(ka) [chancellor] přinesl zachycený dopis rodu [rod]. Je v něm dost na to, aby někdo přišel o hlavu.
+
+1. Dopis si nechat pro pozdější chvíli
+2. Předat dopis králi
+3. Vrátit dopis tiše pisateli
+
+### 22. Tajemství v truhle  `n_vydirani`
+
+> V železné truhle rodu leží listina, která by mohla zničit rod [rod]. Špehmistr(yně) [spymaster] se ptá, zda nenastal čas ji použít.
+
+1. Vydírat je o zlato
+2. Přinutit je podpořit tvůj nárok
+3. Listinu spálit — takové zbraně se nepoužívají
+
+### 23. Pozvání do tmy  `n_spiklenci_zvou`
+
+> Maskovaný posel předal pozvání na schůzku v opuštěné kapli. Nespokojení šlechtici hledají někoho, kdo by se postavil proti králi [king].
+
+1. Přidat se ke spiklencům
+2. Udat spiklence králi
+3. Na schůzku nejít a mlčet
+
+### 24. Velitel stráží  `n_podplatit_straze`
+
+> Spiklenci potřebují velitele královské stráže. Je chamtivý, ale není hloupý — a ví, jak vysoko visí šibenice.
+
+1. Uplatit ho zlatem *(jen za určitých podmínek)*
+2. Přesvědčit ho, že je to správné *(riskantní volba)*
+3. Najít jinou cestu
+
+### 25. Jazyk, který se rozvázal  `n_spiklenec_zradil`
+
+> Jeden ze spiklenců se v krčmě opil a mluvil. Zatím ho poslouchali jen sedláci, ale do rána to může vědět celý dvůr.
+
+1. Umlčet ho dřív, než bude pozdě *(riskantní volba)*
+2. Předejít mu a přiznat se králi
+3. Zapírat a doufat *(riskantní volba)*
+
+### 26. Zrádce mezi svými  `n_zradce_v_radach`
+
+> [target], tvůj/tvoje [rádce], se tajně schází s lidmi krále. Pokud o něčem ví, může to rodu [rod] zlomit vaz.
+
+1. Uplatit ho, aby mlčel
+2. Zbavit ho služby
+3. Krmit ho falešnými zprávami *(riskantní volba)*
+
+### 27. Mlýn na potoce  `n_mlyn`
+
+> Sedláci musí vozit obilí k mlýnu Bílé Brány a platit mlynářovi třetinu. Tvůj purkrabí navrhuje postavit vlastní mlýn na potoce pod tvrzí.
+
+1. Postavit mlýn
+2. Pronajmout stavbu mlynáři
+3. Nestavět
+
+### 28. Pytláci  `n_pytlaci`
+
+> Hajní chytili v panském lese tři pytláky s jelenem. Jsou to hladoví otcové rodin z tvé vlastní vsi.
+
+1. Pověsit je pro výstrahu
+2. Uložit pokutu a robotu navíc
+3. Propustit je a dát jim jelena
+
+### 29. Kamenný hrad  `n_kamenny_hrad`
+
+> Stará dřevěná tvrz se rozpadá. Stavitel z Vlčího Údělu přinesl plány kamenného hradu s věží, jaký by se nestyděl ani velmož.
+
+1. Postavit kamenný hrad *(jen za určitých podmínek)*
+2. Opravit tvrz a postavit palisádu
+3. Nic nestavět
+
+### 30. Robota  `n_robota`
+
+> Sedláci z tvých vsí odmítají chodit na robotu. Tvrdí, že žně jsou krátké a že na panských polích nemají čas na svá vlastní.
+
+1. Trvat na robotě
+2. Ulevit jim od roboty
+3. Vyjednat s rychtáři *(riskantní volba)*
+
+### 31. Trhové právo  `n_trzni_pravo`
+
+> Měšťané z přístavní vsi chtějí každý týden pořádat trh. Na trhové právo je ale potřeba královo svolení — a král ho nedává zadarmo.
+
+1. Požádat krále o trhové právo *(riskantní volba)*
+2. Pořádat trh i bez svolení
+
+### 32. Neúroda  `n_spatna_uroda`
+
+> Letní deště spálily obilí na stéblech. Sýpky na panství zůstanou poloprázdné a zima bude dlouhá.
+
+1. Snížit sedlákům dávky
+2. Nakoupit obilí od Bílé Brány
+3. Trvat na plných dávkách
+
+### Klidné období (Šlechtic)
+
+1. Spravovat panství
+2. Cvičit družinu
+3. Psát dopisy ke dvoru
+4. Studovat rodokmeny a staré listiny

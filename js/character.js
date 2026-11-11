@@ -1,7 +1,7 @@
 // Ruler avatar / character sheet ("Postava").
 // Portraits are optional files; missing ones fall back gracefully to an initial.
 
-import { TRAIT_DEFS, STATUS_TIERS, SEASONS } from './data.js';
+import { TRAIT_DEFS, STATUS_TIERS, SEASONS, tierTitle } from './data.js';
 import { traitBonuses } from './engine.js';
 import { biography, loyaltyLabel, roleLabel } from './court.js';
 import { esc } from './ui.js';
@@ -52,10 +52,6 @@ export function memberPortraitCandidates(c, role) {
   return [`${base}.jpg`, `${base}.png`];
 }
 
-function title5(r) {
-  return r.gender === 'female' ? 'Královna' : 'Král';
-}
-
 function reignYears(state) {
   return Math.floor((state.turn - (state.ruler.reignStartTurn || 0)) / 4);
 }
@@ -68,15 +64,14 @@ function yearsWord(n) {
 
 export function renderCharacterSheet(state) {
   const r = state.ruler;
-  const tierName = STATUS_TIERS[r.statusTier];
-  const title = r.statusTier === 5 ? title5(r) : tierName;
+  const title = tierTitle(r.statusTier, r.gender);
   const ageK = Math.max(0, Math.min(0.5, (r.age - 40) / 60));
   const years = reignYears(state);
 
   const ladder = STATUS_TIERS.slice(1).map((label, i) => {
     const tier = i + 1;
     const cls = tier < r.statusTier ? 'done' : tier === r.statusTier ? 'current' : '';
-    const shown = tier === 5 ? title5(r) : label;
+    const shown = tier === 5 || tier === r.statusTier ? tierTitle(tier, r.gender) : label;
     return `<div class="cs-step ${cls}"><i></i>${esc(shown)}</div>`;
   }).join('');
 
@@ -133,7 +128,7 @@ export function renderCharacterSheet(state) {
         ${portraitImg(rulerPortraitCandidates(r), r.name, 'cs-portrait-img')}
         <div class="cs-aging"></div>
       </div>
-      <p class="cs-portrait-note">${r.age >= OLD_AGE ? 'Léta vlády se do tváře vepsala.' : 'Portrét z doby nástupu na trůn.'}</p>
+      <p class="cs-portrait-note">${r.age >= OLD_AGE ? 'Léta vlády se do tváře vepsala.' : state.scenario === 'slechtic' ? `Portrét ${r.gender === 'female' ? 'paní' : 'pána'} rodu ${esc(state.dynastyName)}.` : 'Portrét z doby nástupu na trůn.'}</p>
     </div>
     <div class="cs-info">
       <span class="panel-overline">${esc(title)} · ${state.generation}. generace</span>
@@ -141,7 +136,7 @@ export function renderCharacterSheet(state) {
       <div class="cs-dynasty">z dynastie ${esc(state.dynastyName)}</div>
       <div class="cs-facts">
         <div><span>Věk</span><strong>${r.age}</strong></div>
-        <div><span>Vláda</span><strong>${years} ${yearsWord(years)}</strong></div>
+        <div><span>${state.scenario === 'slechtic' ? 'V čele rodu' : 'Vláda'}</span><strong>${years} ${yearsWord(years)}</strong></div>
         <div><span>Rok</span><strong>${state.year}</strong></div>
       </div>
       <h4 class="cs-section">Postavení</h4>
@@ -184,7 +179,7 @@ export function renderPersonSheet(state, role) {
   const c = state[role];
   if (!c) return;
   const alive = c.alive !== false;
-  const title = roleLabel(role, c.gender);
+  const title = roleLabel(role, c.gender, state.scenario);
   const history = (c.history || []).slice().reverse();
   const him = c.gender === 'female' ? 'ji' : 'ho';
   const rows = history.map((h) => {

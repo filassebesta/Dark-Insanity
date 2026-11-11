@@ -24,6 +24,7 @@
 // resourceScale so e.g. the size of the army changes the odds of a battle.
 
 import { MORE_EVENTS } from './events_more.js';
+import { NOBLE_EVENTS, NOBLE_QUIET_EVENT } from './events_noble.js';
 
 const BASE_EVENTS = [
   {
@@ -826,7 +827,7 @@ const BASE_EVENTS = [
   },
 ];
 
-export const EVENTS = [...BASE_EVENTS, ...MORE_EVENTS];
+export const EVENTS = [...BASE_EVENTS, ...MORE_EVENTS, ...NOBLE_EVENTS];
 
 // Picked when no other event is due (or now and then by chance): a calm season
 // still lets the ruler spend it on something.
@@ -865,3 +866,5 @@ export const QUIET_EVENT = {
     },
   ],
 };
+
+export const QUIET_EVENTS = { panovnik: QUIET_EVENT, slechtic: NOBLE_QUIET_EVENT };
