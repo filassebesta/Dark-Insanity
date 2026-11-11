@@ -180,7 +180,6 @@ export function openMap(gameState, opts = {}) {
   host.classList.remove('town-open');
   view = { x: 0, y: 0, w: W, h: H };
   applyView();
-  document.dispatchEvent(new CustomEvent('kingdom:map-open', { detail: { layer: opts.layer || null } }));
   if (opts.focusRoutes) {
     selectThing({ type: 'feature', id: 'vassal' });
     animateTo(fitBox(VASSAL_VIEW));
@@ -1030,7 +1029,6 @@ function openTown(placeId) {
   applyView();
   host.classList.add('town-open');
   drawTown();
-  document.dispatchEvent(new CustomEvent('kingdom:town-open', { detail: { id } }));
 }
 
 function closeTown() {

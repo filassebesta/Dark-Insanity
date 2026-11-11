@@ -84,7 +84,6 @@ musí být aktivní, jinak je mapa skrytá. Screenshoty ukládat mimo repozitá�
 | `js/events_ambition.js` | událost „Čeho chceš dosáhnout“ (nabídka tří ambicí, `free: true`) |
 | `js/achievements.js` | Síň slávy: 28 úspěchů napříč všemi hrami (localStorage) |
 | `js/fame.js` | lišta ambice nad příběhem, obrazovka Síň slávy, úspěchy na konci kroniky, oznámení |
-| `js/tips.js` | rady pro začátečníky (jednou, vypnutelné v Možnostech) |
 | `js/injuries.js` | zranění vládce: druhy, postihy, hojení, zánět, náhrady, přídomky podle zranění (bez DOM) |
 | `js/events_injury.js` | ranhojič, řemeslník s náhradou (dřevěná noha, železná ruka, páska), posměch u dvora |
 | `js/events_build.js` | 16 událostí kolem staveb (požár, nákaza, cech, žold, nájezd, městská práva, poutníci… a 4 pro grunt) |
@@ -189,12 +188,12 @@ obchodní `trade`, `tradeOffer`, `tradeMod`, `tradeStock`.
 - Větve `heal`, `treat`, `worsen`, `aid` léčí, ošetřují, zhoršují a dávají náhradu.
 - Zranění se ukazují na plaketě (červeně snížené vlastnosti, „bez nohy“), v listu postavy (sekce Zranění) a v Síni předků; trvalé zranění může dát přídomek (Jednooký, Chromá…).
 
-### Ambice, Síň slávy, rady
+### Ambice a Síň slávy
 - **Ambice** (`ambitions.js`): zhruba jednou za 1–2 roky (pokud žádná neběží) přijde událost `ambice` se třemi cíli podle scénáře (19 ambicí: stavby, povýšení sídla, pokladna, bitvy, víra, prestiž, klid v krajích, obchod, výchova dědice, legitimita, královská přízeň, spojenectví, a 8 selských). Druh `gain` (přírůstek od začátku), `reach` (dosáhnout), `below` (nejvýš). Splnění: odměna (větev události) + bod vlastnosti; nesplnění v termínu: prestiž −2 (sedlák −1). Nový vládce začíná bez ambice.
 - Událost s `free: true` nezabírá období: po ní hned přijde běžná událost téhož období (`nextEventSameSeason` v `main.js`). Jinak by nabídka ubírala události a měnila vyvážení.
 - **Statistiky** `state.stats` (`bumpStat` v `data.js`): `built`, `upgrades`, `battlesWon`, `delivered`, `tradeGold`, `injuries`, `scars`, `crises`, `ambitionsDone`; `state.origin` = scénář, kterým kronika začala.
 - **Síň slávy** (`achievements.js`): úspěchy se kontrolují po každé volbě a období, ukládají se do `localStorage` (`insanityKingdom.achievements`) a platí pro všechny hry. Obrazovka `screen-hall` (z Možností a z konce kroniky), 3 skryté „temné“ úspěchy.
-- **Rady** (`tips.js`): start, riskantní volba, ambice, krize, mapa, stavění, obchod, zranění, Síň slávy (na konci kroniky). Vypnutí a „Ukázat rady znovu“ v Možnostech.
+- Rady pro začátečníky byly na přání uživatele odstraněny — nepřidávat je znovu.
 
 ### Obrázky pro Sedláka
 - Zapracováno 31 obrázků: 8 portrétů sedláka, 10 portrétů rodiny a vsi, 3 konce, 10 scén.
@@ -257,6 +256,7 @@ a šance rytířské bitvy (Sedlák), ekonomika v `processPeasantEconomy` a `pro
 - **Prompty dávkově** a samostatné (uživatel je posílá do AI bez přístupu k repozitáři).
 - **Hlavní menu = původní rytina**, nic na něm neměnit; žádné červené zvýraznění klikacích míst.
 - **Důsledky voleb skryté** (žádné náhledy efektů ani růstu vlastností u voleb).
+- **Žádné tutoriálové rady** ani vyskakovací nápovědy — uživatel je nechce.
 - Hudba: hlavní téma běží celou hru, bitevní jen při bojích.
 - Git: vyvíjet a pushovat jen na větev `claude/insanity-kingdom-html-game-dccy50`; **PR nevytvářet**, pokud o to uživatel výslovně nepožádá; commity končí atribučními řádky podle pokynů prostředí.
 - Testovací screenshoty nikdy neukládat do repozitáře (jednou se to stalo a bylo odstraněno).

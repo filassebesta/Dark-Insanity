@@ -1466,7 +1466,7 @@ kbd {
 .cs-injuries em i { font-style: normal; font-size: .8rem; padding: .05rem .45rem; border-radius: 2px; background: rgba(224,154,127,.15); color: #e09a7f; }
 .cs-injuries small { font-size: .85rem; color: var(--gold); }
 
-/* ---------- ambitions, Hall of Fame, tips ---------- */
+/* ---------- ambitions and the Hall of Fame ---------- */
 .ambition-bar { display: grid; grid-template-columns: auto 1fr; gap: .1rem .8rem; align-items: baseline; padding: .65rem .9rem; margin-bottom: 1.1rem; border: 1px solid rgba(120,80,30,.28); border-left: 3px solid var(--gold); background: rgba(200,164,106,.1); }
 .ambition-bar[hidden] { display: none; }
 .ambition-bar.urgent { border-left-color: var(--rust); }
@@ -1507,17 +1507,7 @@ kbd {
 .achievement-toast b { font-family: var(--font-display); font-weight: 400; font-size: 1.15rem; color: var(--gold-bright); }
 .achievement-toast small { font-size: .85rem; opacity: .8; }
 
-.tip-card { position: fixed; left: 1.2rem; top: 4.8rem; z-index: 60; width: min(360px, calc(100vw - 2rem)); padding: 1rem 1.1rem .9rem; background: #efe6d2; color: var(--ink); border: 1px solid rgba(120,80,30,.4); border-top: 3px solid var(--gold); box-shadow: 0 10px 30px rgba(0,0,0,.45); opacity: 0; transform: translateY(12px); transition: opacity .35s ease, transform .35s var(--ease-out); }
-.tip-card.in { opacity: 1; transform: none; }
-.tip-over { display: block; font-family: var(--font-caps); font-size: .66rem; letter-spacing: .26em; text-transform: uppercase; color: var(--ink-faint); }
-.tip-card strong { display: block; font-family: var(--font-display); font-weight: 400; font-size: 1.2rem; color: var(--blood); margin: .1rem 0 .3rem; }
-.tip-card p { margin: 0 0 .7rem; font-size: .95rem; line-height: 1.5; }
-.tip-actions { display: flex; justify-content: space-between; align-items: center; gap: .6rem; }
-.tip-off { background: none; border: none; padding: 0; font: inherit; font-size: .8rem; color: var(--ink-faint); cursor: pointer; text-decoration: underline; }
-.tip-ok { font-family: var(--font-caps); font-size: .76rem; letter-spacing: .16em; text-transform: uppercase; padding: .4rem .9rem; border: 1px solid var(--blood); background: var(--blood); color: #f6ead2; cursor: pointer; }
-.tip-ok:hover { background: #a3352b; }
 @media (max-width: 560px) {
-  .tip-card { right: .6rem; left: .6rem; bottom: .6rem; width: auto; }
   .hall-grid { grid-template-columns: 1fr; }
 }
 

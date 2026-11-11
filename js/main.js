@@ -12,7 +12,6 @@ import { openCharacter, closeCharacter, isCharacterOpen, openPerson, closePerson
 import { playMusic, setMusicVolume } from './audio.js';
 import { checkAchievements } from './achievements.js';
 import { renderAmbitionBar, renderHall, renderEndingAchievements, announceAchievement } from './fame.js';
-import { showTip, setTipsEnabled, tipsEnabled, resetTips, hideTip } from './tips.js';
 
 let currentState = null;
 let activeEvent = null;
@@ -70,14 +69,12 @@ function openRouteMap() {
 
 function endGame(gameOver) {
   closeOverlays();
-  hideTip();
   playMusic(BATTLE_ENDINGS.includes(gameOver.type) ? 'battle' : 'menu');
   currentState.gameOver = gameOver;
   award();
   saveGame(currentState);
   renderEndingScreen(currentState, gameOver);
   renderEndingAchievements(currentState);
-  if ((currentState.achievementsEarned || []).length) showTip('hall');
   showScreen('screen-ending');
 }
 
@@ -88,9 +85,6 @@ function presentEvent(event) {
   playMusic(event.music || 'menu'); // the main theme runs through the whole game
   activeEvent = event;
   awaitingChoice = true;
-  if (event.id === 'ambice') showTip('ambition');
-  else if (/^krize/.test(event.id)) showTip('crisis');
-  if ((event.choices || []).some((c) => c.isRoll && (!c.requires || c.requires(currentState)))) showTip('roll');
   renderEventCard(currentState, event, {
     onChoiceSelected: handleChoiceSelected,
     onRouteSelected: handleRouteSelected,
@@ -102,7 +96,6 @@ const TRAIT_LABELS = { strength: 'Síla', eloquence: 'Výřečnost', intelligenc
 function showOutcome(result) {
   awaitingChoice = false;
   if (result.traitGained) toast(`+1 ${TRAIT_LABELS[result.traitGained]}`);
-  if ((result.notes || []).some((n) => n.text.startsWith('Zranění'))) showTip('injury');
   award();
   saveGame(currentState);
   refreshAllPanels(result.traitGained);
@@ -165,7 +158,6 @@ function startGame(state) {
   document.body.className = 'mood-' + state.scenario;
   showScreen('screen-game');
   refreshAllPanels();
-  showTip('start');
   runNextTurn();
 }
 
@@ -218,7 +210,6 @@ function wireActions() {
         break;
       case 'back-to-menu':
         closeOverlays();
-        hideTip();
         showScreen('screen-menu');
         break;
       case 'back-to-new-game':
@@ -244,11 +235,6 @@ function wireActions() {
         break;
       case 'back-from-hall':
         showScreen(hallReturn === 'screen-hall' ? 'screen-menu' : hallReturn);
-        break;
-      case 'reset-tips':
-        resetTips();
-        document.getElementById('input-tips-toggle').checked = true;
-        toast('Rady se v příští hře ukážou znovu.');
         break;
       case 'quit-game':
         toast('Hru lze zavřít v prohlížeči.');
@@ -368,9 +354,6 @@ function wireActions() {
     saveSettings(settings);
   });
   document.getElementById('input-typewriter-toggle').checked = settings.typewriter;
-  const tipsInput = document.getElementById('input-tips-toggle');
-  tipsInput.checked = tipsEnabled();
-  tipsInput.addEventListener('change', (e) => setTipsEnabled(e.target.checked));
 
   const volumeInput = document.getElementById('input-music-volume');
   const volumeLabel = document.getElementById('music-volume-value');
@@ -514,10 +497,6 @@ document.addEventListener('kingdom:build', (e) => {
   refreshAllPanels();
   if (e.detail.message) toast(e.detail.message);
 });
-
-// the first visit to the map, a town or the trade table brings a tip
-document.addEventListener('kingdom:map-open', (e) => showTip(e.detail.layer === 'trade' ? 'trade' : 'map'));
-document.addEventListener('kingdom:town-open', () => showTip('town'));
 
 wireActions();
 wireMapChrome();
