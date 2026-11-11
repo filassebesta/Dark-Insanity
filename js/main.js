@@ -7,7 +7,7 @@ import {
   renderReignInfo, renderCharacterPlaque, renderOutcome, renderStaticIcons,
   resetResourceMemory, esc, upgradeScenarioArt, renderHousesPanel, renderTradeNews,
 } from './ui.js';
-import { openMap, closeMap, isMapOpen, wireMapChrome } from './map.js';
+import { openMap, closeMap, isMapOpen, wireMapChrome, closeTownIfOpen } from './map.js';
 import { openCharacter, closeCharacter, isCharacterOpen, openPerson, closePerson, isPersonOpen } from './character.js';
 import { playMusic, setMusicVolume } from './audio.js';
 
@@ -356,6 +356,7 @@ function wireKeyboard() {
     if (e.target.matches('input, textarea')) return;
 
     if (e.key === 'Escape') {
+      if (closeTownIfOpen()) return; // from a town back to the map first
       closeOverlays();
       return;
     }
@@ -452,6 +453,14 @@ document.addEventListener('kingdom:decree', (e) => {
   saveGame(currentState);
   refreshAllPanels();
   toast(`${currentState.scenario === 'sedlak' ? 'Naplánováno' : 'Výnos vydán'}: ${e.detail.label}`);
+});
+
+// building in a town or on the farm: save, refresh the bars and tell the player
+document.addEventListener('kingdom:build', (e) => {
+  if (!currentState) return;
+  if (!e.detail.error) saveGame(currentState);
+  refreshAllPanels();
+  if (e.detail.message) toast(e.detail.message);
 });
 
 wireActions();

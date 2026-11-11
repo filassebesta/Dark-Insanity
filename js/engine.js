@@ -3,6 +3,7 @@ import { makeChronicleEntry, inheritTraits } from './state.js';
 import { EVENTS, QUIET_EVENTS } from './events.js';
 import { roleLabel, QUIRK_ROLES, randomQuirk, quirkLabel } from './court.js';
 import { processTrade, resolveIncident, resolveOffer, addTradeMod, ensureTrade, cargoTokens, GOODS, MAX_STOCK } from './trade.js';
+import { processBuilding, buildingDrift } from './build.js';
 
 const TRAIT_MIN = 1;
 const TRAIT_MAX = 10;
@@ -774,12 +775,13 @@ function driftProvinces(state) {
   const bonus = traitBonuses(state);
   const noble = isNoble(state);
   for (const p of ownProvinces(state)) {
+    const built = buildingDrift(state, p.id); // churches, walls, taverns… in the province's towns
     // a noble's villages answer to their lord, not to a claim on the throne
     const unrestBase = noble ? 34 : 45;
-    const unrestTarget = unrestBase - (r.stability - 50) * 0.6 - (p.garrison - 50) * 0.25 - (p.wealth - 50) * 0.15 + (r.food < 20 ? 20 : 0) - bonus.order;
+    const unrestTarget = unrestBase - (r.stability - 50) * 0.6 - (p.garrison - 50) * 0.25 - (p.wealth - 50) * 0.15 + (r.food < 20 ? 20 : 0) - bonus.order - built.order;
     p.unrest = clamp(toward(p.unrest, unrestTarget, 0.2, 4) + randInt(-3, 3));
     const standing = noble ? 55 + (r.stability - 50) * 0.4 + (r.prestige - 50) * 0.2 : 45 + (r.legitimacy - 50) * 0.7 + (r.prestige - 50) * 0.2;
-    const loyaltyTarget = standing - Math.max(0, p.unrest - 50) * 0.4 + bonus.loyalty;
+    const loyaltyTarget = standing - Math.max(0, p.unrest - 50) * 0.4 + bonus.loyalty + built.loyalty;
     p.loyalty = clamp(toward(p.loyalty, loyaltyTarget, 0.15, 3) + randInt(-2, 2));
   }
   // fame and legitimacy fade unless renewed; faith settles back toward custom
@@ -958,7 +960,10 @@ export function advanceTurn(state) {
   state.seasonIndex = state.turn % SEASONS.length;
   if (state.seasonIndex === 0) state.year += 1;
 
-  const { goldIncome, foodIncome } = processTurnEconomy(state);
+  const economy = processTurnEconomy(state);
+  const built = processBuilding(state); // finished work and what the towns' buildings yield
+  const goldIncome = economy.goldIncome + built.gold;
+  const foodIncome = economy.foodIncome + built.food;
   let successionOccurred = false;
   let deathCheckText = '';
 
@@ -971,7 +976,7 @@ export function advanceTurn(state) {
   }
 
   updateGoldenAgeStreak(state);
-  const tradeNews = processTrade(state);
+  const tradeNews = [...built.news, ...processTrade(state)];
 
   const seasonLabel = SEASONS[state.seasonIndex];
   const [goldWord, foodWord] = isPeasant(state) ? ['grošů', 'zásob'] : ['zlata', 'jídla'];

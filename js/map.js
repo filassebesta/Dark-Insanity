@@ -9,6 +9,10 @@ import {
   caravanFee, canSend, sendCaravan, sellAtHome, buyAtHome, convertFood, loadText,
 } from './trade.js';
 import { esc } from './ui.js';
+import {
+  PEASANT_VILLAGE, townIdFor, townOf, levelName, currentProject, ownsTown, startBuilding, startUpgrade, cancelProject, demolish,
+} from './build.js';
+import { renderTownPlan, townSidebar } from './town.js';
 
 const W = 1264;
 const H = 848;
@@ -71,6 +75,9 @@ const FEATURES = {
   lodge: { name: 'Sokolov', kind: 'Myslivecká osada', at: [985, 394], r: 38, province: 'sokoli-hvozd', text: 'Poslední osada před hlubokým hvozdem. Kdo jde lesní stezkou dál na sever, je odsud sám.' },
   toll: { name: 'Mýtnice', kind: 'Strážní věž na obchodní cestě', at: [1082, 250], r: 30, province: 'sokoli-hvozd', text: 'Strážní věž na okraji hvozdu. Bezpečný průchod k severu — za mýto a čekání.' },
   abbey: { name: 'Klášter na útesu', kind: 'Klášter', at: [297, 505], r: 40, province: 'pobrezni-mark', text: 'Starý klášter nad mořem. Opat má vliv na víru celého pobřeží.' },
+  lipnice: { name: 'Lipnice', kind: 'Selská ves', at: [585, 640], r: 26, province: 'brodna', text: 'Selská ves uprostřed obilných lánů.' },
+  dubovice: { name: 'Dubovice', kind: 'Ves pod hradem', at: [540, 300], r: 28, province: 'capital', text: 'Ves, která živí královskou kuchyni.' },
+  zareci: { name: 'Zářečí', kind: 'Osada za řekou', at: [744, 458], r: 26, province: 'capital', text: 'Pár chalup na druhém břehu Brodnice.' },
   vassal: { name: 'Orlí Stráž', kind: 'Sídlo vzdáleného vazala', at: [1160, 88], r: 44, province: null, text: 'Hrad vazala za severovýchodní hranicí. Vedou k němu tři cesty — každá s jiným nebezpečím.' },
 };
 
@@ -154,6 +161,7 @@ const layers = { loyalty: false, unrest: true, garrison: false, routes: false, t
 let tradeForm = { dest: null, good: null, qty: 1, escort: false };
 let drag = null;
 let suppressClick = false;
+let town = null; // { id, slot } while a settlement is open instead of the map
 
 export function isMapOpen() {
   return host && host.classList.contains('open');
@@ -168,6 +176,8 @@ export function openMap(gameState, opts = {}) {
   host.classList.add('open');
   host.setAttribute('aria-hidden', 'false');
   selected = null;
+  town = null;
+  host.classList.remove('town-open');
   view = { x: 0, y: 0, w: W, h: H };
   applyView();
   if (opts.focusRoutes) {
@@ -178,7 +188,16 @@ export function openMap(gameState, opts = {}) {
   }
 }
 
+/** Esc inside a town goes back to the map first. Returns true when it did. */
+export function closeTownIfOpen() {
+  if (!isMapOpen() || !town) return false;
+  closeTown();
+  return true;
+}
+
 export function closeMap() {
+  town = null;
+  if (host) host.classList.remove('town-open');
   if (host) {
     host.classList.remove('open');
     host.setAttribute('aria-hidden', 'true');
@@ -223,10 +242,12 @@ function render() {
       <button class="icon-button" data-zoom="out" aria-label="Oddálit">−</button>
       <button class="icon-button" data-zoom="reset" aria-label="Celá mapa">⤢</button>
     </div>
-    <div class="map-hint">Kolečkem přibližuj · táhni pro posun · klikni na místo</div>
+    <div class="map-hint">Kolečkem přibližuj · táhni pro posun · klikni na město nebo ves a stav</div>
+    <div class="town-stage" hidden></div>
   `;
   svg = canvas.querySelector('svg');
   wireInteractions(canvas);
+  if (town) drawTown();
 }
 
 function provinceFill(id, p) {
@@ -270,11 +291,22 @@ function routePath(key, r) {
 function featureMarker(id, f) {
   const [x, y] = f.at;
   const active = selected && selected.type === 'feature' && selected.id === id;
-  return `<g class="map-feature${active ? ' active' : ''}" data-feature="${id}" transform="translate(${x} ${y})">
+  const townId = townIdFor(state, id);
+  let badge = '';
+  if (townId) {
+    const town = townOf(state, townId);
+    const busy = currentProject(town);
+    const mine = ownsTown(state, townId);
+    badge = `<g class="f-town${mine ? ' own' : ''}" transform="translate(${f.r * 0.72} ${-f.r * 0.72})">
+      <circle r="11"/><text y="4">${town.level}</text>${busy ? '<g class="f-busy" transform="translate(13 -9)"><circle r="7"/><path d="M-3 3l5 -5M0 -4l3 3"/></g>' : ''}
+    </g>`;
+  }
+  return `<g class="map-feature${townId ? ' settlement' : ''}${active ? ' active' : ''}" data-feature="${id}" transform="translate(${x} ${y})">
     <circle class="f-hit" r="${f.r}"/>
     <circle class="f-dot" r="5"/>
     <circle class="f-ring" r="${f.r}"/>
-    <text class="f-label" y="${f.r + 15}">${esc(f.name)}</text>
+    ${badge}
+    <text class="f-label" y="${f.r + 15}">${esc(townId === 'grunt' ? 'Tvůj grunt' : f.name)}</text>
   </g>`;
 }
 
@@ -602,6 +634,7 @@ function showOverview() {
     <h4 class="map-sub">Legenda</h4>
     <ul class="map-legend">
       <li><span class="lg-dot"></span>Zlatý bod = místo, na které jde kliknout</li>
+      <li><span class="lg-town"></span>Číslo = úroveň sídla; klikni a stav</li>
       <li><span class="lg-smoke"></span>Kouř = nepokoje v provincii</li>
       <li><span class="lg-shield"></span>Štít = posádka (vrstva Posádky)</li>
       <li><span class="lg-line route"></span>Čárkované cesty k Orlí Stráži (vrstva Cesty)</li>
@@ -632,6 +665,7 @@ function showNobleOverview() {
     <ul class="map-legend">
       <li><span class="lg-dot"></span>Zlatý bod = místo, na které jde kliknout</li>
       <li><span class="lg-own"></span>Zlatý okraj = tvé panství</li>
+      <li><span class="lg-town"></span>Číslo = úroveň sídla; na tvém panství v něm můžeš stavět</li>
       <li><span class="lg-smoke"></span>Kouř = nepokoje na tvém panství</li>
     </ul>
   `);
@@ -644,6 +678,7 @@ function showPeasantOverview() {
     <span class="panel-overline">Kraj ${esc(PROVINCES[home.province].label)}</span>
     <h3 class="panel-title">Ves ${esc(home.village)}</h3>
     <p class="map-desc">Tvůj grunt stojí ve vsi ${esc(home.village)} v kraji Brodná, na panství pánů z Bílé Brány. Zbytek země drží král a velké rody. Klikni na kraj a uvidíš, komu patří.</p>
+    <button class="map-chip" data-goto-feature="${PEASANT_VILLAGE}"><span>Tvůj grunt</span><em class="good">${esc(levelName('grunt', townOf(state, 'grunt').level))} · stavět</em></button>
     ${statRow('Grunt', r.stability, 'wealth')}
     ${statRow('Přízeň pána', r.favor, 'loyalty')}
     ${statRow('Pověst ve vsi', r.prestige, 'garrison')}
@@ -656,6 +691,18 @@ function showPeasantOverview() {
       }).join('')}
     </div>
   `);
+}
+
+// places in a province; towns and villages show their level and open the town view
+function placeChips(features) {
+  if (!features.length) return '';
+  return `<h4 class="map-sub">Sídla a místa</h4><div class="map-chip-list">
+    ${features.map(([fid, f]) => {
+      const tid = townIdFor(state, fid);
+      const sub = tid ? `${levelName(tid, townOf(state, tid).level)}${currentProject(townOf(state, tid)) ? ' · staví se' : ''}${ownsTown(state, tid) ? ' · stavět' : ''}` : f.kind;
+      return `<button class="map-chip" data-goto-feature="${fid}"><span>${esc(tid === 'grunt' ? 'Tvůj grunt' : f.name)}</span><em class="${tid && ownsTown(state, tid) ? 'good' : ''}">${esc(sub)}</em></button>`;
+    }).join('')}
+  </div>`;
 }
 
 function showForeignProvince(id, f) {
@@ -671,9 +718,7 @@ function showForeignProvince(id, f) {
     ${h ? `<p class="map-desc"><strong>${h.head.gender === 'female' ? 'Paní' : 'Pán'} ${esc(h.head.name)}</strong>, ${h.head.age} let${h.ally ? ' · spojenec tvého rodu' : ''}${h.married ? ' · spřízněni sňatkem' : ''}</p>
       ${statRow('Vztah k tobě', h.attitude, 'loyalty')}${statRow('Moc rodu', h.power, 'garrison')}`
       : `${statRow('Přízeň krále', state.resources.favor, 'loyalty')}`}
-    ${features.length ? `<h4 class="map-sub">Místa</h4><div class="map-chip-list">
-      ${features.map(([fid, x]) => `<button class="map-chip" data-goto-feature="${fid}"><span>${esc(x.name)}</span><em>${esc(x.kind)}</em></button>`).join('')}
-    </div>` : ''}
+    ${placeChips(features)}
     <button class="map-back" data-overview>← Celá země</button>
   `);
 }
@@ -689,7 +734,8 @@ function showPeasantProvince(id, f) {
     <span class="map-verdict ${id === home.province ? 'good' : 'warn'}">${esc(f.name)}</span>
     <p class="map-desc">${esc(h ? f.def.text : p.text)}</p>
     ${h ? `<p class="map-desc"><strong>${h.head.gender === 'female' ? 'Paní' : 'Pán'} ${esc(h.head.name)}</strong>, ${h.head.age} let</p>` : `<p class="map-desc">Vládne tu král ${esc(state.king ? state.king.name : '')}.</p>`}
-    ${id === home.province ? `<p class="map-decree-hint">Tady, ve vsi ${esc(home.village)}, stojí tvůj grunt.</p>` : ''}
+    ${id === home.province ? `<p class="map-decree-hint">Tady, ve vsi ${esc(home.village)}, stojí tvůj grunt. Klikni na něj a stav.</p>` : ''}
+    ${placeChips(Object.entries(FEATURES).filter(([, x]) => x.province === id))}
     <button class="map-back" data-overview>← Celá země</button>
   `);
 }
@@ -711,9 +757,7 @@ function showProvince(id) {
     ${statRow('Bohatství', prov.wealth, 'wealth')}
     ${statRow('Posádka', prov.garrison, 'garrison')}
     ${prov.lost ? '' : decreeBlock(id)}
-    ${features.length ? `<h4 class="map-sub">Místa</h4><div class="map-chip-list">
-      ${features.map(([fid, f]) => `<button class="map-chip" data-goto-feature="${fid}"><span>${esc(f.name)}</span><em>${esc(f.kind)}</em></button>`).join('')}
-    </div>` : ''}
+    ${placeChips(features)}
     <button class="map-back" data-overview>← Celé království</button>
   `);
 }
@@ -867,6 +911,11 @@ function tooltipFor(target) {
   const routeEl = target.closest('[data-route]');
   if (featEl) {
     const f = FEATURES[featEl.dataset.feature];
+    const tid = townIdFor(state, featEl.dataset.feature);
+    if (tid) {
+      const tw = townOf(state, tid);
+      return `<strong>${esc(tid === 'grunt' ? 'Tvůj grunt' : f.name)}</strong><span>${esc(levelName(tid, tw.level))} · ${tw.buildings.filter((b) => b.ready).length} staveb${currentProject(tw) ? ' · staví se' : ''}</span><span>${ownsTown(state, tid) ? 'Klikni a stav' : 'Klikni a prohlédni si'}</span>`;
+    }
     return `<strong>${esc(f.name)}</strong><span>${esc(f.kind)}</span>`;
   }
   if (routeEl) {
@@ -887,6 +936,7 @@ function tooltipFor(target) {
 function wireInteractions(canvas) {
   canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
+    if (town) return;
     zoomAt(toSvgPoint(e.clientX, e.clientY), e.deltaY < 0 ? 1 / 1.18 : 1.18);
   }, { passive: false });
 
@@ -966,7 +1016,89 @@ function focusProvince(id) {
   animateTo(fitBox(bounds(PROVINCES[id].points), 0.12));
 }
 
+// ---------- settlements: building in towns and villages (build.js, town.js) ----------
+
+function openTown(placeId) {
+  const id = townIdFor(state, placeId);
+  if (!id) return;
+  town = { id, place: placeId, slot: null };
+  hideTooltip();
+  // the map glides to the place underneath, so going back lands there
+  const [x, y] = FEATURES[placeId].at;
+  view = fitBox({ x: x - 210, y: y - 150, w: 420, h: 300 });
+  applyView();
+  host.classList.add('town-open');
+  drawTown();
+}
+
+function closeTown() {
+  const place = town && town.place;
+  town = null;
+  host.classList.remove('town-open');
+  const stage = host.querySelector('.town-stage');
+  if (stage) { stage.hidden = true; stage.innerHTML = ''; }
+  // the badge on the map may have changed
+  const keepView = { ...view };
+  render();
+  view = keepView;
+  applyView();
+  selected = null;
+  if (place) selectThing({ type: 'feature', id: place });
+  else showOverview();
+}
+
+function drawTown() {
+  const stage = host.querySelector('.town-stage');
+  stage.innerHTML = renderTownPlan(state, town.id, town.slot);
+  stage.hidden = false;
+  sidebar(townSidebar(state, town.id, town.slot));
+}
+
+function selectSlot(slot) {
+  town.slot = slot;
+  const stage = host.querySelector('.town-stage');
+  stage.querySelectorAll('.plot.selected').forEach((el) => el.classList.remove('selected'));
+  if (slot !== null) stage.querySelector(`.plot[data-town-slot="${slot}"]`)?.classList.add('selected');
+  sidebar(townSidebar(state, town.id, slot));
+  // on a phone the sidebar sits under the plan: bring the choice into view
+  if (slot !== null && window.matchMedia('(max-width: 900px)').matches) {
+    host.querySelector('.map-sidebar').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function townAction(result) {
+  if (!result) return;
+  if (!result.error) town.slot = null;
+  drawTown();
+  document.dispatchEvent(new CustomEvent('kingdom:build', { detail: { message: result.error || result.message, error: !!result.error } }));
+}
+
+function handleTownClick(t) {
+  if (t.closest('[data-close-town]')) { closeTown(); return true; }
+  const build = t.closest('[data-build]');
+  if (build) {
+    if (!build.disabled) townAction(startBuilding(state, town.id, build.dataset.build, Number(build.dataset.slot)));
+    return true;
+  }
+  if (t.closest('[data-upgrade-town]')) {
+    if (!t.closest('[data-upgrade-town]').disabled) townAction(startUpgrade(state, town.id));
+    return true;
+  }
+  if (t.closest('[data-cancel-project]')) { townAction(cancelProject(state, town.id)); return true; }
+  const demo = t.closest('[data-demolish]');
+  if (demo) {
+    if (demo.dataset.confirm) townAction(demolish(state, town.id, Number(demo.dataset.demolish)));
+    else { demo.dataset.confirm = '1'; demo.textContent = 'Opravdu strhnout? Klikni znovu.'; demo.classList.add('confirm'); }
+    return true;
+  }
+  if (t.closest('[data-town-slot-clear]')) { selectSlot(null); return true; }
+  const slot = t.closest('[data-town-slot]');
+  if (slot) { selectSlot(Number(slot.dataset.townSlot)); return true; }
+  return false;
+}
+
 function focusFeature(id) {
+  if (townIdFor(state, id)) { openTown(id); return; }
   selectThing({ type: 'feature', id });
   const [x, y] = FEATURES[id].at;
   animateTo(id === 'vassal' ? fitBox(VASSAL_VIEW) : fitBox({ x: x - 210, y: y - 150, w: 420, h: 300 }));
@@ -979,8 +1111,17 @@ function focusRoute(key) {
 
 // Sidebar + header controls (wired once from main.js)
 export function wireMapChrome() {
-  document.getElementById('map-view').addEventListener('click', (e) => {
+  const mapView = document.getElementById('map-view');
+  mapView.addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && town && e.target.closest && e.target.closest('.plot[data-town-slot]')) {
+      e.preventDefault();
+      e.stopPropagation();
+      selectSlot(Number(e.target.closest('.plot').dataset.townSlot));
+    }
+  });
+  mapView.addEventListener('click', (e) => {
     const t = e.target;
+    if (town && handleTownClick(t)) return;
     const layerBtn = t.closest('[data-layer]');
     if (layerBtn) {
       layers[layerBtn.dataset.layer] = !layers[layerBtn.dataset.layer];

@@ -67,7 +67,9 @@ musí být aktivní, jinak je mapa skrytá. Screenshoty ukládat mimo repozitá�
 | `js/court.js` | role a tituly dvora podle scénáře, životopisy, povahy rádců |
 | `js/council.js` | rada: rádci doporučují volbu |
 | `js/trade.js` | obchod: zboží, trhy, karavany, zakázky (bez DOM) |
-| `js/map.js` | interaktivní malovaná mapa (SVG nad obrázkem), vrstvy, výnosy, obchodní vrstva |
+| `js/map.js` | interaktivní malovaná mapa (SVG nad obrázkem), vrstvy, výnosy, obchodní vrstva, vstup do měst |
+| `js/build.js` | stavění: sídla, úrovně, parcely, budovy, stavební hutě, výnosy staveb (bez DOM) |
+| `js/town.js` | plán sídla (SVG s parcelami a ikonami budov) a boční panel stavění |
 | `js/ui.js` | vykreslení karty události, výsledků, panelů, konce |
 | `js/character.js` | list postavy, Síň předků, detail člena dvora |
 | `js/audio.js` | hlavní téma a bitevní hudba s prolínáním, hlasitost |
@@ -157,6 +159,17 @@ obchodní `trade`, `tradeOffer`, `tradeMod`, `tradeStock`.
 - Zakázky s termínem; královské a panské jsou závazné (nesplnění stojí přízeň).
 - Obchodní vrstva mapy (cesty, trhy, pohybující se karavany), záložka **Obchod**, klávesa **O**, zprávy z cest u události.
 
+### Stavění ve městech a vsích
+- Klik na město/ves na mapě otevře **plán sídla** s parcelami; klik na volnou parcelu nabídne stavby, klik na stavbu ukáže detail (strhnout, zastavit stavbu).
+- 9 sídel (`SETTLEMENTS` v `build.js`): Vlčí Úděl, Brod, Přístav Mark, Klášter na útesu, Železná Huť, Sokolov a nové vsi Lipnice, Dubovice, Zářečí. Sedlák místo Lipnice staví na **vlastním gruntu** (`towns.grunt`).
+- Úrovně Osada → Ves → Městys → Město → Královské město (klášter a grunt mají vlastní názvy), každá otevírá víc parcel; povýšení stojí zlato, čas a hotové stavby (Město potřebuje hradby, Královské město katedrálu, Statek svobodný stav).
+- 16 budov království (3 jen pro přístav, důl a myslivce) a 8 staveb gruntu. Účinky: `income` (každé období), `yearly` (na jaře), `drift` (klid a věrnost kraje, strop 8/6), `stock` (zboží do skladu), `onBuild`/`onProv` (jednou).
+- Jen jedna stavba v sídle naráz a omezený počet **stavebních hutí** v celé zemi (Panovník 2, Šlechtic a Sedlák 1).
+- Stavět jde jen ve vlastních krajích (šlechtic jen na svém panství, po korunovaci všude). Cizí sídla jde prohlížet.
+- Stavby, které stojí od začátku (`base: true`), nic navíc nedávají — jsou započtené v původní ekonomice, aby se nezměnilo vyvážení.
+- Ukládá se do `state.towns`; staré uložené hry si sídla vytvoří samy.
+- Obrázky budov a sídel jsou volitelné (prompty v `docs/gemini-prompts.md`, sekce 16); po dodání je zapnout v `BUILDING_ART` / `TOWN_ART` v `js/town.js`.
+
 ### Obrázky pro Sedláka
 - Zapracováno 31 obrázků: 8 portrétů sedláka, 10 portrétů rodiny a vsi, 3 konce, 10 scén.
 
@@ -202,6 +215,9 @@ FIX=s_drab.jpg python3 tools/images/process_batch.py dir1,dir2 <scratch> <repo> 
 | Šlechtic | cílí na trůn (ambice 1), neobchoduje | trůn ~45–49 %, poprava ~38 %, vyhnanství ~7 % |
 | Sedlák | ambice 0,5 | šlechtický stav ~45–50 %, svoboda kolem 10. roku, medián ~25 let; zbytek hlavně zpustlý grunt |
 | všechny | s obchodováním | mírné zlepšení, obchod hru nerozbíjí |
+| Panovník | staví všechno, co jde (bot ve scratchpadu) | zlatý věk ~61 %, kolaps ~31 % (bez stavění ~38 % / ~37 %) |
+| Šlechtic | staví všechno, co jde (náhodné volby) | trůn ~25 % → ~33 %, poprava mírně klesne |
+| Sedlák | staví všechno, co jde (ambice 0) | šlechtický stav ~9 % → ~25 %, zpustlý grunt 84 % → 67 % |
 
 Hlavní páky: šance u `n_smrt_krale` (Šlechtic), ceny `s_vykup` a `s_zemansky_statek`
 a šance rytířské bitvy (Sedlák), ekonomika v `processPeasantEconomy` a `processTurnEconomy`.
@@ -228,3 +244,4 @@ a šance rytířské bitvy (Sedlák), ekonomika v `processPeasantEconomy` a `pro
 - Jedinečná jména i u nové generace dvora (při nástupnictví se mohou opakovat).
 - Rada zatím nezná budoucí důsledky kromě dluhů (příznaky jako `loan_taken`); šlo by ji naučit víc.
 - Případně ukládání do více slotů s přehledem scénáře a přídomku vládce.
+- Stavění: události, které reagují na stavby (požár ve městě bez hradeb, nemoc a špitál, cech žádá privilegia), rada, která doporučuje stavby, a obrázky budov (sekce 16 promptů).
