@@ -565,11 +565,9 @@ export function renderEndingScreen(state, gameOver) {
   if (CONTINUE_LABELS[gameOver.type]) cont.textContent = CONTINUE_LABELS[gameOver.type];
   const years = state.turn > 0 ? Math.ceil(state.turn / SEASONS.length) : 0;
   document.getElementById('ending-stats').innerHTML = [
-    ['Dynastie', state.dynastyName],
+    [state.scenario === 'panovnik' ? 'Dynastie' : 'Rod', state.dynastyName],
     [state.scenario === 'panovnik' ? 'Let vlády' : 'Let rodu', years],
     ['Generací', state.generation],
-    ['Zlato', state.resources.gold],
-    ['Stabilita', state.resources.stability],
-    ['Prestiž', state.resources.prestige],
+    ...['gold', 'stability', 'prestige'].map((k) => [resourceLabel(RESOURCE_DEFS.find((d) => d.key === k), state.scenario), state.resources[k]]),
   ].map(([label, value]) => `<div><span>${label}</span><span>${esc(value)}</span></div>`).join('');
 }

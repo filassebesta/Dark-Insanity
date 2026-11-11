@@ -67,7 +67,8 @@ letters, watermark or signature.
 
 ✅ = hotovo a ve hře · ❌ = chybí
 
-> ❌ **Chybí: všechno ze sekce 14** (scénář Sedlák: 8 portrétů sedláka, 10 portrétů rodiny a vsi, 3 konce; volitelně 38 scén sedláka a 5 scén rádců).
+> ✅ Sekce 14.1–14.3 hotové (portréty sedláka, rodina a ves, konce) a prvních 10 scén ze 14.4 (dávka 4).
+> ❌ Volitelně chybí: zbylých 28 scén sedláka (14.4, dávky 5–7), 5 scén rádců (14.5), 6 scén obchodu (15) a 24 scén krizí a ozvěn (13).
 
 | Stav | Soubor | Poměr | Cílové rozlišení | Kde se zobrazí | Prompt |
 |---|---|---|---|---|---|

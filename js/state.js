@@ -57,7 +57,22 @@ export function createNewGame(rulerName, dynastyName, gender, scenario = 'panovn
   return createKingGame(rulerName, dynastyName, gender);
 }
 
+/** Nobody in the household shares a first name with someone else in it. */
+function uniqueNames(state) {
+  const used = new Set([state.ruler.name]);
+  for (const role of ['heir', 'spouse', 'chancellor', 'marshal', 'spymaster']) {
+    const c = state[role];
+    for (let i = 0; i < 20 && used.has(c.name); i++) c.name = randomName(c.gender);
+    used.add(c.name);
+  }
+  return state;
+}
+
 function createKingGame(rulerName, dynastyName, gender) {
+  return uniqueNames(buildKingGame(rulerName, dynastyName, gender));
+}
+
+function buildKingGame(rulerName, dynastyName, gender) {
   const rulerGender = gender === 'female' || gender === 'male' ? gender : (Math.random() < 0.5 ? 'male' : 'female');
   const spouseGender = rulerGender === 'male' ? 'female' : 'male';
 
