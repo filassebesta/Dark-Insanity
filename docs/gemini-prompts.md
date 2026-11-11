@@ -84,67 +84,67 @@ letters, watermark or signature.
 | ✅ | `scenario_panovnik.jpg`, `scenario_sedlak.jpg` | 3:2 | 1200 × 800 | Karty výběru scénáře | 4.1, 4.3 |
 | ✅ | `scenario_slechtic.jpg` | 3:2 | 1200 × 800 | Karta scénáře Šlechtic | 4.2 |
 | ✅ | `kingdom_map.jpg` | 3:2 | 2400 × 1600 | Podklad interaktivní mapy | 9 |
-| ❌ | `pohranicni_najezd.jpg` | 1:1 | 2048 × 2048 | Nájezd na hranici | 10 |
+| ✅ | `pohranicni_najezd.jpg` | 1:1 | 2048 × 2048 | Nájezd na hranici | 10 |
 | ✅ | `valka_s_markami.jpg` | 1:1 | 2048 × 2048 | Válka s Marcemi | 10 |
 | ❌ | `vzpoura_v_provincii.jpg` | 1:1 | 2048 × 2048 | Vzpoura | 10 |
-| ❌ | `lapkove_ve_hvozdu.jpg` | 1:1 | 2048 × 2048 | Lapkové ve hvozdu | 10 |
-| ❌ | `hladomor.jpg` | 1:1 | 2048 × 2048 | Hladomor | 10 |
+| ✅ | `lapkove_ve_hvozdu.jpg` | 1:1 | 2048 × 2048 | Lapkové ve hvozdu | 10 |
+| ✅ | `hladomor.jpg` | 1:1 | 2048 × 2048 | Hladomor | 10 |
 | ❌ | `atentat.jpg` | 1:1 | 2048 × 2048 | Dýka ve tmě | 10 |
 | ❌ | `soud_se_spiklenci.jpg` | 1:1 | 2048 × 2048 | Soud se spiklenci | 10 |
-| ❌ | `zaval_v_dole.jpg` | 1:1 | 2048 × 2048 | Zával v dole | 10 |
+| ✅ | `zaval_v_dole.jpg` | 1:1 | 2048 × 2048 | Zával v dole | 10 |
 | ❌ | `mor_v_pristavu.jpg` | 1:1 | 2048 × 2048 | Mor v přístavu | 10 |
 | ❌ | `kupci_z_jihu.jpg` | 1:1 | 2048 × 2048 | Kupci z jihu | 10 |
 | ❌ | `bohata_uroda.jpg` | 1:1 | 2048 × 2048 | Bohatá úroda | 10 |
-| ❌ | `kruta_zima.jpg` | 1:1 | 2048 × 2048 | Krutá zima | 10 |
-| ❌ | `vychova_dedice.jpg` | 1:1 | 2048 × 2048 | Výchova dědice | 10 |
+| ✅ | `kruta_zima.jpg` | 1:1 | 2048 × 2048 | Krutá zima | 10 |
+| ✅ | `vychova_dedice.jpg` | 1:1 | 2048 × 2048 | Výchova dědice | 10 |
 | ✅ | `dedic_dospel.jpg` | 1:1 | 2048 × 2048 | Dědic dospěl | 10 |
 | ✅ | `smrt_radce.jpg` | 1:1 | 2048 × 2048 | Smrt rádce | 10 |
 | ✅ | `nespokojeny_radce.jpg` | 1:1 | 2048 × 2048 | Nespokojený rádce | 10 |
 | ✅ | `biskupuv_desatek.jpg` | 1:1 | 2048 × 2048 | Biskupův desátek | 10 |
 | ✅ | `turnaj.jpg` | 1:1 | 2048 × 2048 | Turnaj | 10 |
 | ✅ | `cizi_vyslanec.jpg` | 1:1 | 2048 × 2048 | Vyslanec z Marek | 11 |
-| ❌ | `nemoc_vladce.jpg` | 1:1 | 2048 × 2048 | Horečka | 11 |
-| ❌ | `dvorni_blazen.jpg` | 1:1 | 2048 × 2048 | Dvorní šašek | 11 |
-| ❌ | `spor_radcu.jpg` | 1:1 | 2048 × 2048 | Spor rádců | 11 |
-| ❌ | `dedic_v_dluzich.jpg` | 1:1 | 2048 × 2048 | Dluhy dědice | 11 |
-| ❌ | `krest_ditete.jpg` | 1:1 | 2048 × 2048 | Narození dítěte | 11 |
-| ❌ | `portret_vladce.jpg` | 1:1 | 2048 × 2048 | Malíř u dvora | 11 |
-| ❌ | `zrada_spehmistra.jpg` | 1:1 | 2048 × 2048 | Dvojí hra | 11 |
-| ❌ | `prosba_ucitele.jpg` | 1:1 | 2048 × 2048 | Prosba starého učitele | 11 |
-| ❌ | `hostina_slechty.jpg` | 1:1 | 2048 × 2048 | Žádost o hostinu | 11 |
-| ❌ | `vazal_odmita_vojaky.jpg` | 1:1 | 2048 × 2048 | Vazal odmítá vojáky | 11 |
-| ❌ | `spor_o_panstvi.jpg` | 1:1 | 2048 × 2048 | Spor o dědictví | 11 |
-| ❌ | `slechta_odmita_dan.jpg` | 1:1 | 2048 × 2048 | Šlechta odmítá daň | 11 |
-| ❌ | `potulny_rytir.jpg` | 1:1 | 2048 × 2048 | Rytíř bez pána | 11 |
-| ❌ | `souboj_slechticu.jpg` | 1:1 | 2048 × 2048 | Souboj na život a na smrt | 11 |
-| ❌ | `hrabe_utlacuje.jpg` | 1:1 | 2048 × 2048 | Krutý hrabě | 11 |
-| ❌ | `zastava_lesa.jpg` | 1:1 | 2048 × 2048 | Půjčka od kláštera | 11 |
-| ❌ | `pretendent.jpg` | 1:1 | 2048 × 2048 | Pretendent | 11 |
-| ❌ | `stavka_cechu.jpg` | 1:1 | 2048 × 2048 | Stávka cechů | 11 |
-| ❌ | `pozar_mesta.jpg` | 1:1 | 2048 × 2048 | Požár | 11 |
-| ❌ | `carodejnice.jpg` | 1:1 | 2048 × 2048 | Čarodějnice | 11 |
-| ❌ | `poutnik_zazrak.jpg` | 1:1 | 2048 × 2048 | Zázrak u kláštera | 11 |
-| ❌ | `zebravy_prorok.jpg` | 1:1 | 2048 × 2048 | Žebravý prorok | 11 |
-| ❌ | `trh_v_brode.jpg` | 1:1 | 2048 × 2048 | Velký trh v Brodě | 11 |
-| ❌ | `most_pres_brodnici.jpg` | 1:1 | 2048 × 2048 | Most přes Brodnici | 11 |
+| ✅ | `nemoc_vladce.jpg` | 1:1 | 2048 × 2048 | Horečka | 11 |
+| ✅ | `dvorni_blazen.jpg` | 1:1 | 2048 × 2048 | Dvorní šašek | 11 |
+| ✅ | `spor_radcu.jpg` | 1:1 | 2048 × 2048 | Spor rádců | 11 |
+| ✅ | `dedic_v_dluzich.jpg` | 1:1 | 2048 × 2048 | Dluhy dědice | 11 |
+| ✅ | `krest_ditete.jpg` | 1:1 | 2048 × 2048 | Narození dítěte | 11 |
+| ✅ | `portret_vladce.jpg` | 1:1 | 2048 × 2048 | Malíř u dvora | 11 |
+| ✅ | `zrada_spehmistra.jpg` | 1:1 | 2048 × 2048 | Dvojí hra | 11 |
+| ✅ | `prosba_ucitele.jpg` | 1:1 | 2048 × 2048 | Prosba starého učitele | 11 |
+| ✅ | `hostina_slechty.jpg` | 1:1 | 2048 × 2048 | Žádost o hostinu | 11 |
+| ✅ | `vazal_odmita_vojaky.jpg` | 1:1 | 2048 × 2048 | Vazal odmítá vojáky | 11 |
+| ✅ | `spor_o_panstvi.jpg` | 1:1 | 2048 × 2048 | Spor o dědictví | 11 |
+| ✅ | `slechta_odmita_dan.jpg` | 1:1 | 2048 × 2048 | Šlechta odmítá daň | 11 |
+| ✅ | `potulny_rytir.jpg` | 1:1 | 2048 × 2048 | Rytíř bez pána | 11 |
+| ✅ | `souboj_slechticu.jpg` | 1:1 | 2048 × 2048 | Souboj na život a na smrt | 11 |
+| ✅ | `hrabe_utlacuje.jpg` | 1:1 | 2048 × 2048 | Krutý hrabě | 11 |
+| ✅ | `zastava_lesa.jpg` | 1:1 | 2048 × 2048 | Půjčka od kláštera | 11 |
+| ✅ | `pretendent.jpg` | 1:1 | 2048 × 2048 | Pretendent | 11 |
+| ✅ | `stavka_cechu.jpg` | 1:1 | 2048 × 2048 | Stávka cechů | 11 |
+| ✅ | `pozar_mesta.jpg` | 1:1 | 2048 × 2048 | Požár | 11 |
+| ✅ | `carodejnice.jpg` | 1:1 | 2048 × 2048 | Čarodějnice | 11 |
+| ✅ | `poutnik_zazrak.jpg` | 1:1 | 2048 × 2048 | Zázrak u kláštera | 11 |
+| ✅ | `zebravy_prorok.jpg` | 1:1 | 2048 × 2048 | Žebravý prorok | 11 |
+| ✅ | `trh_v_brode.jpg` | 1:1 | 2048 × 2048 | Velký trh v Brodě | 11 |
+| ✅ | `most_pres_brodnici.jpg` | 1:1 | 2048 × 2048 | Most přes Brodnici | 11 |
 | ✅ | `uprchlici.jpg` | 1:1 | 2048 × 2048 | Uprchlíci z Marek | 11 |
-| ❌ | `lichvar.jpg` | 1:1 | 2048 × 2048 | Lichvář | 11 |
-| ❌ | `lichvar_splatka.jpg` | 1:1 | 2048 × 2048 | Den splátky | 11 |
-| ❌ | `katedrala.jpg` | 1:1 | 2048 × 2048 | Katedrála | 11 |
-| ❌ | `kacirska_sekta.jpg` | 1:1 | 2048 × 2048 | Sekta v horách | 11 |
-| ❌ | `relikvie.jpg` | 1:1 | 2048 × 2048 | Relikvie | 11 |
-| ❌ | `opat_v_rade.jpg` | 1:1 | 2048 × 2048 | Opat žádá místo v radě | 11 |
-| ❌ | `zatmeni.jpg` | 1:1 | 2048 × 2048 | Zatmění slunce | 11 |
-| ❌ | `zajaty_syn_markrabiho.jpg` | 1:1 | 2048 × 2048 | Vzácný zajatec | 11 |
-| ❌ | `pirati.jpg` | 1:1 | 2048 × 2048 | Piráti u pobřeží | 11 |
-| ❌ | `dezerteri.jpg` | 1:1 | 2048 × 2048 | Dezertéři | 11 |
-| ❌ | `zvedove_v_horach.jpg` | 1:1 | 2048 × 2048 | Hlášení zvědů | 11 |
-| ❌ | `obleheni.jpg` | 1:1 | 2048 × 2048 | Obléhání | 11 |
-| ❌ | `zold.jpg` | 1:1 | 2048 × 2048 | Žold | 11 |
-| ❌ | `nove_kuse.jpg` | 1:1 | 2048 × 2048 | Nové kuše | 11 |
-| ❌ | `hranicni_kamen.jpg` | 1:1 | 2048 × 2048 | Posunutý hraniční kámen | 11 |
+| ✅ | `lichvar.jpg` | 1:1 | 2048 × 2048 | Lichvář | 11 |
+| ✅ | `lichvar_splatka.jpg` | 1:1 | 2048 × 2048 | Den splátky | 11 |
+| ✅ | `katedrala.jpg` | 1:1 | 2048 × 2048 | Katedrála | 11 |
+| ✅ | `kacirska_sekta.jpg` | 1:1 | 2048 × 2048 | Sekta v horách | 11 |
+| ✅ | `relikvie.jpg` | 1:1 | 2048 × 2048 | Relikvie | 11 |
+| ✅ | `opat_v_rade.jpg` | 1:1 | 2048 × 2048 | Opat žádá místo v radě | 11 |
+| ✅ | `zatmeni.jpg` | 1:1 | 2048 × 2048 | Zatmění slunce | 11 |
+| ✅ | `zajaty_syn_markrabiho.jpg` | 1:1 | 2048 × 2048 | Vzácný zajatec | 11 |
+| ✅ | `pirati.jpg` | 1:1 | 2048 × 2048 | Piráti u pobřeží | 11 |
+| ✅ | `dezerteri.jpg` | 1:1 | 2048 × 2048 | Dezertéři | 11 |
+| ✅ | `zvedove_v_horach.jpg` | 1:1 | 2048 × 2048 | Hlášení zvědů | 11 |
+| ✅ | `obleheni.jpg` | 1:1 | 2048 × 2048 | Obléhání | 11 |
+| ✅ | `zold.jpg` | 1:1 | 2048 × 2048 | Žold | 11 |
+| ✅ | `nove_kuse.jpg` | 1:1 | 2048 × 2048 | Nové kuše | 11 |
+| ✅ | `hranicni_kamen.jpg` | 1:1 | 2048 × 2048 | Posunutý hraniční kámen | 11 |
 | ✅ | `povoden.jpg` | 1:1 | 2048 × 2048 | Povodeň | 11 |
-| ❌ | `sucho.jpg` | 1:1 | 2048 × 2048 | Sucho | 11 |
+| ✅ | `sucho.jpg` | 1:1 | 2048 × 2048 | Sucho | 11 |
 | ❌ | `vlci.jpg` | 1:1 | 2048 × 2048 | Vlci | 11 |
 | ❌ | `stribrna_zila.jpg` | 1:1 | 2048 × 2048 | Stříbrná žíla | 11 |
 | ❌ | `kobylky.jpg` | 1:1 | 2048 × 2048 | Kobylky | 11 |
@@ -153,12 +153,12 @@ letters, watermark or signature.
 | ❌ | `vyroci_vlady.jpg` | 1:1 | 2048 × 2048 | Výročí vlády | 11 |
 | ❌ | `skola_ucencu.jpg` | 1:1 | 2048 × 2048 | Škola učenců | 11 |
 | ✅ | `cizi_princezna.jpg` | 1:1 | 2048 × 2048 | Nabídka sňatku | 11 |
-| ❌ | `zahada_v_lese.jpg` | 1:1 | 2048 × 2048 | Zmizelí myslivci | 11 |
-| ❌ | `kupecka_gilda.jpg` | 1:1 | 2048 × 2048 | Kupecká gilda | 11 |
+| ✅ | `zahada_v_lese.jpg` | 1:1 | 2048 × 2048 | Zmizelí myslivci | 11 |
+| ✅ | `kupecka_gilda.jpg` | 1:1 | 2048 × 2048 | Kupecká gilda | 11 |
 | ❌ | `stary_rytir_umira.jpg` | 1:1 | 2048 × 2048 | Poslední přání | 11 |
 | ❌ | `ztracena_listina.jpg` | 1:1 | 2048 × 2048 | Ztracená listina | 11 |
 
-Chybí **63 obrázků pro nové události** (sekce 10 a 11). Do té doby tyto události ukazují výchozí scénu.
+Chybí **15 obrázků pro nové události** (sekce 10 a 11). Do té doby tyto události ukazují výchozí scénu.
 
 **Volitelné varianty pro královnu:** scény `rada_manzela`, `varovani_kancelere`
 a `zprava_spehmistra` ukazují krále. Když nahraješ `<název>_female.jpg`
