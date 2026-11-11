@@ -80,14 +80,16 @@ musí být aktivní, jinak je mapa skrytá. Screenshoty ukládat mimo repozitá�
 | `js/events_echoes.js` | krize (vyčerpané zdroje) a ozvěny rozhodnutí + tabulka `ECHO_HOOKS` |
 | `js/events_court.js` | události podle povah rádců + výchova dědice u šlechtice |
 | `js/events_trade.js` | přepadení karavany, piráti, cizí kupec, clo, hlad na severu, vlastní loď |
+| `js/injuries.js` | zranění vládce: druhy, postihy, hojení, zánět, náhrady, přídomky podle zranění (bez DOM) |
+| `js/events_injury.js` | ranhojič, řemeslník s náhradou (dřevěná noha, železná ruka, páska), posměch u dvora |
 | `js/events_build.js` | 16 událostí kolem staveb (požár, nákaza, cech, žold, nájezd, městská práva, poutníci… a 4 pro grunt) |
 | `docs/gemini-prompts.md` | objednávkový list obrázků (prompty, stav, dávkový prompt) |
 | `docs/udalosti.md` | čitelný přehled všech událostí a voleb |
 | `tools/sim/` | simulace (viz výše) |
 | `tools/images/process_batch.py` | zpracování dávky obrázků (detekce a oprava tmavého pruhu, ořez a změna velikosti) |
 
-**Celkem:** ~10 500 řádků JS, 202 událostí (95 Panovník, 39 Šlechtic, 41 Sedlák,
-27 pro více scénářů — z toho 12 událostí o stavbách společných Panovníkovi a Šlechtici).
+**Celkem:** ~10 500 řádků JS, 205 událostí (95 Panovník, 39 Šlechtic, 41 Sedlák,
+30 pro více scénářů — z toho 12 o stavbách a 3 o zraněních).
 
 ### Formát události (zkráceně)
 
@@ -172,6 +174,15 @@ obchodní `trade`, `tradeOffer`, `tradeMod`, `tradeStock`.
 - **Události o stavbách** (`events_build.js`): cílí na konkrétní sídlo (`target` vrací `'town:<id>'`, v textu `{town.loc}` = „v Brodu“, `{town.Loc}`, `{town.name}`). Větev může mít `town: { destroy: 'random' | '<klíč>', start: '<klíč>', hurry: n, levelUp: true, at: '<id>' }`. Stavby tak mají i rizika: požár nebo nájezd může stavbu zničit, hradby nájezd odrazí, špitál zastaví nákazu, mistr stavitel přidá stavební huť (`flags.mistr_stavitel`).
 - Stará událost „Katedrála“ teď při plném financování opravdu začne stavět katedrálu ve Vlčím Údělu; po dostavbě přijde „Svěcení katedrály“.
 - Obrázky budov a sídel jsou volitelné (prompty v `docs/gemini-prompts.md`, sekce 16); po dodání je zapnout v `BUILDING_ART` / `TOWN_ART` v `js/town.js`.
+
+### Zranění vládce
+- `state.ruler.injuries = [{ key, since, healsAt?, treated?, aided? }]`; definice v `INJURIES` (`js/injuries.js`).
+- Dočasná: pohmožděniny (1–2 období), zlomená ruka (3–5), hluboká rána (4–6, 4 % za období, že se zanítí a vládce zemře, dokud není ošetřená).
+- Trvalá: chromá noha, zohyzděná tvář, ztracené oko, ztracená ruka, ztracená noha. Náhrada (páska, železná ruka, dřevěná noha) postih zmírní.
+- Postihy: nižší **efektivní vlastnosti** (`effectiveTraits` — hody, roční vliv vlastností, přídomky; základ zůstává a dědic ho dědí), horší šance v boji (`army`), u sedláka méně zásob (`work`), kratší život (`deathRisk`), jednorázová ztráta prestiže.
+- Vznik: větev události `injury: '<klíč>' | 'random' | { pool, chance }` (rvačka, atentát, turnaj, hon, souboj, první linie, vlk, roj) a obecně 30 % po každém neúspěšném hodu na sílu (`noInjury: true` to vypne, např. u „síly“ ve smyslu tvrdosti při jednání).
+- Větve `heal`, `treat`, `worsen`, `aid` léčí, ošetřují, zhoršují a dávají náhradu.
+- Zranění se ukazují na plaketě (červeně snížené vlastnosti, „bez nohy“), v listu postavy (sekce Zranění) a v Síni předků; trvalé zranění může dát přídomek (Jednooký, Chromá…).
 
 ### Obrázky pro Sedláka
 - Zapracováno 31 obrázků: 8 portrétů sedláka, 10 portrétů rodiny a vsi, 3 konce, 10 scén.

@@ -112,7 +112,7 @@ export const BUILD_EVENTS = [
       {
         label: 'Odmítnout — trh má být svobodný',
         hintType: 'trait', hintKey: 'strength',
-        isRoll: true, baseChance: 0.45, traitKey: 'strength', traitScale: 0.04,
+        isRoll: true, baseChance: 0.45, traitKey: 'strength', traitScale: 0.04, noInjury: true,
         onSuccess: { effects: { stability: 2 }, chronicle: 'Cechmistři odešli s nepořízenou a po čase se smířili. Trh {town.loc} zůstal otevřený všem.' },
         onFailure: { town: { destroy: 'cech' }, provinceEffects: { target: { unrest: 6 } }, chronicle: 'Uražení mistři {town.loc} cech rozpustili a odešli i s tovaryši do ciziny. Cechovní dům zeje prázdnotou.' },
       },
@@ -407,7 +407,7 @@ export const BUILD_EVENTS = [
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.5, traitKey: 'strength', traitScale: 0.04,
         onSuccess: { effects: { gold: 3, prestige: 1 }, chronicle: 'Roj byl zpátky ve včelíně dřív, než sousedé stačili sehnat žebřík. Med bude.' },
-        onFailure: { effects: { army: -1, stability: -2 }, chronicle: 'Větev praskla. Roj si odnesl soused a hospodář týden kulhal.' },
+        onFailure: { effects: { army: -1, stability: -2 }, injury: 'pohmozdeni', chronicle: 'Větev praskla. Roj si odnesl soused a hospodář týden kulhal.' },
       },
       {
         label: 'Nechat ho letět',

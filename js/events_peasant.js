@@ -350,7 +350,7 @@ export const PEASANT_EVENTS = [
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.45, traitKey: 'strength', traitScale: 0.05,
         onSuccess: { effects: { prestige: 6 }, traitGain: 'strength', chronicle: 'Vlčí kůže visí na vratech. Ves ví, kdo ji tam pověsil.' },
-        onFailure: { effects: { stability: -4, army: -2 }, chronicle: 'Vlk byl rychlejší. Kousnutí se hojí dlouho a pole čeká.' },
+        onFailure: { effects: { stability: -4, army: -2 }, injury: 'rana', chronicle: 'Vlk byl rychlejší. Kousnutí se hojí dlouho a pole čeká.' },
       },
       {
         label: 'Nastražit oka a jámy',
@@ -391,7 +391,7 @@ export const PEASANT_EVENTS = [
         hintType: 'resource', hintKey: 'faith',
         isRoll: true, baseChance: 0.55, traitKey: 'strength', traitScale: 0.03,
         onSuccess: { effects: { faith: 8, prestige: 10 }, chronicle: 'Nosil{R:|a} jsi vodu a chleba do nakažených chalup. Bůh tě ušetřil a ves na to nezapomene.' },
-        onFailure: { effects: { army: -8, faith: 4, prestige: 6 }, chronicle: 'Mor si vzal dva čeledíny. Ves ti ale za pomoc líbá ruce.' },
+        onFailure: { effects: { army: -8, faith: 4, prestige: 6 }, noInjury: true, chronicle: 'Mor si vzal dva čeledíny. Ves ti ale za pomoc líbá ruce.' },
       },
     ],
   },
@@ -408,7 +408,7 @@ export const PEASANT_EVENTS = [
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.5, traitKey: 'strength', traitScale: 0.04,
         onSuccess: { effects: { food: 4, prestige: 3 }, chronicle: 'Mlynář pochopil, že s tebou se šidit nevyplácí. Doplnil mouku i s omluvou.' },
-        onFailure: { effects: { prestige: -3, favor: -3 }, chronicle: 'Mlynář je pánův člověk. Stížnost skončila na panském dvoře a tobě to nepomohlo.' },
+        onFailure: { effects: { prestige: -3, favor: -3 }, noInjury: true, chronicle: 'Mlynář je pánův člověk. Stížnost skončila na panském dvoře a tobě to nepomohlo.' },
       },
       {
         label: 'Vozit obilí do jiného mlýna',
@@ -828,7 +828,7 @@ export const PEASANT_EVENTS = [
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.15, traitKey: 'strength', traitScale: 0.05,
         onSuccess: { setTier: 2, effects: { prestige: 15, favor: 8 }, hiddenEffects: { clearFlag: 's_v_poli' }, traitGain: 'strength', music: 'battle', chronicle: '{ruler.name} {R:zachránil|zachránila} v bitvě korouhev. Za statečnost {R:byl propuštěn|byla propuštěna} z poddanství. Rod {dynastyName} je svobodný!' },
-        onFailure: { effects: { stability: -10, army: -3, prestige: 2 }, hiddenEffects: { clearFlag: 's_v_poli' }, music: 'battle', chronicle: 'Kopí zlomené, noha probodnutá. Domů ses {R:vrátil|vrátila} o holi.' },
+        onFailure: { effects: { stability: -10, army: -3, prestige: 2 }, hiddenEffects: { clearFlag: 's_v_poli' }, injury: 'kulhani', music: 'battle', chronicle: 'Kopí zlomené, noha probodnutá. Domů ses {R:vrátil|vrátila} o holi.' },
       },
       {
         label: 'Vrhnout se do první řady',
@@ -836,7 +836,7 @@ export const PEASANT_EVENTS = [
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.02, traitKey: 'strength', traitScale: 0.035,
         onSuccess: { effects: { prestige: 15, favor: 6 }, hiddenEffects: { clearFlag: 's_v_poli', setFlag: 's_hrdina' }, traitGain: 'strength', music: 'battle', chronicle: '{ruler.name} {R:prorazil|prorazila} řady nepřítele. Královský maršál se ptal na jméno svobodného sedláka, který bojuje jako rytíř.' },
-        onFailure: { effects: { stability: -8, prestige: 2 }, hiddenEffects: { clearFlag: 's_v_poli' }, music: 'battle', chronicle: 'Kopí zlomené, noha probodnutá. Domů ses {R:vrátil|vrátila} o holi.' },
+        onFailure: { effects: { stability: -8, prestige: 2 }, hiddenEffects: { clearFlag: 's_v_poli' }, injury: 'kulhani', music: 'battle', chronicle: 'Kopí zlomené, noha probodnutá. Domů ses {R:vrátil|vrátila} o holi.' },
       },
       {
         label: 'Držet se vzadu a přežít',

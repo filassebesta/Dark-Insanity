@@ -4,6 +4,10 @@ import { EVENTS, QUIET_EVENTS } from './events.js';
 import { roleLabel, QUIRK_ROLES, randomQuirk, quirkLabel } from './court.js';
 import { processTrade, resolveIncident, resolveOffer, addTradeMod, ensureTrade, cargoTokens, GOODS, MAX_STOCK } from './trade.js';
 import { processBuilding, buildingDrift, applyTownEffects, settlementDef } from './build.js';
+import {
+  effectiveTraits, injuryMods, injure, applyInjuryEffects, processInjuries, injuryTokens,
+  injuryEpithetScores, INJURY_EPITHETS, lastingInjuryNames, STRENGTH_FAIL_INJURY,
+} from './injuries.js';
 
 const TRAIT_MIN = 1;
 const TRAIT_MAX = 10;
@@ -43,6 +47,7 @@ export function interpolate(state, text) {
     });
   }
   Object.assign(dict, cargoTokens(state));
+  Object.assign(dict, injuryTokens(state));
   const town = ctx.town && settlementDef(ctx.town);
   if (town) {
     // {town.name} Brod, {town.loc} v Brodu, {town.Loc} V Brodu
@@ -376,6 +381,7 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
   applyHeirTraits(state, branch.heirTraits, notes);
   applyTradeEffects(state, branch, notes);
   applyTownEffects(state, state.eventContext?.town, branch.town, notes);
+  applyInjuryEffects(state, branch, notes); // wounds, cures and wooden legs
   recordCourtHistory(state, meta, touched, outcome);
   scheduleEcho(state, branch.echo, meta);
   tallyReign(state, branch, meta, outcome);
@@ -559,7 +565,7 @@ const EPITHETS = {
 export function reignEpithet(state, ruler = state.ruler) {
   const reign = reignOf(state);
   const s = reign.sums;
-  const t = ruler.traits;
+  const t = effectiveTraits(ruler);
   const years = Math.round((state.turn - (ruler.reignStartTurn || 0)) / 4);
   const scores = {
     brave: reign.battles.won >= 3 && reign.battles.won > reign.battles.lost ? 20 + reign.battles.won * 8 : 0,
@@ -576,6 +582,7 @@ export function reignEpithet(state, ruler = state.ruler) {
     wise: (t.intelligence - 7) * 16,
     patient: (t.patience - 7) * 16,
     old: ruler.age >= 72 ? 20 + (ruler.age - 72) * 3 : 0,
+    ...injuryEpithetScores(ruler), // Jednooký, Chromá…
   };
   let best = 'quiet';
   let bestScore = 28; // anything weaker than this leaves a quiet name
@@ -583,7 +590,7 @@ export function reignEpithet(state, ruler = state.ruler) {
     if (score > bestScore) { best = key; bestScore = score; }
   }
   if (best === 'quiet' && years < 2) return null; // too early to tell
-  const [male, female, reason] = EPITHETS[best];
+  const [male, female, reason] = EPITHETS[best] || INJURY_EPITHETS[best.replace('injury_', '')];
   const f = ruler.gender === 'female';
   return {
     key: best,
@@ -594,7 +601,11 @@ export function reignEpithet(state, ruler = state.ruler) {
 
 export function computeSuccessChance(state, choice) {
   let chance = choice.baseChance ?? 0.5;
-  if (choice.traitKey) chance += (state.ruler.traits[choice.traitKey] || 0) * (choice.traitScale ?? 0.03);
+  if (choice.traitKey) chance += (effectiveTraits(state.ruler)[choice.traitKey] || 0) * (choice.traitScale ?? 0.03);
+  // wounds weigh on every test, a lost limb most of all on those of the sword
+  const hurt = injuryMods(state.ruler);
+  chance += hurt.rolls;
+  if (choice.resourceKey === 'army' || choice.traitKey === 'strength') chance += hurt.army;
   // optional resource weight, e.g. a battle depends on the size of the army
   if (choice.resourceKey) chance += ((state.resources[choice.resourceKey] ?? 50) - 50) / 100 * (choice.resourceScale ?? 0.4);
   if (choice.chanceBonus) chance += choice.chanceBonus(state); // e.g. allies backing a claim
@@ -627,6 +638,9 @@ export function resolveChoice(state, event, choiceIndex) {
   }
 
   const notes = applyBranch(state, branch, { event, label: choice.label, battle: choice.resourceKey === 'army' }, outcome);
+  // a lost test of strength (a brawl, a hunt, a duel) can leave a wound even where the story does not say so
+  if (outcome === 'failure' && choice.traitKey === 'strength' && !branch.injury && !branch.noInjury && !choice.noInjury
+    && Math.random() < STRENGTH_FAIL_INJURY) injure(state, 'random', notes);
   const traitGained = branch.traitGain || null;
   if (traitGained) {
     state.ruler.traits[traitGained] = clampTrait(state.ruler.traits[traitGained] + 1);
@@ -713,7 +727,8 @@ function processPeasantEconomy(state) {
   const SEASON_FOOD = [-2, 1, 7, -6];
   let goldIncome = Math.round(r.stability / 35) - 1 + traitBonuses(state).gold
     + (capable(state, 'chancellor') ? 1 : 0) + (state.flags.s_rychtar ? 1 : 0);
-  let foodIncome = Math.round((r.stability + r.army) / 35) - 2 + SEASON_FOOD[state.seasonIndex];
+  let foodIncome = Math.round((r.stability + r.army) / 35) - 2 + SEASON_FOOD[state.seasonIndex]
+    - injuryMods(state.ruler).work; // a farmer without a leg or a hand does half the work
   if (state.seasonIndex === 2) {
     foodIncome -= free ? 2 : 5;
     goldIncome -= free ? 3 : 1;
@@ -764,7 +779,7 @@ function processTurnEconomy(state) {
 // the provinces, eloquence wins their loyalty, intelligence fills the treasury,
 // patience keeps unrest from eating into stability.
 export function traitBonuses(state) {
-  const t = state.ruler.traits;
+  const t = effectiveTraits(state.ruler); // an injured ruler governs with what is left
   return {
     order: t.strength - 5,        // lower unrest target in every province
     loyalty: t.eloquence - 5,     // higher loyalty target in every province
@@ -854,8 +869,8 @@ function ageCharacters(state) {
 
 function checkNaturalDeath(state) {
   const age = state.ruler.age;
-  if (age < 50) return false;
-  const chance = Math.min(0.6, (age - 50) * 0.02);
+  // old wounds shorten life at any age
+  const chance = Math.min(0.6, Math.max(0, (age - 50) * 0.02) + injuryMods(state.ruler).deathRisk);
   return Math.random() < chance;
 }
 
@@ -874,7 +889,7 @@ function generateSuccessorHousehold(state) {
   };
 }
 
-function handleSuccession(state) {
+function handleSuccession(state, cause = 'stářím') {
   if (state.heir.alive) {
     const oldName = state.ruler.name;
     const newRulerName = state.heir.name;
@@ -890,9 +905,11 @@ function handleSuccession(state) {
       epithet: epithet ? epithet.word : null,
       epithetReason: epithet ? epithet.reason : null,
       deeds: reignOf(state).deeds,
+      injuries: lastingInjuryNames(state.ruler),
+      cause: cause === 'stářím' ? null : cause,
     });
     state.reign = newReign();
-    state.chronicle.push(makeChronicleEntry(state, `${oldName}${state.pastRulers.at(-1).epithet ? ` ${state.pastRulers.at(-1).epithet}` : ''} umírá stářím. ${isPeasant(state) ? 'Grunt' : isNoble(state) ? 'Panství' : 'Korunu'} přebírá ${newRulerName}.`));
+    state.chronicle.push(makeChronicleEntry(state, `${oldName}${state.pastRulers.at(-1).epithet ? ` ${state.pastRulers.at(-1).epithet}` : ''} umírá ${cause}. ${isPeasant(state) ? 'Grunt' : isNoble(state) ? 'Panství' : 'Korunu'} přebírá ${newRulerName}.`));
     state.ruler = {
       name: newRulerName,
       gender: state.heir.gender,
@@ -977,7 +994,14 @@ export function advanceTurn(state) {
   let successionOccurred = false;
   let deathCheckText = '';
 
-  if (state.seasonIndex === 0) {
+  // wounds heal, or a festering one kills
+  const wounds = processInjuries(state);
+  if (wounds.died) {
+    successionOccurred = handleSuccession(state, 'na následky zranění');
+    deathCheckText = ' Vládce podlehl zranění.';
+  }
+
+  if (state.seasonIndex === 0 && !wounds.died) {
     ageCharacters(state);
     if (checkNaturalDeath(state)) {
       successionOccurred = handleSuccession(state);
@@ -986,7 +1010,7 @@ export function advanceTurn(state) {
   }
 
   updateGoldenAgeStreak(state);
-  const tradeNews = [...built.news, ...processTrade(state)];
+  const tradeNews = [...wounds.news, ...built.news, ...processTrade(state)];
 
   const seasonLabel = SEASONS[state.seasonIndex];
   const [goldWord, foodWord] = isPeasant(state) ? ['grošů', 'zásob'] : ['zlata', 'jídla'];

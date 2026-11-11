@@ -63,7 +63,7 @@ export const NOBLE_EVENTS = [
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.4, traitKey: 'strength', traitScale: 0.04, resourceKey: 'army', resourceScale: 0.5,
         onSuccess: { effects: { army: -5, prestige: 10, favor: 12, legitimacy: 5 }, traitGain: 'strength', chronicle: 'Korouhev rodu {dynastyName} prolomila nepřátelské křídlo. Král po bitvě objal {ruler.name} před celým vojskem.' },
-        onFailure: { effects: { army: -12, prestige: -4 }, chronicle: 'Útok narazil na kopí. Polovina mužů se domů nevrátila a král si všiml jen toho, kdo couvl.' },
+        onFailure: { effects: { army: -12, prestige: -4 }, injury: { pool: ['rana', 'ruka', 'noha', 'oko', 'jizva', 'zlomenina'], chance: 0.6 }, chronicle: 'Útok narazil na kopí. Polovina mužů se domů nevrátila a král si všiml jen toho, kdo couvl.' },
       },
       {
         label: 'Držet se v záloze a šetřit muže',
@@ -795,7 +795,7 @@ export const NOBLE_EVENTS = [
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.55, traitKey: 'strength', traitScale: 0.03,
         onSuccess: { effects: { faith: -3 }, chronicle: 'Spiklenec už nikdy nepromluví. Spiknutí žije dál.' },
-        onFailure: { effects: { favor: -20 }, noble: { plotReset: true }, chronicle: 'Pokus o umlčení se nezdařil a spiklenec utekl ke králi. Spiknutí je rozprášeno a král má podezření.' },
+        onFailure: { effects: { favor: -20 }, noble: { plotReset: true }, noInjury: true, chronicle: 'Pokus o umlčení se nezdařil a spiklenec utekl ke králi. Spiknutí je rozprášeno a král má podezření.' },
       },
       {
         label: 'Předejít mu a přiznat se králi',

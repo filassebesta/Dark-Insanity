@@ -1269,7 +1269,7 @@ export const MORE_EVENTS = [
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.45, traitKey: 'strength', traitScale: 0.05,
         onSuccess: { effects: { prestige: 6 }, provinceEffects: { 'sokoli-hvozd': { loyalty: 10 } }, traitGain: 'strength', chronicle: 'Vládce sám skolil vůdce smečky. Kožešina visí v síni a v Sokolově se o lovu zpívá.' },
-        onFailure: { effects: { prestige: -4, stability: -2 }, chronicle: 'Hon skončil zraněným koněm a pokousaným psovodem. Vlci odešli, až když se oteplilo.' },
+        onFailure: { effects: { prestige: -4, stability: -2 }, injury: { pool: ['rana', 'kulhani', 'noha', 'zlomenina'] }, chronicle: 'Smečka strhla koně i s jezdcem. Vládce se domů vrátil na nosítkách a vlci odešli, až když se oteplilo.' },
       },
       {
         label: 'Vypsat odměnu za každou vlčí hlavu',

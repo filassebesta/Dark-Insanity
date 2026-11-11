@@ -2,7 +2,7 @@
 
 Vygenerováno z `js/events*.js`. Jména v hranatých závorkách hra doplní podle aktuálního stavu.
 
-Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí · Scénář **Sedlák**: 33 událostí (+ 3 krize, 2 ozvěny) · Krize: 7 · Ozvěny rozhodnutí: 17 · Povahy rádců a výchova: 5 · Obchod: 6 · Stavby: 16 (12 království, 4 grunt).
+Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí · Scénář **Sedlák**: 33 událostí (+ 3 krize, 2 ozvěny) · Krize: 7 · Ozvěny rozhodnutí: 17 · Povahy rádců a výchova: 5 · Obchod: 6 · Stavby: 16 (12 království, 4 grunt) · Zranění: 3.
 
 ## Scénář Panovník
 
@@ -1682,3 +1682,32 @@ Přijdou jen tehdy, když v sídle stojí příslušná stavba. `[ve městě]` h
 1. Dát pánovi, co chce *(jen někdy)*
 2. Odmítnout — co jsem postavil, je moje
 3. Tvrdit, že stavby jsou staré *(riskantní volba)*
+
+## Zranění vládce
+
+Přijdou, jen když je vládce zraněný (`js/events_injury.js`). Zranění samotná vznikají v soubojích, při honu, v turnaji, v bitvě v první linii, při atentátu a obecně s pravděpodobností 30 % po každém neúspěšném hodu na sílu.
+
+### 1. Rána, která se nehojí  `z_ranhojic`
+
+> Obvazy se každé ráno mění a každé ráno jsou krvavější. [Zranění] pálí a v noci přichází horečka. U dveří čekají dva: učený lékař s kufříkem nástrojů a stará bylinkářka z lesa.
+
+1. Zaplatit učeného lékaře *(jen někdy)*
+2. Poslat pro ranhojiče z Brodu *(jen někdy)*
+3. Svěřit se bylinkářce *(riskantní volba)*
+4. Modlit se a vydržet *(riskantní volba)*
+
+### 2. Řemeslník s nabídkou  `z_nahrada`
+
+> [Řezbář] se uklonil a rozbalil plátno. Slyšel prý, jak [vládce] přišel o [nohu], a přináší [dřevěnou nohu], změřenou na míru. Nebude to jako dřív, ale bude to lepší než teď.
+
+1. Nechat si ji udělat *(jen někdy)*
+2. Zaplatit, kolik dům dá *(jen někdy)*
+3. Odmítnout a naučit se žít bez ní
+
+### 3. Smích za zády  `z_posmech`
+
+> Na hostině si šašek přivázal ke koleni násadu od koštěte, přes oko pásku a začal se potácet mezi stoly. Hosté se dusí smíchem — a pak jeden po druhém zmlknou a dívají se k čelu stolu, kde sedí [vládce].
+
+1. Dát ho zbičovat
+2. Smát se s nimi *(riskantní volba)*
+3. Přejít to mlčením

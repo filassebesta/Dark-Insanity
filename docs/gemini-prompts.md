@@ -1469,3 +1469,15 @@ prompt jsou stejné jako v sekci 14.0 (nahrát do `assets/_incoming/`).
 | `t_s_dobytek.jpg` | Nemoc v chlévě | `s_spatna_uroda` | A worried peasant couple with a lantern beside a sick cow with a lowered head in a dim cowshed. |
 | `t_s_zavist.jpg` | Závist sousedů | `pozar_mesta` | Villagers whispering at a well, glancing sideways at a prosperous farmstead with a new barn across the green. |
 | `t_s_pan_podil.jpg` | Pán si všiml | `s_pan_navsteva` | A lord on horseback stopped at a farm fence, looking over new farm buildings while a peasant holds his cap. |
+
+---
+
+## 18. Zranění vládce (volitelné scény, 1:1, cíl 2048 × 2048)
+
+Formát a dávkový prompt jako v sekci 14.0. Zatím se používají půjčené obrázky.
+
+| Soubor | Událost | Teď používá | Popis pro Gemini |
+|---|---|---|---|
+| `z_ranhojic.jpg` | Rána, která se nehojí | `nemoc_vladce` | A feverish wounded ruler on a bed with bloody bandages, a learned physician with a case of instruments on one side and an old herb woman on the other, candlelight. |
+| `z_nahrada.jpg` | Řemeslník s nabídkou | `nove_kuse` | A craftsman unwrapping a carved wooden leg and an iron hand with hinges on a workbench before a seated nobleman, a workshop full of tools. |
+| `z_posmech.jpg` | Smích za zády | `dvorni_blazen` | A jester at a castle feast hobbling with a broomstick tied to his knee and a patch over one eye, guests laughing and then falling silent toward the head of the table. |
