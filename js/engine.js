@@ -1,7 +1,7 @@
 import { SEASONS, TERRAIN_DEFS, NOBLE_HOUSES, PEASANT_HOME, clamp, randomName, randInt, tierTitle } from './data.js';
 import { makeChronicleEntry, inheritTraits } from './state.js';
 import { EVENTS, QUIET_EVENTS } from './events.js';
-import { roleLabel, QUIRK_ROLES, randomQuirk, quirkLabel } from './court.js';
+import { roleLabel, roleCases, QUIRK_ROLES, randomQuirk, quirkLabel } from './court.js';
 import { ageFamily, ensureFamily, successor, rebuildHousehold, marryRuler, marryHeir, relationWord, yearsText, ADULT_AGE } from './family.js';
 import { processTrade, resolveIncident, resolveOffer, addTradeMod, ensureTrade, cargoTokens, GOODS, MAX_STOCK } from './trade.js';
 
@@ -81,6 +81,7 @@ export function interpolate(state, text) {
     const t = roleLabel(role, state[role].gender, state.scenario);
     dict[`${role}.Title`] = t;
     dict[`${role}.title`] = t.toLowerCase();
+    for (const [k, v] of Object.entries(roleCases(role, state[role].gender, state.scenario))) dict[`${role}.title${k}`] = v;
   }
   // gendered word forms: {R:přijel|přijela} follows the ruler, {H:...} the house head in context
   const genderOf = {
@@ -754,6 +755,7 @@ export function pickNextEvent(state) {
 
 // A peasant lives off the farm: the land (Grunt) and the hands that work it (Čeleď).
 // Every autumn the lord takes his due: labour and grain from a serf, coin from a freeman.
+
 function processPeasantEconomy(state) {
   const r = state.resources;
   const free = state.ruler.statusTier >= 2;
@@ -761,6 +763,12 @@ function processPeasantEconomy(state) {
   let goldIncome = Math.round(r.stability / 35) - 1 + traitBonuses(state).gold
     + (capable(state, 'chancellor') ? 1 : 0) + (state.flags.s_rychtar ? 1 : 0);
   let foodIncome = Math.round((r.stability + r.army) / 35) - 2 + SEASON_FOOD[state.seasonIndex];
+  // in winter the small children are mouths to feed, the grown ones (16+) have been hands in the field
+  if (state.seasonIndex === 3) {
+    const kids = [state.heir, ...(state.children || [])].filter((c) => c && c.alive !== false && !c.none);
+    // one small child is always fed somehow; every further one costs
+    foodIncome -= Math.max(0, kids.filter((c) => c.age < 12).length - 1) - kids.filter((c) => c.age >= 16).length;
+  }
   if (state.seasonIndex === 2) {
     foodIncome -= free ? 2 : 5;
     goldIncome -= free ? 3 : 1;

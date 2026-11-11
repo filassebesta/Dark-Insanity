@@ -332,8 +332,8 @@ export function ageFamily(state) {
   // ---- advisers grow old and die; their office has to be filled ----
   for (const role of COUNCIL) {
     const c = state[role];
-    if (!c || c.alive === false || c.age < 60) continue;
-    if (Math.random() < Math.min(0.5, (c.age - 58) * 0.03)) {
+    if (!c || c.alive === false || c.age < 62) continue;
+    if (Math.random() < Math.min(0.45, (c.age - 60) * 0.022)) {
       c.alive = false;
       state.chronicle.push(makeChronicleEntry(state, `${fem(c) ? 'Zemřela' : 'Zemřel'} ${c.name} ve věku ${c.age} let.`));
       break; // one funeral a year is enough

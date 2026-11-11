@@ -28,7 +28,7 @@ export const FAMILY_EVENTS = [
         requires: (s) => !isPeasant(s),
         hintType: 'resource', hintKey: 'prestige',
         effects: { gold: -12, prestige: 5, faith: 2 },
-        chronicle: 'Za rakví {dead.name} šli šlechtici i žebráci. Zvony zněly do setmění a rod {dynastyName} ukázal, že své mrtvé nezapomíná.',
+        chronicle: 'Za rakví šli šlechtici i žebráci. Zvony zněly do setmění a rod {dynastyName} ukázal, že své mrtvé nezapomíná.',
       },
       {
         label: 'Pohřbít v tichosti v rodové hrobce',
@@ -51,7 +51,7 @@ export const FAMILY_EVENTS = [
         requires: isPeasant,
         hintType: 'resource', hintKey: 'prestige',
         effects: { food: -6, gold: -2, prestige: 5 },
-        chronicle: 'Na karu se pilo i plakalo do noci. Ves ukázala, že rod {dynastyName} k ní patří, a {dead.name} odešl{X:|a} se ctí.',
+        chronicle: 'Na karu se pilo i plakalo do noci. Ves ukázala, že rod {dynastyName} k ní patří, a {dead.name} {X:odešel|odešla} se ctí.',
       },
       {
         label: 'Jen farář, rodina a hrob pod lípou',
@@ -91,12 +91,12 @@ export const FAMILY_EVENTS = [
     text: '{ruler.name} je teprve {R:chlapec|dívka}, kter{R:ý|á} sotva dosáhne na stůl. Až do šestnácti let za {R:něj|ni} musí někdo rozhodovat, a každý v domě má jasno, kdo by to měl být.',
     choices: [
       {
-        label: 'Poručnictví svěřit {P:otci|matce} {parent.name}',
+        label: 'Poručníkem bude {P:otec|matka} {parent.name}',
         requires: (s) => !!s.parent,
         hintType: 'resource', hintKey: 'stability',
         effects: { stability: 4 },
         regent: 'parent',
-        chronicle: 'Za {ruler.name} vládne {parent.word} {parent.name}. Vlastní krev je nejjistější ochrana.',
+        chronicle: 'Než dítě dospěje, vládne {parent.word} {parent.name}. Vlastní krev je nejjistější ochrana.',
       },
       {
         label: 'Správu povede {chancellor.title} {chancellor.name}',
@@ -270,7 +270,7 @@ export const FAMILY_EVENTS = [
         chronicle: 'Muzikanti hráli do rána. {newborn.name} to celé prospal{N:|a}.',
       },
       {
-        label: 'Požádat o kmotrovství {L:pána|paní} {lord.name}',
+        label: 'Požádat {L:pána|paní} z Bílé Brány o kmotrovství',
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.3, traitKey: 'eloquence', traitScale: 0.04,
         chanceBonus: (s) => (s.resources.favor - 50) / 120,
@@ -323,7 +323,7 @@ export const FAMILY_EVENTS = [
         effects: { gold: -4, prestige: 6 },
         courtEffects: { heir: { loyalty: -2 } },
         heirMarry: 'svobodni',
-        chronicle: 'Do rodu {dynastyName} se přiženil{D:a|} {heir.spouseName} ze svobodného statku. Kdo dřív smekal, teď si podává ruku.',
+        chronicle: 'Do rodu {dynastyName} {D:přišla nevěsta|přišel ženich} {heir.spouseName} ze svobodného statku. Kdo dřív smekal, teď si podává ruku.',
       },
       {
         label: 'Ještě počkat, na gruntu {D:ho|ji} potřebujeme',
