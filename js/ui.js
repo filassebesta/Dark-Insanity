@@ -1,5 +1,5 @@
 import { RESOURCE_DEFS, TRAIT_DEFS, TERRAIN_DEFS, SEASONS, NOBLE_HOUSES, resourceLabel, activeResourceDefs, tierTitle } from './data.js';
-import { interpolate, computeSuccessChance, attitudeLabel, ownProvinces } from './engine.js';
+import { interpolate, computeSuccessChance, attitudeLabel, ownProvinces, reignEpithet } from './engine.js';
 import { ICONS } from './icons.js';
 import { playMusic, setAllMuted } from './audio.js';
 import { rulerPortraitCandidates, memberPortraitCandidates, portraitImg } from './character.js';
@@ -244,6 +244,7 @@ export function renderEventCard(state, event, handlers) {
     event.image,
   ]);
   document.getElementById('event-title').textContent = event.title;
+  renderSceneEcho(state, event);
   const choiceList = document.getElementById('choice-list');
   choiceList.innerHTML = '';
 
@@ -281,6 +282,28 @@ export function renderEventCard(state, event, handlers) {
     btn.addEventListener('click', () => handlers.onChoiceSelected(index));
     choiceList.appendChild(btn);
   });
+}
+
+// An echo names the old decision it comes from; a crisis says what ran out.
+const CRISIS_CAUSES = {
+  krize_pokladna: 'Došlo zlato', krize_hlad: 'Došlo jídlo', krize_vojsko: 'Došlo vojsko',
+  krize_vira: 'Víra je na dně', krize_posmech: 'Prestiž je na dně',
+  krize_uchvatitel: 'Legitimita je na dně', krize_nemilost: 'Králova přízeň je na dně',
+};
+
+function renderSceneEcho(state, event) {
+  const el = document.getElementById('scene-echo');
+  const origin = event.echo && state.echoOrigin;
+  el.classList.toggle('crisis', !!event.crisis);
+  if (origin) {
+    const who = origin.ruler && origin.ruler !== state.ruler.name ? `, kdy vládl${origin.gender === 'female' ? 'a' : ''} ${esc(origin.ruler)}` : '';
+    el.innerHTML = `<b>Ozvěna</b>Rok ${origin.year}${who} · ${esc(origin.title)}: „${esc(origin.choice)}“`;
+  } else if (event.crisis) {
+    el.innerHTML = `<b>Krize</b>${esc(CRISIS_CAUSES[event.id] || '')}`;
+  } else {
+    el.innerHTML = '';
+  }
+  el.hidden = !el.innerHTML;
 }
 
 const OUTCOME_LABELS = {
@@ -471,6 +494,10 @@ export function renderEndingScreen(state, gameOver) {
   });
   document.getElementById('ending-title').textContent = ENDING_TITLES[gameOver.type] || 'Konec';
   document.getElementById('ending-text').textContent = gameOver.text;
+  const epithet = reignEpithet(state);
+  const epithetEl = document.getElementById('ending-epithet');
+  epithetEl.hidden = !epithet;
+  if (epithet) epithetEl.textContent = `Kronika zapíše: ${state.ruler.name} ${epithet.word}, ${epithet.reason}.`;
   document.getElementById('ending-continue').hidden = gameOver.type !== 'crowned';
   const years = state.turn > 0 ? Math.ceil(state.turn / SEASONS.length) : 0;
   document.getElementById('ending-stats').innerHTML = [

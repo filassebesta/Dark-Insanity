@@ -276,7 +276,161 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
   applyCourtEffects(state, branch.courtEffects, notes, touched);
   applyCourtReplacement(state, branch.replaceCourt, notes, meta);
   recordCourtHistory(state, meta, touched, outcome);
+  scheduleEcho(state, branch.echo, meta);
+  tallyReign(state, branch, meta, outcome);
   return notes;
+}
+
+// ---------- echoes: decisions that come back years later ----------
+
+// branch.echo = { event: '<echo event id>', after: [minTurns, maxTurns] }
+function scheduleEcho(state, spec, meta) {
+  if (!spec || !meta || !meta.event) return;
+  state.echoes = state.echoes || [];
+  if (state.echoes.some((e) => e.event === spec.event)) return; // the same story only once at a time
+  const [a, b] = spec.after || [8, 16];
+  state.echoes.push({
+    event: spec.event,
+    due: state.turn + randInt(a, b),
+    context: state.eventContext ? { ...state.eventContext } : null,
+    from: { year: state.year, title: meta.event.title, choice: meta.label, ruler: state.ruler.name, gender: state.ruler.gender },
+  });
+}
+
+/** The next echo whose time has come, or null. Echoes whose story no longer fits are dropped. */
+function takeDueEcho(state) {
+  const list = state.echoes || [];
+  for (let i = 0; i < list.length; i++) {
+    const echo = list[i];
+    if (echo.due > state.turn) continue;
+    list.splice(i, 1);
+    i -= 1;
+    const event = EVENTS.find((e) => e.id === echo.event);
+    if (!event || (event.scenario || 'panovnik') !== state.scenario) continue;
+    state.eventContext = echo.context;
+    if (event.requires && !event.requires(state)) { state.eventContext = null; continue; }
+    state.echoOrigin = echo.from;
+    return event;
+  }
+  return null;
+}
+
+// ---------- crises: what happens when a resource runs out ----------
+
+const CRISES = [
+  { key: 'food', max: 3, event: 'krize_hlad' },
+  { key: 'gold', max: 2, event: 'krize_pokladna' },
+  { key: 'favor', max: 10, event: 'krize_nemilost', scenario: 'slechtic' },
+  { key: 'army', max: 5, event: 'krize_vojsko' },
+  { key: 'legitimacy', max: 8, event: 'krize_uchvatitel', scenario: 'panovnik' },
+  { key: 'faith', max: 8, event: 'krize_vira' },
+  { key: 'prestige', max: 5, event: 'krize_posmech' },
+];
+const CRISIS_COOLDOWN = 12;
+
+function raiseCrisis(state) {
+  if (state.pendingEvent) return;
+  const history = state.eventHistory || {};
+  for (const c of CRISES) {
+    if (c.scenario && c.scenario !== state.scenario) continue;
+    const value = state.resources[c.key];
+    if (value === undefined || value > c.max) continue;
+    if (history[c.event] !== undefined && state.turn - history[c.event] < CRISIS_COOLDOWN) continue;
+    state.pendingEvent = c.event;
+    return;
+  }
+}
+
+// ---------- the reign: deeds, battles and the name history will give the ruler ----------
+
+function newReign() {
+  return { rolls: { won: 0, lost: 0 }, battles: { won: 0, lost: 0 }, sums: {}, unrest: 0, deeds: [] };
+}
+
+function reignOf(state) {
+  if (!state.reign) state.reign = newReign();
+  return state.reign;
+}
+
+function tallyReign(state, branch, meta, outcome) {
+  if (!meta || !meta.event || /^(quiet_season|n_klidne_obdobi)$/.test(meta.event.id)) return;
+  const reign = reignOf(state);
+  let weight = 0;
+  for (const [k, v] of Object.entries(branch.effects || {})) {
+    reign.sums[k] = (reign.sums[k] || 0) + v;
+    weight += Math.abs(v);
+  }
+  for (const fx of Object.values(branch.provinceEffects || {})) {
+    if (fx.unrest) reign.unrest += fx.unrest;
+    weight += Math.abs(fx.loyalty || 0) + Math.abs(fx.unrest || 0) + (fx.lost ? 40 : 0);
+  }
+  if (outcome === 'success' || outcome === 'failure') {
+    reign.rolls[outcome === 'success' ? 'won' : 'lost'] += 1;
+    if (meta.battle) reign.battles[outcome === 'success' ? 'won' : 'lost'] += 1;
+    weight += 10;
+  }
+  if (branch.setTier || branch.newKing || branch.endGame) weight += 60;
+  if (meta.event.forced) weight += 15;
+  // the three weightiest decisions of a reign are what the chronicle remembers
+  reign.deeds.push({ year: state.year, title: meta.event.title, choice: meta.label, outcome, weight });
+  reign.deeds.sort((x, y) => y.weight - x.weight);
+  reign.deeds.length = Math.min(reign.deeds.length, 3);
+}
+
+// Adjective epithets [male, female, reason]; the strongest claim on the ruler's memory wins.
+const EPITHETS = {
+  brave: ['Udatný', 'Udatná', 'za bitvy, které vyhrál{|a}'],
+  unlucky: ['Nešťastný', 'Nešťastná', 'za to, že {mu|jí} štěstí nepřálo'],
+  thrifty: ['Hospodárný', 'Hospodárná', 'za plnou pokladnici'],
+  generous: ['Štědrý', 'Štědrá', 'za zlato, které rozdal{|a}'],
+  pious: ['Zbožný', 'Zbožná', 'za věrnost církvi'],
+  godless: ['Bezbožný', 'Bezbožná', 'za spory s církví'],
+  famous: ['Slavný', 'Slavná', 'za slávu rodu'],
+  cruel: ['Krutý', 'Krutá', 'za tvrdou ruku'],
+  good: ['Dobrý', 'Dobrá', 'za laskavost k poddaným'],
+  strong: ['Silný', 'Silná', 'za sílu paže i vůle'],
+  eloquent: ['Výmluvný', 'Výmluvná', 'za dar slova'],
+  wise: ['Moudrý', 'Moudrá', 'za moudrost v radě'],
+  patient: ['Trpělivý', 'Trpělivá', 'za klid v bouřích'],
+  old: ['Starý', 'Stará', 'za dlouhý život'],
+  quiet: ['Tichý', 'Tichá', 'za vládu bez velkých bouří'],
+};
+
+/** The name history gives the current ruler, judged by the reign so far. */
+export function reignEpithet(state, ruler = state.ruler) {
+  const reign = reignOf(state);
+  const s = reign.sums;
+  const t = ruler.traits;
+  const years = Math.round((state.turn - (ruler.reignStartTurn || 0)) / 4);
+  const scores = {
+    brave: reign.battles.won >= 3 && reign.battles.won > reign.battles.lost ? 20 + reign.battles.won * 8 : 0,
+    unlucky: reign.rolls.lost >= 5 && reign.rolls.lost > reign.rolls.won * 1.5 ? 15 + reign.rolls.lost * 4 : 0,
+    thrifty: (s.gold || 0) / 2,
+    generous: -(s.gold || 0) / 2,
+    pious: s.faith || 0,
+    godless: -(s.faith || 0),
+    famous: s.prestige || 0,
+    cruel: reign.unrest,
+    good: -reign.unrest,
+    strong: (t.strength - 7) * 16,
+    eloquent: (t.eloquence - 7) * 16,
+    wise: (t.intelligence - 7) * 16,
+    patient: (t.patience - 7) * 16,
+    old: ruler.age >= 72 ? 20 + (ruler.age - 72) * 3 : 0,
+  };
+  let best = 'quiet';
+  let bestScore = 28; // anything weaker than this leaves a quiet name
+  for (const [key, score] of Object.entries(scores)) {
+    if (score > bestScore) { best = key; bestScore = score; }
+  }
+  if (best === 'quiet' && years < 2) return null; // too early to tell
+  const [male, female, reason] = EPITHETS[best];
+  const f = ruler.gender === 'female';
+  return {
+    key: best,
+    word: f ? female : male,
+    reason: reason.replace(/\{([^|{}]*)\|([^|{}]*)\}/g, (m, a, b) => (f ? b : a)),
+  };
 }
 
 export function computeSuccessChance(state, choice) {
@@ -309,7 +463,7 @@ export function resolveChoice(state, event, choiceIndex) {
     outcome = success ? 'success' : 'failure';
   }
 
-  const notes = applyBranch(state, branch, { event, label: choice.label }, outcome);
+  const notes = applyBranch(state, branch, { event, label: choice.label, battle: choice.resourceKey === 'army' }, outcome);
   const traitGained = branch.traitGain || null;
   if (traitGained) {
     state.ruler.traits[traitGained] = clampTrait(state.ruler.traits[traitGained] + 1);
@@ -352,11 +506,14 @@ function eventAvailable(state, e) {
 
 export function pickNextEvent(state) {
   state.eventContext = null;
+  state.echoOrigin = null;
   if (state.pendingEvent) {
     const forced = EVENTS.find((e) => e.id === state.pendingEvent);
     state.pendingEvent = null;
     if (forced) return forced;
   }
+  const echo = takeDueEcho(state);
+  if (echo) return echo;
   const QUIET_EVENT = QUIET_EVENTS[state.scenario] || QUIET_EVENTS.panovnik;
   const available = EVENTS.filter((e) => eventAvailable(state, e));
   const quietAllowed = state.lastEventId !== QUIET_EVENT.id;
@@ -517,14 +674,20 @@ function handleSuccession(state) {
     const oldName = state.ruler.name;
     const newRulerName = state.heir.name;
     state.pastRulers = state.pastRulers || [];
+    state.ruler.alive = false;
+    const epithet = reignEpithet(state);
     state.pastRulers.push({
       name: oldName,
       gender: state.ruler.gender,
       generation: state.generation,
       years: Math.max(1, Math.round((state.turn - (state.ruler.reignStartTurn || 0)) / 4)),
       diedAt: state.ruler.age,
+      epithet: epithet ? epithet.word : null,
+      epithetReason: epithet ? epithet.reason : null,
+      deeds: reignOf(state).deeds,
     });
-    state.chronicle.push(makeChronicleEntry(state, `${oldName} umírá stářím. ${isNoble(state) ? 'Panství' : 'Korunu'} přebírá ${newRulerName}.`));
+    state.reign = newReign();
+    state.chronicle.push(makeChronicleEntry(state, `${oldName}${state.pastRulers.at(-1).epithet ? ` ${state.pastRulers.at(-1).epithet}` : ''} umírá stářím. ${isNoble(state) ? 'Panství' : 'Korunu'} přebírá ${newRulerName}.`));
     state.ruler = {
       name: newRulerName,
       gender: state.heir.gender,
@@ -615,6 +778,7 @@ export function advanceTurn(state) {
     return { turnSummary, event: null, successionOccurred, gameOver };
   }
 
+  raiseCrisis(state);
   const event = pickNextEvent(state);
   state.currentEvent = event ? event.id : null;
   return { turnSummary, event, successionOccurred, gameOver: null };

@@ -2,7 +2,7 @@
 // Portraits are optional files; missing ones fall back gracefully to an initial.
 
 import { TRAIT_DEFS, STATUS_TIERS, SEASONS, tierTitle } from './data.js';
-import { traitBonuses } from './engine.js';
+import { traitBonuses, reignEpithet } from './engine.js';
 import { biography, loyaltyLabel, roleLabel } from './court.js';
 import { esc } from './ui.js';
 
@@ -118,8 +118,20 @@ export function renderCharacterSheet(state) {
       </div>`;
   }).join('');
 
-  const ancestors = (state.pastRulers || []).slice().reverse().map((a) => `
-      <li><strong>${esc(a.name)}</strong><span>${a.generation}. generace · vládl${a.gender === 'female' ? 'a' : ''} ${a.years} ${yearsWord(a.years)} · zemřel${a.gender === 'female' ? 'a' : ''} v ${a.diedAt} letech</span></li>`).join('');
+  const OUTCOME_WORD = { success: ' (úspěch)', failure: ' (nezdar)', danger: ' (nebezpečí)' };
+  const ancestors = (state.pastRulers || []).slice().reverse().map((a) => {
+    const f = a.gender === 'female' ? 'a' : '';
+    const deeds = (a.deeds || []).map((d) => `<li>${d.year} · ${esc(d.title)}: ${esc(d.choice)}${OUTCOME_WORD[d.outcome] || ''}</li>`).join('');
+    return `
+      <li><strong>${esc(a.name)}${a.epithet ? ` <em>${esc(a.epithet)}</em>` : ''}</strong>
+        ${a.epithetReason ? `<span class="cs-reason">${esc(a.epithetReason)}</span>` : ''}
+        <span>${a.generation}. generace · vládl${f} ${a.years} ${yearsWord(a.years)} · zemřel${f} v ${a.diedAt} letech</span>
+        ${deeds ? `<ul class="cs-deeds">${deeds}</ul>` : ''}</li>`;
+  }).join('');
+  const epithet = reignEpithet(state);
+  const epithetLine = epithet
+    ? `<p class="cs-epithet">Lid ${r.gender === 'female' ? 'ji' : 'ho'} už teď nazývá <em>${esc(r.name)} ${esc(epithet.word)}</em>, ${esc(epithet.reason)}.</p>`
+    : `<p class="cs-epithet">Lid ještě neví, jak ${r.gender === 'female' ? 'ji' : 'ho'} bude nazývat.</p>`;
 
   document.getElementById('character-sheet').innerHTML = `
     <div class="cs-portrait-wrap">
@@ -134,6 +146,7 @@ export function renderCharacterSheet(state) {
       <span class="panel-overline">${esc(title)} · ${state.generation}. generace</span>
       <h2 class="cs-name">${esc(r.name)}</h2>
       <div class="cs-dynasty">z dynastie ${esc(state.dynastyName)}</div>
+      ${epithetLine}
       <div class="cs-facts">
         <div><span>Věk</span><strong>${r.age}</strong></div>
         <div><span>${state.scenario === 'slechtic' ? 'V čele rodu' : 'Vláda'}</span><strong>${years} ${yearsWord(years)}</strong></div>
@@ -147,7 +160,7 @@ export function renderCharacterSheet(state) {
       <ul class="cs-influence">${influence}</ul>
       <h4 class="cs-section">Rodina</h4>
       <div class="cs-family">${family}</div>
-      ${ancestors ? `<h4 class="cs-section cs-gap">Předkové</h4><ul class="cs-ancestors">${ancestors}</ul>` : ''}
+      ${ancestors ? `<h4 class="cs-section cs-gap">Síň předků</h4><ul class="cs-ancestors">${ancestors}</ul>` : ''}
     </div>
   `;
 

@@ -1138,3 +1138,46 @@ Stejný formát jako v sekcích 10 a 11.
 | `n_trzni_pravo.jpg` | Trhové právo | Townsfolk setting up the first market stalls in a small coastal village square, merchants arriving by cart and boat. |
 | `n_spatna_uroda.jpg` | Neúroda | Rain-ruined dark wheat fields under heavy grey clouds, peasants looking at the spoiled harvest in despair. |
 | `n_klidne_obdobi.jpg` | Klidné období (šlechtic) | A peaceful coastal estate with a small wooden fort, fishing boats, fields and a village in calm evening light. |
+
+---
+
+## 13. Krize a ozvěny (volitelné, 1:1, cíl 2048 × 2048)
+
+Tyto události už ve hře fungují a zatím si půjčují obrázek z příbuzné scény (viz sloupec „Teď používá“).
+Vlastní obrázek není nutný. Když ho ale vygeneruješ a pojmenuješ podle sloupce Soubor, hra ho sama použije místo půjčeného.
+
+Stejný styl i formát jako v sekcích 10 až 12. Generuj dávkově, po pěti až deseti obrázcích.
+
+**Krize**: přijdou samy, když dojde zlato, jídlo, vojsko, víra, prestiž, legitimita nebo králova přízeň.
+
+| Soubor | Událost | Teď používá | Popis pro Gemini |
+|---|---|---|---|
+| `krize_pokladna.jpg` | Prázdná pokladna | `zlodej_v_pokladne` | An empty royal treasury vault, open chests with nothing inside, a despairing chancellor holding up an empty ledger, soldiers grumbling at the door. |
+| `krize_hlad.jpg` | Hladové bouře | `hladomor` | A starving crowd with empty bowls and clubs surging toward a castle gate at dusk, guards bracing behind the portcullis. |
+| `krize_vojsko.jpg` | Bezbranní | `dezerteri` | Empty castle walls with only a few old guards, banners hanging on bare spears, enemy riders watching from a distant hill. |
+| `krize_vira.jpg` | Prázdné kostely | `kacirska_sekta` | A ragged wandering preacher shouting to a crowd on a village green while the church behind stands empty with its doors open. |
+| `krize_posmech.jpg` | Terč posměchu | `dvorni_blazen` | Drunken nobles and peasants in a smoky tavern laughing at a minstrel singing a mocking song, a crude caricature of a crowned figure on the wall. |
+| `krize_uchvatitel.jpg` | Trůn se otřásá | `pretendent` | A tense assembly of lords in a great hall, some standing with arms crossed, one pointing at an empty throne, whispers and suspicion. |
+| `krize_nemilost.jpg` | Poslední varování | `n_obvineni_u_dvora` | A royal herald in tabard reading a stern sealed letter aloud in the courtyard of a modest coastal fort, the noble household listening in dread. |
+
+**Ozvěny**: vrátí se roky po určitém rozhodnutí.
+
+| Soubor | Událost | Teď používá | Popis pro Gemini |
+|---|---|---|---|
+| `ozvena_omilostneny.jpg` | Splacená přísaha | `soud_se_spiklenci` | A grey-haired former conspirator kneeling at a castle gate, offering a folded list of names to a guard captain at dawn. |
+| `ozvena_syn_ucitele.jpg` | Hrdina od brodu | `prosba_ucitele` | Cheering soldiers carrying a young wounded hero on their shoulders after defending a river ford, broken enemy shields in the water. |
+| `ozvena_deti_hladu.jpg` | Děti hladu | `hladomor` | A band of gaunt young outlaws in ragged cloaks ambushing a cart in a dark forest, their faces hard and hungry. |
+| `ozvena_markrabi.jpg` | Dluh cti | `zajaty_syn_markrabiho` | A foreign envoy in rich furs presenting a sealed peace treaty in a throne hall, the seal bearing a march-lord's eagle. |
+| `ozvena_masakr.jpg` | Píseň o krvavém dni | `vzpoura_v_provincii` | Angry painted words smeared on a village church wall at night, a few villagers with candles standing silently before graves. |
+| `ozvena_klaster_dedic.jpg` | Návrat z kláštera | `vychova_dedice` | A young scholar in plain monastic travel clothes returning through a castle gate with books, an abbot's letter in hand. |
+| `ozvena_pirati.jpg` | Obvyklá platba | `pirati` | Grinning pirates on a dock holding out an open chest for tribute, their black-sailed ship moored behind them in a harbour. |
+| `ozvena_bylinkarka.jpg` | Dluh se splácí | `carodejnice` | A herb woman with a basket of dried herbs tending a feverish child in a candlelit castle chamber, a suspicious priest in the doorway. |
+| `ozvena_uprchlici.jpg` | Vydejte nám je | `uprchlici` | A thriving village of former refugees with new houses and fields, a foreign envoy on horseback demanding their return. |
+| `ozvena_ucenci.jpg` | První učenci | `skola_ucencu` | Three young scholars presenting drawings of a watermill, a mountain map and a herbal to a ruler in a sunlit study. |
+| `ozvena_zlomeny_slib.jpg` | Zlomený slib | `stary_rytir_umira` | A young knight in his late father's armour throwing down a gauntlet before a lord in a manor courtyard, villagers behind him. |
+| `ozvena_most.jpg` | Most se zřítil | `most_pres_brodnici` | A collapsed wooden bridge over a swollen river, a merchant wagon half sunk, people pulling survivors from the water. |
+| `ozvena_n_pytlaci.jpg` | Stará laskavost | `n_pytlaci` | Former poachers in hunter's clothes leading armed retainers along a hidden forest path at dawn toward distant campfires. |
+| `ozvena_n_vdecny_rod.jpg` | Vděčnost sousedů | `n_pujcka_rodu` | A wagon with a gift chest pulled by four horses arriving at a small coastal fort, a rival lord's banner on the wagon. |
+| `ozvena_n_pisatel.jpg` | Bedýnka bez erbu | `n_nalezeny_dopis` | A plain unmarked wooden box opened on a table by candlelight, revealing a letter and lists of names and sums. |
+| `ozvena_n_pomsta.jpg` | Krev za krev | `n_spiklenci_zvou` | A hooded assassin with a dagger climbing the wall of a fort at night, a confidant watching from a shadowed window. |
+| `ozvena_n_rychtar.jpg` | Cepy pod hradbami | `n_robota` | Angry peasants with flails and pitchforks led by a village reeve gathered beneath the walls of a small fort at dusk. |

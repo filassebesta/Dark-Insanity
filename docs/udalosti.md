@@ -2,7 +2,7 @@
 
 Vygenerováno z `js/events*.js`. Jména v hranatých závorkách hra doplní podle aktuálního stavu.
 
-Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí.
+Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí · Krize: 7 · Ozvěny rozhodnutí: 17.
 
 ## Scénář Panovník
 
@@ -918,3 +918,240 @@ Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí
 2. Cvičit družinu
 3. Psát dopisy ke dvoru
 4. Studovat rodokmeny a staré listiny
+
+## Krize (oba scénáře)
+
+Přijdou samy, když některý zdroj klesne téměř na nulu. Stejná krize se může vrátit nejdřív po třech letech.
+
+### 1. Prázdná pokladna  `krize_pokladna`
+
+> Truhly v pokladnici zejí prázdnotou. [chancellor.Title] [chancellor.name] rozkládá ruce: na žold není, na dluhy není, na zítřek není. Vojáci si už šeptají a věřitelé buší na bránu.
+
+1. Zabavit stříbro z kostelů
+2. Zvýšit dávky poddaným
+3. Propustit část vojska
+4. Prosit krále o odklad dávek
+
+### 2. Hladové bouře  `krize_hlad`
+
+> Sýpky jsou vymetené do posledního zrnka. V ulicích se lidé bijí o chleba a dav s prázdnými mísami a holemi se valí k bráně hradu.
+
+1. Koupit obilí za každou cenu
+2. Zabavit zásoby kupcům a klášterům
+3. Rozehnat dav vojskem
+4. Vyjít k lidu a sdílet s ním vlastní stůl
+
+### 3. Bezbranní  `krize_vojsko`
+
+> Korouhve visí na prázdných kopích. Zbylo jen pár starých strážných a zvědové hlásí, že za hranicí si toho už všimli.
+
+1. Najmout žoldnéře
+2. Povolat sedláky ke zbrani
+3. Spolehnout se na hradby a štěstí
+
+### 4. Prázdné kostely  `krize_vira`
+
+> Kostely zejí prázdnotou a na návsích káže potulný kazatel, že rod [dynastyName] je Bohem zavržený. Lidé mu naslouchají a kněží se bojí vyjít ze sakristie.
+
+1. Postavit nový chrám
+2. Poslat proti němu učené kněze
+3. Kazatele zatknout
+
+### 5. Terč posměchu  `krize_posmech`
+
+> Po krčmách i šlechtických síních se zpívá posměšná píseň o rodu [dynastyName]. Kdo se dřív bál, teď se směje, a kdo se směje, ten neposlechne.
+
+1. Uspořádat velkolepé slavnosti
+2. Vyzvat autora písně na souboj
+3. Nechat je zpívat
+
+### 6. Trůn se otřásá  `krize_uchvatitel`
+
+> Na sněmu zazněla otázka, kterou se dřív nikdo neodvážil vyslovit nahlas: má [ruler.name] vůbec právo nosit korunu? Páni si to šeptají a čekají, kdo se ozve první.
+
+1. Nechat se znovu korunovat v katedrále
+2. Svolat sněm a žádat přísahu věrnosti
+3. Umlčet pochybovače
+
+### 7. Poslední varování  `krize_nemilost`
+
+> Královský herold přivezl list s pečetí, která se neodmítá. [king.name] píše krátce: ještě jedno provinění a panství rodu [dynastyName] připadne koruně. U dvora se prý už dělí o tvé louky.
+
+1. Odjet ke dvoru a pokořit se
+2. Poslat králi bohatý dar
+3. Požádat spojence o přímluvu
+4. Odpovědět hrdě
+
+## Ozvěny rozhodnutí
+
+Vrátí se po letech, když hráč dříve zvolil uvedenou možnost.
+
+### 1. Splacená přísaha  `ozvena_omilostneny`
+
+*Spouští: `soud_se_spiklenci` → „Udělit milost výměnou za přísahu“ (při úspěchu) · za 2,5–5 let*
+
+> U brány čeká muž, kterého koruna kdysi omilostnila na soudu se spiklenci. Prošedivěl, ale přísahu nezapomněl: přináší jména lidí, kteří chystají vraždu. Za svou věrnost žádá jediné, místo u dvora.
+
+1. Odměnit ho místem u dvora
+2. Jména prověřit a pak se rozhodnout
+3. Kdo zradil jednou, zradí znovu
+
+### 2. Hrdina od brodu  `ozvena_syn_ucitele`
+
+*Spouští: `prosba_ucitele` → „Ať syn slouží v posádce na hranici“ · za 2–4 let*
+
+> Z hranice přišla zpráva o hrdinském činu. Syn starého učitele, kterého koruna kdysi místo žaláře poslala do posádky, ubránil s hrstkou mužů brod před nájezdníky. Vojáci ho nosí na ramenou a žádají pro něj rytířský pás.
+
+1. Pasovat ho na rytíře
+2. Jmenovat ho velitelem posádky
+3. Odměnit ho jen zlatem
+
+### 3. Děti hladu  `ozvena_deti_hladu`
+
+*Spouští: `hladomor` → „Nechat to na vůli Boží“ · za 3–5 let*
+
+> Ve hvozdech řádí banda, které lidé říkají Děti hladu. Jsou to sirotci z hladomoru, kdy koruna nechala lid na vůli Boží. Vyrostli, zatvrdli a teď berou to, co jim tehdy nikdo nedal.
+
+1. Vyslat vojsko a bandu vyhladit
+2. Nabídnout jim milost a půdu
+3. Vypsat odměnu za jejich hlavy
+
+### 4. Dluh cti  `ozvena_markrabi`
+
+*Spouští: `zajaty_syn_markrabiho` → „Propustit ho bez výkupného“ · za 2,5–4,5 let*
+
+> Z Marek přijel posel s nečekanou zprávou. Mladý zajatec, kterého koruna kdysi propustila bez výkupného, se stal markrabím. Píše, že dluh cti nezapomněl, a nabízí mír na deset let.
+
+1. Přijmout mír
+2. Žádat raději spojenectví a vojáky
+3. Odmítnout, Marky jsou nepřítel
+
+### 5. Píseň o krvavém dni  `ozvena_masakr`
+
+*Spouští: `vzpoura_v_provincii` → „Potlačit vzpouru vojskem“ (při úspěchu) · za 2,5–4,5 let*
+
+> V kraji [province.name] se zpívá píseň o dni, kdy koruna potlačila vzpouru mečem. Děti padlých dospěly a jejich hněv nezestárl. Na zdech kostelů se objevují nápisy proti koruně.
+
+1. Postavit kapli za padlé a vyhlásit smír
+2. Nápisy smýt a pisatele potrestat
+3. Poslat do kraje výmluvného vyslance
+
+### 6. Návrat z kláštera  `ozvena_klaster_dedic`
+
+*Spouští: `vychova_dedice` → „Poslat ho do kláštera na útesu“ · za 2–3,5 let*
+
+> [heir.name] se vrací z kláštera na útesu. Mluví latinsky, zná zákony i hvězdy. Opat v dopise připomíná, že taková výchova si zaslouží vděčnost, konkrétně pozemky u Brodnice.
+
+1. Darovat klášteru pozemky
+2. Poděkovat, ale nic nedat
+3. Jmenovat dědice do královské rady
+
+### 7. Obvyklá platba  `ozvena_pirati`
+
+*Spouští: `pirati` → „Zaplatit pirátům, ať táhnou jinam“ · za 1,5–3 let*
+
+> Piráti jsou zpátky. Tentokrát nečekají na vyjednávání, přišli si pro „obvyklou platbu“. Kdo zaplatí jednou, platí navždy, smějí se v přístavních krčmách.
+
+1. Zaplatit znovu
+2. Vyplout proti nim
+3. Opevnit přístav
+
+### 8. Dluh se splácí  `ozvena_bylinkarka`
+
+*Spouští: `carodejnice` → „Propustit ji“ · za 1,5–3,5 let*
+
+> Na dvoře propukla horečka a ranhojiči si nevědí rady. Pak se u brány objevila žena, kterou koruna kdysi odmítla vydat církevnímu soudu. Nese byliny a říká, že dluh se splácí.
+
+1. Pustit ji k nemocným
+2. Svěřit nemocné kněžím
+3. Vzít ji do služby jako dvorní ranhojičku
+
+### 9. Vydejte nám je  `ozvena_uprchlici`
+
+*Spouští: `uprchlici` → „Přijmout je“ · za 2–4 let*
+
+> Vesnice uprchlíků z Marek vzkvétá. Pole jsou zoraná, řemeslníci pracují a daně se platí. Teď ale přijel vyslanec z Marek a žádá jejich vydání, prý jsou to markraběcí nevolníci.
+
+1. Odmítnout, jsou to teď naši lidé
+2. Vydat je
+3. Vyplatit markrabímu odstupné
+
+### 10. První učenci  `ozvena_ucenci`
+
+*Spouští: `skola_ucencu` → „Školu založit a financovat“ · za 2,5–4,5 let*
+
+> Z královské školy vyšli první učenci. Jeden předkládá návrh na nové mlýny na Brodnici, druhý chce zmapovat rudné žíly v horách a třetí tvrdí, že umí léčit dobytčí mor.
+
+1. Podpořit mlýny
+2. Podpořit mapování hor
+3. Vzít do služeb koruny všechny tři
+
+### 11. Zlomený slib  `ozvena_zlomeny_slib`
+
+*Spouští: `stary_rytir_umira` → „Slíbit, ale léno dát jinému“ · za 2–3,5 let*
+
+> Syn starého rytíře se dozvěděl, že slib daný jeho otci na smrtelné posteli byl lež. Vyzval nového lenního pána na souboj a celý kraj stojí na jeho straně.
+
+1. Vrátit synovi léno
+2. Povolit souboj, ať rozhodne Bůh
+3. Syna uvěznit pro vzpouru
+
+### 12. Most se zřítil  `ozvena_most`
+
+*Spouští: `most_pres_brodnici` → „Postavit levnější dřevěný most“ · za 2–3,5 let*
+
+> Dřevěný most přes Brodnici, postavený co nejlevněji, se zřítil pod kupeckou karavanou. Utopilo se pět vozků a s nimi zboží za stovky zlatých. Kupci žádají náhradu.
+
+1. Zaplatit náhradu a postavit most z kamene
+2. Opravit dřevěný most
+3. Odmítnout, řeka je vůle Boží
+
+### 13. Stará laskavost  `ozvena_n_pytlaci`
+
+*Spouští: `n_pytlaci` → „Propustit je a dát jim jelena“ · za 1,5–3 let*
+
+> Bývalí pytláci, které rod [dynastyName] kdysi propustil i s jelenem, přiběhli za svítání. V lesích na hranici panství táboří ozbrojenci, kteří nevypadají jako lovci. Pytláci znají každou stezku a nabízejí, že k nim družinu dovedou.
+
+1. Vést družinu jejich stezkami
+2. Přijmout je do služby jako myslivce
+3. Varovat sousední rody
+
+### 14. Vděčnost sousedů  `ozvena_n_vdecny_rod`
+
+*Spouští: `n_pujcka_rodu` → „Půjčit bez úroku“ · za 1,5–3 let*
+
+> [house.HeadTitle] [house.head] z rodu [house.name] nezapomněl na půjčku bez úroku, kterou rod kdysi v nouzi dostal. U královského dvora teď jeho lidé mluví o rodu [dynastyName] jen v dobrém a na tvrz dorazil dar.
+
+1. Přijmout dar
+2. Požádat je raději o přímluvu u krále
+3. Navrhnout spojenectví
+
+### 15. Bedýnka bez erbu  `ozvena_n_pisatel`
+
+*Spouští: `n_nalezeny_dopis` → „Vrátit dopis tiše pisateli“ · za 1,5–3 let*
+
+> Do tvrze dorazila bedýnka bez erbu. Leží v ní list od pisatele dopisu, který rod [dynastyName] kdysi tiše vrátil, místo aby ho zneužil. Stojí v něm jen: „Dluh splácím tím nejcennějším, co mám.“ Pod tím jsou jména, data a částky.
+
+1. Ponechat si tajemství
+2. Předat listinu králi jako důkaz věrnosti
+3. Spálit ji, dluh je splacen
+
+### 16. Krev za krev  `ozvena_n_pomsta`
+
+*Spouští: `n_spiklenci_zvou` → „Udat spiklence králi“ · za 2–3,5 let*
+
+> Spiklenci, které rod [dynastyName] kdysi udal králi, skončili na popravišti. Jejich příbuzní ale ne. [spymaster.Title] [spymaster.name] přináší zprávu: najatý vrah už je na cestě.
+
+1. Nastražit na něj past
+2. Zdvojit stráže a nevycházet
+3. Požádat krále o ochranu
+
+### 17. Cepy pod hradbami  `ozvena_n_rychtar`
+
+*Spouští: `n_robota` → „Trvat na robotě“ · za 2–3,5 let*
+
+> Rychtář, který kdysi prosil o úlevu od roboty, už neprosí. Svolal sedláky ze všech vesnic panství a s cepy a vidlemi stojí pod hradbami tvrze. Chtějí zpět staré právo, nebo hlavu výběrčího.
+
+1. Ulevit jim od roboty
+2. Rozehnat je družinou
+3. Vydat jim výběrčího

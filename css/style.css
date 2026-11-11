@@ -420,6 +420,14 @@ kbd {
   text-shadow: 0 3px 24px rgba(0,0,0,.8);
 }
 
+.scene-echo {
+  margin: .7rem 0 0; max-width: 44rem;
+  font-size: .95rem; font-style: italic; line-height: 1.4;
+  color: rgba(235,227,209,.82); text-shadow: 0 2px 12px rgba(0,0,0,.9);
+}
+.scene-echo b { font-family: var(--font-caps); font-style: normal; font-weight: 400; font-size: .74rem; letter-spacing: .3em; text-transform: uppercase; color: var(--gold); margin-right: .6rem; }
+.scene-echo.crisis b { color: #d9785f; }
+
 .character-plaque {
   position: absolute;
   left: 2.4rem;
@@ -1086,6 +1094,14 @@ kbd {
 .cs-ancestors li { display: flex; flex-direction: column; padding-left: 1rem; border-left: 1px solid var(--gold-dim); }
 .cs-ancestors strong { font-family: var(--font-display); font-weight: 400; font-size: 1.1rem; }
 .cs-ancestors span { font-size: .85rem; color: rgba(235,227,209,.55); }
+.cs-ancestors strong em { font-style: italic; color: var(--gold); }
+.cs-ancestors .cs-reason { font-style: italic; }
+.cs-deeds { list-style: none; margin: .35rem 0 0; padding: 0; display: flex; flex-direction: column; gap: .15rem; }
+.cs-deeds li { padding: 0; border: 0; display: block; font-size: .85rem; color: rgba(235,227,209,.7); }
+.cs-deeds li::before { content: '— '; color: var(--gold-dim); }
+.cs-epithet { margin: -1rem 0 1.6rem; font-size: 1rem; color: rgba(235,227,209,.75); }
+.cs-epithet em { color: var(--gold); font-style: italic; }
+.ending-epithet { font-style: italic; color: var(--gold); margin: -.4rem 0 1.2rem; }
 .plaque-portrait { position: relative; }
 .plaque-portrait img { position: absolute; inset: 0; }
 .cs-pips { grid-column: 2; display: flex; gap: 3px; }

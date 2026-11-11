@@ -25,6 +25,7 @@
 
 import { MORE_EVENTS } from './events_more.js';
 import { NOBLE_EVENTS, NOBLE_QUIET_EVENT } from './events_noble.js';
+import { CRISIS_EVENTS, ECHO_EVENTS, attachEchoHooks } from './events_echoes.js';
 
 const BASE_EVENTS = [
   {
@@ -827,7 +828,7 @@ const BASE_EVENTS = [
   },
 ];
 
-export const EVENTS = [...BASE_EVENTS, ...MORE_EVENTS, ...NOBLE_EVENTS];
+export const EVENTS = attachEchoHooks([...BASE_EVENTS, ...MORE_EVENTS, ...NOBLE_EVENTS, ...CRISIS_EVENTS, ...ECHO_EVENTS]);
 
 // Picked when no other event is due (or now and then by chance): a calm season
 // still lets the ruler spend it on something.
