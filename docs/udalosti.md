@@ -2,7 +2,7 @@
 
 Vygenerováno z `js/events*.js`. Jména v hranatých závorkách hra doplní podle aktuálního stavu.
 
-Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí · Scénář **Sedlák**: 33 událostí (+ 3 krize, 2 ozvěny) · Krize: 7 · Ozvěny rozhodnutí: 17 · Povahy rádců a výchova: 5 · Obchod: 6.
+Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí · Scénář **Sedlák**: 33 událostí (+ 3 krize, 2 ozvěny) · Krize: 7 · Ozvěny rozhodnutí: 17 · Povahy rádců a výchova: 5 · Obchod: 6 · Stavby: 16 (12 království, 4 grunt).
 
 ## Scénář Panovník
 
@@ -1554,3 +1554,131 @@ Přepadení karavany a pirátů přijde samo, když se náklad cestou dostane do
 
 1. Loď postavit
 2. Spokojit se s pronajatými loděmi
+
+## Stavby ve městech a na gruntu
+
+Přijdou jen tehdy, když v sídle stojí příslušná stavba. `[ve městě]` hra nahradí konkrétním sídlem (v Brodu, ve Vlčím Údělu…).
+
+### 1. Oheň nad střechami  `t_pozar`
+
+> [Ve městě] hoří. Oheň vyskočil z pekárny u cesty a vítr ho žene přes doškové střechy. Lidé běhají s vědry, ale plameny jsou rychlejší než oni.
+
+1. Poslat vojáky hasit *(riskantní volba)*
+2. Strhnout domy v cestě ohni
+3. Svolat lid k modlitbě o déšť *(riskantní volba)*
+
+### 2. Horečka v ulicích  `t_nakaza`
+
+> [Ve městě] se lidé začali probouzet s horečkou a skvrnami na krku. Lazebníci krčí rameny a kněží zvoní umíráčkem čím dál častěji.
+
+1. Otevřít špitál nemocným *(jen někdy)*
+2. Zavřít cesty a nikoho nepouštět
+3. Nechat to na lazebnících *(riskantní volba)*
+
+### 3. Cech žádá výsady  `t_cech_vysady`
+
+> Cechmistři [ve městě] přišli v nejlepších šatech a s pečetí na listině. Chtějí, aby nikdo mimo cech nesměl ve městě prodávat sukno — a aby jim to vládce potvrdil navždy.
+
+1. Udělit cechu výsady
+2. Odmítnout — trh má být svobodný *(riskantní volba)*
+3. Výsady prodat za zlato
+
+### 4. Mistr stavitel  `t_stavitel`
+
+> Na staveniště [ve městě] přišel cizí mistr s olovnicí za pasem. Prohlédl lešení, plivl a řekl, že tohle by se svými lidmi postavil za polovinu času. Za odpovídající cenu, pochopitelně.
+
+1. Najmout ho na tuhle stavbu *(jen někdy)*
+2. Nabídnout mu stálou službu *(jen někdy)*
+3. Poslat ho dál
+
+### 5. Kasárna bez žoldu  `t_zold`
+
+> Posádka kasáren [ve městě] dva měsíce neviděla ani groš. Vojáci sedí na nádvoří, místo cvičení hrají v kostky o vlastní zbraně a velitel posílá posla, že dlouho je už neudrží.
+
+1. Vyplatit žold *(jen někdy)*
+2. Slíbit žold po žních *(riskantní volba)*
+3. Rozpustit posádku
+
+### 6. Lupiči před branou  `t_najezd`
+
+> Za úsvitu se z lesa vynořila tlupa lupičů na koních. Míří k branám, protože [ve městě] je co brát: plné sklady, kostelní stříbro a všechno, co se dá odvézt nebo zapálit.
+
+1. Zavřít brány a bránit hradby *(jen někdy)*
+2. Vyjet proti nim *(riskantní volba)*
+3. Vyplatit je *(jen někdy)*
+
+### 7. Obyvatelé chtějí víc  `t_mestska_prava`
+
+> Konšelé [ve městě] přinesli prosbu: sídlo vyrostlo, lidí přibylo a chtějí práva, jaká mají větší místa — vlastní trh, soud a pečeť. Jsou ochotni za ně leccos nabídnout.
+
+1. Udělit práva jako dar
+2. Práva prodat za zlato
+3. Odmítnout
+
+### 8. Poutníci  `t_pout`
+
+> Ke kostelu [ve městě] se sjíždějí poutníci. Prý tam slepá stařena po mši prohlédla. Cesty jsou plné lidí s holemi a mušlemi na kloboucích — a všichni mají hlad i měšec.
+
+1. Vybírat od poutníků mýto
+2. Pohostit poutníky
+
+### 9. Mlynář šidí  `t_mlynar`
+
+> Sedláci, kteří melou [ve městě], si stěžují: mlynář prý bere víc, než mu patří, a mouku vrací lehčí, než přivezli obilí. Mlynář přísahá na svou mlýnskou váhu.
+
+1. Potrestat mlynáře
+2. Nechat ho, mele dobře
+3. Postavit obecní váhu *(jen někdy)*
+
+### 10. Nejlepší žák  `t_skola_zak`
+
+> Opat z klášterní školy [ve městě] přivádí chlapce v obnošené kutně. Syn uhlíře, ale čte latinsky, počítá rychleji než písaři a pamatuje si každé slovo. Opat se ptá, co s ním.
+
+1. Vzít ho do kanceláře
+2. Poslat ho studovat do ciziny *(jen někdy)*
+3. Ať zůstane u mnichů
+
+### 11. Svěcení katedrály  `t_sveceni`
+
+> Poslední kámen je osazen. Katedrála [ve městě] se tyčí nad krajinou a biskup čeká, jak velkolepé má být svěcení. Přijedou hosté z ciziny i z nejzapadlejších vsí.
+
+1. Velkolepé svěcení *(jen někdy)*
+2. Skromná mše
+
+### 12. Podzimní jarmark  `t_jarmark`
+
+> Nové tržiště [ve městě] je plné. Kupci z celé země rozkládají zboží, kejklíři polykají oheň a rychtář se ptá, kolik má letos vybírat tržného.
+
+1. Vybrat plné tržné
+2. Odpustit tržné, ať se sjedou kupci
+
+### 13. Roj na lípě  `t_s_roj` *(Sedlák)*
+
+> Z včelína vyrojily včely a usadily se vysoko v koruně lípy na návsi. Sousedé už mají připravené koše — kdo roj sundá, toho je.
+
+1. Vylézt pro roj *(riskantní volba)*
+2. Nechat ho letět
+
+### 14. Nemoc v chlévě  `t_s_dobytek` *(Sedlák)*
+
+> Kráva v chlévě nežere a stojí se svěšenou hlavou. Jestli je to mor dobytka, do týdne bude chlév prázdný.
+
+1. Zabít nemocný kus
+2. Zavolat kováře, který léčí dobytek *(jen někdy)*
+3. Počkat, ono to přejde *(riskantní volba)*
+
+### 15. Závist sousedů  `t_s_zavist` *(Sedlák)*
+
+> Grunt se rozrůstá a ve vsi se o tom mluví. U studny je slyšet, že si hospodář myslí, že je víc než ostatní. A že by stačila jedna jiskra.
+
+1. Uspořádat hody pro celou ves
+2. Nevšímat si řečí *(riskantní volba)*
+3. Postěžovat si rychtáři
+
+### 16. Pán si všiml  `t_s_pan_podil` *(Sedlák)*
+
+> [Pán] [jméno pána] projížděl kolem gruntu a zastavil koně. Nové stavby si prohlížel dlouho. Druhý den přišel drábův vzkaz: poddaný, který tolik staví, může i víc odvádět.
+
+1. Dát pánovi, co chce *(jen někdy)*
+2. Odmítnout — co jsem postavil, je moje
+3. Tvrdit, že stavby jsou staré *(riskantní volba)*

@@ -163,7 +163,7 @@ export const BUILDINGS = {
   },
   katedrala: {
     name: 'Katedrála', cost: { gold: 40, food: 5 }, turns: 6, minLevel: 4, requires: 'kostel',
-    yearly: { faith: 3, prestige: 1, legitimacy: 1 }, onBuild: { prestige: 6, faith: 5 },
+    yearly: { faith: 2, prestige: 1 }, onBuild: { prestige: 6, faith: 5, legitimacy: 3 },
     text: 'Stavba na celou generaci. Až bude stát, poutníci přijdou z půli světa.',
   },
   lodenice: {
@@ -305,7 +305,8 @@ export function currentProject(town) {
 const CREWS = { panovnik: 2, slechtic: 1, sedlak: 1 };
 
 export function crewLimit(state) {
-  return CREWS[state.scenario] || 1;
+  // a master builder taken into service (event t_stavitel) runs one more crew
+  return (CREWS[state.scenario] || 1) + (state.flags && state.flags.mistr_stavitel ? 1 : 0);
 }
 
 /** Projects running in the player's own settlements. */
@@ -511,6 +512,71 @@ export function processBuilding(state) {
     }
   }
   return { gold, food, news };
+}
+
+// ---------- events (see events_build.js) ----------
+
+/** Has the town this building standing (finished)? builtOnly = raised by the player, not there from the start. */
+export function hasBuilding(state, id, key, builtOnly = false) {
+  const town = state.towns && state.towns[id];
+  return !!town && town.buildings.some((b) => b.key === key && b.ready && (!builtOnly || !b.base));
+}
+
+/** Own settlements (ids) that pass a test; the farm only for a peasant. */
+export function ownTowns(state, test = () => true) {
+  return Object.keys(ensureTowns(state)).filter((id) => ownsTown(state, id) && test(id, state.towns[id]));
+}
+
+const pickOne = (list) => list[Math.floor(Math.random() * list.length)];
+
+/**
+ * Branch effect `town` of an event, on the settlement in context (or fx.at):
+ *   destroy: 'random' | <key>   — a finished building is lost (walls and cathedrals stand)
+ *   start: <key>                — construction begins for free, if there is room
+ *   hurry: n                    — the work in progress ends n seasons sooner
+ *   levelUp: true               — the settlement rises a level at once
+ */
+export function applyTownEffects(state, ctxTown, fx, notes) {
+  if (!fx) return;
+  const id = fx.at || ctxTown;
+  if (!id || !settlementDef(id)) return;
+  const town = townOf(state, id);
+  const def = settlementDef(id);
+  const own = ownsTown(state, id); // only the player's own towns get gifts; harm can come anywhere
+  if (fx.destroy) {
+    const pool = town.buildings.filter((b) => b.ready && !['hradby', 'katedrala'].includes(b.key)
+      && (fx.destroy === 'random' || b.key === fx.destroy));
+    const b = pickOne(pool);
+    if (b) {
+      town.buildings = town.buildings.filter((x) => x !== b);
+      notes.push({ text: `Zničeno ${def.loc}: ${buildingDef(b.key).name.toLowerCase()}`, tone: 'neg' });
+    }
+  }
+  if (fx.start && own) {
+    const bdef = buildingDef(fx.start);
+    const slots = slotCount(id, town.level);
+    let slot = -1;
+    for (let i = 0; i < slots; i++) if (!town.buildings.some((b) => b.slot === i)) { slot = i; break; }
+    if (bdef && catalogFor(id)[fx.start] && slot >= 0 && !currentProject(town) && !town.buildings.some((b) => b.key === fx.start)) {
+      town.buildings.push({ key: fx.start, slot, ready: false, start: state.turn, done: state.turn + bdef.turns });
+      notes.push({ text: `Začala stavba ${def.loc}: ${bdef.name.toLowerCase()}`, tone: 'pos' });
+    }
+  }
+  if (fx.hurry && own) {
+    const b = town.buildings.find((x) => !x.ready);
+    const target = b || town.upgrade;
+    if (target) {
+      target.done = Math.max(state.turn + 1, target.done - fx.hurry);
+      notes.push({ text: `Stavba ${def.loc} bude hotová dřív`, tone: 'pos' });
+    }
+  }
+  if (fx.levelUp && own) {
+    const to = town.level + 1;
+    if (to <= maxLevel(id) && upgradeSpec(id, to) && !town.upgrade) {
+      town.level = to;
+      notes.push({ text: `${def.name}: ${levelName(id, to).toLowerCase()}`, tone: 'pos' });
+    }
+  }
 }
 
 /** How the player's buildings in a province shift the unrest and loyalty it settles at (capped). */

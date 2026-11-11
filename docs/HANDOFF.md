@@ -80,13 +80,14 @@ musí být aktivní, jinak je mapa skrytá. Screenshoty ukládat mimo repozitá�
 | `js/events_echoes.js` | krize (vyčerpané zdroje) a ozvěny rozhodnutí + tabulka `ECHO_HOOKS` |
 | `js/events_court.js` | události podle povah rádců + výchova dědice u šlechtice |
 | `js/events_trade.js` | přepadení karavany, piráti, cizí kupec, clo, hlad na severu, vlastní loď |
+| `js/events_build.js` | 16 událostí kolem staveb (požár, nákaza, cech, žold, nájezd, městská práva, poutníci… a 4 pro grunt) |
 | `docs/gemini-prompts.md` | objednávkový list obrázků (prompty, stav, dávkový prompt) |
 | `docs/udalosti.md` | čitelný přehled všech událostí a voleb |
 | `tools/sim/` | simulace (viz výše) |
 | `tools/images/process_batch.py` | zpracování dávky obrázků (detekce a oprava tmavého pruhu, ořez a změna velikosti) |
 
-**Celkem:** ~10 500 řádků JS, 186 událostí (95 Panovník, 39 Šlechtic, 37 Sedlák,
-15 pro více scénářů).
+**Celkem:** ~10 500 řádků JS, 202 událostí (95 Panovník, 39 Šlechtic, 41 Sedlák,
+27 pro více scénářů — z toho 12 událostí o stavbách společných Panovníkovi a Šlechtici).
 
 ### Formát události (zkráceně)
 
@@ -168,6 +169,8 @@ obchodní `trade`, `tradeOffer`, `tradeMod`, `tradeStock`.
 - Stavět jde jen ve vlastních krajích (šlechtic jen na svém panství, po korunovaci všude). Cizí sídla jde prohlížet.
 - Stavby, které stojí od začátku (`base: true`), nic navíc nedávají — jsou započtené v původní ekonomice, aby se nezměnilo vyvážení.
 - Ukládá se do `state.towns`; staré uložené hry si sídla vytvoří samy.
+- **Události o stavbách** (`events_build.js`): cílí na konkrétní sídlo (`target` vrací `'town:<id>'`, v textu `{town.loc}` = „v Brodu“, `{town.Loc}`, `{town.name}`). Větev může mít `town: { destroy: 'random' | '<klíč>', start: '<klíč>', hurry: n, levelUp: true, at: '<id>' }`. Stavby tak mají i rizika: požár nebo nájezd může stavbu zničit, hradby nájezd odrazí, špitál zastaví nákazu, mistr stavitel přidá stavební huť (`flags.mistr_stavitel`).
+- Stará událost „Katedrála“ teď při plném financování opravdu začne stavět katedrálu ve Vlčím Údělu; po dostavbě přijde „Svěcení katedrály“.
 - Obrázky budov a sídel jsou volitelné (prompty v `docs/gemini-prompts.md`, sekce 16); po dodání je zapnout v `BUILDING_ART` / `TOWN_ART` v `js/town.js`.
 
 ### Obrázky pro Sedláka
@@ -215,9 +218,9 @@ FIX=s_drab.jpg python3 tools/images/process_batch.py dir1,dir2 <scratch> <repo> 
 | Šlechtic | cílí na trůn (ambice 1), neobchoduje | trůn ~45–49 %, poprava ~38 %, vyhnanství ~7 % |
 | Sedlák | ambice 0,5 | šlechtický stav ~45–50 %, svoboda kolem 10. roku, medián ~25 let; zbytek hlavně zpustlý grunt |
 | všechny | s obchodováním | mírné zlepšení, obchod hru nerozbíjí |
-| Panovník | staví všechno, co jde (bot ve scratchpadu) | zlatý věk ~61 %, kolaps ~31 % (bez stavění ~38 % / ~37 %) |
-| Šlechtic | staví všechno, co jde (náhodné volby) | trůn ~25 % → ~33 %, poprava mírně klesne |
-| Sedlák | staví všechno, co jde (ambice 0) | šlechtický stav ~9 % → ~25 %, zpustlý grunt 84 % → 67 % |
+| Panovník | staví všechno, co jde (bot ve scratchpadu) | zlatý věk ~49 %, kolaps ~25 % (bez stavění ~39 % / ~40 %) |
+| Šlechtic | staví všechno, co jde (náhodné volby) | trůn ~25 % → ~42 %, poprav ubude |
+| Sedlák | staví všechno, co jde (ambice 0) | šlechtický stav ~9 % → ~31 %, zpustlý grunt 84 % → 60 % |
 
 Hlavní páky: šance u `n_smrt_krale` (Šlechtic), ceny `s_vykup` a `s_zemansky_statek`
 a šance rytířské bitvy (Sedlák), ekonomika v `processPeasantEconomy` a `processTurnEconomy`.
@@ -244,4 +247,4 @@ a šance rytířské bitvy (Sedlák), ekonomika v `processPeasantEconomy` a `pro
 - Jedinečná jména i u nové generace dvora (při nástupnictví se mohou opakovat).
 - Rada zatím nezná budoucí důsledky kromě dluhů (příznaky jako `loan_taken`); šlo by ji naučit víc.
 - Případně ukládání do více slotů s přehledem scénáře a přídomku vládce.
-- Stavění: události, které reagují na stavby (požár ve městě bez hradeb, nemoc a špitál, cech žádá privilegia), rada, která doporučuje stavby, a obrázky budov (sekce 16 promptů).
+- Stavění: rada, která doporučuje stavby, další události o stavbách (hlavně pro Sedláka), ozvěny navázané na stavby a obrázky budov (sekce 16 promptů).

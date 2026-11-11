@@ -1443,3 +1443,29 @@ Images:
 | `towns/lodge.jpg` | Sokolov | A few log cabins in a clearing at the edge of a dark endless pine forest, smoke from a charcoal pile. |
 | `towns/village.jpg` | Dubovice, Zářečí, Lipnice | A Bohemian village of thatched cottages around a green with a linden tree, fields all around. |
 | `towns/farm.jpg` | Tvůj grunt | A single peasant farmstead with a cottage, barn and fenced yard, surrounded by strip fields. |
+
+---
+
+## 17. Události o stavbách (volitelné scény, 1:1, cíl 2048 × 2048)
+
+Události fungují s půjčenými obrázky. Vlastní je jen vylepší. Formát a dávkový
+prompt jsou stejné jako v sekci 14.0 (nahrát do `assets/_incoming/`).
+
+| Soubor | Událost | Teď používá | Popis pro Gemini |
+|---|---|---|---|
+| `t_pozar.jpg` | Oheň nad střechami | `pozar_mesta` | Townsfolk and soldiers passing buckets in a chain as fire jumps across thatched roofs of a medieval town at dusk. |
+| `t_nakaza.jpg` | Horečka v ulicích | `mor_v_pristavu` | A narrow medieval street with a marked door, a priest with a hand bell and a cart with covered bodies, pale light. |
+| `t_cech_vysady.jpg` | Cech žádá výsady | `stavka_cechu` | Three guild masters in fine robes presenting a sealed charter in front of a tall guild house with a hanging golden sign. |
+| `t_stavitel.jpg` | Mistr stavitel | `n_kamenny_hrad` | A foreign master builder with a plumb line and compasses inspecting wooden scaffolding on a half-built stone wall, masons watching. |
+| `t_zold.jpg` | Kasárna bez žoldu | `zold` | Idle soldiers sitting in a barracks courtyard playing dice on a drum, weapons leaning on the wall, an officer frowning. |
+| `t_najezd.jpg` | Lupiči před branou | `pohranicni_najezd` | Mounted raiders with torches riding out of a misty forest at dawn toward the gate of a small walled town. |
+| `t_mestska_prava.jpg` | Obyvatelé chtějí víc | `n_trzni_pravo` | Town aldermen kneeling before a ruler, offering a petition scroll and a purse, a growing town visible through the window. |
+| `t_pout.jpg` | Poutníci | `poutnik_zazrak` | A stream of pilgrims with staffs and scallop shells on their hats walking up a road toward a small stone church. |
+| `t_mlynar.jpg` | Mlynář šidí | `n_mlyn` | Angry peasants with sacks of grain arguing with a floury miller beside a balance scale in front of a windmill. |
+| `t_skola_zak.jpg` | Nejlepší žák | `skola_ucencu` | An abbot presenting a thin boy in a worn habit holding an open book, in a stone monastery schoolroom with candles. |
+| `t_sveceni.jpg` | Svěcení katedrály | `katedrala` | A bishop blessing a newly finished Gothic cathedral, a great crowd on the square, banners and incense smoke. |
+| `t_jarmark.jpg` | Podzimní jarmark | `trh_v_brode` | A crowded autumn fair on a town market square, striped stalls, a fire-eater and merchants weighing goods. |
+| `t_s_roj.jpg` | Roj na lípě | `bohata_uroda` | A peasant on a ladder reaching for a dark swarm of bees hanging in a linden tree on a village green, neighbours with baskets below. |
+| `t_s_dobytek.jpg` | Nemoc v chlévě | `s_spatna_uroda` | A worried peasant couple with a lantern beside a sick cow with a lowered head in a dim cowshed. |
+| `t_s_zavist.jpg` | Závist sousedů | `pozar_mesta` | Villagers whispering at a well, glancing sideways at a prosperous farmstead with a new barn across the green. |
+| `t_s_pan_podil.jpg` | Pán si všiml | `s_pan_navsteva` | A lord on horseback stopped at a farm fence, looking over new farm buildings while a peasant holds his cap. |

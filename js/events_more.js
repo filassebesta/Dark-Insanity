@@ -819,7 +819,8 @@ export const MORE_EVENTS = [
       {
         label: 'Financovat stavbu',
         hintType: 'resource', hintKey: 'faith',
-        effects: { gold: -30, faith: 10, prestige: 6, legitimacy: 3 },
+        effects: { gold: -30, faith: 5 },
+        town: { at: 'capital', start: 'katedrala' }, // rises on a plot in Vlčí Úděl; the rest of the glory comes when it stands
         chronicle: 'Byl položen základní kámen katedrály. Kameníci z celé země se sjíždějí do hlavního města.',
       },
       {

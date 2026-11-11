@@ -3,7 +3,7 @@ import { makeChronicleEntry, inheritTraits } from './state.js';
 import { EVENTS, QUIET_EVENTS } from './events.js';
 import { roleLabel, QUIRK_ROLES, randomQuirk, quirkLabel } from './court.js';
 import { processTrade, resolveIncident, resolveOffer, addTradeMod, ensureTrade, cargoTokens, GOODS, MAX_STOCK } from './trade.js';
-import { processBuilding, buildingDrift } from './build.js';
+import { processBuilding, buildingDrift, applyTownEffects, settlementDef } from './build.js';
 
 const TRAIT_MIN = 1;
 const TRAIT_MAX = 10;
@@ -43,6 +43,11 @@ export function interpolate(state, text) {
     });
   }
   Object.assign(dict, cargoTokens(state));
+  const town = ctx.town && settlementDef(ctx.town);
+  if (town) {
+    // {town.name} Brod, {town.loc} v Brodu, {town.Loc} V Brodu
+    Object.assign(dict, { 'town.name': town.name, 'town.loc': town.loc, 'town.Loc': town.loc[0].toUpperCase() + town.loc.slice(1) });
+  }
   const lord = lordOf(state);
   if (lord) {
     Object.assign(dict, {
@@ -370,6 +375,7 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
   applyCourtReplacement(state, branch.replaceCourt, notes, meta);
   applyHeirTraits(state, branch.heirTraits, notes);
   applyTradeEffects(state, branch, notes);
+  applyTownEffects(state, state.eventContext?.town, branch.town, notes);
   recordCourtHistory(state, meta, touched, outcome);
   scheduleEcho(state, branch.echo, meta);
   tallyReign(state, branch, meta, outcome);
@@ -688,7 +694,11 @@ export function pickNextEvent(state) {
   if (event.onPick) event.onPick(state); // e.g. a buyer asking for whatever fills the warehouse
   if (event.target) {
     const t = event.target(state);
-    if (state.provinces.some((p) => p.id === t)) state.eventContext = { province: t };
+    // 'town:<id>' = a settlement; its province counts as the event's province too
+    if (typeof t === 'string' && t.startsWith('town:')) {
+      const id = t.slice(5);
+      state.eventContext = { town: id, province: settlementDef(id).province };
+    } else if (state.provinces.some((p) => p.id === t)) state.eventContext = { province: t };
     else if ((state.houses || []).some((h) => h.id === t)) state.eventContext = { house: t };
     else state.eventContext = { role: t };
   }
