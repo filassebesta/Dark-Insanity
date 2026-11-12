@@ -1,5 +1,7 @@
 # Insanity Kingdom — prompty pro Gemini (obrázky)
 
+> **Nové obrázky (stavby, sídla, válka, zbojníci, zranění) jsou připravené k odeslání po dávkách v `docs/obrazky-k-dodani.md`.**
+
 Tenhle soubor je „objednávkový list“ obrázků. Každý prompt je hotový ke
 zkopírování do Gemini (Gemini app → **Vytvořit obrázek**). U každého je:
 
