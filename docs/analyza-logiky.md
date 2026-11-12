@@ -38,6 +38,6 @@ král → císař). Zdroj: čtení kódu všech událostí, simulace tisíců he
 
 ## Vyvážení (doporučení)
 
-- **Nejtěžší je teď začátek.** Dřív si začátečník mohl vybrat snadného Panovníka; teď všichni začínají jako sedlák a zhruba polovina náhodně hrajících botů skončí zpustlým gruntem do 25 let. Pro skutečného hráče je to méně, ale stojí za zvážení zmírnit první roky (např. menší podzimní dávky v prvních 3 letech, nebo „druhá šance“: místo konce hry rod přejde na jiný grunt s prázdnou truhlou).
+- **Začátek za sedláka (vyřešeno):** nebyl těžký, ale stál na roční „práci na gruntu“, kterou šlo zadat jen z mapy. Rozumný hráč, který ji neobjevil, krachoval ve 23 % her. Teď ji příběh nabídne po žních sám (`s_prace_na_gruntu`); krachy rozumného hráče klesly na ~2 %, napůl chybujícího z ~50 % na ~23 %.
 - **Cesta ke koruně je dlouhá** (medián ~65 let, 2–3 generace). To je záměr kroniky rodu, ale povstání ji zkracuje pro odvážné.
 - **Císař** je pro hráče, který válčí: bot, který neustále táhne na sousedy s plnou hotovostí, se jím stane zhruba v polovině her.

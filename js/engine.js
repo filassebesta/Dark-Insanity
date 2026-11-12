@@ -423,6 +423,7 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
     if (a) notes.push({ text: `Ambice: ${a.name} (do ${a.years} let)`, tone: 'pos' });
   }
   if (branch.ambitionSkip) skipAmbition(state);
+  if (branch.decree) notes.push(...(issueDecree(state, branch.decree) || [])); // the year's work chosen in a story (events_farm.js)
   applyWarEffects(state, branch.war, notes); // a war event moves the campaign
   recordCourtHistory(state, meta, touched, outcome);
   scheduleEcho(state, branch.echo, meta);
@@ -521,7 +522,7 @@ export function issueDecree(state, key, provinceId) {
   applyEffects(state, d.effects);
   state.decreeYear = state.year;
   const where = d.prov ? ` (${state.provinces.find((p) => p.id === provinceId).name.replace(/ \(.*\)$/, '')})` : '';
-  state.chronicle.push(makeChronicleEntry(state, `Výnos roku ${state.year}: ${d.label}${where}.`));
+  state.chronicle.push(makeChronicleEntry(state, `${isPeasant(state) ? 'Práce na gruntu' : 'Výnos'} roku ${state.year}: ${d.label}${where}.`));
   return notes;
 }
 
@@ -1191,6 +1192,9 @@ export function advanceTurn(state) {
   tradeNews.unshift(...processWar(state));
   // now and then the ruler is asked to set a goal for the coming years
   if (!state.pendingEvent && readyToOffer(state)) state.pendingEvent = 'ambice';
+  // after the harvest a farm that got no extra work this year gets its chance in the story
+  // (autumn, or winter when the autumn was taken by something more pressing)
+  if (!state.pendingEvent && isPeasant(state) && state.seasonIndex >= 2 && decreeAvailable(state)) state.pendingEvent = 's_prace_na_gruntu';
   const event = pickNextEvent(state);
   state.currentEvent = event ? event.id : null;
   return { turnSummary, event, successionOccurred, gameOver: null, tradeNews };

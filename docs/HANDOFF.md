@@ -253,6 +253,7 @@ obchodní `trade`, `tradeOffer`, `tradeMod`, `tradeStock`.
 - **Mapa světa:** tlačítko „Svět“ v hlavičce mapy (`world.js`); pod hranicemi je malba `assets/map/world_map.jpg` (2000 × 1342, hranice obtažené podle ní, funkce `P` přepočítává na 1264 × 848), bez ní se kreslí SVG. Klik na zemi → panel s vládcem, silou, vztahem a tlačítkem „Připravit tažení“. Vlčí Úděl vrací na mapu království.
 - **Tokeny rodu panovníka:** `{king.title}`/`{king.Title}` (král/královna), `{K:…|…}` (podle krále), `{F:…|…}` a `{formerKing.name}` (sesazený), `{house.gen}` (2. pád rodu: „z rodu pánů z Bílé Brány“). Názvy událostí se teď taky interpolují.
 - **Opravy návazností** (audit): sňatek dědice jen jeden napříč stupni (`flags.heir_married`), noví králové mívají dědice, smrt vzdáleného krále nemění přízeň pána, rádci mimo královský dvůr v 66+ letech umírají a jsou nahrazeni, nová domácnost po nástupnictví odpovídá věku vládce, nevolník nedostává události o zahraničním obchodu.
+- **Začátek za sedláka:** grunt bez roční „práce na gruntu“ (výnos z mapy) chátrá; kdo ji neobjevil, krachoval (rozumný hráč 23 %). Když hráč do podzimu nic nenaplánuje, přijde po žních volná událost `s_prace_na_gruntu` (`events_farm.js`) se stejnými možnostmi; větev `decree: '<klíč>'` zadá práci stejně jako mapa (`issueDecree`). Kdo mapu používá, ji neuvidí. Simulace mají „rozumného hráče“ `tools/sim/smart.mjs` (váží účinky voleb podle toho, čeho je málo; parametr = podíl náhodných voleb). Pozor: čistě náhodný bot s touto událostí vychází hůř, protože v ní volí naslepo místo rozumné práce z mapy — to je vlastnost bota, ne hry.
 - Zbývající drobnosti z auditu: `docs/analyza-logiky.md`. Obrázky kariéry (`docs/obrazky-kariera.md`) jsou všechny dodané: scény kapitol a povstání, císař a císařovna (`ruler_emperor_*`, bez nich nosí portrét krále), cizí panovníci (`realm_<země>_<pohlaví>.jpg`) a mapa světa.
 
 ## 5. Obrázky — jak to funguje a co chybí
@@ -294,7 +295,10 @@ FIX=s_drab.jpg python3 tools/images/process_batch.py dir1,dir2 <scratch> <repo> 
 | Scénář | Bot | Výsledek |
 |---|---|---|
 | Panovník | náhodné volby | medián ~33 let; zlatý věk ~38 %, kolaps ~38 %, zbytek přežije 100 let |
-| Celá kronika | `sim_career.mjs`, ambice 0,7 | svobodník ~90 % (rok ~10), erb ~50 % (rok ~25), významný šlechtic ~48 %, koruna ~30–34 % (rok ~65); nejčastější konec je zpustlý grunt (~45 %) |
+| Sedlák, rozumný hráč (`smart.mjs`) | práce na gruntu jen z příběhu (podzimní událost `s_prace_na_gruntu`), 35 % chybných voleb | zkrachovalý grunt ~2 % (bez podzimní události 23 %), erb medián rok ~21 |
+| Sedlák, napůl chybující hráč | 60 % chybných voleb | zkrachovalý grunt ~23 % (bez podzimní události ~50 %) |
+| Celá kronika, rozumný hráč | `SMART=0.4 sim_career.mjs 400 0.7` | svobodník 98 % (r. 7), erb 96 % (r. 19), koruna ~71 % (r. ~58) |
+| Celá kronika | `sim_career.mjs`, ambice 0,7 (náhodné volby) | svobodník ~90 % (rok ~10), erb ~50 % (rok ~25), významný šlechtic ~48 %, koruna ~30–34 % (rok ~65); nejčastější konec je zpustlý grunt (~45 %) |
 | Šlechtic | cílí na trůn (ambice 1), neobchoduje | trůn ~42–55 %, poprava ~35 % (noví králové teď mívají dospělé dědice, nárok je těžší; povstání bot nepoužívá) |
 | Sedlák | ambice 0,5 | šlechtický stav ~45–50 %, svoboda kolem 10. roku, medián ~25 let; zbytek hlavně zpustlý grunt |
 | všechny | s obchodováním | mírné zlepšení, obchod hru nerozbíjí |

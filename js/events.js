@@ -34,6 +34,7 @@ import { AMBITION_EVENTS } from './events_ambition.js';
 import { WAR_EVENTS } from './events_war.js';
 import { BANDIT_EVENTS } from './events_bandits.js';
 import { CAREER_EVENTS } from './events_career.js';
+import { FARM_EVENTS } from './events_farm.js';
 import { PEASANT_EVENTS, PEASANT_CRISES, PEASANT_ECHOES, PEASANT_QUIET_EVENT } from './events_peasant.js';
 
 const BASE_EVENTS = [
@@ -845,7 +846,7 @@ const BASE_EVENTS = [
   },
 ];
 
-export const EVENTS = attachEchoHooks([...BASE_EVENTS, ...MORE_EVENTS, ...NOBLE_EVENTS, ...COURT_EVENTS, ...TRADE_EVENTS, ...BUILD_EVENTS, ...INJURY_EVENTS, ...AMBITION_EVENTS, ...WAR_EVENTS, ...BANDIT_EVENTS, ...PEASANT_EVENTS, ...CRISIS_EVENTS, ...PEASANT_CRISES, ...ECHO_EVENTS, ...PEASANT_ECHOES, ...CAREER_EVENTS]);
+export const EVENTS = attachEchoHooks([...BASE_EVENTS, ...MORE_EVENTS, ...NOBLE_EVENTS, ...COURT_EVENTS, ...TRADE_EVENTS, ...BUILD_EVENTS, ...INJURY_EVENTS, ...AMBITION_EVENTS, ...WAR_EVENTS, ...BANDIT_EVENTS, ...PEASANT_EVENTS, ...CRISIS_EVENTS, ...PEASANT_CRISES, ...ECHO_EVENTS, ...PEASANT_ECHOES, ...CAREER_EVENTS, ...FARM_EVENTS]);
 
 // Picked when no other event is due (or now and then by chance): a calm season
 // still lets the ruler spend it on something.
