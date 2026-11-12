@@ -64,7 +64,7 @@ def fix(a, y):
     return out
 
 def target(name):
-    if name.startswith(('ruler_', 'realm_')) or name.split('_')[0] == 's' and name.rsplit('_', 1)[-1] in ('male.jpg', 'female.jpg'):
+    if name.startswith(('ruler_', 'realm_', 'suitor_', 'child_')) or name.split('_')[0] == 's' and name.rsplit('_', 1)[-1] in ('male.jpg', 'female.jpg'):
         return 'portraits', (1024, 1280)
     if name.startswith('ending_'):
         return 'endings', (1365, 768)

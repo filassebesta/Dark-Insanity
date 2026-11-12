@@ -87,6 +87,7 @@ function newSuitor(state) {
     kindKey: i, kindLabel: k.kind[g].replace('{house}', houseGen), bio: k.text[g],
     affection: randInt(10, 30), quirk: randomQuirk(), traits: inheritTraits(),
     dowry: { ...k.dowry }, house, realm: k.realm || null, alive: true,
+    portrait: `suitor_${state.scenario}_${i}_${gender}`, // assets/portraits, see docs/obrazky-rodina.md
   };
 }
 
@@ -103,7 +104,7 @@ export function marry(state, i) {
   if (!s) return '';
   state.spouse = {
     role: 'spouse', name: s.name, gender: s.gender, age: s.age, alive: true,
-    loyalty: clamp(55 + Math.round(s.affection / 4)), quirk: s.quirk, traits: s.traits,
+    loyalty: clamp(55 + Math.round(s.affection / 4)), quirk: s.quirk, traits: s.traits, portrait: s.portrait,
     bio: `${s.kindLabel[0].toUpperCase()}${s.kindLabel.slice(1)}. ${s.bio} Svatba z lásky, ne z povinnosti.`,
   };
   for (const [k, v] of Object.entries(s.dowry || {})) if (state.resources[k] !== undefined) state.resources[k] = clamp(state.resources[k] + v);

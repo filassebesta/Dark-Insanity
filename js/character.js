@@ -56,9 +56,13 @@ window.__portraitFallback = (img) => {
 
 /** Court member portrait files: assets/portraits/<role>_<male|female>.jpg (or .png). */
 export function memberPortraitCandidates(c, role, scenario) {
+  const g = c.gender === 'male' ? 'male' : 'female';
+  // a person with a face of their own (a suitor, and the spouse they became: family.js), a small child
+  const own = c.portrait ? [`assets/portraits/${c.portrait}.jpg`] : [];
+  const small = (role === 'heir' || role === 'child') && c.age < 7 ? [`assets/portraits/child_${g}.jpg`] : [];
   // a peasant's household has its own faces (s_<role>_<gender>), never the royal court's
-  const base = `assets/portraits/${scenario === 'sedlak' ? 's_' : ''}${role}_${c.gender === 'male' ? 'male' : 'female'}`;
-  return [`${base}.jpg`, `${base}.png`];
+  const base = `assets/portraits/${scenario === 'sedlak' ? 's_' : ''}${role === 'child' ? 'heir' : role}_${g}`;
+  return [...own, ...small, `${base}.jpg`, `${base}.png`];
 }
 
 function reignYears(state) {
