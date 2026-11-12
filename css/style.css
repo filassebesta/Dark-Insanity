@@ -1643,3 +1643,23 @@ kbd {
 .talk-topic span { font-size: .8rem; color: var(--gold); }
 .talk-table:empty { display: none; }
 .talk-table .dice-panel { color: var(--ink); }
+
+/* ---------- gear (js/gear.js) and the ally in a fight ---------- */
+.cs-gear-sum { margin: 0 0 .7rem; color: rgba(235,227,209,.75); }
+.cs-gear-sum b { color: var(--gold-bright); font-weight: 600; }
+.cs-gear { list-style: none; padding: 0; margin: 0 0 1.2rem; display: grid; gap: .3rem; }
+.cs-gear li { display: grid; grid-template-columns: 4.5rem 11rem 1fr; gap: .6rem; align-items: baseline; font-size: .95rem; color: rgba(235,227,209,.6); }
+.cs-gear b { font-family: var(--font-display); font-weight: 400; font-size: 1.05rem; color: var(--paper); }
+.cs-gear em { font-style: normal; font-size: .82rem; color: var(--gold); }
+.cs-sub small { font-family: var(--font-body); letter-spacing: 0; text-transform: none; color: rgba(235,227,209,.55); font-weight: 400; }
+.gear-shop { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: .5rem; margin-bottom: 2.2rem; }
+.gear-buy { font: inherit; text-align: left; display: grid; gap: .15rem; padding: .6rem .75rem; border: 1px solid rgba(200,164,106,.3); background: rgba(13,11,9,.35); color: var(--paper); cursor: pointer; border-radius: 3px; position: relative; }
+.gear-buy:hover:not([disabled]) { border-color: var(--gold); background: rgba(200,164,106,.12); }
+.gear-buy[disabled] { opacity: .5; cursor: not-allowed; }
+.gear-buy.owned { opacity: .75; border-color: rgba(156,188,108,.5); }
+.gear-buy b { font-family: var(--font-display); font-weight: 400; font-size: 1.05rem; padding-right: 4rem; }
+.gear-buy span { font-size: .85rem; color: rgba(235,227,209,.65); }
+.gear-buy em { font-style: normal; font-size: .8rem; color: var(--gold); }
+.gear-buy i { position: absolute; top: .6rem; right: .75rem; font-style: normal; font-size: .85rem; color: var(--gold-bright); }
+.cb-ally { grid-column: 1 / -1; font-size: .78rem; color: #3f6b2a; }
+@media (max-width: 560px) { .cs-gear li { grid-template-columns: 4rem 1fr; } .cs-gear em { grid-column: 2; } }

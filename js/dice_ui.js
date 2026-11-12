@@ -129,10 +129,11 @@ export function openCombat(state, choice, onDone) {
       <div class="cb-exchange">
         ${last.you ? diceLine(last.you.a, last.you.at - last.you.a.reduce((x, y) => x + y, 0), last.you.at, 'Ty') : ''}
         ${last.you ? diceLine(last.you.d, last.you.df - last.you.d.reduce((x, y) => x + y, 0), last.you.df, foe.name) : ''}
+        ${last.ally ? diceLine(last.ally.a, last.ally.at - last.ally.a.reduce((x, y) => x + y, 0), last.ally.at, `${c.ally.title} ${c.ally.name}`) : ''}
         ${last.foe ? diceLine(last.foe.a, last.foe.at - last.foe.a.reduce((x, y) => x + y, 0), last.foe.at, `${foe.name} útočí`) : ''}
         ${last.foe ? diceLine(last.foe.d, last.foe.df - last.foe.d.reduce((x, y) => x + y, 0), last.foe.df, 'Tvá obrana') : ''}
       </div>
-      <ul class="cb-log">${last.lines.map((l) => `<li class="${l.tone}">${esc(l.text)}</li>`).join('')}</ul>` : `<p class="cb-intro">${esc(def.text)} Hází se k6 — šestka se hází znovu a přičítá. Útok musí přehodit obranu.</p>`;
+      <ul class="cb-log">${last.lines.map((l) => `<li class="${l.tone}">${esc(l.text)}</li>`).join('')}</ul>` : `<p class="cb-intro">${esc(def.text)} Hází se k6 — šestka se hází znovu a přičítá. Útok musí přehodit obranu.${c.ally ? ` Po tvém boku stojí ${esc(c.ally.title.toLowerCase())} ${esc(c.ally.name)}.` : ''}${c.allyRefused ? ` ${esc(c.allyRefused)}` : ''}</p>`;
     const over = c.over;
     const verdict = over ? (['win', 'scared', 'broke'].includes(over)
       ? '<div class="dice-verdict pos"><b>Vítězství</b><span>Nepřítel je poražen.</span></div>'
@@ -142,7 +143,7 @@ export function openCombat(state, choice, onDone) {
       <div class="dice-panel combat-panel">
         <div class="dice-head"><span class="dice-over">Souboj · kolo ${c.round + (over ? 0 : 1)} · hod k6+</span><b>${esc(choice.label)}</b></div>
         <div class="cb-fighters">
-          <div class="cb-f you"><span class="cb-name">${esc(you.name)}</span>${hpBar(you.hp, you.maxHp)}<span class="cb-nums">ÚČ ${you.uc} · OČ ${you.oc} · zbraň +${you.dmg}</span></div>
+          <div class="cb-f you"><span class="cb-name">${esc(you.name)}</span>${hpBar(you.hp, you.maxHp)}<span class="cb-nums">ÚČ ${you.uc} · OČ ${you.oc} · zbraň +${you.dmg}</span>${c.ally ? `<span class="cb-ally">+ ${esc(c.ally.title)} ${esc(c.ally.name)} (ÚČ ${c.ally.uc})</span>` : ''}</div>
           <div class="cb-vs">⚔</div>
           <div class="cb-f foe"><span class="cb-name">${esc(foe.name)}</span>${hpBar(foe.hp, foe.maxHp)}<span class="cb-nums">ÚČ ${foe.uc} · OČ ${foe.oc - foe.ocMalus}${foe.ocMalus ? ' (lest)' : ''} · zbraň +${foe.dmg}</span></div>
         </div>

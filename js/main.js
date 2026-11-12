@@ -551,6 +551,20 @@ document.addEventListener('kingdom:build', (e) => {
   if (e.detail.message) toast(e.detail.message);
 });
 
+// gear bought in the character sheet
+document.addEventListener('kingdom:buy', async (e) => {
+  if (!currentState) return;
+  const { buyItem } = await import('./gear.js');
+  const res = buyItem(currentState, e.detail.key);
+  if (!res.error) saveGame(currentState);
+  refreshAllPanels();
+  const view = document.getElementById('character-view');
+  const scroll = view.scrollTop;
+  openCharacter(currentState);
+  view.scrollTop = scroll;
+  toast(res.error || res.message);
+});
+
 // a conversation at court: save, refresh the court and show the answer in the sheet
 document.addEventListener('kingdom:talk', (e) => {
   if (!currentState) return;

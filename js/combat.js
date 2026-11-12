@@ -8,20 +8,22 @@
 // No DOM here — combat_ui.js draws it.
 
 import { effectiveTraits, injuryMods, injure } from './injuries.js';
+import { gearMods } from './gear.js';
+import { roleLabel } from './court.js';
 
 // hp: lives · uc / oc: attack and defence numbers · dmg: weapon · nerve: how hard it is to scare off
 // lethal: a lost fight is a real wound (not just bruises) · wounds: what a lost fight leaves
 export const ENEMIES = {
   rvaci: { name: 'Rváči z krčmy', plural: true, hp: 15, uc: 3, oc: 3, dmg: 0, nerve: 3, wounds: ['pohmozdeni', 'pohmozdeni', 'zlomenina', 'jizva'], text: 'Tři opilí žoldnéři s pěstmi jako palice a jedním stolem navíc.' },
   zbojnici: { name: 'Zbojníci', plural: true, hp: 17, uc: 3, oc: 3, dmg: 1, nerve: 3, lethal: true, wounds: ['rana', 'zlomenina', 'jizva', 'oko', 'ruka'], text: 'Tlupa zbojníků se sekerami a kosami nasazenými na stojato.' },
-  hejtman: { name: 'Zbojnický hejtman', hp: 16, uc: 4, oc: 3, dmg: 2, nerve: 5, lethal: true, wounds: ['rana', 'jizva', 'oko', 'ruka', 'noha'], text: 'Vůdce tlupy s valaškou a bez špetky strachu.' },
-  vrah: { name: 'Najatý vrah', hp: 11, uc: 4, oc: 3, dmg: 2, nerve: 6, lethal: true, wounds: ['rana', 'rana', 'jizva', 'oko'], text: 'Muž ve tmě s dýkou, která už zabíjela.' },
+  hejtman: { duel: true, name: 'Zbojnický hejtman', hp: 16, uc: 4, oc: 3, dmg: 2, nerve: 5, lethal: true, wounds: ['rana', 'jizva', 'oko', 'ruka', 'noha'], text: 'Vůdce tlupy s valaškou a bez špetky strachu.' },
+  vrah: { duel: true, name: 'Najatý vrah', hp: 11, uc: 4, oc: 3, dmg: 2, nerve: 6, lethal: true, wounds: ['rana', 'rana', 'jizva', 'oko'], text: 'Muž ve tmě s dýkou, která už zabíjela.' },
   vlci: { name: 'Vlčí smečka', hp: 16, uc: 3, oc: 3, dmg: 1, nerve: 2, lethal: true, wounds: ['rana', 'kulhani', 'noha', 'zlomenina'], text: 'Šedé stíny mezi stromy. Vůdce smečky je velký jako tele.' },
   vlk: { name: 'Vlk', hp: 11, uc: 3, oc: 2, dmg: 1, nerve: 2, lethal: true, wounds: ['rana', 'kulhani', 'pohmozdeni'], text: 'Vyhladovělý vlk u ovčína, zuby vyceněné.' },
-  rytir: { name: 'Rytíř v plné zbroji', hp: 14, uc: 4, oc: 3, dmg: 1, nerve: 6, wounds: ['pohmozdeni', 'zlomenina', 'oko', 'jizva', 'kulhani'], text: 'Zkušený turnajový rytíř s dřevcem a štítem s cizím erbem.' },
-  souper: { name: 'Šlechtic s mečem', hp: 14, uc: 4, oc: 3, dmg: 1, nerve: 5, lethal: true, wounds: ['rana', 'jizva', 'zlomenina', 'oko'], text: 'Uražený šlechtic, který s mečem zachází líp než s rýmy.' },
+  rytir: { duel: true, name: 'Rytíř v plné zbroji', hp: 14, uc: 4, oc: 3, dmg: 1, nerve: 6, wounds: ['pohmozdeni', 'zlomenina', 'oko', 'jizva', 'kulhani'], text: 'Zkušený turnajový rytíř s dřevcem a štítem s cizím erbem.' },
+  souper: { duel: true, name: 'Šlechtic s mečem', hp: 14, uc: 4, oc: 3, dmg: 1, nerve: 5, lethal: true, wounds: ['rana', 'jizva', 'zlomenina', 'oko'], text: 'Uražený šlechtic, který s mečem zachází líp než s rýmy.' },
   drab: { name: 'Dráb a pacholci', plural: true, hp: 13, uc: 3, oc: 3, dmg: 1, nerve: 4, wounds: ['pohmozdeni', 'zlomenina', 'jizva'], text: 'Panský dráb s holí a dva pacholci za zády.' },
-  hruby: { name: 'Hrubý', hp: 13, uc: 3, oc: 2, dmg: 1, nerve: 4, wounds: ['pohmozdeni', 'zlomenina'], text: 'Soused Hrubý, ramena jako vrata a nálada jako bouřka.' },
+  hruby: { duel: true, name: 'Hrubý', hp: 13, uc: 3, oc: 2, dmg: 1, nerve: 4, wounds: ['pohmozdeni', 'zlomenina'], text: 'Soused Hrubý, ramena jako vrata a nálada jako bouřka.' },
 };
 
 export const ACTIONS = {
@@ -48,28 +50,46 @@ const sum = (faces) => faces.reduce((a, b) => a + b, 0);
 // verb agreement: Zbojníci padají, Vlk padá
 const v = (foe, one, many) => (foe.plural ? many : one);
 
-/** The ruler's numbers for a fight: lives, attack, defence, weapon. */
+/** The ruler's numbers for a fight: lives, attack, defence, weapon — traits plus gear (gear.js). */
 export function fighterOf(state) {
   const t = effectiveTraits(state.ruler);
-  const armed = state.scenario !== 'sedlak'; // a lord fights with a sword and mail, a farmer with a flail
+  const gear = gearMods(state); // a lord starts with a sword and mail, a farmer with a flail
   const hurt = injuryMods(state.ruler);
   const lame = Math.round(hurt.army * 10); // a lost leg or hand weighs on the sword arm
   return {
     name: state.ruler.name,
     female: state.ruler.gender === 'female',
-    hp: 8 + t.strength,
-    maxHp: 8 + t.strength,
-    uc: Math.round(t.strength / 2) + lame,
-    oc: Math.round((t.strength + t.patience) / 4) + (armed ? 1 : 0),
-    dmg: armed ? 2 : 1,
+    hp: 8 + t.strength + gear.hp,
+    maxHp: 8 + t.strength + gear.hp,
+    uc: Math.round(t.strength / 2) + lame + gear.uc,
+    oc: Math.round((t.strength + t.patience) / 4) + gear.oc,
+    dmg: Math.max(1, gear.dmg),
+    flee: gear.flee,
+    gear: gear.items.map((i) => i.name),
     traits: t,
   };
 }
 
+/**
+ * Who fights at the ruler's side against a band (not in single combat): the
+ * marshal — for a peasant the smith — if loyal enough. Returns { ally } or { refused }.
+ */
+export function companionFor(state, enemyKey) {
+  const def = ENEMIES[enemyKey];
+  const m = state.marshal;
+  if (!def || def.duel || !m || m.alive === false) return {};
+  const title = roleLabel('marshal', m.gender, state.scenario);
+  if (m.loyalty < 50) return { refused: `${title} ${m.name} se drží stranou. Za tebe krvácet nebude.` };
+  return { ally: { name: m.name, title, uc: 2 + (m.quirk === 'schopny' ? 1 : 0), dmg: 1, female: m.gender === 'female' } };
+}
+
 export function startCombat(state, enemyKey) {
   const def = ENEMIES[enemyKey] || ENEMIES.zbojnici;
+  const side = companionFor(state, enemyKey);
   return {
     enemyKey,
+    ally: side.ally || null,
+    allyRefused: side.refused || null,
     you: fighterOf(state),
     foe: { ...def, maxHp: def.hp, ocMalus: 0 },
     round: 0,
@@ -135,7 +155,7 @@ export function combatRound(state, c, action) {
       rec.lines.push({ who: 'you', text: c.tricked ? 'Na stejný trik podruhé neskočí.' : 'Nepřítel lest prokoukl.', tone: 'neg' });
     }
   } else if (action === 'utek') {
-    const r = opposed(Math.round(you.traits.patience / 2), foe.uc);
+    const r = opposed(Math.round(you.traits.patience / 2) + (you.flee || 0), foe.uc);
     rec.you = r;
     if (r.at > r.df) {
       c.over = 'fled';
@@ -144,6 +164,17 @@ export function combatRound(state, c, action) {
     }
     foeBonus += 2;
     rec.lines.push({ who: 'you', text: 'Útěk se nezdařil — a nepřítele máš teď za zády.', tone: 'neg' });
+  }
+
+  // the ally strikes too
+  if (c.ally && foe.hp > 0) {
+    const r = opposed(c.ally.uc, foe.oc - foe.ocMalus);
+    rec.ally = r;
+    if (r.at > r.df) {
+      const dmg = r.at - r.df + c.ally.dmg;
+      foe.hp = Math.max(0, foe.hp - dmg);
+      rec.lines.push({ who: 'ally', text: `${c.ally.title} ${c.ally.name} ${c.ally.female ? 'zasáhla' : 'zasáhl'}: −${dmg}.`, tone: 'pos' });
+    }
   }
 
   if (foe.hp <= 0) {

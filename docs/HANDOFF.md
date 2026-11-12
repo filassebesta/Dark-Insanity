@@ -80,6 +80,9 @@ musí být aktivní, jinak je mapa skrytá. Screenshoty ukládat mimo repozitá�
 | `js/events_echoes.js` | krize (vyčerpané zdroje) a ozvěny rozhodnutí + tabulka `ECHO_HOOKS` |
 | `js/events_court.js` | události podle povah rádců + výchova dědice u šlechtice |
 | `js/events_trade.js` | přepadení karavany, piráti, cizí kupec, clo, hlad na severu, vlastní loď |
+| `js/talk.js` | rozhovory s dvorem: témata podle role a povahy, hod k%, věrnost, drby (bez DOM) |
+| `js/talk_ui.js` | sekce Rozhovor v detailu člena dvora |
+| `js/gear.js` | výzbroj: zbraně, zbroj, štít, kůň, obchod (bez DOM) |
 | `js/combat.js` | souboj po kolech: nepřátelé, akce, hody k6+, zranění z boje (bez DOM) |
 | `js/dice_ui.js` | „stůl“: hod k% u riskantních voleb a souboj po kolech v příběhovém panelu |
 | `js/events_bandits.js` | zbojníci: na cestě, noční přepadení, zbojnický hejtman |
@@ -200,6 +203,16 @@ obchodní `trade`, `tradeOffer`, `tradeMod`, `tradeStock`.
 - Nepřátelé (`ENEMIES`): rváči, zbojníci, zbojnický hejtman, najatý vrah, vlčí smečka, vlk, turnajový rytíř, šlechtic s mečem, dráb s pacholky, soused Hrubý. Těžký zásah (5+) může zranit, prohraný boj zraní vždy (u rváčů jen modřiny). Zranění z boje nahrazují `injury` větve.
 - Souboje jsou u: rvačka v krčmě, atentát, turnaj, vlčí hon, souboj s autorem písně, Sedlák: dráb, vlk, Hrubý, a v nových událostech se zbojníky. Průměrný vládce (vše 5) vyhraje se zbojníky ~75 %, s hejtmanem ~45–50 %, sedlák se zbojníky ~55 %; silná postava (Síla 8) vyhrává výrazně častěji.
 - Simulace souboje nehrají, berou šanci z `baseChance` a `traitKey` volby (proto je volba se soubojem i dál `isRoll`).
+
+### Rozhovory s dvorem
+- V detailu člena dvora (Dvůr → klik na osobu) je sekce **Rozhovor**: s každým jednou za období (`c.talkTurn`).
+- Témata (`TOPICS` v `talk.js`): zeptat se, jak se má (výřečnost), požádat o radu (inteligence, 1× ročně, rádce přinese zdroj podle oboru), pochválit (věrnost +5, ctižádostiví ostatní žárlí), dar (5 zlata / 2 groše, chamtivý ocení víc), výtka (síla, riskantní). Podle povahy: modlitba (zbožný), učit se (schopný → +1 vlastnost vládci, 1× ročně), slib moci (ctižádostivý, jen jednou), boje (odvážný), rizika (opatrný), svěřit se (oddaný). Rodina: učit dědice (zvedne nejslabší vlastnost, 1× ročně), večer s manželem/kou. Špehmistr/krčmář: drby (kdo je nejméně věrný, který rod škodí).
+- Riskantní témata jdou přes stejný hod k% jako volby (`topicRollChoice` → `rollParts`); věrnost pod 40 dá −10, nad 70 +5. Výsledek se zapíše do historie osoby.
+
+### Výzbroj a družina
+- `state.gear` (`gear.js`): pán začíná s mečem a kroužkovou košilí, sedlák s cepem. V listu postavy (P) sekce **Výzbroj** s obchodem: dlouhý meč (ÚČ +1), válečná sekera (zbraň +3), mistrovský meč, plátová zbroj (+4 životy, útěk −2), štít (OČ +1), jezdecký kůň, válečný oř (+4 k hodům na sílu a vojsko, ukazuje se v rozpisu hodu). Sedlák u kováře: sekera, kabátec, štít, kůň.
+- Kompletní výzbroj pána (~60 zlata) zvedne šanci proti hejtmanovi z ~43 % na ~83 %, tedy zhruba jako +3 Síla.
+- **Družina:** v boji proti tlupě (ne v souboji muže proti muži: turnaj, souboj, hejtman, vrah, Hrubý) jde s vládcem maršál (u Sedláka kovář), pokud má věrnost aspoň 50. Útočí každé kolo (ÚČ 2, schopný 3). Nevěrný se drží stranou. Proti zbojníkům zvedne šanci ~73 → ~86 %.
 
 ### Válečná tažení
 - Záložka **Válka** (klávesa **V**, vrstva mapy „Válka“) u Panovníka a Šlechtice; Sedlák války nevede.

@@ -8,6 +8,8 @@ import { esc } from './ui.js';
 import { effectiveTraits, injuriesOf, injuryFx, INJURIES } from './injuries.js';
 import { ambitionSection } from './fame.js';
 import { talkSection } from './talk_ui.js';
+import { ensureGear, shopFor, ITEMS, SLOTS } from './gear.js';
+import { fighterOf } from './combat.js';
 
 const TIER_SLUGS = [null, 'peasant', 'freeman', 'minor_noble', 'noble', 'king'];
 const OLD_AGE = 55;
@@ -68,6 +70,27 @@ function yearsWord(n) {
 
 const TRAIT_NAME = { strength: 'síla', eloquence: 'výřečnost', intelligence: 'inteligence', patience: 'trpělivost' };
 const SEASON_LOC = ['na jaře', 'v létě', 'na podzim', 'v zimě'];
+
+/** Gear: what the ruler carries into a fight, and what can be bought (gear.js). */
+function gearBlock(state) {
+  const gear = ensureGear(state);
+  const f = fighterOf(state);
+  const fx = (it) => [it.uc ? `ÚČ +${it.uc}` : '', it.oc ? `OČ +${it.oc}` : '', it.dmg ? `zbraň +${it.dmg}` : '', it.hp ? `životy +${it.hp}` : '', it.flee ? `útěk ${it.flee > 0 ? '+' : ''}${it.flee}` : '', it.roll ? `+${it.roll} k hodům v boji` : ''].filter(Boolean).join(' · ');
+  const worn = Object.entries(SLOTS).map(([slot, label]) => {
+    const it = ITEMS[gear[slot]];
+    return `<li><span>${label}</span><b>${it ? esc(it.name) : '—'}</b><em>${it ? esc(fx(it)) : ''}</em></li>`;
+  }).join('');
+  const coin = state.scenario === 'sedlak' ? 'grošů' : 'zlata';
+  const shop = shopFor(state).map(({ key, item, owned, block }) => `
+    <button class="gear-buy${owned ? ' owned' : ''}" data-buy="${key}"${block ? ` disabled title="${esc(block)}"` : ''}>
+      <b>${esc(item.name)}</b><span>${esc(item.text)}</span><em>${esc(fx(item))}</em><i>${owned ? 'máš' : `${item.cost} ${coin}`}</i>
+    </button>`).join('');
+  return `<h4 class="cs-section">Výzbroj</h4>
+    <p class="cs-gear-sum">V souboji: <b>${f.hp}</b> životů · útočné číslo <b>${f.uc}</b> · obranné číslo <b>${f.oc}</b> · zbraň <b>+${f.dmg}</b></p>
+    <ul class="cs-gear">${worn}</ul>
+    <h4 class="cs-section cs-sub">${state.scenario === 'sedlak' ? 'U kováře' : 'Zbrojíř a koňský trh'} <small>· v pokladně ${state.resources.gold} ${coin}</small></h4>
+    <div class="gear-shop">${shop}</div>`;
+}
 
 /** The ruler's wounds: what they take away and when (if ever) they heal. */
 function injuryBlock(state) {
@@ -195,6 +218,7 @@ export function renderCharacterSheet(state) {
       <div class="cs-traits">${traits}</div>
       ${ambitionSection(state)}
       ${injuryBlock(state)}
+      ${gearBlock(state)}
       <h4 class="cs-section">Vliv na vládu</h4>
       <ul class="cs-influence">${influence}</ul>
       <h4 class="cs-section">Rodina</h4>
@@ -205,7 +229,20 @@ export function renderCharacterSheet(state) {
 
 }
 
+// buying gear from the character sheet
+let gearWired = false;
+function wireGear(state) {
+  if (gearWired) return;
+  gearWired = true;
+  document.getElementById('character-view').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-buy]');
+    if (!btn || btn.disabled) return;
+    document.dispatchEvent(new CustomEvent('kingdom:buy', { detail: { key: btn.dataset.buy } }));
+  });
+}
+
 export function openCharacter(state) {
+  wireGear(state);
   renderCharacterSheet(state);
   const view = document.getElementById('character-view');
   view.classList.add('open');

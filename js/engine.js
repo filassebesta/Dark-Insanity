@@ -8,6 +8,7 @@ import {
   effectiveTraits, injuryMods, injure, applyInjuryEffects, processInjuries, injuryTokens,
   injuryEpithetScores, INJURY_EPITHETS, lastingInjuryNames, STRENGTH_FAIL_INJURY,
 } from './injuries.js';
+import { gearMods } from './gear.js';
 import { readyToOffer, startAmbition, skipAmbition, settleAmbition, dropAmbition, FAILURE } from './ambitions.js';
 import { processWar, applyWarEffects, warTokens } from './war.js';
 
@@ -640,6 +641,11 @@ export function rollParts(state, choice) {
   const hurt = injuryMods(state.ruler);
   add('Zranění', (hurt.rolls + (choice.resourceKey === 'army' || choice.traitKey === 'strength' ? hurt.army : 0)) * 100);
   if (choice.chanceBonus) add(choice.bonusLabel || 'Okolnosti', choice.chanceBonus(state) * 100); // e.g. allies backing a claim
+  // a good horse carries the ruler into every fight
+  if (choice.traitKey === 'strength' || choice.resourceKey === 'army') {
+    const horse = gearMods(state).items.find((i) => i.slot === 'horse');
+    if (horse && horse.roll) add(horse.name, horse.roll);
+  }
   // a capable adviser helps in their own field
   const helper = (role) => `Schopn${state[role].gender === 'female' ? 'á' : 'ý'} ${roleLabel(role, state[role].gender, state.scenario).toLowerCase()}`;
   if (choice.resourceKey === 'army' && capable(state, 'marshal')) add(helper('marshal'), 6);
