@@ -196,16 +196,18 @@ f_ozvena_kmotr.jpg — Morning after a fire: a burnt-out village tavern smoking,
 
 ---
 
-## Dávka R5 — Významný šlechtic (1:1, 12 ks) — rozdělená na R5a a R5b
+## Dávka R5 — Významný šlechtic (1:1, 12 ks, hromadně)
 
-Původní znění Gemini odmítalo (zabitý muž, zatykač, potápějící se lodě, útok kopím, odkaz na konkrétní hru). Tahle verze má klidnější popisy, obecný popis stylu a je rozdělená na dvě dávky po šesti.
-
-## Dávka R5a — Významný šlechtic I (1:1, 6 ks)
+Původní znění Gemini odmítalo (zabitý muž, zatykač, potápějící se lodě, útok kopím, odkaz na konkrétní hru). Tahle verze má klidnější popisy, obecný popis stylu a výslovně žádá všech 12 obrázků najednou. Když se Gemini zastaví v půlce, napiš mu „continue“.
 
 ```
-Please paint one separate image for each line below. Each line has a file
-name and a description. Return every image as its own file named exactly as
-the file name, showing the scene described on its line. No grid or collage.
+Please paint 12 separate images, one for each line below, all in this one
+response: create them one after another without stopping, without asking
+for confirmation and without waiting for me between them. Each line has a
+file name and a description. Return every image as its own file named
+exactly as the file name, showing the scene described on its line. No grid
+or collage. If you cannot finish all 12 at once, continue with the next
+ones when I write "continue".
 
 Format: square, 1:1, 2048 x 2048. The main figures in the centre and upper
 part of the picture. The painted scene continues all the way to the bottom
@@ -225,27 +227,6 @@ v_rytiri_u_brany.jpg — Five young knights without a lord standing in a castle 
 v_opovedny_list.jpg — A herald in bright livery pinning a sealed parchment to the wooden gate of a castle, guards on the walls looking down, a banner of another noble family behind him.
 v_turnaj.jpg — A festive tournament below a castle: colourful tents, banners of many families, two knights in bright surcoats riding in the lists, spectators in a wooden stand.
 v_zkouska_vernosti.jpg — A royal messenger handing a sealed letter to a worried nobleman in the hall of his castle, the nobleman reading it by the fire with a troubled face.
-```
-
-## Dávka R5b — Významný šlechtic II (1:1, 6 ks)
-
-```
-Please paint one separate image for each line below. Each line has a file
-name and a description. Return every image as its own file named exactly as
-the file name, showing the scene described on its line. No grid or collage.
-
-Format: square, 1:1, 2048 x 2048. The main figures in the centre and upper
-part of the picture. The painted scene continues all the way to the bottom
-edge (floor, ground or water): no empty or flat area and no darker band at
-the bottom. Even brightness from top to bottom.
-
-Style for every image: a muted historical oil painting with visible loose
-brushwork and subtle canvas texture, earthy palette of ochre, rust, olive
-green and dusty slate blue, soft candle or daylight with gentle shadows,
-14th-century Central European setting, realistic proportions, calm and
-serious mood. No text, letters, watermark or signature.
-
-Images:
 v_jizni_vyslanec.jpg — A galley with purple sails in a small harbour below a castle, a richly dressed foreign envoy stepping ashore with servants carrying silk and spices.
 v_biskupova_prizen.jpg — A bishop in robes showing a nobleman the wooden scaffolding of a new cathedral choir under construction, stonemasons at work around them.
 v_ozvena_rada.jpg — An evening debate in the royal council: noblemen standing and arguing around the table by candlelight, the king listening with a stern face.
