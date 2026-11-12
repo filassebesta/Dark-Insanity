@@ -47,6 +47,18 @@ node tools/sim/sim_peasant.mjs 400 0.5     # Sedlák; 2. argument = ambice
 node tools/sim/sim_trade.mjs sedlak 200    # libovolný scénář s botem, který obchoduje (3. arg "notrade" = bez obchodu)
 ```
 
+**Kontroly kvality (před každým commitem):**
+
+```bash
+node tools/check/validate.mjs            # statická kontrola obsahu: neznámé zdroje v efektech, tokeny, rodové tvary, odkazy na id, obrázky (exit 1 = chyba)
+node tools/check/validate.mjs --art      # + seznam událostí bez vlastního obrázku
+node tools/check/smoke.mjs 40 <scratch>  # hraje 3 scénáře ve skutečném Chromiu přes UI, hlídá chyby stránky a zbylé tokeny v textu
+```
+
+**Vývojový tým:** na projektu pracuje pět agentů (`.claude/agents/`: creative-director,
+lore-designer, game-coder, graphic-designer, bug-checker) přes pipeline `/tym`.
+Proces: `docs/tym/README.md`, backlog: `docs/tym/BACKLOG.md`, kánon světa: `docs/lore/KANON.md`.
+
 **Prohlížečové testy:** Playwright (Chromium). Moduly lze importovat přímo ve
 stránce, např. `page.evaluate(async () => (await import('/js/state.js')).createNewGame(...))`,
 uložit stav přes `saveGame` a kliknout na „Pokračovat“. Obrazovka `screen-game`
@@ -81,6 +93,7 @@ musí být aktivní, jinak je mapa skrytá. Screenshoty ukládat mimo repozitá�
 | `docs/gemini-prompts.md` | objednávkový list obrázků (prompty, stav, dávkový prompt) |
 | `docs/udalosti.md` | čitelný přehled všech událostí a voleb |
 | `tools/sim/` | simulace (viz výše) |
+| `tools/check/` | validátor obsahu a prohlížečový smoke test (viz výše) |
 | `tools/images/process_batch.py` | zpracování dávky obrázků (detekce a oprava tmavého pruhu, ořez a změna velikosti) |
 
 **Celkem:** ~10 500 řádků JS, 186 událostí (95 Panovník, 39 Šlechtic, 37 Sedlák,
