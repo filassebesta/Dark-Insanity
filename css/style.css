@@ -1031,13 +1031,13 @@ kbd {
   grid-template-columns: minmax(280px, 440px) minmax(0, 620px);
   gap: clamp(2rem, 5vw, 5rem);
   justify-content: center;
-  align-items: center;
+  align-items: start; /* the portrait sits at the top, not in the middle of a long sheet */
   padding: 4rem 2rem;
   color: var(--paper);
 }
 .character-view.open .cs-portrait-wrap { animation: cardEnter .7s var(--ease-out) .05s both; }
 .character-view.open .cs-info { animation: pageTurn .7s var(--ease-out) .15s both; }
-.cs-portrait-wrap { position: relative; }
+.cs-portrait-wrap { position: sticky; top: 4rem; } /* stays in view while the sheet scrolls */
 .cs-portrait {
   position: relative;
   aspect-ratio: 4 / 5;
@@ -1173,7 +1173,7 @@ kbd {
 .person-close { position: absolute; top: 1rem; right: 1rem; z-index: 2; color: var(--ink); border-color: rgba(90,70,45,.35); }
 .person-sheet { display: grid; grid-template-columns: minmax(220px, 340px) 1fr; gap: 2.4rem; padding: 2.6rem; }
 .ps-portrait {
-  position: relative; aspect-ratio: 4 / 5; align-self: start; overflow: hidden;
+  position: sticky; top: 1rem; aspect-ratio: 4 / 5; align-self: start; overflow: hidden; /* stays in view while the detail scrolls */
   background: radial-gradient(circle at 50% 35%, var(--bg-3), var(--bg-0));
   border: 1px solid var(--gold-dim); box-shadow: 0 18px 40px rgba(0,0,0,.35);
 }
@@ -1247,8 +1247,8 @@ kbd {
   .character-sheet { grid-template-columns: 1fr; padding: 4rem 1.2rem 2rem; }
   .person-view { padding: .6rem; }
   .person-sheet { grid-template-columns: 1fr; padding: 3rem 1.2rem 1.6rem; gap: 1.4rem; }
-  .ps-portrait { max-width: 240px; width: 100%; margin: 0 auto; }
-  .cs-portrait-wrap { max-width: 300px; margin: 0 auto; width: 100%; }
+  .ps-portrait { max-width: 240px; width: 100%; margin: 0 auto; position: relative; top: 0; }
+  .cs-portrait-wrap { max-width: 300px; margin: 0 auto; width: 100%; position: relative; top: 0; }
 }
 @media (max-width: 560px) {
   .cs-traits, .cs-family { grid-template-columns: 1fr; }
