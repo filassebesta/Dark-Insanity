@@ -43,5 +43,6 @@ král → císař). Zdroj: čtení kódu všech událostí, simulace tisíců he
 ## Vyvážení (doporučení)
 
 - **Začátek za sedláka (vyřešeno):** nebyl těžký, ale stál na roční „práci na gruntu“, kterou šlo zadat jen z mapy. Rozumný hráč, který ji neobjevil, krachoval ve 23 % her. Teď ji příběh nabídne po žních sám (`s_prace_na_gruntu`); krachy rozumného hráče klesly na ~2 %, napůl chybujícího z ~50 % na ~23 %.
-- **Cesta ke koruně je dlouhá** (medián ~65 let, 2–3 generace). To je záměr kroniky rodu, ale povstání ji zkracuje pro odvážné.
+- **Cesta ke koruně (vyřešeno):** významný šlechtic čekal na smrt krále medián 35 let. Linka „boj o trůn“ ji zkrátila; rozumný hráč je králem kolem 42. roku (dřív 59) a popravou končí ~2 % her (dřív ~21 %).
+- **Obtížnost teď:** rozumné volby sedláka spolehlivě vedou k erbu, čistě náhodné klikání ztratí grunt asi v polovině her. Pokud by hra působila příliš snadno, nejjednodušší páky jsou povaha pána (podíl chamtivých) a výše podzimních dávek v `processPeasantEconomy`.
 - **Císař** je pro hráče, který válčí: bot, který neustále táhne na sousedy s plnou hotovostí, se jím stane zhruba v polovině her.

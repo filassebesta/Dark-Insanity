@@ -254,6 +254,16 @@ obchodní `trade`, `tradeOffer`, `tradeMod`, `tradeStock`.
 - **Tokeny rodu panovníka:** `{king.title}`/`{king.Title}` (král/královna), `{K:…|…}` (podle krále), `{F:…|…}` a `{formerKing.name}` (sesazený), `{house.gen}` (2. pád rodu: „z rodu pánů z Bílé Brány“). Názvy událostí se teď taky interpolují.
 - **Opravy návazností** (audit): sňatek dědice jen jeden napříč stupni (`flags.heir_married`), noví králové mívají dědice, smrt vzdáleného krále nemění přízeň pána, rádci mimo královský dvůr v 66+ letech umírají a jsou nahrazeni, nová domácnost po nástupnictví odpovídá věku vládce, nevolník nedostává události o zahraničním obchodu.
 - **Začátek za sedláka:** grunt bez roční „práce na gruntu“ (výnos z mapy) chátrá; kdo ji neobjevil, krachoval (rozumný hráč 23 %). Když hráč do podzimu nic nenaplánuje, přijde po žních volná událost `s_prace_na_gruntu` (`events_farm.js`) se stejnými možnostmi; větev `decree: '<klíč>'` zadá práci stejně jako mapa (`issueDecree`). Kdo mapu používá, ji neuvidí. Simulace mají „rozumného hráče“ `tools/sim/smart.mjs` (váží účinky voleb podle toho, čeho je málo; parametr = podíl náhodných voleb). Pozor: čistě náhodný bot s touto událostí vychází hůř, protože v ní volí naslepo místo rozumné práce z mapy — to je vlastnost bota, ne hry.
+- **Druhé kolo (podle design review agenta):**
+  - *Boj o trůn* (`events_throne.js`, `engine.js processThroneArc`): 6 let po dosažení významného šlechtice (nebo když je králi 60) král padne na honu → regentská rada (místo regenta = nárok +15) → spor o nástupnictví → do 4–7 období rozhodnutí o trůnu v `n_smrt_krale`. Nový král spouští odpočet znovu (`state.throneReset`). Během války se linka nehýbe.
+  - *Zlatý věk* už kroniku sám neukončí: událost `zlaty_vek` nabídne konec ve slávě, ambici „Říše“ (`cisarstvi`) nebo vládu dál (znovu nejdřív za 10 let).
+  - *Karty kapitol* i pro svobodu (`kapitola_svoboda`), velmože (`kapitola_velmoz`) a císaře (`kapitola_cisar`); `TIER_CHAPTERS` v `engine.js`, `state.milestones.tierN`.
+  - *Grunt:* práce „Najmout čeledíny“ (`hire`), klučení stojí 1 čeledína, čeledník od úrovně 2, hlad −3 grunt za období místo −5, první zpustnutí = chalupa na kraji vsi (`s_chalupa`, `flags.chalupa`), hladová krize nabízí nákup obilí, ambice „Ruce k práci“ = +8 čeledi.
+  - *Převrat:* první nezdar `n_prevrat` = útěk tajnou chodbou (`flags.prevrat_selhal`), až druhý = poprava.
+  - *Prolog* (`events_prologue.js`): tři volné karty před první sezónou (původ: fara / pytlák / kovář / krčma → `traits: {…}` posune víc vlastností a později přijde jedna vlastní událost; první zima; hold pánovi). *Povaha pána* `LORD_NATURES` (chamtivý / spravedlivý / krutý) mění podzimní dávky a jak rychle pán zapomíná; token `{lord.nature}`, `{lord.natureText}`.
+  - *Nové události* (`events_stages.js`): 8 + 2 ozvěny pro svobodníka (`f_*`), 8 + 4 ozvěny pro významného šlechtice (`v_*`).
+  - *Popisky voleb* se interpolují (rodové tvary fungují i v nich).
+  - *Rozumný hráč* v simulacích: `tools/sim/smart.mjs`, `SMART=0.4 node tools/sim/sim_career.mjs`.
 - Zbývající drobnosti z auditu: `docs/analyza-logiky.md`. Obrázky kariéry (`docs/obrazky-kariera.md`) jsou všechny dodané: scény kapitol a povstání, císař a císařovna (`ruler_emperor_*`, bez nich nosí portrét krále), cizí panovníci (`realm_<země>_<pohlaví>.jpg`) a mapa světa.
 
 ## 5. Obrázky — jak to funguje a co chybí
@@ -297,7 +307,8 @@ FIX=s_drab.jpg python3 tools/images/process_batch.py dir1,dir2 <scratch> <repo> 
 | Panovník | náhodné volby | medián ~33 let; zlatý věk ~38 %, kolaps ~38 %, zbytek přežije 100 let |
 | Sedlák, rozumný hráč (`smart.mjs`) | práce na gruntu jen z příběhu (podzimní událost `s_prace_na_gruntu`), 35 % chybných voleb | zkrachovalý grunt ~2 % (bez podzimní události 23 %), erb medián rok ~21 |
 | Sedlák, napůl chybující hráč | 60 % chybných voleb | zkrachovalý grunt ~23 % (bez podzimní události ~50 %) |
-| Celá kronika, rozumný hráč | `SMART=0.4 sim_career.mjs 400 0.7` | svobodník 98 % (r. 7), erb 96 % (r. 19), koruna ~71 % (r. ~58) |
+| Celá kronika, rozumný hráč | `SMART=0.4 sim_career.mjs 300 0.7` (po druhém kole) | svobodník 100 % (r. 7), erb 100 % (r. 20), velmož (r. 22), koruna ~91 % (r. 42), poprava ~2 % |
+| Sedlák podle povahy pána | `natures.mjs` (scratch), 60 % / 100 % náhodných voleb | spravedlivý 1 % / 30 %, krutý 2 % / 52 %, chamtivý 7 % / 65 % zpustlých gruntů |
 | Celá kronika | `sim_career.mjs`, ambice 0,7 (náhodné volby) | svobodník ~90 % (rok ~10), erb ~50 % (rok ~25), významný šlechtic ~48 %, koruna ~30–34 % (rok ~65); nejčastější konec je zpustlý grunt (~45 %) |
 | Šlechtic | cílí na trůn (ambice 1), neobchoduje | trůn ~42–55 %, poprava ~35 % (noví králové teď mívají dospělé dědice, nárok je těžší; povstání bot nepoužívá) |
 | Sedlák | ambice 0,5 | šlechtický stav ~45–50 %, svoboda kolem 10. roku, medián ~25 let; zbytek hlavně zpustlý grunt |
