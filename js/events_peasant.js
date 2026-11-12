@@ -891,8 +891,8 @@ export const PEASANT_EVENTS = [
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.3, traitKey: 'eloquence', traitScale: 0.05,
         chanceBonus: (s) => (s.resources.favor - 50) / 150,
-        onSuccess: { effects: { gold: -38 }, setTier: 2, traitGain: 'eloquence', chronicle: 'Pán nakonec slevil. Rod {dynastyName} je svobodný a v truhle ještě něco zbylo.' },
-        onFailure: { effects: { favor: -8 }, chronicle: 'Pán se urazil: svobodu si sedlák nesmlouvá. Přijď znovu, až se naučíš pokoře.' },
+        onSuccess: { effects: { gold: -38 }, setTier: 2, traitGain: 'eloquence', chronicle: '{lord.Title} nakonec slevil{L:|a}. Rod {dynastyName} je svobodný a v truhle ještě něco zbylo.' },
+        onFailure: { effects: { favor: -8 }, chronicle: '{lord.Title} se urazil{L:|a}: svobodu si sedlák nesmlouvá. Přijď znovu, až se naučíš pokoře.' },
       },
       {
         label: 'Ještě počkat',
@@ -1000,9 +1000,16 @@ export const PEASANT_CRISES = [
         chronicle: '{L:Pán dal obilí. A zapsal si, kolik mu dlužíš.|Paní dala obilí. A zapsala si, kolik jí dlužíš.}',
       },
       {
+        label: 'Koupit obilí na trhu v Brodné',
+        requires: (s) => s.resources.gold >= 6,
+        hintType: 'resource', hintKey: 'gold',
+        effects: { gold: -6, food: 12 },
+        chronicle: 'Poslední groše odešly za obilí z Brodné. Komora se naplnila — truhla vyprázdnila.',
+      },
+      {
         label: 'Propustit čeleď',
         hintType: 'resource', hintKey: 'army',
-        effects: { army: -8, food: 6 },
+        effects: { army: -4, food: 6 }, // the hands that go now are missing in the spring
         chronicle: 'Čeleď odešla s uzlíky. Míň úst, míň rukou.',
       },
     ],

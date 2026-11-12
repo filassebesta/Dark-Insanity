@@ -422,8 +422,18 @@ export const NOBLE_EVENTS = [
         label: 'Udeřit dnes v noci',
         hintType: 'resource', hintKey: 'army',
         isRoll: true, baseChance: 0.0, traitKey: 'strength', traitScale: 0.03, resourceKey: 'army', resourceScale: 0.7,
+        requires: (s) => !s.flags.prevrat_selhal, // the first failure is a flight, the second the scaffold
         chanceBonus: (s) => allies(s) * 0.07 + (s.resources.legitimacy - 40) / 250,
-        onSuccess: { endGame: 'crowned', chronicle: 'Do rána bylo po všem. Král byl sesazen a koruna připadla rodu {dynastyName}.' },
+        onSuccess: { endGame: 'crowned', chronicle: 'Do rána bylo po všem. Sesazen{K:ý král|á královna} {king.name} je v žaláři a koruna připadla rodu {dynastyName}.' },
+        onFailure: { effects: { favor: -15, legitimacy: -10, army: -10, prestige: -6 }, noble: { plotReset: true }, hiddenEffects: { setFlag: 'prevrat_selhal' }, chronicle: 'Někdo spiklence zradil. Stráže čekaly s tasenými meči, ale {ruler.name} {R:unikl|unikla} tajnou chodbou. Spiklenci visí na hradbách a jméno rodu {dynastyName} se u dvora vyslovuje šeptem.' },
+      },
+      {
+        label: 'Udeřit dnes v noci',
+        hintType: 'resource', hintKey: 'army',
+        isRoll: true, baseChance: 0.0, traitKey: 'strength', traitScale: 0.03, resourceKey: 'army', resourceScale: 0.7,
+        requires: (s) => !!s.flags.prevrat_selhal,
+        chanceBonus: (s) => allies(s) * 0.07 + (s.resources.legitimacy - 40) / 250,
+        onSuccess: { endGame: 'crowned', chronicle: 'Do rána bylo po všem. Sesazen{K:ý král|á královna} {king.name} je v žaláři a koruna připadla rodu {dynastyName}.' },
         onFailure: { endGame: 'executed', chronicle: 'Někdo spiklence zradil. Stráže čekaly s tasenými meči.' },
       },
       {
