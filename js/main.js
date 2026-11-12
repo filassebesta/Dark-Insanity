@@ -382,6 +382,13 @@ function wireActions() {
     if (e.target.id === 'panel-overlay') closePanels();
   });
 
+  // the new game form speaks of a farmer or a farmer's wife, not of a king or a queen
+  document.querySelectorAll('input[name="ruler-gender"]').forEach((radio) => radio.addEventListener('change', () => {
+    const female = radio.value === 'female' && radio.checked;
+    document.getElementById('ruler-name-label').textContent = female ? 'Jméno hospodyně' : 'Jméno hospodáře';
+    document.getElementById('input-ruler-name').placeholder = female ? 'např. Anežka' : 'např. Vojtěch';
+  }));
+
   document.getElementById('input-dynasty-name').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') document.querySelector('[data-action="start-new-game"]').click();
   });
