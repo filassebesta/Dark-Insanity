@@ -8,10 +8,11 @@ import {
   resetResourceMemory, esc, upgradeScenarioArt, renderHousesPanel, renderTradeNews,
 } from './ui.js';
 import { openMap, closeMap, isMapOpen, wireMapChrome, closeTownIfOpen } from './map.js';
-import { openCharacter, closeCharacter, isCharacterOpen, openPerson, closePerson, isPersonOpen } from './character.js';
+import { openCharacter, closeCharacter, isCharacterOpen, openPerson, closePerson, isPersonOpen, renderPersonSheet } from './character.js';
 import { playMusic, setMusicVolume } from './audio.js';
 import { checkAchievements } from './achievements.js';
 import { openRoll, openCombat } from './dice_ui.js';
+import { wireTalk } from './talk_ui.js';
 import { renderAmbitionBar, renderWarBar, renderHall, renderEndingAchievements, announceAchievement } from './fame.js';
 
 let currentState = null;
@@ -550,8 +551,17 @@ document.addEventListener('kingdom:build', (e) => {
   if (e.detail.message) toast(e.detail.message);
 });
 
+// a conversation at court: save, refresh the court and show the answer in the sheet
+document.addEventListener('kingdom:talk', (e) => {
+  if (!currentState) return;
+  saveGame(currentState);
+  refreshAllPanels();
+  renderPersonSheet(currentState, e.detail.role);
+});
+
 wireActions();
 wireMapChrome();
+wireTalk();
 wireKeyboard();
 wireMenuAmbience();
 wireClickSound();

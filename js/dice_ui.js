@@ -23,13 +23,13 @@ function d10(cls, value) {
 }
 
 /** Shows the roll for a risky choice; calls onDone({ success, roll }) after the player rolls and continues. */
-export function openRoll(state, choice, onDone) {
-  hideCouncil();
+export function openRoll(state, choice, onDone, host = panel()) {
+  if (host === panel()) hideCouncil();
   const parts = rollParts(state, choice);
   const trait = choice.traitKey ? traitLabel(choice.traitKey) : '';
   const mods = parts.mods.length ? parts.mods.map((m) => `<li><span>${esc(m.label)}</span><b class="${m.value > 0 ? 'pos' : 'neg'}">${sign(m.value)}</b></li>`).join('')
     : '<li><span>Žádné úpravy</span><b>±0</b></li>';
-  panel().innerHTML = `
+  host.innerHTML = `
     <div class="dice-panel">
       <div class="dice-head"><span class="dice-over">Zkouška${trait ? ` · ${esc(trait)}` : ''} · hod k%</span><b>${esc(choice.label)}</b></div>
       <div class="dice-row">
@@ -44,7 +44,7 @@ export function openRoll(state, choice, onDone) {
       <div class="dice-verdict" hidden></div>
       <button class="seal-button primary dice-primary" data-dice="roll">Hodit kostkou</button>
     </div>`;
-  const root = panel().querySelector('.dice-panel');
+  const root = host.querySelector('.dice-panel');
   const btn = root.querySelector('.dice-primary');
   let result = null;
   btn.addEventListener('click', () => {

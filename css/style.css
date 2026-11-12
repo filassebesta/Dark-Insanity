@@ -1629,3 +1629,17 @@ kbd {
   .cb-actions { grid-template-columns: 1fr 1fr; }
   .cb-roll { grid-template-columns: 6rem auto 1fr; }
 }
+
+/* ---------- conversations at court (js/talk_ui.js) ---------- */
+.talk-box { display: grid; gap: .7rem; margin-bottom: 1.8rem; padding: .9rem 1rem; border: 1px solid rgba(200,164,106,.3); background: rgba(200,164,106,.06); }
+.talk-greet { margin: 0; font-style: italic; color: rgba(235,227,209,.85); }
+.talk-reply { margin: 0; color: var(--paper); line-height: 1.55; }
+.talk-note { margin: 0; font-size: .88rem; color: rgba(235,227,209,.55); }
+.talk-topics { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: .45rem; }
+.talk-topic { font: inherit; text-align: left; display: grid; gap: .1rem; padding: .55rem .7rem; border: 1px solid rgba(200,164,106,.35); background: rgba(13,11,9,.35); color: var(--paper); cursor: pointer; border-radius: 3px; transition: border-color .2s ease, background .2s ease; }
+.talk-topic:hover:not([disabled]) { border-color: var(--gold); background: rgba(200,164,106,.12); }
+.talk-topic[disabled] { opacity: .45; cursor: not-allowed; }
+.talk-topic b { font-weight: 500; font-family: var(--font-display); font-size: 1.02rem; }
+.talk-topic span { font-size: .8rem; color: var(--gold); }
+.talk-table:empty { display: none; }
+.talk-table .dice-panel { color: var(--ink); }
