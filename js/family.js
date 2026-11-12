@@ -95,6 +95,8 @@ function newSuitor(state) {
 export function refreshSuitors(state) {
   if (isMarried(state) || state.ruler.age > 60 || state.gameOver) { state.suitors = []; return; }
   state.suitors = (state.suitors || []).filter((x) => x.stage === state.scenario);
+  // suitors from an older save get their face too
+  for (const x of state.suitors) if (!x.portrait && x.kindKey !== undefined) x.portrait = `suitor_${x.stage}_${x.kindKey}_${x.gender}`;
   while (state.suitors.length < 3) state.suitors.push({ ...newSuitor(state), stage: state.scenario });
 }
 

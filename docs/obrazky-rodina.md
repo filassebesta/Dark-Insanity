@@ -6,7 +6,7 @@ Portréty nápadnic a nápadníků (po svatbě se stanou tváří manžela/ky), 
 
 | Stav | Dávka | Co | Kusů | Kde se zobrazí |
 |---|---|---|---|---|
-| ⏳ | R1 | Nápadnice a nápadníci ve vsi + malé děti | 12 | list postavy → Rodina, námluvy, manžel/ka |
+| ✅ | R1 | Nápadnice a nápadníci ve vsi + malé děti | 12 | list postavy → Rodina, námluvy, manžel/ka |
 | ⏳ | R2 | Prolog a rodina | 12 | první karty hry, narození, dohazovač, schovanec, podzimní práce |
 | ⏳ | R3 | Boj o trůn, kapitoly a zlatý věk | 9 | velké zlomy kariéry |
 | ⏳ | R4 | Svobodník | 10 | události svobodného sedláka |
