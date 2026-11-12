@@ -2,7 +2,7 @@
 
 Vygenerováno z `js/events*.js`. Jména v hranatých závorkách hra doplní podle aktuálního stavu.
 
-Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí · Scénář **Sedlák**: 33 událostí (+ 3 krize, 2 ozvěny) · Krize: 7 · Ozvěny rozhodnutí: 17 · Povahy rádců a výchova: 5 · Obchod: 6 · Stavby: 16 (12 království, 4 grunt) · Zranění: 3 · Ambice: 1 (nabídka cílů) · Válka: 10.
+Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí · Scénář **Sedlák**: 33 událostí (+ 3 krize, 2 ozvěny) · Krize: 7 · Ozvěny rozhodnutí: 17 · Povahy rádců a výchova: 5 · Obchod: 6 · Stavby: 16 (12 království, 4 grunt) · Zranění: 3 · Ambice: 1 (nabídka cílů) · Válka: 10 · Zbojníci: 3. Volby označené ⚔ se bojují po kolech s k6, ostatní riskantní volby se hází k%.
 
 ## Scénář Panovník
 
@@ -1803,3 +1803,32 @@ Přijdou jen během tažení, které hráč vypraví na mapě (záložka Válka,
 1. Postarat se o vdovy a sirotky *(jen někdy)*
 2. Najít viníka mezi veliteli
 3. Unést to mlčky
+
+## Zbojníci
+
+Volby se ⚔ se bojují po kolech (`js/combat.js`).
+
+### 1. Zbojníci na cestě  `z_zbojnici_cesta`
+
+> Cesta vede úvozem mezi buky. Najednou padne přes cestu strom a z houští vystoupí pět chlapů se sekerami. Ten největší se usměje: „Mýto, pane. Nebo si vezmeme všechno — i boty.“
+
+1. Tasit zbraň a bránit se ⚔ *(souboj: Zbojníci)*
+2. Zaplatit mýto *(jen někdy)*
+3. Pokusit se je umluvit *(riskantní volba)*
+4. Utéct do lesa *(riskantní volba)*
+
+### 2. Zbojnický hejtman  `z_hejtman` *(Panovník, Šlechtic)*
+
+> V kraji [kraj] řádí zbojnický hejtman. Vypaluje dvory, věší výběrčí a lidé o něm zpívají písně. Teď poslal vzkaz: ať si to s ním vrchnost rozdá sama, muž proti muži, na mýtině u starého dubu.
+
+1. Přijmout výzvu ⚔ *(souboj: Zbojnický hejtman)*
+2. Poslat na ně vojsko *(riskantní volba)*
+3. Vypsat odměnu na jeho hlavu *(jen někdy)*
+
+### 3. Noční přepadení  `z_prepadeni_noc`
+
+> Uprostřed noci se rozštěkali psi. Ve dvoře jsou cizí muži s pochodněmi a někdo už páčí vrata od sýpky. Než se kdo vzbudí, bude po všem.
+
+1. Popadnout zbraň a vyběhnout ⚔ *(souboj: Zbojníci)*
+2. Zabarikádovat se a čekat
+3. Vzbudit všechny a bránit se společně *(riskantní volba)*

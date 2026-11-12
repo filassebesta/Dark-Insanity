@@ -63,6 +63,7 @@ export const PEASANT_EVENTS = [
       },
       {
         label: 'Vyhodit ho ze dvora',
+        combat: 'drab', // fought out in rounds (combat.js)
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.35, traitKey: 'strength', traitScale: 0.05,
         onSuccess: { effects: { prestige: 8, favor: -4 }, traitGain: 'strength', chronicle: 'Dráb letěl přes plot rovnou do louže. Ves se smála ještě týden.' },
@@ -347,6 +348,7 @@ export const PEASANT_EVENTS = [
     choices: [
       {
         label: 'Počkat na ně s kopím',
+        combat: 'vlk', // fought out in rounds (combat.js)
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.45, traitKey: 'strength', traitScale: 0.05,
         onSuccess: { effects: { prestige: 6 }, traitGain: 'strength', chronicle: 'Vlčí kůže visí na vratech. Ves ví, kdo ji tam pověsil.' },
@@ -648,6 +650,7 @@ export const PEASANT_EVENTS = [
       },
       {
         label: 'Vyřídit si to s Hrubým po svém',
+        combat: 'hruby', // fought out in rounds (combat.js)
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.5, traitKey: 'strength', traitScale: 0.04,
         onSuccess: { effects: { prestige: 5, stability: 3 }, traitGain: 'strength', chronicle: 'Hrubý odešel s monoklem a mez je zpátky tam, kde má být.' },

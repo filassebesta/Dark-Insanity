@@ -1,4 +1,4 @@
-import { SEASONS, TERRAIN_DEFS, NOBLE_HOUSES, PEASANT_HOME, clamp, randomName, randInt, tierTitle, bumpStat } from './data.js';
+import { SEASONS, TERRAIN_DEFS, NOBLE_HOUSES, PEASANT_HOME, clamp, randomName, randInt, tierTitle, bumpStat, TRAIT_DEFS, RESOURCE_DEFS, resourceLabel } from './data.js';
 import { makeChronicleEntry, inheritTraits } from './state.js';
 import { EVENTS, QUIET_EVENTS } from './events.js';
 import { roleLabel, QUIRK_ROLES, randomQuirk, quirkLabel } from './court.js';
@@ -610,21 +610,59 @@ export function reignEpithet(state, ruler = state.ruler) {
   };
 }
 
-export function computeSuccessChance(state, choice) {
-  let chance = choice.baseChance ?? 0.5;
-  if (choice.traitKey) chance += (effectiveTraits(state.ruler)[choice.traitKey] || 0) * (choice.traitScale ?? 0.03);
+// ---------- the dice: every risky choice is a roll of k% (1–100) ----------
+//
+// A risky choice has a target number (how hard the deed is for an average
+// ruler with average means) and modifiers added to the roll: traits counted
+// from the average 5, resources from 50, wounds, capable advisers and the
+// circumstances (allies, the state of the army…). roll + modifiers ≥ target
+// succeeds; 96–100 always succeeds, 1–5 always fails. The chance shown to
+// the player is exactly the chance of that roll.
+
+/** { target, mods: [{ label, value }], bonus, chance } for a risky choice. */
+export function rollParts(state, choice) {
+  let base = choice.baseChance ?? 0.5;
+  const mods = [];
+  const add = (label, value) => { if (Math.round(value)) mods.push({ label, value: Math.round(value) }); };
+  if (choice.traitKey) {
+    const scale = choice.traitScale ?? 0.03;
+    const v = effectiveTraits(state.ruler)[choice.traitKey] || 0;
+    base += 5 * scale; // an average trait (5) is part of the difficulty, the rest is a bonus or a malus
+    const def = TRAIT_DEFS.find((d) => d.key === choice.traitKey);
+    add(`${def ? def.label : choice.traitKey} ${v}`, (v - 5) * scale * 100);
+  }
+  if (choice.resourceKey) {
+    const v = state.resources[choice.resourceKey] ?? 50;
+    const def = RESOURCE_DEFS.find((d) => d.key === choice.resourceKey);
+    add(`${def ? resourceLabel(def, state.scenario) : choice.resourceKey} ${v}`, (v - 50) / 100 * (choice.resourceScale ?? 0.4) * 100);
+  }
   // wounds weigh on every test, a lost limb most of all on those of the sword
   const hurt = injuryMods(state.ruler);
-  chance += hurt.rolls;
-  if (choice.resourceKey === 'army' || choice.traitKey === 'strength') chance += hurt.army;
-  // optional resource weight, e.g. a battle depends on the size of the army
-  if (choice.resourceKey) chance += ((state.resources[choice.resourceKey] ?? 50) - 50) / 100 * (choice.resourceScale ?? 0.4);
-  if (choice.chanceBonus) chance += choice.chanceBonus(state); // e.g. allies backing a claim
+  add('Zranění', (hurt.rolls + (choice.resourceKey === 'army' || choice.traitKey === 'strength' ? hurt.army : 0)) * 100);
+  if (choice.chanceBonus) add(choice.bonusLabel || 'Okolnosti', choice.chanceBonus(state) * 100); // e.g. allies backing a claim
   // a capable adviser helps in their own field
-  if (choice.resourceKey === 'army' && capable(state, 'marshal')) chance += 0.06;
-  if (choice.traitKey === 'intelligence' && capable(state, 'spymaster')) chance += 0.06;
-  if (choice.traitKey === 'eloquence' && capable(state, 'spouse')) chance += 0.06;
-  return Math.max(0.05, Math.min(0.95, chance));
+  const helper = (role) => `Schopn${state[role].gender === 'female' ? 'á' : 'ý'} ${roleLabel(role, state[role].gender, state.scenario).toLowerCase()}`;
+  if (choice.resourceKey === 'army' && capable(state, 'marshal')) add(helper('marshal'), 6);
+  if (choice.traitKey === 'intelligence' && capable(state, 'spymaster')) add(helper('spymaster'), 6);
+  if (choice.traitKey === 'eloquence' && capable(state, 'spouse')) add(helper('spouse'), 6);
+  const target = 101 - Math.round(base * 100);
+  const bonus = mods.reduce((s, m) => s + m.value, 0);
+  const chance = Math.max(0.05, Math.min(0.95, (101 - target + bonus) / 100));
+  return { target, mods, bonus, chance };
+}
+
+/** Rolls k% for a risky choice: { roll, bonus, total, target, success, crit: 'hit' | 'miss' | null }. */
+export function rollDice(state, choice) {
+  const parts = rollParts(state, choice);
+  const roll = 1 + Math.floor(Math.random() * 100);
+  const total = roll + parts.bonus;
+  const crit = roll >= 96 ? 'hit' : roll <= 5 ? 'miss' : null;
+  const success = crit === 'hit' || (crit !== 'miss' && total >= parts.target);
+  return { ...parts, roll, total, crit, success };
+}
+
+export function computeSuccessChance(state, choice) {
+  return rollParts(state, choice).chance;
 }
 
 function markEventSeen(state, event) {
@@ -636,16 +674,22 @@ function markEventSeen(state, event) {
   if (event.markSeen) event.markSeen(state);
 }
 
-export function resolveChoice(state, event, choiceIndex) {
+/**
+ * Resolves a choice. `decided` comes from the table: a dice roll the player made
+ * ({ success, roll }) or a fight fought out ({ success, combat: true }); without it the
+ * engine rolls by itself (the sims).
+ */
+export function resolveChoice(state, event, choiceIndex, decided = null) {
   const choice = event.choices[choiceIndex];
   let outcome = 'normal';
   let branch = choice;
 
   if (choice.isRoll) {
-    const chance = computeSuccessChance(state, choice);
-    const success = Math.random() < chance;
+    const success = decided ? decided.success : rollDice(state, choice).success;
     branch = success ? choice.onSuccess : choice.onFailure;
     outcome = success ? 'success' : 'failure';
+    // a fight already dealt its own wounds blow by blow
+    if (decided && decided.combat) branch = { ...branch, injury: undefined, noInjury: true };
   }
 
   const notes = applyBranch(state, branch, { event, label: choice.label, battle: choice.resourceKey === 'army' }, outcome);

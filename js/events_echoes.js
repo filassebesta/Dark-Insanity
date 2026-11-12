@@ -174,6 +174,7 @@ export const CRISIS_EVENTS = [
       },
       {
         label: 'Vyzvat autora písně na souboj',
+        combat: 'souper', // fought out in rounds (combat.js)
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.45, traitKey: 'strength', traitScale: 0.05,
         onSuccess: { effects: { prestige: 16 }, traitGain: 'strength', chronicle: 'Autor písně ležel v prachu a prosil o milost. Nová píseň je o něm.' },

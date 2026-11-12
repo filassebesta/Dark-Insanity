@@ -1500,3 +1500,15 @@ Formát a dávkový prompt jako v sekci 14.0. Zatím se používají půjčené 
 | `w_zved.jpg` | Zvěd s mapou | `zprava_spehmistra` | A hooded scout unrolling a rough map by candlelight in a commander's tent. |
 | `w_triumf.jpg` | Vítězné vojsko se vrací | `vojenska_prehlidka` | A victorious army marching through a town gate with torn banners and carts of plunder, townsfolk throwing flowers. |
 | `w_porazka.jpg` | Po porážce | `stary_rytir_umira` | The remnants of a beaten army limping home through a town gate, widows searching the faces of the returning men. |
+
+---
+
+## 20. Zbojníci (volitelné scény, 1:1, cíl 2048 × 2048)
+
+Formát a dávkový prompt jako v sekci 14.0. Zatím se používají půjčené obrázky.
+
+| Soubor | Událost | Teď používá | Popis pro Gemini |
+|---|---|---|---|
+| `z_zbojnici_cesta.jpg` | Zbojníci na cestě | `lapkove_ve_hvozdu` | A sunken forest road between beech trees blocked by a felled tree, five rough bandits with axes and scythes stepping out of the undergrowth toward a lone rider. |
+| `z_hejtman.jpg` | Zbojnický hejtman | `zastava_lesa` | A charismatic bandit chief with a long-handled hatchet (valaška) waiting in a forest clearing by an ancient oak, his band watching from the trees. |
+| `z_prepadeni_noc.jpg` | Noční přepadení | `pohranicni_najezd` | Night raiders with torches in a farmyard forcing open the granary door, dogs barking, a figure with a sword running out of the house. |

@@ -80,6 +80,9 @@ musí být aktivní, jinak je mapa skrytá. Screenshoty ukládat mimo repozitá�
 | `js/events_echoes.js` | krize (vyčerpané zdroje) a ozvěny rozhodnutí + tabulka `ECHO_HOOKS` |
 | `js/events_court.js` | události podle povah rádců + výchova dědice u šlechtice |
 | `js/events_trade.js` | přepadení karavany, piráti, cizí kupec, clo, hlad na severu, vlastní loď |
+| `js/combat.js` | souboj po kolech: nepřátelé, akce, hody k6+, zranění z boje (bez DOM) |
+| `js/dice_ui.js` | „stůl“: hod k% u riskantních voleb a souboj po kolech v příběhovém panelu |
+| `js/events_bandits.js` | zbojníci: na cestě, noční přepadení, zbojnický hejtman |
 | `js/war.js` | válečná tažení: cíle, vojsko v poli, zásoby, morálka, postup, konec tažení, tributy (bez DOM) |
 | `js/events_war.js` | 8 událostí v poli (bitva, obléhání, úplavice, dezertéři, mír, hlad, hrdina, zvěd) + triumf a porážka |
 | `js/ambitions.js` | ambice: cíle vládce s termínem, postup, odměna, nesplnění (bez DOM) |
@@ -189,6 +192,14 @@ obchodní `trade`, `tradeOffer`, `tradeMod`, `tradeStock`.
 - Vznik: větev události `injury: '<klíč>' | 'random' | { pool, chance }` (rvačka, atentát, turnaj, hon, souboj, první linie, vlk, roj) a obecně 30 % po každém neúspěšném hodu na sílu (`noInjury: true` to vypne, např. u „síly“ ve smyslu tvrdosti při jednání).
 - Větve `heal`, `treat`, `worsen`, `aid` léčí, ošetřují, zhoršují a dávají náhradu.
 - Zranění se ukazují na plaketě (červeně snížené vlastnosti, „bez nohy“), v listu postavy (sekce Zranění) a v Síni předků; trvalé zranění může dát přídomek (Jednooký, Chromá…).
+
+### Kostky a souboje
+- **Každá riskantní volba se hází k% (1–100)** jako v Dračím doupěti: `rollParts` (`engine.js`) rozloží šanci na **cílové číslo** (obtížnost pro průměrného vládce) a **modifikátory k hodu**: vlastnost od průměru 5 (Síla 7 při `traitScale` 0,05 = +10), zdroj od 50, zranění, schopný rádce (+6), okolnosti (`chanceBonus`, popisek `bonusLabel`). Hod + modifikátory ≥ cíl = úspěch, 96–100 vždy úspěch, 1–5 vždy neúspěch. Pravděpodobnost je přesně stejná jako dřív (`computeSuccessChance` = `rollParts().chance`), vyvážení se nemění.
+- Hráč klikne na volbu → panel s cílem, modifikátory a tlačítkem **Hodit kostkou** (Enter) → animace dvou k10 → verdikt → Pokračovat. `resolveChoice(state, event, i, { success })` přijme výsledek ze stolu; bez něj hází engine sám (simulace).
+- **Souboj** (`combat: '<nepřítel>'` u volby s `isRoll`): po kolech, hody **k6+** (šestka se hází znovu a přičítá). Útok = k6+ + ÚČ proti k6+ + OČ, zásah bere rozdíl + zbraň. Vládce: životy 8 + Síla, ÚČ = Síla/2, OČ = (Síla + Trpělivost)/4 (+1 zbroj u pána), zbraň +2 (sedlák +1). Akce: Útok, Silný úder (ÚČ −1, rána +3), Kryt (OČ +3, příští útok +1), Zastrašit (výřečnost proti odvaze), Lest (inteligence: nepříteli OČ −2, útok +2), Útěk (trpělivost). Klávesy 1–6, Enter.
+- Nepřátelé (`ENEMIES`): rváči, zbojníci, zbojnický hejtman, najatý vrah, vlčí smečka, vlk, turnajový rytíř, šlechtic s mečem, dráb s pacholky, soused Hrubý. Těžký zásah (5+) může zranit, prohraný boj zraní vždy (u rváčů jen modřiny). Zranění z boje nahrazují `injury` větve.
+- Souboje jsou u: rvačka v krčmě, atentát, turnaj, vlčí hon, souboj s autorem písně, Sedlák: dráb, vlk, Hrubý, a v nových událostech se zbojníky. Průměrný vládce (vše 5) vyhraje se zbojníky ~75 %, s hejtmanem ~45–50 %, sedlák se zbojníky ~55 %; silná postava (Síla 8) vyhrává výrazně častěji.
+- Simulace souboje nehrají, berou šanci z `baseChance` a `traitKey` volby (proto je volba se soubojem i dál `isRoll`).
 
 ### Válečná tažení
 - Záložka **Válka** (klávesa **V**, vrstva mapy „Válka“) u Panovníka a Šlechtice; Sedlák války nevede.

@@ -20,14 +20,14 @@ export const WAR_EVENTS = [
       {
         label: 'Udeřit čelně',
         hintType: 'resource', hintKey: 'army',
-        isRoll: true, baseChance: 0.5, chanceBonus: warBonus, noInjury: true,
+        isRoll: true, baseChance: 0.5, chanceBonus: warBonus, bonusLabel: 'Vojsko v poli', noInjury: true,
         onSuccess: { effects: { prestige: 2 }, war: { progress: 35, morale: 10, power: -2, won: true }, music: 'battle', chronicle: 'Útok prorazil nepřátelské řady a nepřítel prchl z bojiště. Do tábora se vojsko vracelo za zpěvu.' },
         onFailure: { war: { progress: -5, morale: -18, power: -6, wound: 0.35 }, music: 'battle', chronicle: 'Útok se zlomil o nepřátelské štíty. Na svahu zůstalo ležet mnoho dobrých mužů.' },
       },
       {
         label: 'Obejít je lesem a vpadnout do boku',
         hintType: 'trait', hintKey: 'intelligence',
-        isRoll: true, baseChance: 0.3, traitKey: 'intelligence', traitScale: 0.03, chanceBonus: warBonus,
+        isRoll: true, baseChance: 0.3, traitKey: 'intelligence', traitScale: 0.03, chanceBonus: warBonus, bonusLabel: 'Vojsko v poli',
         onSuccess: { war: { progress: 45, morale: 12, power: -1, won: true }, traitGain: 'intelligence', music: 'battle', chronicle: 'Jízda se vynořila z lesa nepříteli v zádech. Bitva skončila dřív, než pořádně začala.' },
         onFailure: { war: { morale: -12, power: -4, wound: 0.2 }, music: 'battle', chronicle: 'Les byl hustší, než se zdálo. Oddíl zabloudil a přišel do bitvy pozdě a vyčerpaný.' },
       },
@@ -50,7 +50,7 @@ export const WAR_EVENTS = [
       {
         label: 'Vzít hradby útokem',
         hintType: 'resource', hintKey: 'army',
-        isRoll: true, baseChance: 0.4, chanceBonus: warBonus, noInjury: true,
+        isRoll: true, baseChance: 0.4, chanceBonus: warBonus, bonusLabel: 'Vojsko v poli', noInjury: true,
         onSuccess: { effects: { prestige: 3 }, war: { progress: 45, morale: 10, power: -4, won: true }, music: 'battle', chronicle: 'Žebříky se opřely o hradby a první muži byli nahoře dřív, než obránci stačili shodit kameny. Pevnost padla.' },
         onFailure: { war: { progress: 5, morale: -15, power: -8, wound: 0.35 }, music: 'battle', chronicle: 'Útok na hradby skončil masakrem v příkopu. Obránci jásali až do noci.' },
       },
@@ -64,7 +64,7 @@ export const WAR_EVENTS = [
       {
         label: 'Podkopat hradby',
         hintType: 'trait', hintKey: 'intelligence',
-        isRoll: true, baseChance: 0.3, traitKey: 'intelligence', traitScale: 0.03, chanceBonus: warBonus,
+        isRoll: true, baseChance: 0.3, traitKey: 'intelligence', traitScale: 0.03, chanceBonus: warBonus, bonusLabel: 'Vojsko v poli',
         onSuccess: { war: { progress: 40, power: -1, won: true }, chronicle: 'Horníci vykopali štolu pod nárožní věží a zapálili trámy. Věž se zřítila i s kusem hradby.' },
         onFailure: { war: { morale: -8, power: -3 }, chronicle: 'Obránci podkop objevili a zaplavili ho vodou. Horníci se už nevrátili.' },
       },
@@ -153,7 +153,7 @@ export const WAR_EVENTS = [
       {
         label: 'Žádat dvojnásobek',
         hintType: 'trait', hintKey: 'eloquence',
-        isRoll: true, baseChance: 0.2, traitKey: 'eloquence', traitScale: 0.04, chanceBonus: warBonus,
+        isRoll: true, baseChance: 0.2, traitKey: 'eloquence', traitScale: 0.04, chanceBonus: warBonus, bonusLabel: 'Vojsko v poli',
         onSuccess: { effects: { gold: 10 }, war: { end: 'peace' }, chronicle: 'Nepřítel zaplatil dvakrát tolik, jen aby měl pokoj. Vyjednávání se zapíše do kroniky.' },
         onFailure: { war: { morale: -6 }, chronicle: 'Posel se urazil a odjel. Nepřítel se rozhodl bránit do posledního muže.' },
       },
@@ -216,7 +216,7 @@ export const WAR_EVENTS = [
       {
         label: 'Poslat ho v čele příštího útoku',
         hintType: 'trait', hintKey: 'strength',
-        isRoll: true, baseChance: 0.5, chanceBonus: warBonus, noInjury: true,
+        isRoll: true, baseChance: 0.5, chanceBonus: warBonus, bonusLabel: 'Vojsko v poli', noInjury: true,
         onSuccess: { war: { progress: 15, morale: 10, won: true }, chronicle: 'Hrdina vedl útok a muži šli za ním jako jeden. Nepřítel ustoupil o celé údolí.' },
         onFailure: { war: { morale: -8, power: -1 }, chronicle: 'Hrdina padl v prvním útoku. Jeho smrt vzala vojsku víc než jednoho muže.' },
       },

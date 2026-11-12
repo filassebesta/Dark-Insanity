@@ -1266,6 +1266,7 @@ export const MORE_EVENTS = [
     choices: [
       {
         label: 'Vyjet na hon osobně',
+        combat: 'vlci', // fought out in rounds (combat.js)
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.45, traitKey: 'strength', traitScale: 0.05,
         onSuccess: { effects: { prestige: 6 }, provinceEffects: { 'sokoli-hvozd': { loyalty: 10 } }, traitGain: 'strength', chronicle: 'Vládce sám skolil vůdce smečky. Kožešina visí v síni a v Sokolově se o lovu zpívá.' },

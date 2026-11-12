@@ -6,6 +6,7 @@ import { rulerPortraitCandidates, memberPortraitCandidates, portraitImg } from '
 import { roleLabel, loyaltyLabel, quirkLabel } from './court.js';
 import { councilAdvice } from './council.js';
 import { effectiveTraits, injuryWords } from './injuries.js';
+import { ENEMIES } from './combat.js';
 
 const DEFAULT_SCENE = 'assets/events/scene_default.jpg';
 
@@ -298,7 +299,10 @@ export function renderEventCard(state, event, handlers) {
     if (choice.requires && !choice.requires(state)) return; // e.g. needs a secret or a conspiracy
     shownAt[index] = shown;
     let tag = '';
-    if (choice.isRoll) {
+    if (choice.isRoll && choice.combat) {
+      const foe = ENEMIES[choice.combat];
+      tag = `<span class="risk-tag combat-tag" title="Souboj po kolech s kostkou k6">⚔ Souboj · ${esc(foe ? foe.name : '')}</span>`;
+    } else if (choice.isRoll) {
       const pct = Math.round(computeSuccessChance(state, choice) * 100);
       const trait = TRAIT_DEFS.find((d) => d.key === choice.traitKey);
       const res = RESOURCE_DEFS.find((d) => d.key === choice.resourceKey);
@@ -306,7 +310,7 @@ export function renderEventCard(state, event, handlers) {
         trait ? `${trait.label} ${effectiveTraits(state.ruler)[trait.key]}` : '',
         res ? `${resourceLabel(res, state.scenario)} ${state.resources[res.key]}` : '',
       ].filter(Boolean).join(' + ');
-      tag = `<span class="risk-tag" title="Šance na úspěch závisí na: ${basis || 'náhodě'}">${basis ? `${esc(basis)} · ` : ''}${pct} %</span>`;
+      tag = `<span class="risk-tag" title="Hod k% — šance závisí na: ${basis || 'náhodě'}">${basis ? `${esc(basis)} · ` : ''}k% · ${pct} %</span>`;
     }
     // what a choice costs or brings stays hidden until it is made
     const btn = makeChoiceButton(shown++, hintIcon(choice.hintType, choice.hintKey), choice.label, tag);

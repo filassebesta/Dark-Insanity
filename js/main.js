@@ -11,6 +11,7 @@ import { openMap, closeMap, isMapOpen, wireMapChrome, closeTownIfOpen } from './
 import { openCharacter, closeCharacter, isCharacterOpen, openPerson, closePerson, isPersonOpen } from './character.js';
 import { playMusic, setMusicVolume } from './audio.js';
 import { checkAchievements } from './achievements.js';
+import { openRoll, openCombat } from './dice_ui.js';
 import { renderAmbitionBar, renderWarBar, renderHall, renderEndingAchievements, announceAchievement } from './fame.js';
 
 let currentState = null;
@@ -111,7 +112,24 @@ function showOutcome(result) {
 
 function handleChoiceSelected(index) {
   if (!awaitingChoice) return;
-  showOutcome(resolveChoice(currentState, activeEvent, index));
+  const choice = activeEvent.choices[index];
+  if (!choice.isRoll) {
+    showOutcome(resolveChoice(currentState, activeEvent, index));
+    return;
+  }
+  // a risky choice goes to the table: a fight in rounds, or a roll of k%
+  awaitingChoice = false;
+  skipTypewriter();
+  const event = activeEvent;
+  if (choice.combat) {
+    openCombat(currentState, choice, (fought) => {
+      const result = resolveChoice(currentState, event, index, fought);
+      result.notes = [...fought.notes, ...(result.notes || [])];
+      showOutcome(result);
+    });
+  } else {
+    openRoll(currentState, choice, (rolled) => showOutcome(resolveChoice(currentState, event, index, rolled)));
+  }
 }
 
 function handleRouteSelected(terrainKey) {
@@ -422,6 +440,22 @@ function wireKeyboard() {
     }
     if (isOverlayOpen()) return;
 
+    // at the table: number keys pick a combat action, Enter rolls or continues
+    const table = document.querySelector('#choice-list .dice-panel');
+    if (table) {
+      if (/^[1-9]$/.test(e.key)) {
+        const act = table.querySelectorAll('.cb-action')[Number(e.key) - 1];
+        if (act && !act.disabled) act.click();
+        return;
+      }
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (skipTypewriter()) return;
+        const primary = table.querySelector('.dice-primary');
+        if (primary && !primary.disabled) primary.click();
+      }
+      return;
+    }
     const buttons = [...document.querySelectorAll('#choice-list .choice-button')];
     if (/^[1-9]$/.test(e.key)) {
       const btn = buttons[Number(e.key) - 1];

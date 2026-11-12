@@ -32,6 +32,7 @@ import { BUILD_EVENTS } from './events_build.js';
 import { INJURY_EVENTS } from './events_injury.js';
 import { AMBITION_EVENTS } from './events_ambition.js';
 import { WAR_EVENTS } from './events_war.js';
+import { BANDIT_EVENTS } from './events_bandits.js';
 import { PEASANT_EVENTS, PEASANT_CRISES, PEASANT_ECHOES, PEASANT_QUIET_EVENT } from './events_peasant.js';
 
 const BASE_EVENTS = [
@@ -95,6 +96,7 @@ const BASE_EVENTS = [
     choices: [
       {
         label: 'Vymlátit je vlastní rukou',
+        combat: 'rvaci', // fought out in rounds (combat.js)
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.45, traitKey: 'strength', traitScale: 0.05,
         onSuccess: { effects: { prestige: 8, army: 2 }, traitGain: 'strength', chronicle: 'Vládce sám srazil rváče k zemi. Zpráva o tom se šíří městem a vojáci si ho začínají víc vážit.' },
@@ -452,6 +454,7 @@ const BASE_EVENTS = [
     choices: [
       {
         label: 'Bránit se holýma rukama',
+        combat: 'vrah', // fought out in rounds (combat.js)
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.45, traitKey: 'strength', traitScale: 0.05,
         onSuccess: { effects: { prestige: 10, stability: 3 }, hiddenEffects: { clearFlag: 'ignored_plot_warning', setFlag: 'plot_uncovered' }, traitGain: 'strength', chronicle: 'Vládce vraha přemohl a ten před smrtí vyzradil jména svých pánů. Spiknutí je odhaleno.' },
@@ -819,6 +822,7 @@ const BASE_EVENTS = [
     choices: [
       {
         label: 'Uspořádat turnaj a sám vjet do klání',
+        combat: 'rytir', // fought out in rounds (combat.js)
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.35, traitKey: 'strength', traitScale: 0.06,
         onSuccess: { effects: { gold: -15, prestige: 14, legitimacy: 3 }, traitGain: 'strength', chronicle: 'Vládce shodil z koně tři soupeře a turnaj vyhrál. O jeho síle se zpívá v každé krčmě.' },
@@ -840,7 +844,7 @@ const BASE_EVENTS = [
   },
 ];
 
-export const EVENTS = attachEchoHooks([...BASE_EVENTS, ...MORE_EVENTS, ...NOBLE_EVENTS, ...COURT_EVENTS, ...TRADE_EVENTS, ...BUILD_EVENTS, ...INJURY_EVENTS, ...AMBITION_EVENTS, ...WAR_EVENTS, ...PEASANT_EVENTS, ...CRISIS_EVENTS, ...PEASANT_CRISES, ...ECHO_EVENTS, ...PEASANT_ECHOES]);
+export const EVENTS = attachEchoHooks([...BASE_EVENTS, ...MORE_EVENTS, ...NOBLE_EVENTS, ...COURT_EVENTS, ...TRADE_EVENTS, ...BUILD_EVENTS, ...INJURY_EVENTS, ...AMBITION_EVENTS, ...WAR_EVENTS, ...BANDIT_EVENTS, ...PEASANT_EVENTS, ...CRISIS_EVENTS, ...PEASANT_CRISES, ...ECHO_EVENTS, ...PEASANT_ECHOES]);
 
 // Picked when no other event is due (or now and then by chance): a calm season
 // still lets the ruler spend it on something.
