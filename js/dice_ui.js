@@ -26,7 +26,7 @@ function d10(cls, value) {
 export function openRoll(state, choice, onDone, host = panel()) {
   if (host === panel()) hideCouncil();
   const parts = rollParts(state, choice);
-  const trait = choice.traitKey ? traitLabel(choice.traitKey) : '';
+  const trait = choice.traitKey && choice.traitScale !== 0 ? traitLabel(choice.traitKey) : '';
   const mods = parts.mods.length ? parts.mods.map((m) => `<li><span>${esc(m.label)}</span><b class="${m.value > 0 ? 'pos' : 'neg'}">${sign(m.value)}</b></li>`).join('')
     : '<li><span>Žádné úpravy</span><b>±0</b></li>';
   host.innerHTML = `

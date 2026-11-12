@@ -181,9 +181,11 @@ function createPeasantGame(rulerName, dynastyName, gender) {
   const state = createKingGame(rulerName, dynastyName, gender);
   state.scenario = 'sedlak';
   state.ruler.statusTier = 1;
-  state.ruler.age = 22;
-  state.heir.age = randInt(1, 4);
-  state.spouse.age = randInt(19, 25);
+  state.ruler.age = 20;
+  // a young farmer starts single and childless: the spouse is courted, the heir born (family.js)
+  state.spouse = { role: 'spouse', name: '', gender: gender === 'female' ? 'male' : 'female', age: 0, loyalty: 0, alive: false, none: true };
+  state.heir = { role: 'heir', name: '', gender: 'male', age: 0, loyalty: 0, alive: false, none: true, traits: inheritTraits() };
+  state.children = [];
   state.chancellor.age = randInt(45, 60);
   state.marshal.age = randInt(30, 50);
   state.spymaster.age = randInt(30, 50);

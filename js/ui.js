@@ -419,7 +419,8 @@ export function renderCourtPanel(state) {
   const f = (c, male, female) => (c.gender === 'female' ? female : male);
   const members = [
     { data: state.ruler, role: state.scenario === 'sedlak' ? f(state.ruler, 'Hospodář', 'Hospodyně') : f(state.ruler, 'Vládce', 'Vládkyně'), extra: tierLabel(state.ruler), portraits: rulerPortraitCandidates(state.ruler) },
-    ...['heir', 'spouse', 'chancellor', 'marshal', 'spymaster'].map((r) => (
+    // a spouse not yet married and an heir not yet born have no card
+    ...['heir', 'spouse', 'chancellor', 'marshal', 'spymaster'].filter((r) => !state[r].none).map((r) => (
       { data: state[r], role: roleLabel(r, state[r].gender, state.scenario, state.flags), portraits: memberPortraitCandidates(state[r], r, state.scenario), person: r })),
   ];
   for (const m of members) {
