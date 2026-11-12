@@ -61,6 +61,8 @@ export function createNewGame(rulerName, dynastyName, gender, scenario = 'sedlak
     : scenario === 'sedlak' ? createPeasantGame(rulerName, dynastyName, gender)
       : createKingGame(rulerName, dynastyName, gender);
   game.origin = scenario; // where the house began: a peasant's line that reaches the crown earns a mark in the Hall of Fame
+  // every chronicle from the plough opens with the prologue (events_prologue.js): upbringing, first winter, the lord
+  if (scenario === 'sedlak') { game.pendingEvent = 'p_puvod'; game.eventQueue = ['p_prvni_zima', 'p_pan']; }
   game.stats = {};
   game.milestones = {}; // turn of each promotion: { ennobled, crowned, empire }
   ensureRealms(game); // the neighbouring kingdoms and their rulers

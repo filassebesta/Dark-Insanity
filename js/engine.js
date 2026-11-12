@@ -66,6 +66,9 @@ export function interpolate(state, text) {
       'lord.name': lord.name, 'lord.title': lord.gender === 'female' ? 'paní' : 'pán',
       'lord.Title': lord.gender === 'female' ? 'Paní' : 'Pán',
       'lord.house': NOBLE_HOUSES.find((d) => d.id === PEASANT_HOME.house).name,
+      // {lord.nature} "chamtivý", {lord.natureText} "počítá každé zrno…"
+      'lord.nature': LORD_NATURES[lordNature(state)][lord.gender === 'female' ? 'f' : 'm'],
+      'lord.natureText': LORD_NATURES[lordNature(state)].text[lord.gender === 'female' ? 1 : 0],
       village: PEASANT_HOME.village,
     });
   }
@@ -113,6 +116,28 @@ export function isNoble(state) {
 
 export function isPeasant(state) {
   return state.scenario === 'sedlak';
+}
+
+// the lord's temper (state.peasant.lordNature): what the autumn dues and the lord's memory are like
+export const LORD_NATURES = {
+  chamtivy: { m: 'chamtivý', f: 'chamtivá', text: ['počítá každé zrno a dávky zvedá, kdykoli může', 'počítá každé zrno a dávky zvedá, kdykoli může'] },
+  spravedlivy: { m: 'spravedlivý', f: 'spravedlivá', text: ['je přísný, ale drží slovo a v neúrodě sleví', 'je přísná, ale drží slovo a v neúrodě sleví'] },
+  kruty: { m: 'krutý', f: 'krutá', text: ['zapomíná na službu dřív, než vychladne pot, a trestá rád', 'zapomíná na službu dřív, než vychladne pot, a trestá ráda'] },
+};
+
+/** The current lord's temper; a new lord brings a new one. */
+export function lordNature(state) {
+  const p = state.peasant;
+  const lord = lordOf(state);
+  if (!p || !lord) return null;
+  if (p.lordName !== lord.name) {
+    const keys = Object.keys(LORD_NATURES);
+    const had = p.lordName;
+    p.lordName = lord.name;
+    p.lordNature = keys[randInt(0, keys.length - 1)];
+    if (had) state.chronicle.push(makeChronicleEntry(state, `Lipnice má nového pána: ${lord.name}. Prý je ${LORD_NATURES[p.lordNature][lord.gender === 'female' ? 'f' : 'm']}.`));
+  }
+  return p.lordNature;
 }
 
 /** The peasant's lord: the head of the house that owns the village. */
@@ -443,6 +468,10 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
     if (a) notes.push({ text: `Ambice: ${a.name} (do ${a.years} let)`, tone: 'pos' });
   }
   if (branch.ambitionSkip) skipAmbition(state);
+  for (const [k, d] of Object.entries(branch.traits || {})) {
+    state.ruler.traits[k] = clampTrait(state.ruler.traits[k] + d);
+    notes.push({ text: `${TRAIT_DEFS.find((t) => t.key === k).label} ${d > 0 ? '+' : ''}${d}`, tone: d > 0 ? 'pos' : 'neg' });
+  }
   if (branch.decree) notes.push(...(issueDecree(state, branch.decree) || [])); // the year's work chosen in a story (events_farm.js)
   applyWarEffects(state, branch.war, notes); // a war event moves the campaign
   recordCourtHistory(state, meta, touched, outcome);
@@ -908,9 +937,11 @@ function processPeasantEconomy(state) {
     + (capable(state, 'chancellor') ? 1 : 0) + (state.flags.s_rychtar ? 1 : 0);
   let foodIncome = Math.round((r.stability + r.army) / 35) - 2 + SEASON_FOOD[state.seasonIndex]
     - injuryMods(state.ruler).work; // a farmer without a leg or a hand does half the work
+  const nature = lordNature(state);
   if (state.seasonIndex === 2) {
-    foodIncome -= free ? 2 : 5;
-    goldIncome -= free ? 3 : 1;
+    // the autumn dues, heavier under a greedy lord and lighter under a fair one
+    foodIncome -= (free ? 2 : 5) + (nature === 'chamtivy' ? (free ? 0 : 2) : nature === 'spravedlivy' ? -1 : 0);
+    goldIncome -= (free ? 3 : 1) + (nature === 'chamtivy' && free ? 1 : 0);
   }
   r.gold = clamp(r.gold + goldIncome);
   r.food = clamp(r.food + foodIncome);
@@ -919,8 +950,9 @@ function processPeasantEconomy(state) {
   if (r.food <= 5) r.stability = clamp(r.stability - 3);
   if (r.prestige > 50 && state.turn % 2 === 1) r.prestige -= 1;
   if (r.faith !== 50 && state.turn % 3 === 0) r.faith += r.faith > 50 ? -1 : 1;
-  // a lord forgets good service quickly and remembers nothing else
-  if (r.favor > 40 && state.turn % 2 === 0) r.favor -= 1;
+  // a lord forgets good service quickly and remembers nothing else (a cruel one twice as fast, a fair one half)
+  const forget = nature === 'kruty' ? state.turn % 2 === 0 || state.turn % 4 === 1 : nature === 'spravedlivy' ? state.turn % 4 === 0 : state.turn % 2 === 0;
+  if (r.favor > 40 && forget) r.favor -= 1;
   driftNoble(state);
   return { goldIncome, foodIncome };
 }

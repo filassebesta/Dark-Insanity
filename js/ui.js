@@ -304,7 +304,7 @@ export function renderEventCard(state, event, handlers) {
       tag = `<span class="risk-tag" title="Hod k% — šance závisí na: ${basis || 'náhodě'}">${basis ? `${esc(basis)} · ` : ''}k% · ${pct} %</span>`;
     }
     // what a choice costs or brings stays hidden until it is made
-    const btn = makeChoiceButton(shown++, hintIcon(choice.hintType, choice.hintKey), choice.label, tag);
+    const btn = makeChoiceButton(shown++, hintIcon(choice.hintType, choice.hintKey), esc(interpolate(state, choice.label)), tag); // labels may follow genders too
     btn.addEventListener('click', () => handlers.onChoiceSelected(index));
     choiceList.appendChild(btn);
   });
@@ -332,7 +332,7 @@ function renderCouncil(state, event, shownAt) {
       <div class="council-body">
         <span class="council-who">${esc(role)} ${esc(c.name)} <em>${esc(loyaltyLabel(c.loyalty, c.gender).toLowerCase())}</em></span>
         <span class="council-line">„${esc(a.line)}“</span>
-        <span class="council-pick">Doporučuje: <b>${shownAt[a.index] + 1}. ${esc(choice.label)}</b></span>
+        <span class="council-pick">Doporučuje: <b>${shownAt[a.index] + 1}. ${esc(interpolate(state, choice.label))}</b></span>
       </div>
     </div>`;
   }).join('');
