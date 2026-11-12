@@ -1,7 +1,8 @@
 import { SEASONS, TERRAIN_DEFS, NOBLE_HOUSES, PEASANT_HOME, clamp, randomName, randInt, tierTitle } from './data.js';
 import { makeChronicleEntry, inheritTraits } from './state.js';
 import { EVENTS, QUIET_EVENTS } from './events.js';
-import { roleLabel, QUIRK_ROLES, randomQuirk, quirkLabel } from './court.js';
+import { roleLabel, roleCases, QUIRK_ROLES, randomQuirk, quirkLabel } from './court.js';
+import { ageFamily, ensureFamily, successor, rebuildHousehold, marryRuler, marryHeir, relationWord, yearsText, ADULT_AGE } from './family.js';
 import { processTrade, resolveIncident, resolveOffer, addTradeMod, ensureTrade, cargoTokens, GOODS, MAX_STOCK } from './trade.js';
 
 const TRAIT_MIN = 1;
@@ -41,6 +42,22 @@ export function interpolate(state, text) {
       'house.seat': state.provinces.find((p) => p.id === house.def.seat).name,
     });
   }
+  const dead = ctx.dead;
+  if (dead) {
+    Object.assign(dict, {
+      'dead.name': dead.name, 'dead.age': String(dead.age),
+      'dead.rel': relationWord(dead.relation, dead), 'dead.cause': dead.cause || '',
+      'dead.ageText': yearsText(dead.age), 'dead.your': dead.gender === 'female' ? 'tvoje' : 'tvůj',
+    });
+  }
+  const born = state.newborn;
+  if (born) Object.assign(dict, { 'newborn.name': born.name, 'newborn.word': born.gender === 'female' ? 'dcera' : 'syn', 'newborn.Word': born.gender === 'female' ? 'Dcera' : 'Syn' });
+  const hs = state.heir && state.heir.spouse;
+  dict['heir.spouseName'] = hs ? hs.name : '';
+  const reg = state.regent === 'parent' ? state.parent : state.regent === 'chancellor' ? state.chancellor : null;
+  dict['regent.name'] = reg ? reg.name : '';
+  dict['parent.name'] = state.parent ? state.parent.name : '';
+  dict['parent.word'] = state.parent ? (state.parent.gender === 'female' ? 'matka' : 'otec') : '';
   Object.assign(dict, cargoTokens(state));
   const lord = lordOf(state);
   if (lord) {
@@ -64,15 +81,19 @@ export function interpolate(state, text) {
     const t = roleLabel(role, state[role].gender, state.scenario);
     dict[`${role}.Title`] = t;
     dict[`${role}.title`] = t.toLowerCase();
+    for (const [k, v] of Object.entries(roleCases(role, state[role].gender, state.scenario))) dict[`${role}.title${k}`] = v;
   }
   // gendered word forms: {R:přijel|přijela} follows the ruler, {H:...} the house head in context
   const genderOf = {
     R: state.ruler.gender, H: house ? house.head.gender : 'male',
     T: target ? target.gender : 'male', D: state.heir ? state.heir.gender : 'male',
     L: lord ? lord.gender : 'male', M: state.spouse ? state.spouse.gender : 'male',
+    X: dead ? dead.gender : 'male', N: born ? born.gender : 'male',
+    P: state.parent ? state.parent.gender : 'male',
+    C: state.chancellor.gender, A: state.marshal.gender, Q: state.spymaster.gender,
   };
   return text
-    .replace(/\{([RHTDLM]):([^|{}]*)\|([^|{}]*)\}/g, (m, who, male, female) => (genderOf[who] === 'female' ? female : male))
+    .replace(/\{([RHTDLMXNPCAQ]):([^|{}]*)\|([^|{}]*)\}/g, (m, who, male, female) => (genderOf[who] === 'female' ? female : male))
     .replace(/\{([\w.]+)\}/g, (m, key) => (key in dict ? dict[key] : m));
 }
 
@@ -192,7 +213,7 @@ function recordCourtHistory(state, meta, touched, outcome) {
     c.history = c.history || [];
     c.history.push({
       year: state.year, season: state.seasonIndex,
-      title: meta.event.title, choice: meta.label, outcome,
+      title: meta.title || meta.event.title, choice: meta.label, outcome,
       delta: touched[role] ?? null,
     });
     if (c.history.length > 40) c.history.shift();
@@ -230,6 +251,26 @@ function applyHeirTraits(state, fx, notes) {
   }
 }
 
+// marry: { loyalty, minAge, maxAge, origin } — the ruler takes a husband or wife
+// heirMarry: true | 'king' — the heir marries (the king's child, or someone found for them)
+// regent: 'parent' | 'chancellor' | 'self' — who governs for a child ruler
+function applyFamilyEffects(state, branch, notes) {
+  if (branch.marry) {
+    const sp = marryRuler(state, branch.marry);
+    notes.push({ text: `${sp.gender === 'female' ? 'Manželka' : 'Manžel'}: ${sp.name} (${sp.age} let)`, tone: 'pos' });
+  }
+  if (branch.heirMarry) {
+    const k = state.king && state.king.heir;
+    const who = branch.heirMarry === 'king' && k ? { name: k.name, age: k.age, origin: 'koruna' } : { origin: typeof branch.heirMarry === 'string' ? branch.heirMarry : '' };
+    const sp = marryHeir(state, who);
+    if (sp) notes.push({ text: `${state.heir.name} ${state.heir.gender === 'female' ? 'se vdává' : 'se žení'}: ${sp.name}`, tone: 'pos' });
+  }
+  if (branch.regent) {
+    state.regent = state.ruler.age < ADULT_AGE ? branch.regent : null;
+  }
+  if (branch.noRemarry) state.flags.no_remarry = true;
+}
+
 // trade / tradeOffer / tradeMod / tradeStock (see events_trade.js)
 function applyTradeEffects(state, branch, notes) {
   if (branch.trade) resolveIncident(state, branch.trade, notes);
@@ -253,6 +294,7 @@ export function ensureCourtData(state) {
     if (state[role] && !state[role].quirk) state[role].quirk = randomQuirk();
   }
   if (state.heir && !state.heir.traits) state.heir.traits = inheritTraits(state.ruler.traits);
+  ensureFamily(state);
 }
 
 // Yearly weight of personalities, and the heir slowly growing up.
@@ -368,6 +410,7 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
   applyCourtEffects(state, branch.courtEffects, notes, touched);
   applyCourtReplacement(state, branch.replaceCourt, notes, meta);
   applyHeirTraits(state, branch.heirTraits, notes);
+  applyFamilyEffects(state, branch, notes);
   applyTradeEffects(state, branch, notes);
   recordCourtHistory(state, meta, touched, outcome);
   scheduleEcho(state, branch.echo, meta);
@@ -387,7 +430,7 @@ function scheduleEcho(state, spec, meta) {
     event: spec.event,
     due: state.turn + randInt(a, b),
     context: state.eventContext ? { ...state.eventContext } : null,
-    from: { year: state.year, title: meta.event.title, choice: meta.label, ruler: state.ruler.name, gender: state.ruler.gender },
+    from: { year: state.year, title: meta.title || meta.event.title, choice: meta.label, ruler: state.ruler.name, gender: state.ruler.gender },
   });
 }
 
@@ -524,7 +567,7 @@ function tallyReign(state, branch, meta, outcome) {
   if (branch.setTier || branch.newKing || branch.endGame) weight += 60;
   if (meta.event.forced) weight += 15;
   // the three weightiest decisions of a reign are what the chronicle remembers
-  reign.deeds.push({ year: state.year, title: meta.event.title, choice: meta.label, outcome, weight });
+  reign.deeds.push({ year: state.year, title: meta.title || meta.event.title, choice: meta.label, outcome, weight });
   reign.deeds.sort((x, y) => y.weight - x.weight);
   reign.deeds.length = Math.min(reign.deeds.length, 3);
 }
@@ -619,7 +662,7 @@ export function resolveChoice(state, event, choiceIndex) {
     outcome = success ? 'success' : 'failure';
   }
 
-  const notes = applyBranch(state, branch, { event, label: choice.label, battle: choice.resourceKey === 'army' }, outcome);
+  const notes = applyBranch(state, branch, { event, title: interpolate(state, event.title), label: interpolate(state, choice.label), battle: choice.resourceKey === 'army' }, outcome);
   const traitGained = branch.traitGain || null;
   if (traitGained) {
     state.ruler.traits[traitGained] = clampTrait(state.ruler.traits[traitGained] + 1);
@@ -668,6 +711,22 @@ export function pickNextEvent(state) {
     state.pendingEvent = null;
     if (forced) return forced;
   }
+  // a funeral, a regency: the family's own news comes first
+  const queue = state.familyQueue || [];
+  while (queue.length) {
+    const item = queue.shift();
+    const ev = EVENTS.find((e) => e.id === item.event && (e.scenarios || [e.scenario || 'panovnik']).includes(state.scenario));
+    if (!ev) continue;
+    state.eventContext = item.dead ? { dead: item.dead } : null;
+    if (ev.requires && !ev.requires(state)) { state.eventContext = null; continue; }
+    return ev;
+  }
+  // an adviser who died of old age leaves an office to fill
+  const vacant = ['chancellor', 'marshal', 'spymaster'].find((r) => state[r] && state[r].alive === false);
+  if (vacant) {
+    const ev = EVENTS.find((e) => e.vacancy && (e.scenarios || [e.scenario || 'panovnik']).includes(state.scenario));
+    if (ev) { state.eventContext = { role: vacant }; return ev; }
+  }
   const echo = takeDueEcho(state);
   if (echo) return echo;
   const QUIET_EVENT = QUIET_EVENTS[state.scenario] || QUIET_EVENTS.panovnik;
@@ -696,6 +755,7 @@ export function pickNextEvent(state) {
 
 // A peasant lives off the farm: the land (Grunt) and the hands that work it (Čeleď).
 // Every autumn the lord takes his due: labour and grain from a serf, coin from a freeman.
+
 function processPeasantEconomy(state) {
   const r = state.resources;
   const free = state.ruler.statusTier >= 2;
@@ -703,6 +763,12 @@ function processPeasantEconomy(state) {
   let goldIncome = Math.round(r.stability / 35) - 1 + traitBonuses(state).gold
     + (capable(state, 'chancellor') ? 1 : 0) + (state.flags.s_rychtar ? 1 : 0);
   let foodIncome = Math.round((r.stability + r.army) / 35) - 2 + SEASON_FOOD[state.seasonIndex];
+  // in winter the small children are mouths to feed, the grown ones (16+) have been hands in the field
+  if (state.seasonIndex === 3) {
+    const kids = [state.heir, ...(state.children || [])].filter((c) => c && c.alive !== false && !c.none);
+    // one small child is always fed somehow; every further one costs
+    foodIncome -= Math.max(0, kids.filter((c) => c.age < 12).length - 1) - kids.filter((c) => c.age >= 16).length;
+  }
   if (state.seasonIndex === 2) {
     foodIncome -= free ? 2 : 5;
     goldIncome -= free ? 3 : 1;
@@ -833,11 +899,13 @@ function ageCharacters(state) {
   state.ruler.age += 1;
   if (state.heir.alive) state.heir.age += 1;
   if (state.spouse.alive) state.spouse.age += 1;
-  state.chancellor.age += 1;
-  state.marshal.age += 1;
-  state.spymaster.age += 1;
+  for (const role of ['chancellor', 'marshal', 'spymaster']) {
+    if (state[role].alive !== false) state[role].age += 1;
+  }
   applyQuirks(state);
+  const news = ageFamily(state);
   if (state.king && state.houses) ageNobleWorld(state);
+  return news;
 }
 
 function checkNaturalDeath(state) {
@@ -847,25 +915,13 @@ function checkNaturalDeath(state) {
   return Math.random() < chance;
 }
 
-function generateSuccessorHousehold(state) {
-  const heirGender = Math.random() < 0.5 ? 'male' : 'female';
-  const spouseGender = heirGender === 'male' ? 'female' : 'male';
-  state.heir = {
-    role: 'heir', name: randomName(heirGender), gender: heirGender,
-    age: randInt(1, 6), loyalty: clamp(70 + randInt(-10, 10)), alive: true,
-    traits: inheritTraits(state.ruler.traits),
-  };
-  state.spouse = {
-    role: 'spouse', name: randomName(spouseGender), gender: spouseGender,
-    age: randInt(24, 36), loyalty: clamp(65 + randInt(-10, 10)), alive: true,
-    quirk: randomQuirk(),
-  };
-}
-
 function handleSuccession(state) {
-  if (state.heir.alive) {
+  const from = successor(state);
+  if (from) {
+    const heir = from.person;
     const oldName = state.ruler.name;
-    const newRulerName = state.heir.name;
+    const newRulerName = heir.name;
+    const oldSpouse = state.spouse;
     state.pastRulers = state.pastRulers || [];
     state.ruler.alive = false;
     const epithet = reignEpithet(state);
@@ -880,19 +936,21 @@ function handleSuccession(state) {
       deeds: reignOf(state).deeds,
     });
     state.reign = newReign();
-    state.chronicle.push(makeChronicleEntry(state, `${oldName}${state.pastRulers.at(-1).epithet ? ` ${state.pastRulers.at(-1).epithet}` : ''} umírá stářím. ${isPeasant(state) ? 'Grunt' : isNoble(state) ? 'Panství' : 'Korunu'} přebírá ${newRulerName}.`));
+    const what = isPeasant(state) ? 'Grunt' : isNoble(state) ? 'Panství' : 'Korunu';
+    const who = from.relation === 'sibling' ? `${heir.gender === 'female' ? 'sestra' : 'bratr'} ${newRulerName}, protože žádné dítě nepřežilo` : newRulerName;
+    state.chronicle.push(makeChronicleEntry(state, `${oldName}${state.pastRulers.at(-1).epithet ? ` ${state.pastRulers.at(-1).epithet}` : ''} umírá stářím. ${what} přebírá ${who}${heir.age < ADULT_AGE ? `, teprve ${heir.age}leté dítě` : ''}.`));
     state.ruler = {
       name: newRulerName,
-      gender: state.heir.gender,
-      age: state.heir.age,
+      gender: heir.gender,
+      age: heir.age,
       // the heir brings the traits their upbringing gave them
-      traits: state.heir.traits ? { ...state.heir.traits } : { strength: 5, eloquence: 5, intelligence: 5, patience: 5 },
+      traits: heir.traits ? { ...heir.traits } : { strength: 5, eloquence: 5, intelligence: 5, patience: 5 },
       statusTier: state.ruler.statusTier,
       alive: true,
       reignStartTurn: state.turn,
     };
     state.generation += 1;
-    generateSuccessorHousehold(state);
+    rebuildHousehold(state, from, oldSpouse);
     state.pendingSuccessionCeremony = true;
     return true;
   }
@@ -961,12 +1019,13 @@ export function advanceTurn(state) {
   const { goldIncome, foodIncome } = processTurnEconomy(state);
   let successionOccurred = false;
   let deathCheckText = '';
+  let familyNews = [];
 
   if (state.seasonIndex === 0) {
-    ageCharacters(state);
+    familyNews = ageCharacters(state);
     if (checkNaturalDeath(state)) {
       successionOccurred = handleSuccession(state);
-      deathCheckText = ' Vládce zemřel přirozenou smrtí.';
+      deathCheckText = isPeasant(state) ? ' Starý hospodář zemřel.' : ' Vládce zemřel přirozenou smrtí.';
     }
   }
 
@@ -975,7 +1034,8 @@ export function advanceTurn(state) {
 
   const seasonLabel = SEASONS[state.seasonIndex];
   const [goldWord, foodWord] = isPeasant(state) ? ['grošů', 'zásob'] : ['zlata', 'jídla'];
-  const turnSummary = `${seasonLabel} roku ${state.year}. Příjem: ${goldIncome >= 0 ? '+' : ''}${goldIncome} ${goldWord}, ${foodIncome >= 0 ? '+' : ''}${foodIncome} ${foodWord}.${deathCheckText}`;
+  const familyText = familyNews.length ? ` ${familyNews.join(' ')}` : '';
+  const turnSummary = `${seasonLabel} roku ${state.year}. Příjem: ${goldIncome >= 0 ? '+' : ''}${goldIncome} ${goldWord}, ${foodIncome >= 0 ? '+' : ''}${foodIncome} ${foodWord}.${deathCheckText}${familyText}`;
   state.chronicle.push(makeChronicleEntry(state, turnSummary));
 
   const gameOver = checkEndConditions(state);

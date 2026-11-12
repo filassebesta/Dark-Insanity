@@ -158,6 +158,7 @@ kbd {
   border-radius: 2px;
 }
 .dialog-panel { width: min(500px, 92vw); animation: cardEnter .55s var(--ease-out) .05s both; }
+.new-game-intro { margin: -.3rem 0 1.2rem; font-style: italic; color: var(--ink-faint); line-height: 1.45; }
 
 .seal-button {
   font-family: var(--font-caps);
@@ -1115,6 +1116,12 @@ kbd {
 .cs-member span { font-family: var(--font-caps); font-size: .66rem; letter-spacing: .18em; text-transform: uppercase; color: var(--gold); }
 .cs-member strong { font-family: var(--font-display); font-weight: 400; font-size: 1.1rem; }
 .cs-member small { color: rgba(235,227,209,.55); }
+.cs-relatives { list-style: none; margin: .9rem 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: .35rem 1.2rem; }
+.cs-relatives li { font-size: .92rem; color: rgba(235,227,209,.8); padding: .3rem 0; border-bottom: 1px solid var(--hairline); }
+.cs-relatives b { font-family: var(--font-display); font-weight: 400; color: rgba(235,227,209,.95); }
+.cs-relatives span { color: rgba(235,227,209,.55); font-size: .85rem; }
+.cs-regency { margin: 0 0 .9rem; padding: .6rem .8rem; border-left: 2px solid var(--gold-dim); color: rgba(235,227,209,.8); font-style: italic; }
+@media (max-width: 640px) { .cs-family, .cs-relatives { grid-template-columns: 1fr; } }
 .character-plaque { cursor: pointer; }
 .character-plaque:hover .plaque-portrait { border-color: var(--gold-bright); box-shadow: 0 0 14px rgba(200,164,106,.5); }
 .plaque-portrait { transition: border-color .2s ease, box-shadow .2s ease; overflow: hidden; }

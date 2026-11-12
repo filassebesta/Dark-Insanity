@@ -69,7 +69,8 @@ musí být aktivní, jinak je mapa skrytá. Screenshoty ukládat mimo repozitá�
 | `js/trade.js` | obchod: zboží, trhy, karavany, zakázky (bez DOM) |
 | `js/map.js` | interaktivní malovaná mapa (SVG nad obrázkem), vrstvy, výnosy, obchodní vrstva |
 | `js/ui.js` | vykreslení karty události, výsledků, panelů, konce |
-| `js/character.js` | list postavy, Síň předků, detail člena dvora |
+| `js/family.js` | rodina v čase: stárnutí, narození, úmrtí (i rádců), sňatky, vnoučata, nástupnictví (dítě → sourozenec), poručnictví; fronta rodinných událostí |
+| `js/character.js` | list postavy (celá rodina s věkem), Síň předků, detail člena dvora, portréty podle věku |
 | `js/audio.js` | hlavní téma a bitevní hudba s prolínáním, hlasitost |
 | `js/events.js` | sestavuje `EVENTS` ze všech souborů níže; základní události Panovníka + klidné období |
 | `js/events_more.js` | dalších 55 událostí Panovníka |
@@ -78,6 +79,7 @@ musí být aktivní, jinak je mapa skrytá. Screenshoty ukládat mimo repozitá�
 | `js/events_echoes.js` | krize (vyčerpané zdroje) a ozvěny rozhodnutí + tabulka `ECHO_HOOKS` |
 | `js/events_court.js` | události podle povah rádců + výchova dědice u šlechtice |
 | `js/events_trade.js` | přepadení karavany, piráti, cizí kupec, clo, hlad na severu, vlastní loď |
+| `js/events_family.js` | rodinné události všech scénářů: smutek, poručnictví, nový sňatek vládce, křtiny a námluvy sedláka, uprázdněný úřad |
 | `docs/gemini-prompts.md` | objednávkový list obrázků (prompty, stav, dávkový prompt) |
 | `docs/udalosti.md` | čitelný přehled všech událostí a voleb |
 | `tools/sim/` | simulace (viz výše) |
@@ -108,7 +110,7 @@ musí být aktivní, jinak je mapa skrytá. Screenshoty ukládat mimo repozitá�
 }
 ```
 
-**Efekty větve** (zpracovává `applyBranch` v `engine.js`): `effects`,
+**Efekty větve** (zpracovává `applyBranch` v `engine.js`): `marry` (vládce se žení/vdává), `heirMarry` (dědic), `regent`, `noRemarry`, `effects`,
 `provinceEffects`, `courtEffects`, `replaceCourt`, `houseEffects`, `noble`
 (spiknutí, tajemství), `setTier`, `newKing`, `endGame`, `hiddenEffects`
 (příznaky), `traitGain`, `heirTraits`, `echo` (naplánuje ozvěnu), `music: 'battle'`,
@@ -116,8 +118,11 @@ obchodní `trade`, `tradeOffer`, `tradeMod`, `tradeStock`.
 
 **Textové tokeny:** `{ruler.name}`, `{heir.name}`, `{chancellor.Title}`,
 `{province.name}`, `{target.*}`, `{house.*}`, `{king.*}`, `{lord.*}`, `{village}`,
-`{cargo.*}` a rodové tvary `{R:muž|žena}` (vládce), `{H:…}` (hlava rodu),
-`{T:…}` (cíl), `{D:…}` (dědic), `{L:…}` (pán), `{M:…}` (manžel/ka).
+`{cargo.*}`, rodinné `{dead.*}`, `{newborn.*}`, `{parent.*}`, `{heir.spouseName}`,
+pády titulů `{chancellor.titleGen|titleDat|titleAcc|titleIns}` (rychtáře, rychtáři, rychtářku, kovářem…)
+a rodové tvary `{R:muž|žena}` (vládce), `{H:…}` (hlava rodu), `{T:…}` (cíl), `{D:…}` (dědic),
+`{L:…}` (pán), `{M:…}` (manžel/ka), `{X:…}` (zesnulý), `{N:…}` (novorozeně), `{P:…}` (ovdovělý rodič),
+`{C:…}`, `{A:…}`, `{Q:…}` (kancléř, maršál, špehmistr a jejich obdoby). Tokeny fungují i v nadpisech a popiscích voleb.
 
 ---
 
@@ -162,6 +167,16 @@ obchodní `trade`, `tradeOffer`, `tradeMod`, `tradeStock`.
 
 ---
 
+### Rodina v čase (třetí kolo)
+- **Stárnutí a smrt všech:** manžel/ka, děti, dědic i rádci stárnou a umírají (děti častěji u sedláka). Zemřelý rádce uvolní úřad a přijde vynucená událost (Panovník `smrt_radce`, Šlechtic `n_smrt_sluzebnika`, Sedlák `s_smrt_souseda`).
+- **Děti a vnoučata:** vládci se rodí děti (nejstarší = dědic, ostatní v `state.children`), dědic se kolem 19–25 let sám ožení/vdá (nebo přes události) a má vlastní děti. Narození a úmrtí jsou v souhrnu období a v kronice.
+- **Nástupnictví:** dědic přebírá i svou rodinu (choť, děti), ovdovělý rodič zůstává (`state.parent`), sourozenci jsou záloha, když žádné dítě nežije. Dítě na trůně dostane poručníka (`rodina_porucnictvi`) do 16 let.
+- **Nový sňatek:** ovdovělý nebo svobodný vládce dostane nabídky sňatku (`rodina_snatek`, `n_snatek`, `s_snatek`).
+- **Portréty podle věku:** dětský vládce má dětskou tvář, dospělý dědic dospělou (`heir_adult_*`, jinak portrét vládce stejného stavu), starý manžel/ka starou.
+- **Sedlák a rodina:** v zimě malé děti ujídají zásoby a odrostlé (16+) pomáhají, první malé dítě se uživí vždy (`processPeasantEconomy`).
+- **Nová hra:** nejdřív výběr scénáře, pak jméno s popisky podle scénáře (Král/Královna, Pán/Paní, Hospodář/Hospodyně).
+- **Volby sedláka:** každá událost má teď 3–5 voleb; přibyly podmíněné volby podle rychtářského úřadu, svobody, rodiny a vztahů s rychtářem, kovářem a krčmářem; prázdné volby mají důsledky.
+
 ## 5. Obrázky — jak to funguje a co chybí
 
 **Hra si obrázky hledá sama** podle názvu souboru, když chybí, použije zálohu:
@@ -183,6 +198,8 @@ zkontrolovat okem. Ve hře spodní třetinu scény stejně kryje tmavý přechod
 # detekce, pak umístění (FIX = soubory, kde se má pruh opravit); potřebuje Pillow + numpy
 python3 tools/images/process_batch.py dir1,dir2 <scratch> <repo> detect
 FIX=s_drab.jpg python3 tools/images/process_batch.py dir1,dir2 <scratch> <repo> place
+# pruh jen přes část šířky detektor nenajde: řádek se zadá ručně (zkontrolovat náhled bandfix_*.png)
+ROW=rodina_porucnictvi.jpg:692 python3 tools/images/process_batch.py dir <scratch> <repo> place
 ```
 
 **Co chybí (vše volitelné, hra si zatím půjčuje podobné scény):** viz stav v
@@ -191,6 +208,7 @@ FIX=s_drab.jpg python3 tools/images/process_batch.py dir1,dir2 <scratch> <repo> 
 - 5 scén rádců a výchovy (14.5) a 6 scén obchodu (15)
 - 24 scén krizí a ozvěn (13)
 - případně znovu `s_krupobiti` a `s_trh` (vložený spodní pruh jen zmírněný)
+- `s_smrt_souseda.jpg` (sekce 16; ostatní rodinné obrázky a portréty dospělých dědiců už jsou ve hře)
 
 ---
 
@@ -200,7 +218,7 @@ FIX=s_drab.jpg python3 tools/images/process_batch.py dir1,dir2 <scratch> <repo> 
 |---|---|---|
 | Panovník | náhodné volby | medián ~33 let; zlatý věk ~38 %, kolaps ~38 %, zbytek přežije 100 let |
 | Šlechtic | cílí na trůn (ambice 1), neobchoduje | trůn ~45–49 %, poprava ~38 %, vyhnanství ~7 % |
-| Sedlák | ambice 0,5 | šlechtický stav ~45–50 %, svoboda kolem 10. roku, medián ~25 let; zbytek hlavně zpustlý grunt |
+| Sedlák | ambice 0,5 | šlechtický stav ~60–65 %, svoboda kolem 9. roku, medián ~23 let; zbytek hlavně zpustlý grunt (náhodný bot bez plánování ~7 %) |
 | všechny | s obchodováním | mírné zlepšení, obchod hru nerozbíjí |
 
 Hlavní páky: šance u `n_smrt_krale` (Šlechtic), ceny `s_vykup` a `s_zemansky_statek`

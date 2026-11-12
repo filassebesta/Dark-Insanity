@@ -68,6 +68,7 @@ letters, watermark or signature.
 ✅ = hotovo a ve hře · ❌ = chybí
 
 > ✅ Sekce 14.1–14.3 hotové (portréty sedláka, rodina a ves, konce) a prvních 10 scén ze 14.4 (dávka 4).
+> ✅ Sekce 16 hotová (4 portréty dospělých dědiců, 8 rodinných scén), chybí jen `s_smrt_souseda.jpg`.
 > ❌ Volitelně chybí: zbylých 28 scén sedláka (14.4, dávky 5–7), 5 scén rádců (14.5), 6 scén obchodu (15) a 24 scén krizí a ozvěn (13).
 
 | Stav | Soubor | Poměr | Cílové rozlišení | Kde se zobrazí | Prompt |
@@ -1344,3 +1345,41 @@ Formát a dávkový prompt jsou stejné jako v sekci 14.0.
 | `o_clo.jpg` | Nové clo | `cizi_vyslanec` | A border toll gate with a barrier pole at the edge of a dark forest, foreign guards collecting coins from a waiting line of merchant wagons. |
 | `o_hlad_na_severu.jpg` | Hlad za horami | `hladomor` | Starving northern villagers in furs waiting at a snowy mountain pass as a caravan of grain wagons comes up the road. |
 | `o_lod.jpg` | Vlastní loď | `kupecka_gilda` | Shipwrights building a high-sided wooden merchant ship on slipways in a small harbour, ropes, scaffolding and gulls. |
+
+---
+
+## 16. Rodina: dospělí dědicové a rodinné scény (volitelné)
+
+Hra už sama řeší stárnutí, narození, úmrtí, sňatky a poručnictví (`js/family.js`)
+a všechno funguje s půjčenými obrázky. Tyto obrázky jsou jen vylepšení.
+Formát a dávkový prompt jsou stejné jako v sekci 14.0 (soubory `heir_adult_*`
+a `s_heir_adult_*` jsou portréty 4:5).
+
+> Stav: ✅ všechno kromě `s_smrt_souseda.jpg` (první pokus vrátil portrét selky
+> místo pohřbu; prompt níže je zpřesněný). Scény `rodina_porucnictvi`,
+> `n_smrt_sluzebnika`, `n_snatek`, `s_krtiny` a `s_namluvy` měly vložený tmavý
+> pruh a byly opraveny (`ROW=` / `FIX=` v `process_batch.py`). Originály jsou
+> v `assets/_source/gemini/batch_rodina/`.
+
+**Proč dospělí dědicové:** dědic do 15 let má dětský portrét. Od 16 let si teď
+hra půjčuje dospělý portrét vládce stejného stavu, takže dcera vládkyně (nebo
+syn vládce) vypadá stejně jako rodič. Vlastní portrét dospělého dědice to vyřeší.
+
+| Soubor | Kdy se použije | Popis pro Gemini |
+|---|---|---|
+| `heir_adult_male.jpg` | dospělý dědic šlechtice nebo krále | A young nobleman of about 20, heir of a noble house, a confident but untested face, short dark hair, a dark blue padded doublet with a silver chain, a sword belt across the chest. |
+| `heir_adult_female.jpg` | dospělá dědička šlechtice nebo krále | A young noblewoman of about 19, heiress of a noble house, clever watchful eyes, a long braid under a thin silver circlet, a dark green velvet gown with a fur-trimmed collar. |
+| `s_heir_adult_male.jpg` | dospělý dědic sedláka nebo svobodníka | A young peasant man of about 19, strong from field work, sunburnt face, unruly hair, a rough undyed linen shirt and a leather belt, a sickle hanging at his side. |
+| `s_heir_adult_female.jpg` | dospělá dědička sedláka nebo svobodníka | A young peasant woman of about 18, sturdy and bright-eyed, hair braided under a white linen kerchief, a coarse brown wool dress with rolled sleeves, a wicker basket on her hip. |
+
+| Soubor | Událost | Teď používá | Popis pro Gemini |
+|---|---|---|---|
+| `rodina_smrt.jpg` | Smutek v rodě | `smrt_radce` | A small family funeral at a village churchyard at dusk, a simple wooden coffin, mourners in dark wool with candles, a bare linden tree. |
+| `rodina_porucnictvi.jpg` | Poručnictví | `vychova_dedice` | A small child sitting on a too-large carved chair in a dim hall, a widowed mother in black standing behind with a hand on the chair, an old steward bowing with a ledger. |
+| `rodina_snatek.jpg` | Trůn bez královny/krále | `cizi_princezna` | A widowed king alone at a long candlelit table, a chancellor laying out small painted portraits of possible brides beside a crown on a cushion. |
+| `n_snatek.jpg` | Rod bez paní/pána | `n_snatkova_nabidka` | Two noble families meeting in the courtyard of a small stone keep, a betrothal contract on a table, banners of two houses, a cautious handshake. |
+| `s_snatek.jpg` | Grunt bez hospodyně | `doziny` | A tired widowed farmer at the doorway of a timber farmhouse with children around him, a village matchmaker woman pointing toward the village, autumn light. |
+| `s_krtiny.jpg` | Křtiny | `krest_ditete` | A peasant christening at a small village church, a godmother holding a swaddled baby at a stone font, villagers in their Sunday wool, a fiddler waiting outside. |
+| `s_namluvy.jpg` | Námluvy | `doziny` | Young villagers dancing around a linden tree at a harvest festival, a shy young couple holding hands at the edge, older women whispering and watching. |
+| `n_smrt_sluzebnika.jpg` | Uprázdněný úřad | `smrt_radce` | An old steward's empty chair and ledger by a cold hearth in a small keep, a lord standing over it while three hopeful men wait by the door. |
+| `s_smrt_souseda.jpg` ❌ | Pohřeb ve vsi | `smrt_radce` | Wide scene, no close-up portrait: a village funeral procession seen from a distance on a muddy road between timber cottages, a plain wooden coffin on an ox cart, a priest with a cross in front, about a dozen villagers in dark wool walking behind, a cold dark blacksmith's forge with an anvil at the roadside, grey overcast sky. |

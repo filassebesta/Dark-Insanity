@@ -14,9 +14,46 @@ import { playMusic, setMusicVolume } from './audio.js';
 let currentState = null;
 let activeEvent = null;
 let awaitingChoice = false;
-let pendingRulerName = '';
-let pendingDynastyName = '';
-let pendingGender = 'male';
+let pendingScenario = 'panovnik';
+
+// The naming form speaks the language of the chosen life: a king founds a dynasty,
+// a noble heads a house, a peasant runs a farm and their family has a village name.
+const NAMING = {
+  panovnik: {
+    overline: 'Panovník · snadné', title: 'Založení dynastie',
+    intro: 'Usedáš na trůn hotového království. Jak se bude jmenovat vládce a jeho rod?',
+    name: 'Jméno vládce', namePh: 'např. Bořivoj', gender: 'Vládne', male: 'Král', female: 'Královna',
+    dynasty: 'Jméno dynastie', dynastyPh: 'např. z Vlčí Hory', start: 'Usednout na trůn',
+  },
+  slechtic: {
+    overline: 'Šlechtic · střední', title: 'Založení rodu',
+    intro: 'Dostáváš do správy jedinou tvrz na pobřeží. Kdo stojí v čele rodu?',
+    name: 'Jméno hlavy rodu', namePh: 'např. Ctibor', gender: 'V čele rodu stojí', male: 'Pán', female: 'Paní',
+    dynasty: 'Jméno rodu', dynastyPh: 'např. z Orlí Skály', start: 'Převzít tvrz',
+  },
+  sedlak: {
+    overline: 'Sedlák · těžké', title: 'Grunt v Lipnici',
+    intro: 'Hospodaříš na cizím gruntu pod pány z Bílé Brány. Kdo vede statek a jak se vašemu rodu říká ve vsi?',
+    name: 'Jméno', namePh: 'např. Jaromír', gender: 'Na gruntu hospodaří', male: 'Hospodář', female: 'Hospodyně',
+    dynasty: 'Jak se rodu říká ve vsi', dynastyPh: 'např. Vávrů nebo Od Lípy', start: 'Chopit se pluhu',
+  },
+};
+
+function prepareNamingScreen(scenario) {
+  const t = NAMING[scenario] || NAMING.panovnik;
+  const set = (id, text) => { document.getElementById(id).textContent = text; };
+  set('new-game-overline', t.overline);
+  set('new-game-title', t.title);
+  set('new-game-intro', t.intro);
+  set('label-ruler-name', t.name);
+  set('label-ruler-gender', t.gender);
+  set('label-gender-male', t.male);
+  set('label-gender-female', t.female);
+  set('label-dynasty-name', t.dynasty);
+  set('start-new-game', t.start);
+  document.getElementById('input-ruler-name').placeholder = t.namePh;
+  document.getElementById('input-dynasty-name').placeholder = t.dynastyPh;
+}
 
 const settings = loadSettings();
 setTypewriterEnabled(settings.typewriter);
@@ -178,15 +215,15 @@ function wireActions() {
 
     switch (actionEl.dataset.action) {
       case 'goto-new-game':
-        showScreen('screen-new-game');
-        document.getElementById('input-ruler-name').focus();
+        // first the life you want to live, then the name you live it under
+        showScreen('screen-scenario');
         break;
       case 'back-to-menu':
         closeOverlays();
         showScreen('screen-menu');
         break;
-      case 'back-to-new-game':
-        showScreen('screen-new-game');
+      case 'back-to-scenario':
+        showScreen('screen-scenario');
         break;
       case 'continue-game': {
         const state = loadMostRecentSave();
@@ -204,12 +241,13 @@ function wireActions() {
       case 'quit-game':
         toast('Hru lze zavřít v prohlížeči.');
         break;
-      case 'goto-scenario-select':
-        pendingRulerName = document.getElementById('input-ruler-name').value.trim();
-        pendingDynastyName = document.getElementById('input-dynasty-name').value.trim();
-        pendingGender = document.querySelector('input[name="ruler-gender"]:checked')?.value || 'male';
-        showScreen('screen-scenario');
+      case 'start-new-game': {
+        const name = document.getElementById('input-ruler-name').value.trim();
+        const dynasty = document.getElementById('input-dynasty-name').value.trim();
+        const gender = document.querySelector('input[name="ruler-gender"]:checked')?.value || 'male';
+        startGame(createNewGame(name, dynasty, gender, pendingScenario));
         break;
+      }
       case 'close-panel':
         closePanels();
         break;
@@ -260,7 +298,10 @@ function wireActions() {
         toast('Tento scénář se ještě připravuje.');
         return;
       }
-      startGame(createNewGame(pendingRulerName, pendingDynastyName, pendingGender, card.dataset.scenario));
+      pendingScenario = card.dataset.scenario;
+      prepareNamingScreen(pendingScenario);
+      showScreen('screen-new-game');
+      document.getElementById('input-ruler-name').focus();
     });
   });
 
@@ -344,7 +385,7 @@ function wireActions() {
   });
 
   document.getElementById('input-dynasty-name').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') document.querySelector('[data-action="goto-scenario-select"]').click();
+    if (e.key === 'Enter') document.querySelector('[data-action="start-new-game"]').click();
   });
 }
 

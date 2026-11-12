@@ -2,7 +2,7 @@
 
 Vygenerováno z `js/events*.js`. Jména v hranatých závorkách hra doplní podle aktuálního stavu.
 
-Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí · Scénář **Sedlák**: 33 událostí (+ 3 krize, 2 ozvěny) · Krize: 7 · Ozvěny rozhodnutí: 17 · Povahy rádců a výchova: 5 · Obchod: 6.
+Scénář **Panovník**: 95 událostí · Scénář **Šlechtic**: 48 · Scénář **Sedlák**: 47 (počty včetně společných rodinných, obchodních a povahových událostí) · Rodina: 9 · Krize a ozvěny zvlášť.
 
 ## Scénář Panovník
 
@@ -181,18 +181,19 @@ Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí
 
 ### 23. Dědic dospěl  `dedic_dospel`
 
-> Dědic [heir] dovršil šestnácti let. Je čas rozhodnout o jeho budoucnosti — a tím i o budoucnosti rodu [rod].
+> Dědic [heir.name] dovršil šestnácti let. Je čas rozhodnout o jeho budoucnosti, a tím i o budoucnosti rodu [dynastyName].
 
-1. Domluvit sňatek se sousedním rodem
+1. Domluvit sňatek se sousedním rodem *(jen za určitých okolností)*
 2. Svěřit dědici velení posádky na hranici *(riskantní volba)*
 3. Ponechat ho u dvora po svém boku
 
 ### 24. Smrt rádce  `smrt_radce`
 
-> Starý/á [rádce] [target] zemřel(a) ve věku [target] let. Dvůr truchlí — a zároveň už se šeptá, kdo usedne na uprázdněné místo.
+> [target.Old] [target.role] [target.name] [target.died] ve věku [target.age] let. Dvůr truchlí — a zároveň už se šeptá, kdo usedne na uprázdněné místo.
 
 1. Jmenovat zkušeného šlechtice
 2. Povýšit mladého a oddaného služebníka
+3. Nechat radu, ať si zvolí sama
 
 ### 25. Nespokojený rádce  `nespokojeny_radce`
 
@@ -260,10 +261,10 @@ Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí
 
 ### 33. Narození dítěte  `krest_ditete`
 
-> V hradní komnatě se narodilo zdravé dítě. Celý hrad je vzhůru, kněží chystají křest a šlechta posílá dary. Jak oslavit nový přírůstek rodu [rod]?
+> Rodu [dynastyName] se narodil [newborn.word] [newborn.name]. Celý dům je vzhůru, kněží chystají křest a sousedé posílají dary. Jak oslavit nový přírůstek?
 
-1. Velká slavnost pro celé město
-2. Skromný křest v hradní kapli
+1. Velká slavnost pro všechny poddané
+2. Skromný křest v kapli
 
 ### 34. Malíř u dvora  `portret_vladce`
 
@@ -614,7 +615,7 @@ Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí
 
 ### 78. Nabídka sňatku  `cizi_princezna`
 
-> Vzdálený král posílá posly s nabídkou: jeho dítě by se mohlo stát chotí dědice [heir]. Věno je štědré, ale ta země je daleko a její spory taky.
+> Vzdálený král posílá posly s nabídkou: jeho dítě by se mohlo stát chotí dědice [heir.name]. Věno je štědré, ale ta země je daleko a její spory taky.
 
 1. Přijmout nabídku
 2. Zeptat se dědice, co chce
@@ -1166,70 +1167,85 @@ Poddaný na gruntu ve vsi Lipnice. Cíl: svoboda (svobodník) a pak erb (drobný
 
 1. Jít a odvést poctivou práci
 2. Poslat místo sebe čeleď
-3. Vymluvit se na nemoc
+3. Vymluvit se na nemoc *(riskantní volba)*
+4. Ať jde za mě [spouse.name], já sklidím doma *(jen za určitých okolností)*
+5. Jako rychtář rozepsat robotu spravedlivě na celou ves *(jen za určitých okolností)*
 
 ### 2. Dráb si přišel  `s_drab`
 
 > Panský dráb stojí na zápraží a tvrdí, že dávky jsou letos vyšší. Na listině nic takového není, ale on číst umí a ty ne. Aspoň si to myslí.
 
 1. Zaplatit, ať je pokoj
-2. Trvat na tom, co stojí v listině
-3. Vyhodit ho ze dvora
+2. Trvat na tom, co stojí v listině *(riskantní volba)*
+3. Vyhodit ho ze dvora *(riskantní volba)*
+4. Poslat pro [chancellor.titleAcc] a pro listinu *(jen za určitých okolností)*
+5. Připomenout mu, že svobodný člověk robotu nedluží *(jen za určitých okolností)*
 
 ### 3. Pán projíždí vsí  `s_pan_navsteva`
 
 > [lord.Title] [lord.name] projíždí s družinou vsí Lipnice a zastavil se právě u tvého gruntu. Koně jsou žízniví, družina hladová a pánův pohled zkoumá tvou stodolu.
 
 1. Pohostit družinu tím nejlepším
-2. Schovat dobrou úrodu a ukázat bídu
-3. Postěžovat si na drába
+2. Schovat dobrou úrodu a ukázat bídu *(riskantní volba)*
+3. Postěžovat si na drába *(riskantní volba)*
+4. Představit pánovi svého syna *(riskantní volba, jen za určitých okolností)*
 
 ### 4. Panský hon  `s_pansky_hon`
 
 > Panský hon se řítí přes tvé pole. Psi, koně a pánovi hosté dupou v obilí, které mělo živit tvou rodinu přes zimu.
 
-1. Protestovat u pána
+1. Protestovat u pána *(riskantní volba)*
 2. Mlčet a sbírat, co zbylo
 3. Nabídnout se jako honec za groš
+4. Postavit se koním do cesty *(riskantní volba)*
+5. Jako rychtář sepsat škody celé vsi a předložit je pánovi *(jen za určitých okolností)*
 
 ### 5. Jelen v panském lese  `s_pytlactvi`
 
 > Zásoby docházejí a v panském lese se pase jelen. Stačí jedna noc, jedna smyčka a nikdo se to nedozví. Za pytláctví se ale věší.
 
-1. Jít v noci do lesa
+1. Jít v noci do lesa *(riskantní volba)*
 2. Požádat pána o obilí na dluh
 3. Utáhnout opasky
+4. Vzít s sebou [spymaster.titleAcc], zná hajného *(riskantní volba, jen za určitých okolností)*
 
 ### 6. Sedláci se bouří  `s_povstani`
 
 > V okolních vsích se sedláci bouří proti robotě. Vůdce povstání čeká v krčmě u [spymaster.name] a hledá muže, kteří se nebojí. Kdo se přidá, může vyhrát svobodu. Nebo provaz.
 
-1. Přidat se k povstání
+1. Přidat se k povstání *(riskantní volba)*
 2. Zůstat stranou
 3. Udat vůdce pánovi
+4. Poslat povstalcům v noci chleba a zůstat doma
+5. Jako svobodný člověk vyjednávat mezi pánem a vsí *(riskantní volba, jen za určitých okolností)*
 
 ### 7. Nový rychtář  `s_rychtar_volba`
 
 > Starý rychtář už nevidí ani na listinu, natož na sousedy. Ves volí nového a několik hlasů padlo i na tebe. Rychtář má od pána groš a od vsi starosti.
 
-1. Ucházet se o úřad
+1. Ucházet se o úřad *(riskantní volba)*
 2. Podpořit souseda
+3. Koupit si hlasy pivem v krčmě *(riskantní volba, jen za určitých okolností)*
+4. Nechat se přemlouvat, ať to vypadá, že o úřad nestojíš *(riskantní volba)*
 
 ### 8. Trh v Brodné  `s_trh`
 
 > V Brodné je velký trh. Kupci z jihu, kováři, dobytkáři i šejdíři. S trochou štěstí se tu dá vydělat. S trochou smůly přijít o všechno.
 
 1. Prodat tele
-2. Koupit nový pluh
-3. Smlouvat o lepší kus dobytka
+2. Koupit nový pluh *(jen za určitých okolností)*
+3. Smlouvat o lepší kus dobytka *(riskantní volba)*
+4. Prodat přebytek obilí, dokud je dobrá cena *(jen za určitých okolností)*
+5. Ať poprvé smlouvá [heir.name] *(riskantní volba, jen za určitých okolností)*
 
 ### 9. Krupobití  `s_krupobiti`
 
 > Z černého mraku se sypaly kroupy velké jako holubí vejce. Obilí leží rozmlácené v blátě a do žní daleko.
 
 1. Rychle zasít znovu
-2. Prosit pána o odpuštění dávek
+2. Prosit pána o odpuštění dávek *(riskantní volba)*
 3. Uspořádat procesí za dobrou úrodu
+4. Jako rychtář vést celou ves k pánovi *(riskantní volba, jen za určitých okolností)*
 
 ### 10. Slabé žně  `s_spatna_uroda`
 
@@ -1238,22 +1254,25 @@ Poddaný na gruntu ve vsi Lipnice. Cíl: svoboda (svobodník) a pak erb (drobný
 1. Propustit část čeledi
 2. Prodat krávu
 3. Vydržet a šetřit
+4. Poslat syna na zimu do služby do Brodné *(jen za určitých okolností)*
 
 ### 11. Hoří stodola  `s_pozar_stodoly`
 
 > V noci chytila stodola. Jestli od lucerny, od blesku, nebo od souseda Hrubého, se kterým se léta přeš o mez, nikdo neví.
 
 1. Postavit ji znovu se sousedy
-2. Postavit ji sám bez cizí pomoci
-3. Obvinit souseda Hrubého
+2. Postavit ji sám, bez cizí pomoci
+3. Obvinit souseda Hrubého *(riskantní volba)*
+4. Domluvit se s [marshal.titleIns] na železném kování *(jen za určitých okolností)*
 
 ### 12. Vlci u ovčína  `s_vlci`
 
 > Za mrazivých nocí chodí vlci až k ovčínu. Dvě ovce už chybí a psi se bojí vyjít ven.
 
-1. Počkat na ně s kopím
+1. Počkat na ně s kopím *(riskantní volba)*
 2. Nastražit oka a jámy
 3. Zavřít stádo a čekat na jaro
+4. Jít na ně spolu s [marshal.titleIns] *(riskantní volba, jen za určitých okolností)*
 
 ### 13. Mor v kraji  `s_mor`
 
@@ -1261,22 +1280,27 @@ Poddaný na gruntu ve vsi Lipnice. Cíl: svoboda (svobodník) a pak erb (drobný
 
 1. Zavřít grunt a nikoho nepouštět
 2. Utéct s rodinou do lesa
-3. Pomáhat nemocným ve vsi
+3. Pomáhat nemocným ve vsi *(riskantní volba)*
+4. Poslat děti k příbuzným do hor *(jen za určitých okolností)*
 
 ### 14. Mlynář šidí  `s_mlynar`
 
 > Z pytle obilí se vrátilo míň mouky, než by mělo. Mlynář krčí rameny: mlýn prý ztrácí. Jenže jen tvoje obilí.
 
-1. Postavit se mu na mlýnici
+1. Postavit se mu na mlýnici *(riskantní volba)*
 2. Vozit obilí do jiného mlýna
 3. Mlčet
+4. Přistihnout ho přímo u vah *(riskantní volba)*
+5. Jako rychtář nechat převážit pytle celé vsi *(jen za určitých okolností)*
 
 ### 15. Cizí osivo  `s_kramar`
 
 > Potulný kramář nabízí osivo z jihu. Prý roste dvakrát rychleji a snese sucho i mráz. Prý.
 
-1. Koupit a zkusit to
+1. Koupit a zkusit to *(riskantní volba, jen za určitých okolností)*
 2. Poslat ho dál
+3. Koupit jen hrst a zasít ji na kousku pole *(riskantní volba, jen za určitých okolností)*
+4. Vyzpovídat ho, odkud to osivo vlastně je *(riskantní volba)*
 
 ### 16. Hrnec v brázdě  `s_poklad`
 
@@ -1285,6 +1309,7 @@ Poddaný na gruntu ve vsi Lipnice. Cíl: svoboda (svobodník) a pak erb (drobný
 1. Nechat si ho a mlčet
 2. Odevzdat ho pánovi
 3. Darovat ho kostelu
+4. Rozdělit se s [chancellor.titleIns], ať to zůstane mezi námi *(jen za určitých okolností)*
 
 ### 17. Peníze na dluh  `s_lichvar`
 
@@ -1292,22 +1317,26 @@ Poddaný na gruntu ve vsi Lipnice. Cíl: svoboda (svobodník) a pak erb (drobný
 
 1. Půjčku vzít
 2. Odmítnout
+3. Půjčit si raději u [chancellor.titleGen], bez úroku *(jen za určitých okolností)*
+4. Vyhodit ho ze dvora, lichva je hřích
 
 ### 18. Lichvář je zpátky  `s_lichvar_splatka`
 
 > Lichvář stojí na zápraží s knihou pod paží. Dvacet grošů se za dva roky proměnilo ve třicet.
 
-1. Splatit všechno
-2. Vyjednat odklad
+1. Splatit všechno *(jen za určitých okolností)*
+2. Vyjednat odklad *(riskantní volba)*
 3. Dát mu do zástavy pole
+4. Požádat pána, ať lichváře z panství vykáže *(riskantní volba, jen za určitých okolností)*
 
 ### 19. Horečka  `s_nemoc_ditete`
 
 > [heir.name] leží v horečce a nepoznává ani vlastní mámu. Do rána se rozhodne. Pomoc je drahá, a ta nejlevnější je kořenářka za lesem.
 
-1. Poslat pro kořenářku
-2. Pozvat faráře k modlitbám
-3. Přivést ranhojiče z Brodné
+1. Poslat pro kořenářku *(riskantní volba)*
+2. Pozvat faráře k modlitbám *(riskantní volba)*
+3. Přivést ranhojiče z Brodné *(jen za určitých okolností)*
+4. Bdít u lůžka celé noci, ty i [spouse.name] *(riskantní volba, jen za určitých okolností)*
 
 ### 20. Čemu se bude učit  `s_vychova`
 
@@ -1316,6 +1345,8 @@ Poddaný na gruntu ve vsi Lipnice. Cíl: svoboda (svobodník) a pak erb (drobný
 1. Do učení v kovárně
 2. Do klášterní školy
 3. Nechat doma na gruntu
+4. K [chancellor.titleDat] na písaře *(jen za určitých okolností)*
+5. Ke [spymaster.titleDat] do krčmy, ať pozná svět
 
 ### 21. Svatba ve vsi  `s_svatba`
 
@@ -1324,46 +1355,53 @@ Poddaný na gruntu ve vsi Lipnice. Cíl: svoboda (svobodník) a pak erb (drobný
 1. Nabídnout dvůr a stoly na hostinu
 2. Přinést pěkný dar
 3. Zůstat doma u práce
+4. Postarat se, aby [heir.name] tančil s tou pravou *(riskantní volba, jen za určitých okolností)*
 
 ### 22. Mez se posunula  `s_spor_o_mez`
 
 > Soused Hrubý přeoral mez o dobré tři brázdy. Tvrdí, že tam vždycky byla. Kámen, který ji značil, se nějak ztratil.
 
-1. Jít za rychtářem
-2. Vyřídit si to s Hrubým po svém
+1. Jít za rychtářem *(riskantní volba)*
+2. Vyřídit si to s Hrubým po svém *(riskantní volba)*
 3. Ustoupit, pro pár brázd se nehádat
+4. Jako rychtář nechat mez přeměřit před svědky *(jen za určitých okolností)*
+5. Nabídnout Hrubému směnu: louku za klid
 
 ### 23. Pomluva  `s_carodejnictvi`
 
 > Sousedce pošla kráva a ves si šeptá, že [spouse.name] byl večer u jejího chléva. Farář se ptá, kdo v rodě [dynastyName] umí zaříkávat.
 
-1. Postavit se pomluvě před celou vsí
+1. Postavit se pomluvě před celou vsí *(riskantní volba)*
 2. Zaplatit faráři za mši a svěcenou vodu
 3. Nechat to na faráři
+4. Zjistit, proč ta kráva doopravdy pošla *(riskantní volba)*
 
 ### 24. Večer v krčmě  `s_krcma`
 
 > V krčmě se pije, hraje v kostky a mluví. [spymaster.Title] [spymaster.name] ti nalévá a mrkne: kdo si dnes připlatí, ten zítra něco ví.
 
-1. Zaplatit pár piv a poslouchat
-2. Zahrát si v kostky
+1. Zaplatit pár piv a poslouchat *(riskantní volba)*
+2. Zahrát si v kostky *(riskantní volba)*
 3. Jít domů včas
+4. Zaplatit rundu celé krčmě *(jen za určitých okolností)*
 
 ### 25. Nový zvon  `s_zvon`
 
 > Starý zvon na kostelíku praskl. Farář obchází ves a vybírá na nový. Kdo přispěje nejvíc, toho jméno bude vyryto na okraji zvonu.
 
-1. Přispět štědře
+1. Přispět štědře *(jen za určitých okolností)*
 2. Odpracovat to při stavbě
-3. Nedat nic
+3. Nedat nic, groše jsou potřeba doma
+4. Dát do zvonoviny prsten po předcích
 
 ### 26. Desátek  `s_desatek`
 
 > Farář přišel pro desátek. Každý desátý snop patří kostelu, tak to bylo vždycky. Letos je ale snopů málo a farář tlustý.
 
 1. Zaplatit celý desátek
-2. Vyjednat polovinu
+2. Vyjednat polovinu *(riskantní volba)*
 3. Odmítnout
+4. Odvést desátek prací na farském poli
 
 ### 27. Odvod  `s_odvod`
 
@@ -1371,24 +1409,26 @@ Poddaný na gruntu ve vsi Lipnice. Cíl: svoboda (svobodník) a pak erb (drobný
 
 1. Jít osobně
 2. Poslat čeledína
-3. Vykoupit se
+3. Vykoupit se *(jen za určitých okolností)*
+4. Půjde [heir.name], je čas *(riskantní volba, jen za určitých okolností)*
 
 ### 28. Bitva  `s_bitva`
 
 > Pod korouhví krále stojíš v první řadě sedláků s kopím v ruce. Naproti se řadí jezdci v železe. Rytíři za vašimi zády čekají, kdo uteče první.
 
-1. Vrhnout se do první řady
-2. Vrhnout se do první řady
+1. Vrhnout se do první řady *(riskantní volba, jen za určitých okolností)*
+2. Vrhnout se do první řady *(riskantní volba, jen za určitých okolností)*
 3. Držet se vzadu a přežít
-4. Plenit nepřátelský tábor
+4. Plenit nepřátelský tábor *(riskantní volba)*
 
 ### 29. Výkup z poddanství  `s_vykup`
 
 > V truhle pod postelí leží víc grošů, než kdy rod [dynastyName] měl. Za ně se dá koupit to nejcennější: svoboda. [lord.Title] [lord.name] je ochoten jednat.
 
 1. Zaplatit pánovi plnou cenu
-2. Smlouvat o cenu
-3. Ještě počkat
+2. Smlouvat o cenu *(riskantní volba)*
+3. Ještě počkat, ať je v truhle rezerva
+4. Požádat [chancellor.titleAcc] o přímluvu u pána *(jen za určitých okolností)*
 
 ### 30. Pole na prodej  `s_pole`
 
@@ -1396,13 +1436,16 @@ Poddaný na gruntu ve vsi Lipnice. Cíl: svoboda (svobodník) a pak erb (drobný
 
 1. Koupit pole
 2. Nechat to být
+3. Koupit jen louku u potoka *(jen za určitých okolností)*
+4. Koupit pole napůl s rodinou snachy *(jen za určitých okolností)*
 
 ### 31. Zemanský statek  `s_zemansky_statek`
 
 > Starý zeman z Pobřežní marky zemřel bez dědiců a jeho tvrz je na prodej i s právem erbu. Kdo ji koupí a dostane královo potvrzení, bude šlechtic. Peníze máš. Královská kancelář ale sedlákům nerada věří.
 
-1. Koupit tvrz a žádat o erb
-2. Ještě ne
+1. Koupit tvrz a žádat o erb *(riskantní volba)*
+2. Ještě ne, nejdřív víc slávy a víc grošů
+3. Koupit tvrz a požádat pány z Bílé Brány o doporučení *(riskantní volba, jen za určitých okolností)*
 
 ### 32. Rytířský pás  `s_pasovani`
 
@@ -1410,15 +1453,7 @@ Poddaný na gruntu ve vsi Lipnice. Cíl: svoboda (svobodník) a pak erb (drobný
 
 1. Pokleknout a přijmout pás
 2. Odmítnout, grunt je víc než meč
-
-### 33. Všední dny  `s_klidne_obdobi`
-
-> Nic zvláštního se neděje. Dráb nechodí, nebe je klidné a práce na gruntu je pořád dost. Čemu se [ruler.name] letos věnuje?
-
-1. Pracovat na poli od tmy do tmy
-2. Opravit stavení a ohrady
-3. Chodit mezi sousedy
-4. Naučit se počítat od rychtáře
+3. Přijmout pás, ale vyprosit si, aby grunt zůstal rodině
 
 ### Krize a ozvěny sedláka
 
@@ -1429,6 +1464,7 @@ Poddaný na gruntu ve vsi Lipnice. Cíl: svoboda (svobodník) a pak erb (drobný
 1. Porazit krávu
 2. Prosit pána o obilí
 3. Propustit čeleď
+4. Obejít sousedy s prosbou
 
 ### 2. Ani groš  `krize_s_bida`
 
@@ -1437,21 +1473,23 @@ Poddaný na gruntu ve vsi Lipnice. Cíl: svoboda (svobodník) a pak erb (drobný
 1. Prodat dobytek
 2. Najmout se na panský dvůr za mzdu
 3. Půjčit si od rychtáře
+4. [heir.name] půjde do služby za mzdu *(jen za určitých okolností)*
 
 ### 3. Hrozba vyhnání  `krize_s_nemilost`
 
 > Dráb přinesl vzkaz: [lord.title] [lord.name] má rodu [dynastyName] dost. Ještě jedna stížnost a grunt dostane jiný hospodář.
 
 1. Jít na panský dvůr a prosit
-2. Přinést pánovi dar
+2. Přinést pánovi dar *(jen za určitých okolností)*
 3. Odvést robotu navíc
+4. Poprosit [chancellor.titleAcc], ať se za rod přimluví *(jen za určitých okolností)*
 
 ### 4. Kdo viděl hrnec  `ozvena_s_poklad`
 
 > Krčmářův syn tenkrát pásl husy u tvého pole a viděl, co jsi vyoral. Teď chce podíl. Jinak to řekne drábovi.
 
 1. Zaplatit mu za mlčení
-2. Zapírat
+2. Zapírat *(riskantní volba)*
 3. Přiznat se pánovi
 
 ### 5. Jidáš z Lipnice  `ozvena_s_udavac`
@@ -1461,6 +1499,16 @@ Poddaný na gruntu ve vsi Lipnice. Cíl: svoboda (svobodník) a pak erb (drobný
 1. Uspořádat hostinu pro celou ves
 2. Požádat pána o ochranu
 3. Snést to
+
+### Klidné období sedláka  `s_klidne_obdobi`
+
+> Nic zvláštního se neděje. Dráb nechodí, nebe je klidné a práce na gruntu je pořád dost. Čemu se [ruler.name] letos věnuje?
+
+1. Pracovat na poli od tmy do tmy
+2. Opravit stavení a ohrady
+3. Chodit mezi sousedy
+4. Naučit se počítat od rychtáře
+5. Věnovat se dětem a učit je, co umíš *(jen za určitých okolností)*
 
 ## Povahy rádců a výchova dědice
 
@@ -1503,6 +1551,92 @@ Události podle povahy rádců běží ve všech scénářích, výchova dědice
 1. Poslat dědice ke královskému dvoru
 2. Učit se správě panství
 3. Vycvičit dědice v družině
+
+## Rodina (všechny scénáře)
+
+Narození, úmrtí, sňatky a poručnictví (viz `js/family.js`). Události se štítkem „vynucená“ přicházejí samy, když se v rodině něco stane; ostatní se losují, když dávají smysl (vládce bez choti, dědic v letech na ženění, čerstvě narozené dítě).
+
+### 1. Smutek v rodě  `rodina_smrt` · Panovník, Šlechtic, Sedlák · vynucená
+
+> Zemřel [dead.name], [dead.your] [dead.rel]. Bylo mu [dead.ageText]. [dead.cause] Dům ztichl a všichni čekají, co uděláš.
+
+1. Vystrojit pohřeb, na který země nezapomene *(jen za určitých okolností)*
+2. Pohřbít v tichosti v rodové hrobce *(jen za určitých okolností)*
+3. Zjistit, jestli ta smrt byla opravdu náhoda *(riskantní volba, jen za určitých okolností)*
+4. Pohřeb s karem pro celou ves *(jen za určitých okolností)*
+5. Jen farář, rodina a hrob pod lípou *(jen za určitých okolností)*
+6. Ráno zase na pole, práce nepočká *(jen za určitých okolností)*
+7. Zůstat doma s rodinou a nechat svět chvíli čekat *(jen za určitých okolností)*
+
+### 2. Poručnictví  `rodina_porucnictvi` · Panovník, Šlechtic, Sedlák · vynucená
+
+> [ruler.name] je teprve chlapec, který sotva dosáhne na stůl. Až do šestnácti let za něj musí někdo rozhodovat, a každý v domě má jasno, kdo by to měl být.
+
+1. Poručníkem bude otec [parent.name] *(jen za určitých okolností)*
+2. Správu povede [chancellor.title] [chancellor.name] *(riskantní volba, jen za určitých okolností)*
+3. [ruler.name] povede rod sám, jen s radou starších
+
+### 3. Trůn bez královny  `rodina_snatek` · Panovník
+
+> Trůn bez královny je jen polovina trůnu. [chancellor.Title] [chancellor.name] přinesl seznam jmen: cizí princezny, dcery domácích pánů a jedno jméno, o kterém celý dvůr ví, ale nikdo ho nevysloví.
+
+1. Sňatek s princeznou z ciziny
+2. Dcera mocného domácího pána
+3. Sňatek z lásky, ať si dvůr říká, co chce *(riskantní volba)*
+4. Zůstat sám, dědice už rod má *(jen za určitých okolností)*
+
+### 4. Rod bez paní  `n_snatek` · Šlechtic
+
+> Tvrz bez paní je jen kamenný dům. [chancellor.Title] [chancellor.name] počítá věna a [spymaster.title] [spymaster.name] zjišťuje, kdo s kým spí. Ze všech nabídek se nejvíc mluví o rodu [house.name].
+
+1. Sňatek s rodem [house.short]
+2. Bohatá kupecká dcera z Přístavu Mark
+3. Sňatek z lásky *(riskantní volba)*
+4. Zůstat sám *(jen za určitých okolností)*
+
+### 5. Grunt bez hospodyně  `s_snatek` · Sedlák
+
+> Grunt bez hospodyně je jako vůz bez kola. Děti chodí neučesané, chlév je vzhůru nohama a [spymaster.title] [spymaster.name] už u výčepu jmenuje tři nevěsty. Teta z Brodné přidala čtvrtou.
+
+1. Selka ze sousedního gruntu, s věnem
+2. Mlynářova dcera
+3. Děvečka, která ti léta pomáhá
+4. Vdova z vedlejší vsi, s vlastními dětmi *(jen za určitých okolností)*
+5. Zůstat sám *(jen za určitých okolností)*
+
+### 6. Křtiny  `s_krtiny` · Sedlák
+
+> V seknici pláče [newborn.word] [newborn.name], zdravý a hlasitý. Farář čeká v kostele a ves čeká na zápraží. Křtiny jsou první věc, kterou o novém člověku celá Lipnice uslyší.
+
+1. Křtiny s muzikou pro celou ves
+2. Požádat pána z Bílé Brány o kmotrovství *(riskantní volba)*
+3. Kmotrem ať je [marshal.name] z kovárny
+4. Skromně, jen kmotři a farář
+
+### 7. Námluvy  `s_namluvy` · Sedlák
+
+> [heir.name] je v letech, kdy se na posvícení netančí jen pro radost. Ves už šeptá o Rozárce z mlýna. Dohazovačka z Brodné přinesla jiné jméno: bohatý grunt, jen nevěsta je o deset let starší.
+
+1. Domluvit bohatý sňatek přes dohazovačku
+2. Nechat ho, ať si vezme, koho má rád
+3. Hledat nevěstu ze svobodného rodu *(jen za určitých okolností)*
+4. Ještě počkat, na gruntu ho potřebujeme
+
+### 8. Uprázdněný úřad  `n_smrt_sluzebnika` · Šlechtic · vynucená
+
+> [target.Old] [target.role] [target.name] [target.died] ve věku [target.age] let. Sloužil rodu [dynastyName] věrně, nebo aspoň dlouho. Teď je místo prázdné a o slovo se hlásí tři lidé.
+
+1. Povýšit někoho z vlastní družiny
+2. Najmout zkušeného člověka z cizích služeb
+3. Přijmout člověka, kterého doporučil král
+
+### 9. Pohřeb ve vsi  `s_smrt_souseda` · Sedlák · vynucená
+
+> [target.Old] [target.role] [target.name] [target.died] ve věku [target.age] let. Celá Lipnice šla za rakví a teď se u studny řeší jediné: kdo po něm převezme, co tu nechal.
+
+1. Podpořit, ať to převezme jeho dítě
+2. Přimluvit se u pána za vlastního člověka *(riskantní volba)*
+3. Nechat to na pánovi a na vsi
 
 ## Obchod (všechny scénáře)
 

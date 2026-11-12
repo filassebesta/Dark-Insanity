@@ -94,6 +94,26 @@ const PEASANT_ROLE_LABELS = {
   spymaster: ['Krčmář', 'Krčmářka'],
 };
 
+// cases of every title: [genitive, dative, accusative, instrumental] (lower case)
+const TITLE_CASES = {
+  'Kancléř': ['kancléře', 'kancléři', 'kancléře', 'kancléřem'], 'Kancléřka': ['kancléřky', 'kancléřce', 'kancléřku', 'kancléřkou'],
+  'Maršál': ['maršála', 'maršálovi', 'maršála', 'maršálem'], 'Maršálka': ['maršálky', 'maršálce', 'maršálku', 'maršálkou'],
+  'Špehmistr': ['špehmistra', 'špehmistrovi', 'špehmistra', 'špehmistrem'], 'Špehmistryně': ['špehmistryně', 'špehmistryni', 'špehmistryni', 'špehmistryní'],
+  'Purkrabí': ['purkrabího', 'purkrabímu', 'purkrabího', 'purkrabím'],
+  'Hejtman': ['hejtmana', 'hejtmanovi', 'hejtmana', 'hejtmanem'], 'Hejtmanka': ['hejtmanky', 'hejtmance', 'hejtmanku', 'hejtmankou'],
+  'Důvěrník': ['důvěrníka', 'důvěrníkovi', 'důvěrníka', 'důvěrníkem'], 'Důvěrnice': ['důvěrnice', 'důvěrnici', 'důvěrnici', 'důvěrnicí'],
+  'Rychtář': ['rychtáře', 'rychtáři', 'rychtáře', 'rychtářem'], 'Rychtářka': ['rychtářky', 'rychtářce', 'rychtářku', 'rychtářkou'],
+  'Kovář': ['kováře', 'kováři', 'kováře', 'kovářem'], 'Kovářka': ['kovářky', 'kovářce', 'kovářku', 'kovářkou'],
+  'Krčmář': ['krčmáře', 'krčmáři', 'krčmáře', 'krčmářem'], 'Krčmářka': ['krčmářky', 'krčmářce', 'krčmářku', 'krčmářkou'],
+};
+
+/** { Gen, Dat, Acc, Ins } forms of a role title, for text like "poslat pro {chancellor.titleAcc}". */
+export function roleCases(role, gender, scenario) {
+  const t = roleLabel(role, gender, scenario);
+  const c = TITLE_CASES[t] || [t, t, t, t].map((x) => x.toLowerCase());
+  return { Gen: c[0], Dat: c[1], Acc: c[2], Ins: c[3] };
+}
+
 export function roleLabel(role, gender, scenario) {
   const pair = (scenario === 'slechtic' && NOBLE_ROLE_LABELS[role])
     || (scenario === 'sedlak' && PEASANT_ROLE_LABELS[role]) || ROLE_LABELS[role];
