@@ -201,12 +201,14 @@ f_ozvena_kmotr.jpg — Morning after a fire: a burnt-out village tavern smoking,
 ```
 Generate one separate image for each line below. Each line has a file name
 and a description. Return every image as its own file named exactly as the
-file name. Do not combine images into a grid or sprite sheet.
+file name, and make sure each file shows exactly the scene described on its
+own line. Do not combine images into a grid or sprite sheet.
 
-Format: aspect ratio 1:1, 2048 x 2048. Main subject in the centre and upper
-part of the image, the lower third darker and calm (text is shown over it).
-Keep the brightness even from top to bottom: no darker band or second
-picture pasted into the lower part.
+Format: aspect ratio 1:1, 2048 x 2048 (square, not wide). Main subject in
+the centre and upper part of the image. The painted scene must continue all
+the way to the bottom edge (floor, ground, water, people's legs): no empty,
+flat or blank area, no darker band and no second picture in the lower part.
+Keep the brightness even from top to bottom.
 
 Style for every image: painted in the style of a dark-fantasy narrative RPG,
 muted oil painting with visible loose brushwork and subtle canvas texture,
