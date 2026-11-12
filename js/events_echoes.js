@@ -729,7 +729,7 @@ export const ECHO_EVENTS = [
     scenario: S, forced: true, echo: true,
     image: img('n_spiklenci_zvou'),
     title: 'Krev za krev',
-    text: 'Spiklenci, které rod {dynastyName} kdysi udal králi, skončili na popravišti. Jejich příbuzní ale ne. {spymaster.Title} {spymaster.name} přináší zprávu: najatý vrah už je na cestě.',
+    text: 'Spiklenci, které rod {dynastyName} kdysi udal koruně, skončili ve věži a ne všichni z ní vyšli živí. Jejich příbuzní ale zůstali na svobodě. {spymaster.Title} {spymaster.name} přináší zprávu: najatý vrah už je na cestě.',
     choices: [
       {
         label: 'Nastražit na něj past',
@@ -745,10 +745,10 @@ export const ECHO_EVENTS = [
         chronicle: 'Celou zimu se v tvrzi nevycházelo. Vrah odtáhl, ale v kraji se mluví o strachu.',
       },
       {
-        label: 'Požádat krále o ochranu',
+        label: 'Požádat korunu o ochranu',
         hintType: 'resource', hintKey: 'favor',
         effects: { favor: -3, stability: 2 },
-        chronicle: 'Král poslal své stráže. Ochrana od koruny ale něco stojí, třeba hrdost.',
+        chronicle: '{king.Title} {king.name} poslal{K:|a} své stráže. Ochrana od koruny ale něco stojí, třeba hrdost.',
       },
     ],
   },

@@ -15,6 +15,20 @@ const friendlyHouse = (s) => {
   return h ? h.id : null;
 };
 const anyHouse = (s) => s.houses[Math.floor(Math.random() * s.houses.length)].id;
+// a house broken in a private war loses its seat to the player (war.js): no feasts at home, no border stones
+const landed = (s, h) => s.provinces.some((p) => p.owner === h.id);
+const landedHouse = (s) => {
+  const pool = s.houses.filter((h) => landed(s, h));
+  return pool.length ? pool[Math.floor(Math.random() * pool.length)].id : null;
+};
+const hostileLandedHouse = (s) => {
+  const h = s.houses.filter((x) => x.attitude < 40 && landed(s, x)).sort((a, b) => a.attitude - b.attitude)[0];
+  return h ? h.id : null;
+};
+const targetLanded = (s) => {
+  const h = s.houses.find((x) => x.id === s.eventContext?.house);
+  return !!h && landed(s, h);
+};
 
 export const NOBLE_EVENTS = [
   // ===================== THE KING AND HIS COURT =====================
@@ -434,7 +448,7 @@ export const NOBLE_EVENTS = [
     id: 'n_spor_o_hranici',
     scenario: S,
     cooldown: 10,
-    target: anyHouse,
+    target: landedHouse,
     title: 'Spor o mezníky',
     text: 'Lidé, kterým velí {house.headTitle} {house.head} z rodu {house.gen}, v noci posunuli hraniční kameny a zabrali tvým vsím louky u řeky.',
     choices: [
@@ -521,7 +535,7 @@ export const NOBLE_EVENTS = [
     scenario: S,
     music: 'battle',
     cooldown: 10,
-    target: hostileHouse,
+    target: hostileLandedHouse,
     title: 'Ozbrojenci na tvé půdě',
     text: 'Ozbrojenci rodu {house.gen} vpadli do tvých vsí, vypálili stodolu a odehnali dobytek. Tvrdí, že jen vymáhají starý dluh.',
     choices: [
@@ -567,10 +581,10 @@ export const NOBLE_EVENTS = [
       },
       {
         label: 'Půjčit za zástavu pozemků',
-        requires: (s) => s.resources.gold >= 20,
+        requires: (s) => s.resources.gold >= 20 && targetLanded(s), // a house without a seat has nothing to pledge
         hintType: 'trait', hintKey: 'intelligence',
         isRoll: true, baseChance: 0.55, traitKey: 'intelligence', traitScale: 0.04,
-        onSuccess: { effects: { gold: 8 }, provinceEffects: { own: { wealth: 6 } }, houseEffects: { target: { attitude: -4, power: -5 } }, traitGain: 'intelligence', chronicle: 'Dluh nebyl splacen a zastavené louky připadly rodu {dynastyName}.' },
+        onSuccess: { effects: { gold: -20 }, provinceEffects: { own: { wealth: 10 } }, houseEffects: { target: { attitude: -4, power: -5 } }, traitGain: 'intelligence', chronicle: 'Dluh nebyl splacen a zastavené louky připadly rodu {dynastyName}. Peníze jsou pryč, půda zůstane.' },
         onFailure: { effects: { gold: -20 }, houseEffects: { target: { attitude: -8 } }, chronicle: 'Dlužník zástavu zpochybnil u soudu a vyhrál. Peníze jsou pryč.' },
       },
       {
@@ -587,7 +601,7 @@ export const NOBLE_EVENTS = [
     id: 'n_hostina_rodu',
     scenario: S,
     cooldown: 10,
-    target: anyHouse,
+    target: landedHouse,
     title: 'Hostina u sousedů',
     text: 'Rod {house.gen} zve na velkou hostinu na své sídlo. Bude tam půl šlechty země — a víno, které rozvazuje jazyky.',
     choices: [
@@ -620,8 +634,9 @@ export const NOBLE_EVENTS = [
     scenario: S,
     cooldown: 10,
     target: hostileHouse,
+    requires: (s) => s.heir.alive,
     title: 'Pomluvy',
-    text: 'Po dvoře se šíří pomluvy, že tvůj rod pochází z koňských handlířů a že dědic {heir.name} není vlastní krve. Stopa vede k rodu {house.gen}.',
+    text: 'Po dvoře se šíří pomluvy, že rod {dynastyName} přišel k erbu podvodem a že dědic {heir.name} není vlastní krve. Stopa vede k rodu {house.gen}.',
     choices: [
       {
         label: 'Odpovědět stejnou mincí',
@@ -738,7 +753,7 @@ export const NOBLE_EVENTS = [
         hintType: 'resource', hintKey: 'favor',
         effects: { favor: 12, prestige: 3 },
         noble: { secrets: 1 },
-        chronicle: 'Rod udal spiklence. Král je vděčný a pár šlechticů skončilo ve věži.',
+        chronicle: 'Rod udal spiklence. {king.Title} je {K:vděčný|vděčná} a pár šlechticů skončilo ve věži.',
       },
       {
         label: 'Na schůzku nejít a mlčet',
@@ -1041,7 +1056,7 @@ export const NOBLE_QUIET_EVENT = {
       hintType: 'resource', hintKey: 'gold',
       effects: { gold: -4 },
       provinceEffects: { own: { wealth: 4, unrest: -3 } },
-      chronicle: 'Purkrabí a pán objeli všechny vsi a srovnali účty.',
+      chronicle: 'Purkrabí a {R:pán|paní} objeli všechny vsi a srovnali účty.',
     },
     {
       label: 'Cvičit družinu',
@@ -1058,10 +1073,19 @@ export const NOBLE_QUIET_EVENT = {
     },
     {
       label: 'Studovat rodokmeny a staré listiny',
+      requires: (s) => s.origin !== 'sedlak', // an old line has old parchments
       hintType: 'trait', hintKey: 'intelligence',
       effects: { legitimacy: 2 },
       traitGain: 'intelligence',
       chronicle: 'Ve starých listinách se našel předek, kterého by se nestyděl ani král.',
+    },
+    {
+      label: 'Dát sepsat kroniku rodu',
+      requires: (s) => s.origin === 'sedlak', // a house from the plough writes its own
+      hintType: 'trait', hintKey: 'intelligence',
+      effects: { legitimacy: 2 },
+      traitGain: 'intelligence',
+      chronicle: 'Písař sepsal kroniku rodu {dynastyName} od pluhu v Lipnici až po erb. Sousední páni se nad ní ušklíbají, ale číst ji chodí všichni.',
     },
   ],
 };

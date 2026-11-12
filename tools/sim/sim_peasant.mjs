@@ -4,7 +4,7 @@ const { createNewGame } = await import(root + 'state.js');
 const E = await import(root + 'engine.js');
 const runs = +(process.argv[2] || 400), AMB = +(process.argv[3] || 0.6);
 const ends = {}, seen = {}, lens = [], tiers = {}; let errors = 0, freedAt = [];
-const WANT = ['Zaplatit pánovi plnou cenu', 'Smlouvat o cenu', 'Koupit tvrz a žádat o erb', 'Pokleknout a přijmout pás', 'Vrhnout se do první řady', 'Jít osobně', 'Koupit pole', 'Ucházet se o úřad'];
+const WANT = ['Zaplatit plnou cenu', 'Smlouvat o cenu', 'Koupit tvrz a žádat o erb', 'Pokleknout a přijmout pás', 'Vrhnout se do první řady', 'Jít osobně', 'Koupit pole', 'Ucházet se o úřad'];
 for (let r = 0; r < runs; r++) {
   const st = createNewGame('A', 'B', 'male', 'sedlak');
   let freed = false;

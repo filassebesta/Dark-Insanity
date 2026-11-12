@@ -17,7 +17,7 @@ const AMB = Number(process.argv[3] ?? 0.6);
 const MAX = Number(process.argv[4] || 150) * 4;
 
 // choices an ambitious house takes on the way up
-const WANT = /Zaplatit pánovi plnou cenu|Smlouvat o cenu|Koupit tvrz a žádat o erb|Pokleknout a přijmout pás|Vrhnout se do první řady|Koupit pole|nárok|Udeřit|Povstat|Přijmout s pokorou|Navrhnout sňatek/;
+const WANT = /Zaplatit plnou cenu|Smlouvat o cenu|Koupit tvrz a žádat o erb|Pokleknout a přijmout pás|Vrhnout se do první řady|Koupit pole|nárok|Udeřit|Povstat|Přijmout s pokorou|Navrhnout sňatek/;
 
 const ends = {}, reached = { svobodnik: [], erb: [], velmoz: [], koruna: [], cisar: [] }, stageEnds = {}, unresolved = new Set();
 let errors = 0, rebellions = 0;

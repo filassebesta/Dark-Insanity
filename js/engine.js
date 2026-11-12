@@ -35,7 +35,8 @@ export function interpolate(state, text) {
     'dynastyName': state.dynastyName,
     'province.name': province ? province.name.replace(/ \(.*\)$/, '') : 'provincie',
     'target.name': target ? target.name : '',
-    'target.role': target ? roleLabel(ctx.role, target.gender, state.scenario).toLowerCase() : '',
+    'target.role': target ? roleLabel(ctx.role, target.gender, state.scenario, state.flags).toLowerCase() : '',
+    'target.Role': target ? roleLabel(ctx.role, target.gender, state.scenario, state.flags) : '', // at the start of a sentence
     'target.age': target ? String(target.age) : '',
     'target.Old': target && target.gender === 'female' ? 'Stará' : 'Starý',
     'target.died': target && target.gender === 'female' ? 'zemřela' : 'zemřel',
@@ -88,7 +89,7 @@ export function interpolate(state, text) {
   }
   // gendered titles: {chancellor.Title} = Kancléř / Kancléřka, {chancellor.title} = lower case
   for (const role of ['chancellor', 'marshal', 'spymaster']) {
-    const t = roleLabel(role, state[role].gender, state.scenario);
+    const t = roleLabel(role, state[role].gender, state.scenario, state.flags);
     dict[`${role}.Title`] = t;
     dict[`${role}.title`] = t.toLowerCase();
   }
@@ -233,8 +234,10 @@ function applyCourtReplacement(state, spec, notes, meta) {
   const role = state.eventContext?.role;
   if (!role || !state[role]) return;
   const gender = Math.random() < 0.5 ? 'male' : 'female';
+  let name = randomName(gender);
+  for (let i = 0; i < 5 && name === state[role].name; i++) name = randomName(gender); // the successor is someone else
   state[role] = {
-    role, name: randomName(gender), gender,
+    role, name, gender,
     age: randInt(spec.minAge ?? 30, spec.maxAge ?? 50),
     loyalty: clamp((spec.loyalty ?? 60) + randInt(-5, 5)), alive: true,
     ...(QUIRK_ROLES.includes(role) ? { quirk: randomQuirk() } : {}),
@@ -243,7 +246,7 @@ function applyCourtReplacement(state, spec, notes, meta) {
   if (meta) meta.replaced = true;
   const fem = state[role].gender === 'female';
   const quirk = quirkLabel(state[role]);
-  notes.push({ text: `${fem ? 'Nová' : 'Nový'} ${roleLabel(role, state[role].gender, state.scenario).toLowerCase()}: ${state[role].name}${quirk ? ` (${quirk.toLowerCase()})` : ''}`, tone: 'pos' });
+  notes.push({ text: `${fem ? 'Nová' : 'Nový'} ${roleLabel(role, state[role].gender, state.scenario, state.flags).toLowerCase()}: ${state[role].name}${quirk ? ` (${quirk.toLowerCase()})` : ''}`, tone: 'pos' });
 }
 
 const TRAIT_NAMES = { strength: 'síla', eloquence: 'výřečnost', intelligence: 'inteligence', patience: 'trpělivost' };
@@ -360,7 +363,13 @@ export const NOBLE_ENDINGS = {
   golden_age: () => 'Vaše vláda přinesla království dlouhotrvající prosperitu a mír — zlatý věk, na který budou kronikáři vzpomínat po staletí.',
   executed: (s) => `${s.flags && s.flags.rebellion ? 'Povstání proti koruně bylo zlomeno' : 'Spiknutí bylo odhaleno'}. ${s.ruler.name} končí na popravišti a jméno rodu ${s.dynastyName} je vymazáno z listin.`,
   ennobled: (s) => `${s.ruler.name} z rodu ${s.dynastyName} {R:povstal|povstala} jako {R:šlechtic|šlechtična}. Rod, který oral cizí pole, bude mít vlastní erb a vlastní tvrz.`,
-  expelled: (s) => `Pán ztratil s rodem ${s.dynastyName} trpělivost. Grunt dostal jiný hospodář a ${s.ruler.name} odchází s rodinou a uzlíkem na cestu, která nikam nevede.`,
+  expelled: (s) => {
+    const lady = lordOf(s)?.gender === 'female';
+    const lost = s.ruler.statusTier >= 2
+      ? 'Svobodu rodu vzít nemohl' + (lady ? 'a' : '') + ', a tak vzal' + (lady ? 'a' : '') + ' grunt: zemský soud ho kvůli staré žalobě přiřkl jinému hospodáři'
+      : 'Grunt dostal jiný hospodář';
+    return `${lady ? 'Paní' : 'Pán'} ztratil${lady ? 'a' : ''} s rodem ${s.dynastyName} trpělivost. ${lost} a ${s.ruler.name} odchází s rodinou a uzlíkem na cestu, která nikam nevede.`;
+  },
   exile: (s) => `Král ztratil s rodem ${s.dynastyName} trpělivost. Panství bylo zabaveno a ${s.ruler.name} odchází s rodinou do vyhnanství.`,
 };
 
@@ -541,7 +550,7 @@ export const FARM_DECREES = {
   market: { label: 'Prodat přebytky na trhu', text: 'Obilí a sýry na trh do Brodné.', effects: { food: -10, gold: 6 } },
   cattle: { label: 'Přikoupit dobytek', text: 'Kráva navíc znamená mléko i tah.', effects: { gold: -10, food: 4, stability: 5 } },
   neighbours: { label: 'Pomoci sousedům', text: 'Půjčit ruce a sdílet zásoby.', effects: { food: -5, prestige: 6 } },
-  lord: { label: 'Přilepšit pánovi', text: 'Dar navíc pro panský dvůr.', effects: { gold: -6, favor: 8 } },
+  lord: { label: 'Přilepšit vrchnosti', text: 'Dar navíc pro panský dvůr.', effects: { gold: -6, favor: 8 } },
 };
 
 export function decreeList(state) {
@@ -590,7 +599,9 @@ const CRISES = [
   // a peasant's crises: hunger, empty purse, and the lord's patience running out
   { key: 'food', max: 3, event: 'krize_s_hlad', scenarios: ['sedlak'] },
   { key: 'gold', max: 1, event: 'krize_s_bida', scenarios: ['sedlak'] },
-  { key: 'favor', max: 10, event: 'krize_s_nemilost', scenarios: ['sedlak'] },
+  // a serf can simply be thrown off the farm; a free man's farm is his own, so the lord goes to court
+  { key: 'favor', max: 10, event: 'krize_s_nemilost', scenarios: ['sedlak'], when: (s) => s.ruler.statusTier < 2 },
+  { key: 'favor', max: 10, event: 'krize_s_nemilost_svobodnik', scenarios: ['sedlak'], when: (s) => s.ruler.statusTier >= 2 },
 ];
 const CRISIS_COOLDOWN = 12;
 
@@ -598,7 +609,7 @@ function raiseCrisis(state) {
   if (state.pendingEvent) return;
   const history = state.eventHistory || {};
   for (const c of CRISES) {
-    if (!c.scenarios.includes(state.scenario)) continue;
+    if (!c.scenarios.includes(state.scenario) || (c.when && !c.when(state))) continue;
     if (c.key === 'favor' && state.flags.rebellion) continue; // a rebel expects no royal grace
     const value = state.resources[c.key];
     if (value === undefined || value > c.max) continue;
@@ -739,7 +750,7 @@ export function rollParts(state, choice) {
     if (horse && horse.roll) add(horse.name, horse.roll);
   }
   // a capable adviser helps in their own field
-  const helper = (role) => `Schopn${state[role].gender === 'female' ? 'á' : 'ý'} ${roleLabel(role, state[role].gender, state.scenario).toLowerCase()}`;
+  const helper = (role) => `Schopn${state[role].gender === 'female' ? 'á' : 'ý'} ${roleLabel(role, state[role].gender, state.scenario, state.flags).toLowerCase()}`;
   if (choice.resourceKey === 'army' && capable(state, 'marshal')) add(helper('marshal'), 6);
   if (choice.traitKey === 'intelligence' && capable(state, 'spymaster')) add(helper('spymaster'), 6);
   if (choice.traitKey === 'eloquence' && capable(state, 'spouse')) add(helper('spouse'), 6);
@@ -1045,7 +1056,7 @@ function retireOldAdvisers(state) {
     const g = Math.random() < 0.5 ? 'male' : 'female';
     let name = randomName(g);
     for (let i = 0; i < 20 && [state.ruler.name, state.heir.name, state.spouse.name, state.chancellor.name, state.marshal.name, state.spymaster.name].includes(name); i++) name = randomName(g);
-    const title = roleLabel(role, c.gender, state.scenario);
+    const title = roleLabel(role, c.gender, state.scenario, state.flags);
     state.chronicle.push(makeChronicleEntry(state, `${title} ${c.name} ${c.gender === 'female' ? 'zemřela' : 'zemřel'} ve věku ${c.age} let. Na ${c.gender === 'female' ? 'její' : 'jeho'} místo nastupuje ${name}.`));
     state[role] = { role, name, gender: g, age: randInt(28, 45), loyalty: clamp(55 + randInt(-8, 8)), alive: true, quirk: randomQuirk() };
   }

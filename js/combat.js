@@ -78,7 +78,7 @@ export function companionFor(state, enemyKey) {
   const def = ENEMIES[enemyKey];
   const m = state.marshal;
   if (!def || def.duel || !m || m.alive === false) return {};
-  const title = roleLabel('marshal', m.gender, state.scenario);
+  const title = roleLabel('marshal', m.gender, state.scenario, state.flags);
   if (m.loyalty < 50) return { refused: `${title} ${m.name} se drží stranou. Za tebe krvácet nebude.` };
   return { ally: { name: m.name, title, uc: 2 + (m.quirk === 'schopny' ? 1 : 0), dmg: 1, female: m.gender === 'female' } };
 }

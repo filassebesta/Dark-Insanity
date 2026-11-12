@@ -1562,7 +1562,7 @@ export const MORE_EVENTS = [
     id: 'stary_rytir_umira',
     cooldown: 30,
     title: 'Poslední přání',
-    text: 'Starý rytíř, který bojoval po boku vládcova otce, umírá. Na smrtelném loži prosí, aby jeho syn mohl převzít jeho léno, ačkoli je to známý opilec a rváč.',
+    text: 'Starý rytíř, který sloužil koruně déle, než pamatuje většina dvora, umírá. Na smrtelném loži prosí, aby jeho syn mohl převzít jeho léno, ačkoli je to známý opilec a rváč.',
     choices: [
       {
         label: 'Splnit poslední přání',

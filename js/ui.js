@@ -325,7 +325,7 @@ function renderCouncil(state, event, shownAt) {
   if (!advice.length) { clearCouncil(); return; }
   el.innerHTML = `<span class="council-title">Rada</span>` + advice.map((a) => {
     const c = a.person;
-    const role = roleLabel(a.role, c.gender, state.scenario);
+    const role = roleLabel(a.role, c.gender, state.scenario, state.flags);
     const choice = event.choices[a.index];
     return `<div class="council-row" data-person="${a.role}" role="button" tabindex="0" title="${esc(role)} ${esc(c.name)} · ${esc(loyaltyLabel(c.loyalty, c.gender))}${c.quirk ? ' · ' + esc(quirkLabel(c)) : ''}">
       <div class="council-avatar">${esc(c.name[0])}${portraitImg(memberPortraitCandidates(c, a.role, state.scenario), c.name, 'council-avatar-img')}</div>
@@ -420,7 +420,7 @@ export function renderCourtPanel(state) {
   const members = [
     { data: state.ruler, role: state.scenario === 'sedlak' ? f(state.ruler, 'Hospodář', 'Hospodyně') : f(state.ruler, 'Vládce', 'Vládkyně'), extra: tierLabel(state.ruler), portraits: rulerPortraitCandidates(state.ruler) },
     ...['heir', 'spouse', 'chancellor', 'marshal', 'spymaster'].map((r) => (
-      { data: state[r], role: roleLabel(r, state[r].gender, state.scenario), portraits: memberPortraitCandidates(state[r], r, state.scenario), person: r })),
+      { data: state[r], role: roleLabel(r, state[r].gender, state.scenario, state.flags), portraits: memberPortraitCandidates(state[r], r, state.scenario), person: r })),
   ];
   for (const m of members) {
     const card = document.createElement('button');

@@ -23,18 +23,22 @@ král → císař). Zdroj: čtení kódu všech událostí, simulace tisíců he
 | Grunt, dluh, karavany pánovi po povýšení | Zmizely bez vysvětlení nebo platily „přízeň“ králi | Grunt se prodá, dluh se splatí, zboží se vrátí do skladu |
 | Nevolník dostával události o zahraničním obchodu | Do ciziny smí jen svobodný | Až od svobodníka |
 | Mladý nástupce s 30letou manželkou a školákem | Domácnost ignorovala věk | Věk rodiny podle vládce |
+| Dva rychtáři v Lipnici | Po vyhrané volbě (`s_rychtar_volba`) zůstal rychtář v radě a události posílaly hráče „za rychtářem“; po „Podpořit souseda“ zůstal starý rychtář | Starý rychtář vždy skládá úřad (`target` + `replaceCourt`); když vyhraje hráč, jeho místo v radě je **konšel/konšelka** (`roleLabel(…, flags)`, vlastní životopisy); volby „za rychtářem“ mají pro rychtáře vlastní variantu (mez, obecní truhla, klidné období, závist sousedů) |
+| Povahy rádců u sedláka | Sedlák „zbavil úřadu“ kováře, kovář chtěl „půdu, čest a místo“, donašeč odešel „v poutech“ | Sedlák vyhlásí krádež na návsi, vyžene donašeče z gruntu; vesnická verze „Zaslouží si víc“ (`q_ctizadost_ves`: groše, přímluva u pána, místo na posvícení) |
+| Svobodník a události nevolníka | `s_povstani` sliboval svobodu svobodnému; hrozba vyhnání po výkupu, kde stálo „Grunt zůstává“ | Povstání bojuje o konec roboty pro vsi; svobodník dostane vlastní krizi `krize_s_nemilost_svobodnik` (žaloba u zemského soudu) a konec „vyhnání“ to vypráví soudem, ne vyhozením. Čísla beze změny |
+| Pán vždy muž | Natvrdo „Pán…“, „pánovi“, „pánův“ v textech sedláka (25 % pánů jsou ženy) | Tvary `{L:…\|…}` a `{lord.title}` v kronikách a textech, popisky voleb neutrálně („vrchnost“, „panský dvůr“), protože popisky se neinterpolují |
+| Rozpory volba × text | `n_pujcka_rodu` +8 zlata, ač dluh nebyl splacen; `ozvena_n_pomsta` popraviště × věž; `s_pozar_stodoly` nápověda síla, hod inteligence | Půjčka 20 je pryč, louky dají víc bohatství (+10); ozvěna mluví o věži; nápověda inteligence |
+| Texty pro „odjakživa urozený“ rod | „bojoval po boku vládcova otce“, „pochází z koňských handlířů“, předek „kterého by se nestyděl ani král“ | Neutrální znění; rod ze vsi (`origin === 'sedlak'`) si v klidném období nechá sepsat kroniku rodu místo hledání předků |
+| Rádci šlechtice s královskými životopisy | „písař královské komory“ u purkrabího drobného šlechtice | `NOBLE_BIOS` pro purkrabího, hejtmana a důvěrníka |
+| Rod bez sídla | Hostina „na svém sídle“, hraniční spor a nájezd rodu, jehož sídlo dobyl hráč | Tyto události cílí jen na rody, které sídlo drží; zástava pozemků jen u rodu s půdou |
+| Cesta k trůnu po zlomeném povstání | Obava, že po milosti zbývá jen smrt krále nebo spiknutí | Ověřeno: milost i ubráněná tvrz nechávají titul 4, příznak vzpoury se maže a po 8 obdobích odpočinku je povstání (`crown`) znovu cílem tažení. Beze změny kódu |
+| Drobnosti nalezené cestou | Věta začínala malým písmenem („hejtmanka…“), smír s povstalci psal „Král“ i královně | Token `{target.Role}`, ženský tvar pro královnu ve `war.js` |
 
-## Co zbývá (drobnější nálezy z auditu)
+## Co zbývá
 
-1. **Dva rychtáři v Lipnici.** Když hráč vyhraje volbu rychtáře (`s_rychtar_volba`), rychtář z rady zůstává a události dál nabízejí „jít za rychtářem“.
-2. **Události o povahách rádců u sedláka** (`events_court.js`): sedlák „zbaví úřadu“ kováře nebo krčmáře, kovář chce „půdu, čest a místo“.
-3. **Svobodník a události nevolníka:** `s_povstani` slibuje svobodu někomu, kdo už je svobodný; hrozba vyhnání z gruntu platí i po výkupu.
-4. **Pán je v některých textech vždy muž** (`t_s_pan_podil`, kroniky „Pán…“), i když 25 % pánů jsou ženy.
-5. **Rozpory volba × text:** `n_pujcka_rodu` (zisk +8 po půjčce 20, kronika říká nesplaceno), `ozvena_n_pomsta` (popraviště × věž), `s_pozar_stodoly` (nápověda síla, hod inteligence).
-6. **Texty pro rod „odjakživa urozený“:** „bojoval po boku vládcova otce“, „pochází z koňských handlířů“ — u rodu ze vsi to nesedí.
-7. **Životopisy nových rádců šlechtice** se berou z královských (písař královské komory…). Chybí vlastní šlechtické.
-8. **Rod, který přišel o sídlo**, se v textech dál chová jako by ho držel (hostina „na svém sídle“).
-9. **Po zlomeném povstání** a milosti zůstává titul, ale cesta k trůnu je už jen přes smrt krále nebo nové spiknutí.
+- `s_vykup`, volba „Smlouvat o cenu“: kroniky „Pán nakonec slevil“ a „Pán se urazil“ jsou dál v mužském rodě. Řádek s úspěchem nese i cenu výkupu, kterou teď ladí jiná práce na ekonomice sedláka (a neúspěch je hned pod ním), takže se nechaly být, aby se změny nesrazily. Po sloučení stačí `{L:Pán nakonec slevil|Paní nakonec slevila}` a `{L:Pán se urazil|Paní se urazila}`.
+- Název zdroje „Přízeň pána“ a ambice „V pánově přízni“ zůstávají: jmenují instituci (panství), ne konkrétní osobu.
+- `docs/udalosti.md` je generovaný přehled a je už starší (chybí kariéra); nové a přejmenované volby se do něj promítnou při příštím přegenerování.
 
 ## Vyvážení (doporučení)
 

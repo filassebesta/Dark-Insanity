@@ -141,7 +141,7 @@ musí být aktivní, jinak je mapa skrytá. Screenshoty ukládat mimo repozitá�
 obchodní `trade`, `tradeOffer`, `tradeMod`, `tradeStock`.
 
 **Textové tokeny:** `{ruler.name}`, `{heir.name}`, `{chancellor.Title}`,
-`{province.name}`, `{target.*}`, `{house.*}`, `{king.*}`, `{lord.*}`, `{village}`,
+`{province.name}`, `{target.*}`, `{house.*}`, `{king.*}`, `{lord.*}`, `{village}`, `{target.Role}` (role velkým písmenem na začátku věty),
 `{cargo.*}` a rodové tvary `{R:muž|žena}` (vládce), `{H:…}` (hlava rodu),
 `{T:…}` (cíl), `{D:…}` (dědic), `{L:…}` (pán), `{M:…}` (manžel/ka).
 

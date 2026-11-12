@@ -362,7 +362,8 @@ function endRebellion(state, how, back, news) {
     state.resources.favor = 20;
     state.resources.legitimacy = clamp(state.resources.legitimacy + 5);
     state.resources.prestige = clamp(state.resources.prestige + 4);
-    text = `Král ${state.king.name} uzavřel s povstalci smír. Rod ${state.dynastyName} si udržel panství i hlavu a celá země ví, že se s ním musí počítat.`;
+    const kq = state.king.gender === 'female';
+    text = `${kq ? 'Královna' : 'Král'} ${state.king.name} uzavřel${kq ? 'a' : ''} s povstalci smír. Rod ${state.dynastyName} si udržel panství i hlavu a celá země ví, že se s ním musí počítat.`;
   } else {
     // a lost or abandoned revolt: the king will not forget
     bumpStat(state, 'warsLost');
