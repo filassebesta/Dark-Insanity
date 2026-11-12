@@ -35,7 +35,7 @@ vlastník souboru (viz `docs/tym/README.md`).
 
    **Tolerance:** výsledky simulací kolísají mezi běhy (medián délky hry ±5 let,
    podíly konců ±4 p. b.). Pokud je výsledek mimo rozmezí z briefu nebo z HANDOFF
-   kap. 6, spusť simulaci ještě 2× a hlas posun teprve, když je mimo ve většině běhů
+   kap. 6, spusť simulaci ještě 2× a hlaš posun teprve, když je mimo ve většině běhů
    (víc než ±5 p. b.). `sim_trade` hraje náhodně bez ambicí — nesrovnávej ho se
    `sim_peasant`/`sim_noble`, ale se sebou samým: `sim_trade <scénář> 200` proti
    `sim_trade <scénář> 200 notrade`. Obchodní události `o_*` padají jen s obchodujícím
