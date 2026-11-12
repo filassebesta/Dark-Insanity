@@ -39,15 +39,6 @@ export function setMusicMuted(muted) {
   });
 }
 
-/** Swap in dedicated scenario-card art when the files exist (assets/ui/scenario_<key>.jpg). */
-export function upgradeScenarioArt() {
-  document.querySelectorAll('.scenario-card').forEach((card) => {
-    const src = `assets/ui/scenario_${card.dataset.scenario}.jpg`;
-    firstExistingImage([src, src.replace(/\.jpg$/, '.png')], null).then((found) => {
-      if (found) card.querySelector('.scenario-art').style.backgroundImage = `url("${found}")`;
-    });
-  });
-}
 
 export function renderStaticIcons() {
   const back = document.querySelector('.menu-return-button');
@@ -273,7 +264,7 @@ export function renderEventCard(state, event, handlers) {
     `assets/events/${event.id}.png`,
     event.image,
   ]);
-  document.getElementById('event-title').textContent = event.title;
+  document.getElementById('event-title').textContent = interpolate(state, event.title); // titles may follow the monarch's gender
   renderSceneEcho(state, event);
   const choiceList = document.getElementById('choice-list');
   choiceList.innerHTML = '';
@@ -500,12 +491,15 @@ export function renderHousesPanel(state) {
       </div>`;
   }).join('');
   const plot = state.noble.plot;
+  const held = state.provinces.filter((p) => p.owner === 'player').length;
   host.innerHTML = kingCard + houses + `
     <div class="house-card intrigue">
       <h4>Tajná hra</h4>
       <div class="stat-bar-row"><span class="label">Spiknutí</span><div class="plot-steps">${[1, 2, 3].map((i) => `<i class="${i <= plot ? 'on' : ''}"></i>`).join('')}</div><span>${plot}/3</span></div>
       <div class="stat-bar-row"><span class="label">Tajemství</span><span class="secrets">${'✦'.repeat(Math.min(state.noble.secrets, 8)) || '—'}</span><span>${state.noble.secrets}</span></div>
-      <p class="house-text">Cesty k trůnu: nárok po smrti krále (podpoří ho spojenci a sňatek s korunou), nebo spiknutí dovedené do konce. Spojenci zvyšují šance obou.</p>
+      <p class="house-text">Cesty k trůnu: nárok po smrti krále (podpoří ho spojenci a sňatek s korunou), spiknutí dovedené do konce, nebo — pro významného šlechtice — otevřené povstání ve válečném tažení. Spojenci zvyšují šance všech tří.</p>
+      ${state.flags.rebellion ? '<span class="house-badge bad">Otevřená vzpoura proti koruně</span>' : ''}
+      ${held > 1 ? `<p class="house-text">Panství rodu: ${held} kraje.</p>` : ''}
     </div>`;
 }
 

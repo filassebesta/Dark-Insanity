@@ -1,5 +1,7 @@
 import { RESOURCE_DEFS, PROVINCE_TEMPLATES, NOBLE_HOUSES, NOBLE_HOME, PEASANT_HOME, randInt, randomName, clamp } from './data.js';
-import { QUIRK_ROLES, randomQuirk } from './court.js';
+import { QUIRK_ROLES, randomQuirk, biography } from './court.js';
+import { ensureRealms } from './realms.js';
+import { dropAmbition } from './ambitions.js';
 
 const SAVE_PREFIX = 'insanityKingdom.save.';
 const SAVE_INDEX_KEY = 'insanityKingdom.saveIndex';
@@ -51,13 +53,28 @@ function initialProvinces() {
   }));
 }
 
-export function createNewGame(rulerName, dynastyName, gender, scenario = 'panovnik') {
+// Every new chronicle starts on the plough: a peasant who can rise to a free man,
+// a noble, a great lord and the throne in the same save. The scenario argument is
+// kept for the simulations and tests that start a later stage directly.
+export function createNewGame(rulerName, dynastyName, gender, scenario = 'sedlak') {
   const game = scenario === 'slechtic' ? createNobleGame(rulerName, dynastyName, gender)
     : scenario === 'sedlak' ? createPeasantGame(rulerName, dynastyName, gender)
       : createKingGame(rulerName, dynastyName, gender);
   game.origin = scenario; // where the house began: a peasant's line that reaches the crown earns a mark in the Hall of Fame
   game.stats = {};
+  game.milestones = {}; // turn of each promotion: { ennobled, crowned, empire }
+  ensureRealms(game); // the neighbouring kingdoms and their rulers
   return game;
+}
+
+/** New officers never share a first name with anyone in the household (the family keeps theirs). */
+function uniqueOfficers(state) {
+  const used = new Set([state.ruler.name, state.heir.name, state.spouse.name]);
+  for (const role of ['chancellor', 'marshal', 'spymaster']) {
+    const c = state[role];
+    for (let i = 0; i < 20 && used.has(c.name); i++) c.name = randomName(c.gender);
+    used.add(c.name);
+  }
 }
 
 /** Nobody in the household shares a first name with someone else in it. */
@@ -177,6 +194,8 @@ function createPeasantGame(rulerName, dynastyName, gender) {
 
 /** The peasant became a noble: the save continues as the Šlechtic scenario with a fief on the coast. */
 export function ennoblePeasant(state) {
+  // the family keeps the life stories of the village they came from
+  for (const role of ['heir', 'spouse']) if (!state[role].bio) state[role].bio = biography(state[role], role, '{dynasty}', 'sedlak');
   state.scenario = 'slechtic';
   state.ruler.statusTier = 3;
   const r = state.resources;
@@ -189,9 +208,31 @@ export function ennoblePeasant(state) {
   state.noble = { province: NOBLE_HOME, plot: 0, secrets: 0 };
   for (const h of state.houses) h.attitude = clamp(h.attitude - 8); // the old houses look down on an upstart
   delete state.peasant;
+  // the reeve, the smith and the innkeeper stay in Lipnice; a lord's household needs a steward, a captain and an ear at court
+  const neighbours = ['chancellor', 'marshal', 'spymaster'].map((r) => state[r].name).join(', ');
+  state.chancellor = newCharacter('chancellor', { minAge: 38, maxAge: 55, loyalty: 58 });
+  state.marshal = newCharacter('marshal', { minAge: 30, maxAge: 48, loyalty: 60 });
+  state.spymaster = newCharacter('spymaster', { minAge: 28, maxAge: 45, loyalty: 52 });
+  uniqueOfficers(state);
+  dropStageContracts(state, 'manor');
+  const farewell = [];
+  // the farm in Lipnice goes to a neighbour for what its buildings are worth
+  const farm = state.towns && state.towns.grunt;
+  if (farm) {
+    const worth = 5 + 3 * farm.buildings.filter((b) => b.ready && !b.base).length + 4 * Math.max(0, farm.level - 1);
+    state.resources.gold = clamp(state.resources.gold + worth);
+    delete state.towns.grunt;
+    farewell.push(`Grunt v Lipnici koupil soused za ${worth} zlatých.`);
+  }
+  // the usurer in Brodná does not forget a debtor just because he now has a coat of arms
+  if (state.flags.s_dluh) {
+    delete state.flags.s_dluh;
+    state.resources.gold = clamp(state.resources.gold - 20);
+    farewell.push('Lichvář z Brodné si dluh vybral hned při podpisu listiny.');
+  }
   state.gameOver = null;
   const f = state.ruler.gender === 'female';
-  state.chronicle.push(makeChronicleEntry(state, `${state.ruler.name} z rodu ${state.dynastyName} ${f ? 'byla povýšena' : 'byl povýšen'} do šlechtického stavu a ${f ? 'dostala' : 'dostal'} v léno tvrz v Pobřežní marce. Rod, který oral cizí pole, má teď vlastní.`));
+  state.chronicle.push(makeChronicleEntry(state, `${state.ruler.name} z rodu ${state.dynastyName} ${f ? 'byla povýšena' : 'byl povýšen'} do šlechtického stavu a ${f ? 'dostala' : 'dostal'} v léno tvrz v Pobřežní marce. Rod, který oral cizí pole, má teď vlastní. Sousedé z Lipnice (${neighbours}) zůstali doma; na tvrzi slouží noví lidé.${farewell.length ? ' ' + farewell.join(' ') : ''}`));
   return state;
 }
 
@@ -215,10 +256,74 @@ export function crownNoble(state) {
     }
     delete p.owner;
   }
+  dropStageContracts(state, 'court');
+  delete state.noble;
+  delete state.flags.rebellion;
+  // help from abroad promised before the crown was won comes due now
+  if (state.flags.cizi_podpora) {
+    delete state.flags.cizi_podpora;
+    state.echoes = state.echoes || [];
+    state.echoes.push({ event: 'ozvena_dluh_markam', due: state.turn + randInt(3, 6), context: null,
+      from: { year: state.year, title: 'Posel z Východních marek', choice: 'Přijmout nabídku a poslat zpátky prsten', ruler: state.ruler.name, gender: state.ruler.gender } });
+  }
+  // the old king (dead, or deposed by the player) leaves the story; the player is the crown now
+  if (state.king) state.formerKing = { name: state.king.name, gender: state.king.gender, alive: state.king.alive && !state.flags.kral_popraven };
+  delete state.king;
+  delete state.flags.kral_popraven;
+  // an heir who is already grown does not "come of age" again at court
+  if (state.heir.alive && state.heir.age >= 16) state.flags[`heir_adult_${state.heir.name}`] = true;
+  if (state.flags.royal_match) state.flags.heir_married = true;
+  // the lord's old servants make way for royal officers
+  const retired = [];
+  for (const [role, min, max] of [['chancellor', 40, 55], ['marshal', 35, 50], ['spymaster', 30, 48]]) {
+    if (state[role].age < 60) continue;
+    retired.push(state[role].name);
+    state[role] = newCharacter(role, { minAge: min, maxAge: max, loyalty: 60 });
+  }
+  if (retired.length) uniqueOfficers(state);
   state.gameOver = null;
   const f = state.ruler.gender === 'female';
-  state.chronicle.push(makeChronicleEntry(state, `${state.ruler.name} z rodu ${state.dynastyName} ${f ? 'byla korunována královnou' : 'byl korunován králem'}. Rod, který začínal s jedinou tvrzí, teď vládne celé zemi.`));
+  state.chronicle.push(makeChronicleEntry(state, `${state.ruler.name} z rodu ${state.dynastyName} ${f ? 'byla korunována královnou' : 'byl korunován králem'}. ${state.origin === 'sedlak' ? 'Rod, který kdysi oral cizí pole v Lipnici' : 'Rod, který začínal s jedinou tvrzí'}, teď vládne celé zemi.${retired.length ? ` Staří služebníci rodu (${retired.join(', ')}) odešli na odpočinek a u dvora slouží noví rádci.` : ''}`));
   return state;
+}
+
+/** Goods on their way to a master the player no longer serves go back to the warehouse. */
+function bringCaravansHome(state, dest) {
+  const t = state.trade;
+  if (!t || !t.caravans) return;
+  for (const c of t.caravans.filter((x) => x.dest === dest)) {
+    t.stock[c.good] = Math.min(20, (t.stock[c.good] || 0) + c.qty); // the warehouse holds 20 loads (trade.js MAX_STOCK)
+  }
+  t.caravans = t.caravans.filter((x) => x.dest !== dest);
+}
+
+/** Obligations to a lord or a king the player has outgrown. */
+function dropStageContracts(state, dest) {
+  if (state.trade && state.trade.contracts) state.trade.contracts = state.trade.contracts.filter((c) => c.dest !== dest);
+}
+
+// ---------- promotions inside one chronicle ----------
+
+// the chapter card (events_career.js) that opens each new stage of life
+const CHAPTER_EVENT = { ennobled: 'kapitola_erb', crowned: 'kapitola_koruna' };
+
+/**
+ * The house rises one stage in the same save: a peasant with a coat of arms becomes a noble,
+ * a noble who took the throne becomes the king. Returns the stage reached, or null.
+ */
+export function promote(state, type) {
+  if (type === 'ennobled' && state.scenario === 'sedlak') ennoblePeasant(state);
+  else if (type === 'crowned' && state.scenario === 'slechtic') crownNoble(state);
+  else return null;
+  state.milestones = state.milestones || {};
+  state.milestones[type] = state.turn;
+  // echoes of the old life that no longer fit the new one are dropped when due (engine takeDueEcho)
+  dropAmbition(state); // a serf's or a vassal's goals do not fit the new life
+  bringCaravansHome(state, type === 'ennobled' ? 'manor' : 'court');
+  // the chapter card comes first; whatever was waiting (the king's death, a war's end) comes after it
+  if (state.pendingEvent) (state.eventQueue = state.eventQueue || []).unshift(state.pendingEvent);
+  state.pendingEvent = CHAPTER_EVENT[type];
+  return type;
 }
 
 export function makeChronicleEntry(state, text) {

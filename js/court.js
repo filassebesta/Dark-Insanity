@@ -175,6 +175,7 @@ const PEASANT_BIOS = {
 
 /** Background story of a court member; stable for the same person (seeded by name and role). */
 export function biography(c, role, dynastyName, scenario) {
+  if (c.bio) return c.bio.replace('{dynasty}', dynastyName); // written down when the house rose: a life story does not change with a title
   const pool = (scenario === 'sedlak' && PEASANT_BIOS[role]) || BIOS[role];
   if (!pool) return '';
   const h = hash(`${c.name}|${role}`);

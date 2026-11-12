@@ -17,7 +17,7 @@ for (let r = 0; r < runs; r++) {
     const e = res.event;
     if (!e) { errors++; console.log('no event'); break; }
     if (e.id === 'n_smrt_krale') kingDeaths++;
-    if (st.noble.plot >= 3) plot3++;
+    if (st.noble && st.noble.plot >= 3) plot3++;
     seen[e.id] = (seen[e.id] || 0) + 1;
     check(st, e.text, e.id);
     try {
@@ -28,6 +28,8 @@ for (let r = 0; r < runs; r++) {
       if (ambitious && Math.random() < AMB) pick = ambitious[1];
       const out = E.resolveChoice(st, e, pick);
       check(st, out.text || '', e.id + '/out');
+      // the crown is now a promotion inside the same chronicle: this sim stops there
+      if (st.scenario === 'panovnik') { ends.crowned = (ends.crowned || 0) + 1; break; }
       const g = E.checkEndConditions(st);
       if (g) { ends[g.type] = (ends[g.type] || 0) + 1; break; }
     } catch (err) { errors++; console.log(e.id, err.stack.split('\n').slice(0, 3).join(' | ')); break; }

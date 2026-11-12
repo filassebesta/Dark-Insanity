@@ -25,7 +25,7 @@ export const NOBLE_EVENTS = [
     cooldown: 9,
     minTurn: 2,
     title: 'Povolávací list',
-    text: 'Královský posel přinesl list s pečetí krále {king.name}. Koruna táhne do pole a každý šlechtic má dodat muže podle velikosti svého panství.',
+    text: 'Královský posel přinesl list s pečetí {K:krále|královny} {king.name}. Koruna táhne do pole a každý šlechtic má dodat muže podle velikosti svého panství.',
     choices: [
       {
         label: 'Poslat muže do královského vojska',
@@ -86,7 +86,7 @@ export const NOBLE_EVENTS = [
     scenario: S,
     cooldown: 8,
     title: 'Pozvání ke dvoru',
-    text: 'Král {king.name} svolává šlechtu na svatodušní dvůr do Vlčího Údělu. Kdo nepřijede, jako by nebyl. Kdo přijede, musí se ukázat.',
+    text: '{king.Title} {king.name} svolává šlechtu na svatodušní dvůr do Vlčího Údělu. Kdo nepřijede, jako by nebyl. Kdo přijede, musí se ukázat.',
     choices: [
       {
         label: 'Přijet v plné nádheře',
@@ -117,8 +117,8 @@ export const NOBLE_EVENTS = [
     scenario: S,
     cooldown: 16,
     minTurn: 4,
-    title: 'Král na návštěvě',
-    text: 'Král {king.name} se na cestě k moři zastaví na tvém panství. S ním přijede sto jezdců, dvůr, psi a sokoli — a všichni budou chtít jíst.',
+    title: '{K:Král|Královna} na návštěvě',
+    text: '{king.Title} {king.name} se na cestě k moři zastaví na tvém panství. S ním přijede sto jezdců, dvůr, psi a sokoli — a všichni budou chtít jíst.',
     choices: [
       {
         label: 'Uspořádat hostinu, na jakou se nezapomíná',
@@ -178,7 +178,7 @@ export const NOBLE_EVENTS = [
     cooldown: 10,
     target: hostileHouse,
     title: 'Obvinění u dvora',
-    text: 'Rod {house.name} obvinil tvůj rod před králem ze zpronevěry královské berně. Král si tě předvolává, aby ses {R:hájil|hájila}.',
+    text: 'Rod {house.gen} obvinil tvůj rod před králem ze zpronevěry královské berně. Král si tě předvolává, aby ses {R:hájil|hájila}.',
     choices: [
       {
         label: 'Obhájit se před králem',
@@ -211,7 +211,7 @@ export const NOBLE_EVENTS = [
     cooldown: 30,
     requires: (s) => s.resources.favor >= 60,
     title: 'Úřad u dvora',
-    text: 'Král {king.name} ti nabízí úřad nejvyššího komorníka. Přístup ke králi, ke královské pokladně — a nenávist všech, kdo o úřad stáli.',
+    text: '{king.Title} {king.name} ti nabízí úřad nejvyššího komorníka. Přístup ke králi, ke královské pokladně — a nenávist všech, kdo o úřad stáli.',
     choices: [
       {
         label: 'Přijmout úřad',
@@ -238,7 +238,7 @@ export const NOBLE_EVENTS = [
     weight: 4,
     requires: (s) => s.ruler.statusTier === 3 && s.resources.favor >= 62 && s.resources.prestige >= 40,
     title: 'Královská milost',
-    text: 'Král {king.name} si předvolal {ruler.title} k trůnu. Za věrné služby chce rod {dynastyName} povýšit mezi velmože země.',
+    text: '{king.Title} {king.name} si předvolal{K:|a} {ruler.title} k trůnu. Za věrné služby chce rod {dynastyName} povýšit mezi velmože země.',
     choices: [
       {
         label: 'Přijmout s pokorou',
@@ -289,8 +289,8 @@ export const NOBLE_EVENTS = [
     scenario: S,
     cooldown: 20,
     requires: (s) => s.king.alive && s.king.age >= 60,
-    title: 'Král stůně',
-    text: 'Král {king.name} ulehl. Je mu {king.age} let a lékaři se tváří vážně. U dvora se začíná mluvit o tom, co bude dál — a kdo by mohl nosit korunu.',
+    title: '{K:Král stůně|Královna stůně}',
+    text: '{king.Title} {king.name} ulehl{K:|a}. Je mu {king.age} let a lékaři se tváří vážně. U dvora se začíná mluvit o tom, co bude dál — a kdo by mohl nosit korunu.',
     choices: [
       {
         label: 'Navštívit krále a ujistit ho o věrnosti',
@@ -322,7 +322,7 @@ export const NOBLE_EVENTS = [
     scenario: S,
     cooldown: 16,
     requires: (s) => s.ruler.statusTier >= 4 && s.resources.favor >= 55 && s.heir.alive && s.heir.age >= 10
-      && s.king.alive && s.king.heir && s.king.heir.alive && !s.flags.royal_match,
+      && s.king.alive && s.king.heir && s.king.heir.alive && !s.flags.royal_match && !s.flags.heir_married,
     title: 'Sňatek s korunou',
     text: 'Královo dítě, {king.heirTitle} {king.heirName}, dospívá. Kdyby se tvůj dědic {heir.name} stal jeho chotí, krev rodu {dynastyName} by jednou seděla na trůně.',
     choices: [
@@ -330,7 +330,7 @@ export const NOBLE_EVENTS = [
         label: 'Navrhnout sňatek králi',
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.25, traitKey: 'eloquence', traitScale: 0.04, resourceKey: 'favor', resourceScale: 0.6,
-        onSuccess: { effects: { legitimacy: 25, prestige: 8, favor: 4 }, hiddenEffects: { setFlag: 'royal_match' }, houseEffects: { '*': { attitude: -6 } }, chronicle: 'Král svolil. Dědic rodu {dynastyName} byl zasnouben s královým dítětem. Ostatní rody zbledly.' },
+        onSuccess: { effects: { legitimacy: 25, prestige: 8, favor: 4 }, hiddenEffects: { setFlag: ['royal_match', 'heir_married'] }, houseEffects: { '*': { attitude: -6 } }, chronicle: 'Král svolil. Dědic rodu {dynastyName} byl zasnouben s královým dítětem. Ostatní rody zbledly.' },
         onFailure: { effects: { favor: -6, prestige: -3 }, chronicle: 'Král nabídku odmítl s úsměvem, který bolel víc než slova.' },
       },
       {
@@ -338,7 +338,7 @@ export const NOBLE_EVENTS = [
         requires: (s) => s.resources.gold >= 30,
         hintType: 'resource', hintKey: 'gold',
         isRoll: true, baseChance: 0.45, resourceKey: 'favor', resourceScale: 0.6,
-        onSuccess: { effects: { gold: -30, legitimacy: 25, prestige: 8 }, hiddenEffects: { setFlag: 'royal_match' }, houseEffects: { '*': { attitude: -6 } }, chronicle: 'Věno přesvědčilo prázdnou královskou pokladnu. Zásnuby byly zpečetěny.' },
+        onSuccess: { effects: { gold: -30, legitimacy: 25, prestige: 8 }, hiddenEffects: { setFlag: ['royal_match', 'heir_married'] }, houseEffects: { '*': { attitude: -6 } }, chronicle: 'Věno přesvědčilo prázdnou královskou pokladnu. Zásnuby byly zpečetěny.' },
         onFailure: { effects: { gold: -10, favor: -4 }, chronicle: 'Král věno nepřijal. Zálohu na dary už ale rod zpátky nedostal.' },
       },
       {
@@ -355,8 +355,8 @@ export const NOBLE_EVENTS = [
     scenario: S,
     forced: true,
     music: 'battle',
-    title: 'Král je mrtev',
-    text: 'Zvony Vlčího Údělu oznamují, že král {king.name} zemřel. Šlechta se sjíždí ke dvoru, koruna leží na polštáři v chrámu a všichni se dívají, kdo se k ní natáhne první.',
+    title: '{K:Král je mrtev|Královna je mrtvá}',
+    text: 'Zvony Vlčího Údělu oznamují, že {king.title} {king.name} zemřel{K:|a}. Šlechta se sjíždí ke dvoru, koruna leží na polštáři v chrámu a všichni se dívají, kdo se k ní natáhne první.',
     choices: [
       {
         label: 'Vznést nárok na trůn',
@@ -402,7 +402,7 @@ export const NOBLE_EVENTS = [
     cooldown: 6,
     requires: (s) => s.noble.plot >= 3 && s.king.alive,
     title: 'Noc dlouhých nožů',
-    text: 'Spiknutí je připravené. Stráže na hradbách jsou podplacené, spojenci čekají na znamení a král {king.name} spí. Stačí jediný rozkaz.',
+    text: 'Spiknutí je připravené. Stráže na hradbách jsou podplacené, spojenci čekají na znamení a {king.title} {king.name} spí. Stačí jediný rozkaz.',
     choices: [
       {
         label: 'Udeřit dnes v noci',
@@ -436,7 +436,7 @@ export const NOBLE_EVENTS = [
     cooldown: 10,
     target: anyHouse,
     title: 'Spor o mezníky',
-    text: 'Lidé, kterým velí {house.headTitle} {house.head} z rodu {house.name}, v noci posunuli hraniční kameny a zabrali tvým vsím louky u řeky.',
+    text: 'Lidé, kterým velí {house.headTitle} {house.head} z rodu {house.gen}, v noci posunuli hraniční kameny a zabrali tvým vsím louky u řeky.',
     choices: [
       {
         label: 'Vytlačit je ozbrojenci',
@@ -468,7 +468,7 @@ export const NOBLE_EVENTS = [
     cooldown: 10,
     target: friendlyHouse,
     title: 'Nabídka spojenectví',
-    text: '{house.HeadTitle} {house.head} z rodu {house.name} {H:přijel|přijela} s malým doprovodem a nabízí spojenectví. Spolu by vaše rody měly u dvora váhu, jakou žádný nemá sám.',
+    text: '{house.HeadTitle} {house.head} z rodu {house.gen} {H:přijel|přijela} s malým doprovodem a nabízí spojenectví. Spolu by vaše rody měly u dvora váhu, jakou žádný nemá sám.',
     choices: [
       {
         label: 'Uzavřít spojenectví',
@@ -493,10 +493,10 @@ export const NOBLE_EVENTS = [
     cooldown: 14,
     target: (s) => {
       const h = s.houses.filter((x) => !x.married && x.attitude >= 45).sort((a, b) => b.attitude - a.attitude)[0];
-      return h && s.heir.alive && s.heir.age >= 12 && !s.flags.royal_match ? h.id : null;
+      return h && s.heir.alive && s.heir.age >= 12 && !s.flags.royal_match && !s.flags.heir_married ? h.id : null;
     },
     title: 'Sňatek mezi rody',
-    text: 'Rod {house.name} nabízí sňatek: tvůj dědic {heir.name} a jejich nejmladší potomek. Věno by bylo štědré a pouto mezi rody pevné.',
+    text: 'Rod {house.gen} nabízí sňatek: tvůj dědic {heir.name} a jejich nejmladší potomek. Věno by bylo štědré a pouto mezi rody pevné.',
     choices: [
       {
         label: 'Přijmout sňatek',
@@ -523,7 +523,7 @@ export const NOBLE_EVENTS = [
     cooldown: 10,
     target: hostileHouse,
     title: 'Ozbrojenci na tvé půdě',
-    text: 'Ozbrojenci rodu {house.name} vpadli do tvých vsí, vypálili stodolu a odehnali dobytek. Tvrdí, že jen vymáhají starý dluh.',
+    text: 'Ozbrojenci rodu {house.gen} vpadli do tvých vsí, vypálili stodolu a odehnali dobytek. Tvrdí, že jen vymáhají starý dluh.',
     choices: [
       {
         label: 'Vyjet proti nim s družinou',
@@ -555,7 +555,7 @@ export const NOBLE_EVENTS = [
     cooldown: 12,
     target: anyHouse,
     title: 'Žádost o půjčku',
-    text: '{house.HeadTitle} {house.head} z rodu {house.name} se {H:ocitl|ocitla} v nesnázích a žádá o půjčku. Prý to vrátí do žní. Prý.',
+    text: '{house.HeadTitle} {house.head} z rodu {house.gen} se {H:ocitl|ocitla} v nesnázích a žádá o půjčku. Prý to vrátí do žní. Prý.',
     choices: [
       {
         label: 'Půjčit bez úroku',
@@ -589,7 +589,7 @@ export const NOBLE_EVENTS = [
     cooldown: 10,
     target: anyHouse,
     title: 'Hostina u sousedů',
-    text: 'Rod {house.name} zve na velkou hostinu na své sídlo. Bude tam půl šlechty země — a víno, které rozvazuje jazyky.',
+    text: 'Rod {house.gen} zve na velkou hostinu na své sídlo. Bude tam půl šlechty země — a víno, které rozvazuje jazyky.',
     choices: [
       {
         label: 'Jet a získat přízeň hostitelů',
@@ -621,7 +621,7 @@ export const NOBLE_EVENTS = [
     cooldown: 10,
     target: hostileHouse,
     title: 'Pomluvy',
-    text: 'Po dvoře se šíří pomluvy, že tvůj rod pochází z koňských handlířů a že dědic {heir.name} není vlastní krve. Stopa vede k rodu {house.name}.',
+    text: 'Po dvoře se šíří pomluvy, že tvůj rod pochází z koňských handlířů a že dědic {heir.name} není vlastní krve. Stopa vede k rodu {house.gen}.',
     choices: [
       {
         label: 'Odpovědět stejnou mincí',
@@ -657,7 +657,7 @@ export const NOBLE_EVENTS = [
     cooldown: 10,
     target: anyHouse,
     title: 'Dopis, který neměl být nalezen',
-    text: '{chancellor.Title} {chancellor.name} přinesl zachycený dopis rodu {house.name}. Je v něm dost na to, aby někdo přišel o hlavu.',
+    text: '{chancellor.Title} {chancellor.name} přinesl zachycený dopis rodu {house.gen}. Je v něm dost na to, aby někdo přišel o hlavu.',
     choices: [
       {
         label: 'Dopis si nechat pro pozdější chvíli',
@@ -671,7 +671,7 @@ export const NOBLE_EVENTS = [
         hintType: 'resource', hintKey: 'favor',
         effects: { favor: 10 },
         houseEffects: { target: { attitude: -15, power: -10 } },
-        chronicle: 'Král si dopis přečetl dvakrát. Rod {house.name} upadl v nemilost a rod {dynastyName} v milost.',
+        chronicle: 'Král si dopis přečetl dvakrát. Rod {house.gen} upadl v nemilost a rod {dynastyName} v milost.',
       },
       {
         label: 'Vrátit dopis tiše pisateli',
@@ -698,7 +698,7 @@ export const NOBLE_EVENTS = [
         effects: { gold: 22 },
         noble: { secrets: -1 },
         houseEffects: { target: { attitude: -15 } },
-        chronicle: 'Rod {house.name} zaplatil za mlčení. Nenávist mají zdarma.',
+        chronicle: 'Rod {house.gen} zaplatil za mlčení. Nenávist mají zdarma.',
       },
       {
         label: 'Přinutit je podpořit tvůj nárok',
@@ -706,7 +706,7 @@ export const NOBLE_EVENTS = [
         effects: { legitimacy: 8 },
         noble: { secrets: -1 },
         houseEffects: { target: { attitude: -5, ally: true } },
-        chronicle: 'Rod {house.name} se veřejně postavil za rod {dynastyName}. Neochotně, ale veřejně.',
+        chronicle: 'Rod {house.gen} se veřejně postavil za rod {dynastyName}. Neochotně, ale veřejně.',
       },
       {
         label: 'Listinu spálit — takové zbraně se nepoužívají',
@@ -724,7 +724,7 @@ export const NOBLE_EVENTS = [
     cooldown: 10,
     requires: (s) => s.noble.plot < 3 && s.king.alive,
     title: 'Pozvání do tmy',
-    text: 'Maskovaný posel předal pozvání na schůzku v opuštěné kapli. Nespokojení šlechtici hledají někoho, kdo by se postavil proti králi {king.name}.',
+    text: 'Maskovaný posel předal pozvání na schůzku v opuštěné kapli. Nespokojení šlechtici hledají někoho, kdo by se postavil proti {K:králi|královně} {king.name}.',
     choices: [
       {
         label: 'Přidat se ke spiklencům',

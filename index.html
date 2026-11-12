@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Libre+Caslon+Display&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=2026-11-12">
+<link rel="stylesheet" href="css/style.css?v=2026-11-12b">
 </head>
 <body>
 <div id="app">
@@ -36,61 +36,27 @@
   <section id="screen-new-game" class="screen backdrop-screen">
     <div class="dialog-panel paper-panel">
       <span class="panel-overline">Nová kronika</span>
-      <h2 class="panel-title">Založení dynastie</h2>
+      <h2 class="panel-title">Založení rodu</h2>
+      <p class="new-game-intro">Každý rod někde začíná. Ten tvůj začíná na cizím gruntu ve vsi Lipnice — s pluhem, dluhy a pánem, který bere dávky. Kam až ho dovedeš, je na tobě.</p>
       <label class="field">
-        <span>Jméno vládce</span>
+        <span>Jméno hospodáře</span>
         <input id="input-ruler-name" type="text" maxlength="24" placeholder="např. Bořivoj">
       </label>
       <div class="field">
-        <span>Vládne</span>
+        <span>Postava</span>
         <div class="gender-toggle" role="radiogroup">
-          <label><input type="radio" name="ruler-gender" value="male" checked><span>Král</span></label>
-          <label><input type="radio" name="ruler-gender" value="female"><span>Královna</span></label>
+          <label><input type="radio" name="ruler-gender" value="male" checked><span>Muž</span></label>
+          <label><input type="radio" name="ruler-gender" value="female"><span>Žena</span></label>
         </div>
       </div>
       <label class="field">
-        <span>Jméno dynastie</span>
-        <input id="input-dynasty-name" type="text" maxlength="24" placeholder="např. z Vlčí Hory">
+        <span>Jméno rodu</span>
+        <input id="input-dynasty-name" type="text" maxlength="24" placeholder="např. Dvořákovi">
       </label>
       <div class="dialog-actions">
         <button class="seal-button ghost" data-action="back-to-menu">Zpět</button>
-        <button class="seal-button primary" data-action="goto-scenario-select">Pokračovat</button>
+        <button class="seal-button primary" data-action="start-new-game">Začít kroniku</button>
       </div>
-    </div>
-  </section>
-
-  <!-- SCENARIO SELECT -->
-  <section id="screen-scenario" class="screen backdrop-screen">
-    <div class="scenario-screen">
-      <span class="panel-overline light">Kapitola první</span>
-      <h2 class="panel-title light">Vyber svůj osud</h2>
-      <div class="scenario-cards">
-        <button class="scenario-card" data-scenario="panovnik">
-          <span class="scenario-art"></span>
-          <span class="scenario-body">
-            <strong>Panovník</strong>
-            <span class="scenario-diff">Snadné</span>
-            <span class="scenario-desc">Vládneš už hotovému království. Výzvou je udržet ho a rozšířit.</span>
-          </span>
-        </button>
-        <button class="scenario-card" data-scenario="slechtic">
-          <span class="scenario-art"></span>
-          <span class="scenario-body">
-            <strong>Šlechtic</strong>
-            <span class="scenario-diff">Střední</span>
-            <span class="scenario-desc">Začínáš s jedinou tvrzí na pobřeží. Získej přízeň krále, přechytrač soupeřící rody a natáhni se po koruně.</span>
-          </span>
-        </button>
-        <button class="scenario-card" data-scenario="sedlak">
-          <span class="scenario-art"></span>
-          <span class="scenario-body">
-            <strong>Sedlák</strong>
-            <span class="scenario-diff">Těžké</span>
-            <span class="scenario-desc">Jsi poddaný na cizím gruntu. Vykup se ze služby, proslav se a vybojuj si erb. Pak můžeš pokračovat jako šlechtic.</span>
-          </span>
-        </button>
-      </div>
-      <button class="seal-button ghost light" data-action="back-to-new-game">Zpět</button>
     </div>
   </section>
 
@@ -120,7 +86,7 @@
         <input id="input-music-volume" type="range" min="0" max="100" step="5" value="60">
       </label>
       <p class="hint">Ovládání: <kbd>1</kbd>–<kbd>4</kbd> volba, <kbd>Enter</kbd> pokračovat / dočíst text, <kbd>M</kbd> mapa, <kbd>P</kbd> postava, <kbd>O</kbd> obchod, <kbd>V</kbd> válka, <kbd>Esc</kbd> zavřít panel.</p>
-      <p class="hint game-version">Verze hry: 12. 11. 2026 — stavění, válka, kostky a souboje, rozhovory, výzbroj.</p>
+      <p class="hint game-version">Verze hry: 12. 11. 2026 — jedna kronika od pluhu ke koruně, povstání proti králi, další království a mapa světa.</p>
       <div class="options-extra">
         <button class="seal-button ghost" data-action="goto-hall">Síň slávy</button>
       </div>
@@ -266,6 +232,6 @@
 
 <div id="toast-container" class="toast-container"></div>
 
-<script type="module" src="js/main.js?v=2026-11-12"></script>
+<script type="module" src="js/main.js?v=2026-11-12b"></script>
 </body>
 </html>

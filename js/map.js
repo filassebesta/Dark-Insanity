@@ -13,6 +13,7 @@ import {
   PEASANT_VILLAGE, townIdFor, townOf, levelName, currentProject, ownsTown, startBuilding, startUpgrade, cancelProject, demolish,
 } from './build.js';
 import { renderTownPlan, townSidebar } from './town.js';
+import { worldSvg, worldSidebar, WORLD_IMAGE } from './world.js';
 import {
   warTargets, warBlock, startWar, recallWar, warTarget, marchShare, warOrigin, oddsLabel, leaderLabel, SIZES,
 } from './war.js';
@@ -167,6 +168,8 @@ let tradeForm = { dest: null, good: null, qty: 1, escort: false };
 let drag = null;
 let suppressClick = false;
 let town = null; // { id, slot } while a settlement is open instead of the map
+let world = false; // the world map (world.js) instead of the kingdom
+let realmSel = null;
 
 export function isMapOpen() {
   return host && host.classList.contains('open');
@@ -179,6 +182,8 @@ export function openMap(gameState, opts = {}) {
   if (opts.layer) layers[opts.layer] = true;
   if (opts.layer === 'war') layers.trade = false;
   if (opts.layer === 'trade') layers.war = false;
+  world = !!opts.world;
+  realmSel = null;
   render();
   host.classList.add('open');
   host.setAttribute('aria-hidden', 'false');
@@ -215,8 +220,11 @@ export function closeMap() {
 // ---------- rendering ----------
 
 function render() {
-  host.querySelector('.map-layer-toggles').innerHTML = LAYERS.filter((l) => l.key !== 'war' || state.scenario !== 'sedlak').map((l) =>
-    `<button class="map-toggle${layers[l.key] ? ' on' : ''}" data-layer="${l.key}">${l.label}</button>`).join('');
+  host.querySelector('.map-layer-toggles').innerHTML = (world ? '' : LAYERS.filter((l) => l.key !== 'war' || state.scenario !== 'sedlak').map((l) =>
+    `<button class="map-toggle${layers[l.key] ? ' on' : ''}" data-layer="${l.key}">${l.label}</button>`).join(''))
+    + `<button class="map-toggle world-toggle${world ? ' on' : ''}" data-world-toggle>${world ? 'Království' : 'Svět'}</button>`;
+  host.querySelector('.map-title').textContent = world ? 'Mapa světa' : 'Mapa království';
+  if (world) return renderWorld();
 
   const canvas = host.querySelector('.map-canvas');
   canvas.innerHTML = `
@@ -256,6 +264,60 @@ function render() {
   svg = canvas.querySelector('svg');
   wireInteractions(canvas);
   if (town) drawTown();
+}
+
+// ---------- the world (world.js) ----------
+
+function renderWorld() {
+  const canvas = host.querySelector('.map-canvas');
+  canvas.innerHTML = `${worldSvg(state, realmSel)}<div class="map-hint">Klikni na zemi · Vlčí Úděl otevře mapu království</div>`;
+  svg = canvas.querySelector('svg');
+  const art = new Image(); // with the painting in place the drawn lands become a light tint over it
+  art.onload = () => svg.classList.add('has-art');
+  art.src = WORLD_IMAGE;
+  svg.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-realm]');
+    selectRealm(el ? el.dataset.realm : null);
+  });
+}
+
+function selectRealm(key) {
+  realmSel = key;
+  svg.querySelectorAll('.w-realm').forEach((g) => g.classList.toggle('selected', g.dataset.realm === key));
+  sidebar(worldSidebar(state, key));
+}
+
+function setWorld(on) {
+  world = on;
+  realmSel = null;
+  town = null;
+  host.classList.remove('town-open');
+  render();
+  if (!world) { view = { x: 0, y: 0, w: W, h: H }; applyView(); }
+  showOverview();
+}
+
+/** Handles the world map's sidebar and header buttons. Returns true when it did. */
+function handleWorld(t) {
+  if (t.closest('[data-world-toggle]')) { setWorld(!world); return true; }
+  if (!world) return false;
+  if (t.closest('[data-world-home]')) { setWorld(false); return true; }
+  if (t.closest('[data-world-overview]')) { selectRealm(null); return true; }
+  const war = t.closest('[data-world-war]');
+  if (war) {
+    warForm.target = war.dataset.worldWar;
+    world = false;
+    layers.war = true;
+    layers.trade = false;
+    render();
+    view = { x: 0, y: 0, w: W, h: H };
+    applyView();
+    showOverview();
+    return true;
+  }
+  const chip = t.closest('.map-sidebar [data-realm]');
+  if (chip) { selectRealm(chip.dataset.realm); return true; }
+  return false;
 }
 
 function provinceFill(id, p) {
@@ -616,6 +678,7 @@ function verdict(prov) {
 }
 
 function showOverview() {
+  if (world) return sidebar(worldSidebar(state, realmSel));
   if (layers.war && state.scenario !== 'sedlak') return showWarOverview();
   if (layers.trade) return showTradeOverview();
   if (state.scenario === 'slechtic') return showNobleOverview();
@@ -656,7 +719,7 @@ function showNobleOverview() {
   sidebar(`
     <span class="panel-overline">Země koruny</span>
     <h3 class="panel-title">Kdo drží zemi</h3>
-    <p class="map-desc">Tvému rodu patří jediné panství. Zbytek země drží král a tři soupeřící rody. Klikni na provincii a uvidíš, kdo v ní vládne.</p>
+    <p class="map-desc">${(() => { const n = state.provinces.filter((p) => p.owner === 'player').length; return n > 1 ? `Tvému rodu patří ${n} kraje.` : 'Tvému rodu patří jediné panství.'; })()} Zbytek země drží král a soupeřící rody. Klikni na provincii a uvidíš, kdo v ní vládne.</p>
     <h4 class="map-sub">Panství</h4>
     <div class="map-chip-list">
       ${state.provinces.map((p) => {
@@ -1289,6 +1352,7 @@ export function wireMapChrome() {
   mapView.addEventListener('click', (e) => {
     const t = e.target;
     if (town && handleTownClick(t)) return;
+    if (handleWorld(t)) return;
     if (!t.closest('.map-svg') && handleWar(t)) return;
     const layerBtn = t.closest('[data-layer]');
     if (layerBtn) {

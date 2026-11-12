@@ -792,7 +792,7 @@ export const PEASANT_EVENTS = [
     requires: (s) => !s.flags.s_v_poli,
     image: img('n_povolavaci_list'),
     title: 'Odvod',
-    text: 'Král {king.name} táhne do války a {lord.title} {lord.name} musí dodat muže. Z každého gruntu jednoho. Kdo půjde, může se vrátit s kořistí, se slávou, nebo vůbec.',
+    text: '{king.Title} {king.name} táhne do války a {lord.title} {lord.name} musí dodat muže. Z každého gruntu jednoho. Kdo půjde, může se vrátit s kořistí, se slávou, nebo vůbec.',
     choices: [
       {
         label: 'Jít osobně',

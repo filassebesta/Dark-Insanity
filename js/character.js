@@ -11,7 +11,7 @@ import { talkSection } from './talk_ui.js';
 import { ensureGear, shopFor, ITEMS, SLOTS } from './gear.js';
 import { fighterOf } from './combat.js';
 
-const TIER_SLUGS = [null, 'peasant', 'freeman', 'minor_noble', 'noble', 'king'];
+const TIER_SLUGS = [null, 'peasant', 'freeman', 'minor_noble', 'noble', 'king', 'emperor'];
 const OLD_AGE = 55;
 
 const TRAIT_TEXT = {
@@ -32,7 +32,9 @@ export function rulerPortraitCandidates(ruler) {
   const g = ruler.gender === 'female' ? 'female' : 'male';
   const base = `assets/portraits/ruler_${slug}_${g}`;
   const young = [`${base}.jpg`, `${base}.png`];
-  return ruler.age >= OLD_AGE ? [`${base}_old.jpg`, `${base}_old.png`, ...young] : young;
+  // an emperor without a portrait of his own wears the king's
+  const king = slug === 'emperor' ? rulerPortraitCandidates({ ...ruler, statusTier: 5 }) : [];
+  return [...(ruler.age >= OLD_AGE ? [`${base}_old.jpg`, `${base}_old.png`, ...young] : young), ...king];
 }
 
 /** <img> that walks through candidate URLs and finally hides itself, revealing the initial underneath. */

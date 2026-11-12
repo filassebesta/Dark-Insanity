@@ -68,7 +68,7 @@ export const MARKETS = {
 };
 
 const CONTRACT_GIVER = {
-  court: 'Král {king.name} žádá',
+  court: '{king.Title} {king.name} žádá',
   manor: '{lord.Title} {lord.name} žádá',
   east: 'Markrabě z Východních marek poptává',
   south: 'Kupci z Jižní říše poptávají',
@@ -360,7 +360,7 @@ function driftPrices(state) {
 
 function contractMarkets(state) {
   if (state.scenario === 'sedlak') return state.ruler.statusTier >= 2 ? ['manor', 'manor', 'east', 'south'] : ['manor'];
-  if (state.scenario === 'slechtic') return ['court', 'court', 'east', 'south', 'north'];
+  if (state.scenario === 'slechtic') return state.flags.rebellion ? ['east', 'south', 'north'] : ['court', 'court', 'east', 'south', 'north'];
   return ['east', 'south', 'north'];
 }
 

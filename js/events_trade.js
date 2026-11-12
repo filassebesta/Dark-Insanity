@@ -10,7 +10,8 @@ import { pickOffer } from './trade.js';
 
 const ALL = ['panovnik', 'slechtic', 'sedlak'];
 const img = (id) => `assets/events/${id}.jpg`;
-const hasSent = (s) => s.trade && s.trade.sent >= 1;
+// someone who has sent goods abroad (a serf may only deliver to the lord's manor)
+const hasSent = (s) => s.trade && s.trade.sent >= 1 && (s.scenario !== 'sedlak' || s.ruler.statusTier >= 2);
 const canRansom = (s) => s.tradeCtx && s.resources.gold >= s.tradeCtx.ransom;
 const escortBonus = (s) => (s.tradeCtx && s.tradeCtx.escort ? 0.2 : 0);
 
