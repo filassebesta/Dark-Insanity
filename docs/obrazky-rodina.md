@@ -7,13 +7,13 @@ Portréty nápadnic a nápadníků (po svatbě se stanou tváří manžela/ky), 
 | Stav | Dávka | Co | Kusů | Kde se zobrazí |
 |---|---|---|---|---|
 | ✅ | R1 | Nápadnice a nápadníci ve vsi + malé děti | 12 | list postavy → Rodina, námluvy, manžel/ka |
-| ✅ 9/12 | R2 | Prolog a rodina | 12 | první karty hry, narození, dohazovač, schovanec, podzimní práce |
+| ✅ | R2 | Prolog a rodina | 12 | první karty hry, narození, dohazovač, schovanec, podzimní práce |
 | ⏳ | R3 | Boj o trůn, kapitoly a zlatý věk | 9 | velké zlomy kariéry |
 | ⏳ | R4 | Svobodník | 10 | události svobodného sedláka |
 | ⏳ | R5 | Významný šlechtic | 12 | události velmože |
 | ⏳ | R6 | Nápadnice a nápadníci šlechtice a krále | 16 | námluvy ve vyšších stupních |
 
-**Dávka R2 (dodáno 9 z 12):** v zipu byly názvy souborů poprohazované a tři obrázky se opakovaly. Roztříděno podle obsahu, tři scény chybí → dávka **R2b** níže.
+**Dávka R2 je kompletní:** devět scén z první dodávky (názvy byly poprohazované, roztříděno podle obsahu) a tři z doobjednávky R2b.
 
 **Celkem 71 obrázků v 6 dávkách** (seřazeno podle priority).
 
@@ -95,7 +95,7 @@ s_chalupa.jpg — A poor peasant family carrying their few belongings to a tiny 
 
 ---
 
-## Dávka R2b — tři chybějící scény z R2 (1:1, 3 ks)
+## Dávka R2b — tři chybějící scény z R2 (1:1, 3 ks) · ✅ dodáno
 
 ```
 Generate one separate image for each line below. Each line has a file name
