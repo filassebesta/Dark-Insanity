@@ -6,6 +6,8 @@ usage: python3 process_batch.py <dir1,dir2,...> <scratch_dir> <repo_root> detect
             FIX=a.jpg,b.jpg  files whose band should be corrected (before/after preview
                              goes to <scratch_dir>/bandfix_<name>.png)
             BATCH=name       originals are copied to assets/_source/gemini/<name> (default "batch")
+            ROW=a.jpg:692,b.jpg:640  band row set by hand, for a band the detector misses
+                             (one that covers only part of the width); implies FIX for that file
 Needs Pillow and numpy. File names must already be the game's names.
 """
 import sys, os, glob, shutil
@@ -38,7 +40,7 @@ def fix(a, y):
     return out
 
 def target(name):
-    if name.startswith('ruler_') or name.split('_')[0] == 's' and name.rsplit('_', 1)[-1] in ('male.jpg', 'female.jpg'):
+    if name.startswith(('ruler_', 'heir_')) or name.split('_')[0] == 's' and name.rsplit('_', 1)[-1] in ('male.jpg', 'female.jpg'):
         return 'portraits', (1024, 1280)
     if name.startswith('ending_'):
         return 'endings', (1365, 768)
@@ -59,11 +61,14 @@ for f in files:
     name = os.path.basename(f)
     a = np.asarray(Image.open(f).convert('RGB')).astype(np.float32)
     band = detect(a)
+    rows = dict(x.split(':') for x in os.environ.get('ROW', '').split(',') if ':' in x)
+    if name in rows:
+        band = (int(rows[name]), None, None)
     if MODE == 'detect':
         print(name, band)
         continue
     folder, size = target(name)
-    fixes = os.environ.get('FIX', '').split(',')
+    fixes = os.environ.get('FIX', '').split(',') + list(rows)
     if band and name in fixes:
         b = fix(a, band[0])
         Image.fromarray(np.hstack([np.asarray(Image.fromarray(a.astype(np.uint8)).resize((400, 400))), np.asarray(Image.fromarray(b.astype(np.uint8)).resize((400, 400)))])).save(f'{S}/bandfix_{name}.png')

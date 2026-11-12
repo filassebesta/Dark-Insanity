@@ -198,6 +198,8 @@ zkontrolovat okem. Ve hře spodní třetinu scény stejně kryje tmavý přechod
 # detekce, pak umístění (FIX = soubory, kde se má pruh opravit); potřebuje Pillow + numpy
 python3 tools/images/process_batch.py dir1,dir2 <scratch> <repo> detect
 FIX=s_drab.jpg python3 tools/images/process_batch.py dir1,dir2 <scratch> <repo> place
+# pruh jen přes část šířky detektor nenajde: řádek se zadá ručně (zkontrolovat náhled bandfix_*.png)
+ROW=rodina_porucnictvi.jpg:692 python3 tools/images/process_batch.py dir <scratch> <repo> place
 ```
 
 **Co chybí (vše volitelné, hra si zatím půjčuje podobné scény):** viz stav v
@@ -206,7 +208,7 @@ FIX=s_drab.jpg python3 tools/images/process_batch.py dir1,dir2 <scratch> <repo> 
 - 5 scén rádců a výchovy (14.5) a 6 scén obchodu (15)
 - 24 scén krizí a ozvěn (13)
 - případně znovu `s_krupobiti` a `s_trh` (vložený spodní pruh jen zmírněný)
-- portréty dospělých dědiců a 9 rodinných scén (sekce 16)
+- `s_smrt_souseda.jpg` (sekce 16; ostatní rodinné obrázky a portréty dospělých dědiců už jsou ve hře)
 
 ---
 

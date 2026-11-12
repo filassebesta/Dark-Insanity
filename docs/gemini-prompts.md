@@ -68,6 +68,7 @@ letters, watermark or signature.
 ✅ = hotovo a ve hře · ❌ = chybí
 
 > ✅ Sekce 14.1–14.3 hotové (portréty sedláka, rodina a ves, konce) a prvních 10 scén ze 14.4 (dávka 4).
+> ✅ Sekce 16 hotová (4 portréty dospělých dědiců, 8 rodinných scén), chybí jen `s_smrt_souseda.jpg`.
 > ❌ Volitelně chybí: zbylých 28 scén sedláka (14.4, dávky 5–7), 5 scén rádců (14.5), 6 scén obchodu (15) a 24 scén krizí a ozvěn (13).
 
 | Stav | Soubor | Poměr | Cílové rozlišení | Kde se zobrazí | Prompt |
@@ -1354,6 +1355,12 @@ a všechno funguje s půjčenými obrázky. Tyto obrázky jsou jen vylepšení.
 Formát a dávkový prompt jsou stejné jako v sekci 14.0 (soubory `heir_adult_*`
 a `s_heir_adult_*` jsou portréty 4:5).
 
+> Stav: ✅ všechno kromě `s_smrt_souseda.jpg` (první pokus vrátil portrét selky
+> místo pohřbu; prompt níže je zpřesněný). Scény `rodina_porucnictvi`,
+> `n_smrt_sluzebnika`, `n_snatek`, `s_krtiny` a `s_namluvy` měly vložený tmavý
+> pruh a byly opraveny (`ROW=` / `FIX=` v `process_batch.py`). Originály jsou
+> v `assets/_source/gemini/batch_rodina/`.
+
 **Proč dospělí dědicové:** dědic do 15 let má dětský portrét. Od 16 let si teď
 hra půjčuje dospělý portrét vládce stejného stavu, takže dcera vládkyně (nebo
 syn vládce) vypadá stejně jako rodič. Vlastní portrét dospělého dědice to vyřeší.
@@ -1375,4 +1382,4 @@ syn vládce) vypadá stejně jako rodič. Vlastní portrét dospělého dědice 
 | `s_krtiny.jpg` | Křtiny | `krest_ditete` | A peasant christening at a small village church, a godmother holding a swaddled baby at a stone font, villagers in their Sunday wool, a fiddler waiting outside. |
 | `s_namluvy.jpg` | Námluvy | `doziny` | Young villagers dancing around a linden tree at a harvest festival, a shy young couple holding hands at the edge, older women whispering and watching. |
 | `n_smrt_sluzebnika.jpg` | Uprázdněný úřad | `smrt_radce` | An old steward's empty chair and ledger by a cold hearth in a small keep, a lord standing over it while three hopeful men wait by the door. |
-| `s_smrt_souseda.jpg` | Pohřeb ve vsi | `smrt_radce` | A village funeral procession on a muddy road, a coffin on a cart, a cold blacksmith's forge in the background, villagers talking in small groups. |
+| `s_smrt_souseda.jpg` ❌ | Pohřeb ve vsi | `smrt_radce` | Wide scene, no close-up portrait: a village funeral procession seen from a distance on a muddy road between timber cottages, a plain wooden coffin on an ox cart, a priest with a cross in front, about a dozen villagers in dark wool walking behind, a cold dark blacksmith's forge with an anvil at the roadside, grey overcast sky. |
