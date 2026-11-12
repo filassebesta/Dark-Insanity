@@ -8,10 +8,11 @@ import { esc } from './ui.js';
 import { effectiveTraits, injuriesOf, injuryFx, INJURIES } from './injuries.js';
 import { ambitionSection } from './fame.js';
 import { talkSection } from './talk_ui.js';
+import { personOf } from './family.js';
 import { ensureGear, shopFor, ITEMS, SLOTS } from './gear.js';
 import { fighterOf } from './combat.js';
 
-const TIER_SLUGS = [null, 'peasant', 'freeman', 'minor_noble', 'noble', 'king'];
+const TIER_SLUGS = [null, 'peasant', 'freeman', 'minor_noble', 'noble', 'king', 'emperor'];
 const OLD_AGE = 55;
 
 const TRAIT_TEXT = {
@@ -32,7 +33,9 @@ export function rulerPortraitCandidates(ruler) {
   const g = ruler.gender === 'female' ? 'female' : 'male';
   const base = `assets/portraits/ruler_${slug}_${g}`;
   const young = [`${base}.jpg`, `${base}.png`];
-  return ruler.age >= OLD_AGE ? [`${base}_old.jpg`, `${base}_old.png`, ...young] : young;
+  // an emperor without a portrait of his own wears the king's
+  const king = slug === 'emperor' ? rulerPortraitCandidates({ ...ruler, statusTier: 5 }) : [];
+  return [...(ruler.age >= OLD_AGE ? [`${base}_old.jpg`, `${base}_old.png`, ...young] : young), ...king];
 }
 
 /** <img> that walks through candidate URLs and finally hides itself, revealing the initial underneath. */
@@ -160,22 +163,25 @@ export function renderCharacterSheet(state) {
     return `<li class="${val > 0 ? 'pos' : val < 0 ? 'neg' : ''}">${t.icon}<b>${t.label}</b><span>${val === 0 ? 'průměrná, bez zvláštního vlivu' : text}</span></li>`;
   }).join('');
 
-  const family = ['spouse', 'heir'].map((role) => {
-    const c = state[role];
-    if (!c) return '';
-    const alive = c.alive !== false;
-    const initial = esc(c.name ? c.name[0] : '?');
-    return `
-      <div class="cs-member${alive ? '' : ' deceased'}" data-person="${role}" role="button" tabindex="0" title="Zobrazit detail">
-        <span class="cs-mini">${initial}</span>
-        ${portraitImg(memberPortraitCandidates(c, role, state.scenario), c.name, 'cs-mini-img')}
-        <div>
-          <span>${ROLE_LABEL[role](c.gender)}</span>
-          <strong>${esc(c.name)}${alive ? '' : ' †'}</strong>
-          <small>${c.age} let · věrnost ${c.loyalty}</small>
-        </div>
+  // the family: spouse and heir, younger children, a child on the way — or the people to court
+  const card = (c, role, label, sub, extra = '') => `
+      <div class="cs-member${c.alive !== false ? '' : ' deceased'}${extra}" data-person="${role}" role="button" tabindex="0" title="Zobrazit detail">
+        <span class="cs-mini">${esc(c.name ? c.name[0] : '?')}</span>
+        ${portraitImg(memberPortraitCandidates(c, role.startsWith('child') ? 'heir' : role.startsWith('suitor') ? 'spouse' : role, state.scenario), c.name, 'cs-mini-img')}
+        <div><span>${esc(label)}</span><strong>${esc(c.name)}${c.alive !== false ? '' : ' †'}</strong><small>${esc(sub)}</small></div>
       </div>`;
-  }).join('');
+  const parts = [];
+  const sp = state.spouse;
+  if (sp && sp.alive !== false) parts.push(card(sp, 'spouse', ROLE_LABEL.spouse(sp.gender), `${sp.age} let · věrnost ${sp.loyalty}`));
+  else if (sp && !sp.none) parts.push(card(sp, 'spouse', ROLE_LABEL.spouse(sp.gender), `${sp.age} let`));
+  if (state.heir && !state.heir.none) parts.push(card(state.heir, 'heir', ROLE_LABEL.heir(state.heir.gender), `${state.heir.age} let · věrnost ${state.heir.loyalty}`));
+  (state.children || []).forEach((c, i) => { if (c.alive !== false) parts.push(card(c, `child:${i}`, c.gender === 'female' ? 'Dcera' : 'Syn', `${c.age} let`)); });
+  const family = parts.join('');
+  const expecting = state.pregnancy ? `<p class="cs-family-note">${r.gender === 'female' ? 'Čekáš dítě.' : `${esc(sp.name)} čeká dítě.`} Narodí se na ${SEASONS[(state.seasonIndex + (state.pregnancy.due - state.turn)) % 4].toLowerCase()}.</p>` : '';
+  const single = !sp || sp.alive === false
+    ? `<p class="cs-family-note">${r.gender === 'female' ? (sp && !sp.none ? 'Vdova.' : 'Svobodná.') : (sp && !sp.none ? 'Vdovec.' : 'Svobodný.')} ${(state.heir && state.heir.alive !== false) ? '' : 'Bez dědice rod vymře.'}</p>`
+    : '';
+  const suitors = (state.suitors || []).map((c, i) => card(c, `suitor:${i}`, c.kindLabel, `${c.age} let · náklonnost ${c.affection}`, ' suitor')).join('');
 
   const OUTCOME_WORD = { success: ' (úspěch)', failure: ' (nezdar)', danger: ' (nebezpečí)' };
   const ancestors = (state.pastRulers || []).slice().reverse().map((a) => {
@@ -222,7 +228,8 @@ export function renderCharacterSheet(state) {
       <h4 class="cs-section">Vliv na vládu</h4>
       <ul class="cs-influence">${influence}</ul>
       <h4 class="cs-section">Rodina</h4>
-      <div class="cs-family">${family}</div>
+      ${single}${family ? `<div class="cs-family">${family}</div>` : ''}${expecting}
+      ${suitors ? `<h4 class="cs-section cs-sub">${r.gender === 'female' ? 'Nápadníci' : 'Nápadnice'} <small>· klikni a dej se do řeči</small></h4><div class="cs-family">${suitors}</div>` : ''}
       ${ancestors ? `<h4 class="cs-section cs-gap">Síň předků</h4><ul class="cs-ancestors">${ancestors}</ul>` : ''}
     </div>
   `;
@@ -265,10 +272,13 @@ export function isCharacterOpen() {
 const OUTCOME_WORDS = { success: 'úspěch', failure: 'nezdar', danger: 'nebezpečí', safe: 'bez úhony' };
 
 export function renderPersonSheet(state, role) {
-  const c = state[role];
+  const c = personOf(state, role);
   if (!c) return;
   const alive = c.alive !== false;
-  const title = roleLabel(role, c.gender, state.scenario);
+  const kind = String(role).split(':')[0];
+  const title = kind === 'suitor' ? c.kindLabel : kind === 'child' ? (c.gender === 'female' ? 'Dcera' : 'Syn') : roleLabel(role, c.gender, state.scenario, state.flags);
+  const portraitRole = kind === 'suitor' ? 'spouse' : kind === 'child' ? 'heir' : role;
+  const heart = kind === 'suitor' ? ['náklonnost', c.affection] : ['věrnost', c.loyalty];
   const history = (c.history || []).slice().reverse();
   const him = c.gender === 'female' ? 'ji' : 'ho';
   const rows = history.map((h) => {
@@ -286,16 +296,16 @@ export function renderPersonSheet(state, role) {
   document.getElementById('person-sheet').innerHTML = `
     <div class="ps-portrait${alive ? '' : ' deceased'}">
       <span class="cs-initial">${esc(c.name ? c.name[0] : '?')}</span>
-      ${portraitImg(memberPortraitCandidates(c, role, state.scenario), c.name, 'ps-portrait-img')}
+      ${portraitImg(memberPortraitCandidates(c, portraitRole, state.scenario), c.name, 'ps-portrait-img')}
     </div>
     <div class="ps-info">
       <span class="panel-overline">${esc(title)}${alive ? '' : ' · zesnul' + (c.gender === 'female' ? 'á' : 'ý')}</span>
       <h2 class="ps-name">${esc(c.name)}</h2>
-      <div class="ps-meta">${c.age} let · <span class="ps-loyal">${loyaltyLabel(c.loyalty, c.gender)}</span></div>
-      <div class="ps-bar"><span style="width:${c.loyalty}%"></span><b>věrnost ${c.loyalty}</b></div>
-      <p class="ps-bio">${esc(biography(c, role, state.dynastyName, state.scenario))}</p>
+      <div class="ps-meta">${c.age} let${kind === 'suitor' ? '' : ` · <span class="ps-loyal">${loyaltyLabel(c.loyalty, c.gender)}</span>`}</div>
+      <div class="ps-bar"><span style="width:${heart[1]}%"></span><b>${heart[0]} ${heart[1]}</b></div>
+      <p class="ps-bio">${esc(kind === 'suitor' ? `${c.bio}${c.affection >= 55 ? ' Z očí je znát, že by žádost o ruku neodmítl' + (c.gender === 'female' ? 'a.' : '.') : ''}` : kind === 'child' ? `${c.gender === 'female' ? 'Dcera' : 'Syn'} rodu ${state.dynastyName}. Kdyby dědic zemřel, ${c.gender === 'female' ? 'nastoupí ona' : 'nastoupí on'} — nejstarší z mladších dětí.` : biography(c, role, state.dynastyName, state.scenario, state.flags))}</p>
       ${c.quirk ? `<div class="ps-quirk"><b>Povaha: ${esc(quirkLabel(c))}</b><span>${esc(quirkText(c, role))}</span></div>` : ''}
-      ${role === 'heir' && c.traits ? `<h4 class="ps-section">Vlastnosti ${c.gender === 'female' ? 'dědičky' : 'dědice'}</h4>
+      ${(role === 'heir' || kind === 'child') && c.traits ? `<h4 class="ps-section">Vlastnosti ${c.gender === 'female' ? 'dědičky' : 'dědice'}</h4>
         <p class="ps-note">S těmito vlastnostmi jednou převezme vládu. Utváří je výchova a léta dospívání.</p>
         <div class="ps-traits">${TRAIT_DEFS.map((t) => `<div>${t.icon}<span>${t.label}</span><b>${c.traits[t.key]}</b></div>`).join('')}</div>` : ''}
       ${talkSection(state, role)}

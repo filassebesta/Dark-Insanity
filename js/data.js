@@ -43,8 +43,9 @@ export const STATUS_TIERS = [
   'Drobný šlechtic',
   'Významný šlechtic',
   'Král',
+  'Císař', // a king who holds two foreign crowns as well (realms.js)
 ];
-export const STATUS_TIERS_FEMALE = [null, 'Selka', 'Svobodnice', 'Drobná šlechtična', 'Významná šlechtična', 'Královna'];
+export const STATUS_TIERS_FEMALE = [null, 'Selka', 'Svobodnice', 'Drobná šlechtična', 'Významná šlechtična', 'Královna', 'Císařovna'];
 
 export function tierTitle(tier, gender) {
   return (gender === 'female' ? STATUS_TIERS_FEMALE : STATUS_TIERS)[tier];
@@ -52,11 +53,11 @@ export function tierTitle(tier, gender) {
 
 // Šlechtic scenario: the realm is shared with the crown and three rival houses.
 export const NOBLE_HOUSES = [
-  { id: 'brana', name: 'páni z Bílé Brány', short: 'Bílá Brána', seat: 'brodna',
+  { id: 'brana', name: 'páni z Bílé Brány', gen: 'pánů z Bílé Brány', short: 'Bílá Brána', seat: 'brodna',
     text: 'Nejbohatší rod v zemi. Drží obilnici Brodnou, půjčují králi peníze a za úsměvem skrývají nůž.' },
-  { id: 'rudi', name: 'Rudí páni z Hřebene', short: 'Rudí', seat: 'zelezny-hreben',
+  { id: 'rudi', name: 'Rudí páni z Hřebene', gen: 'Rudých pánů z Hřebene', short: 'Rudí', seat: 'zelezny-hreben',
     text: 'Válečnický rod z hor. Jejich kovárny zbrojí půl království a jejich trpělivost je krátká jako jejich meče.' },
-  { id: 'sokolove', name: 'Sokolové', short: 'Sokolové', seat: 'sokoli-hvozd',
+  { id: 'sokolove', name: 'Sokolové', gen: 'Sokolů', short: 'Sokolové', seat: 'sokoli-hvozd',
     text: 'Hrdý pohraniční rod, který stráží hranici s Marcemi. Věrní, prchliví a nebezpeční, když se cítí uraženi.' },
 ];
 export const NOBLE_HOME = 'pobrezni-mark';

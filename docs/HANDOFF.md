@@ -4,7 +4,7 @@ Shrnutí všeho, co vzniklo v dlouhé pracovní konverzaci nad touto hrou: co hr
 jak je postavená, jak se s ní pracuje, co je hotové a co zbývá. Je určený pro
 kohokoli, kdo na projekt naváže (člověka i další AI session).
 
-**Větev:** `claude/insanity-kingdom-html-game-dccy50` · **Jazyk hry i komunikace:** čeština
+**Větev:** `claude/kind-lamport-19swo3` (dřív `claude/insanity-kingdom-html-game-dccy50`) · **Jazyk hry i komunikace:** čeština
 
 ---
 
@@ -16,15 +16,20 @@ událost s textem, obrázkem a 2–4 volbami; volby mění zdroje, provincie, dv
 a vztahy. Vládce stárne, umírá a vládu přebírá dědic. Hra se ukládá do
 `localStorage`.
 
-**Tři scénáře (tři obtížnosti), které na sebe navazují:**
+**Jedna kronika od pluhu ke koruně (žádný výběr scénáře).** Každá nová hra
+začíná jako sedlák a v téže uložené hře postupuje výš. `state.scenario` dál
+existuje, ale znamená **životní stupeň** rodu, ne volbu hráče:
 
-| Scénář | Start | Cíl | Po vítězství |
-|---|---|---|---|
-| **Sedlák** (těžké) | poddaný na gruntu ve vsi Lipnice | svoboda (svobodník) → erb (drobný šlechtic) | tlačítko „Pokračovat jako šlechtic“ |
-| **Šlechtic** (střední) | drobný šlechtic s tvrzí v Pobřežní marce | trůn (nárok, povstání, převrat) | tlačítko „Vládnout jako panovník“ |
-| **Panovník** (snadné) | král hotového království | zlatý věk (12 období prosperity) | konec |
+| Stupeň (`scenario`) | Titul (`statusTier`) | Jak se postoupí dál |
+|---|---|---|
+| `sedlak` | 1 Sedlák → 2 Svobodník | výkup (`s_vykup`) nebo statečnost v bitvě (`s_bitva`); pak tvrz s erbem (`s_zemansky_statek`) nebo rytířský pás (`s_pasovani`) |
+| `slechtic` | 3 Drobný šlechtic → 4 Významný šlechtic | královská milost (`n_povyseni`), koupě titulu; pak trůn: nárok po smrti krále, spiknutí a převrat, nebo **povstání proti koruně** (válečné tažení) |
+| `panovnik` | 5 Král → 6 Císař | zlatý věk (konec hry), nebo dobytí dvou cizích korun (císař, hra pokračuje) |
 
-Jedna uložená hra tak může projít celou cestou od pluhu až ke koruně.
+Povýšení (`endGame: 'ennobled' | 'crowned'` ve větvi) už **není konec kroniky**:
+`promote()` ve `state.js` převede hru na další stupeň a vloží kartu kapitoly
+(`kapitola_erb`, `kapitola_koruna` v `events_career.js`). Konce `ennobled`/`crowned`
+na obrazovce konce zůstaly jen pro staré uložené hry (tlačítko je převede).
 
 ---
 
@@ -41,6 +46,7 @@ python3 -m http.server 8123      # pak otevřít http://localhost:8123/
 enginem, bez prohlížeče. Výstup: délka her, rozdělení konců, chyby.
 
 ```bash
+node tools/sim/sim_career.mjs 400 0.7 150  # celá kronika od sedláka; 2. arg = ambice, 3. = max. let
 node tools/sim/sim.mjs                     # Panovník, 400 her
 node tools/sim/sim_noble.mjs 400 1         # Šlechtic; 2. argument = ambice (0–1), jak často bot volí cestu k trůnu
 node tools/sim/sim_peasant.mjs 400 0.5     # Sedlák; 2. argument = ambice
@@ -77,6 +83,9 @@ musí být aktivní, jinak je mapa skrytá. Screenshoty ukládat mimo repozitá�
 | `js/events_more.js` | dalších 55 událostí Panovníka |
 | `js/events_noble.js` | 32 událostí Šlechtice |
 | `js/events_peasant.js` | 32 událostí Sedláka + krize, ozvěny a klidné období sedláka |
+| `js/events_career.js` | karty kapitol (erb, koruna), konec povstání (vítězství / porážka), posel z Marek, ozvěny „vyhnaný král“ a „účet z Marek“ |
+| `js/realms.js` | sousední království (Východní marky, Severní pustiny, Jižní říše): vládci stárnou a umírají, síla, vztah, dobytí koruny, příjem z cizích korun (bez DOM) |
+| `js/world.js` | mapa světa (SVG na pergamenu, volitelně pod ní malba `assets/map/world_map.jpg`) a její boční panel |
 | `js/events_echoes.js` | krize (vyčerpané zdroje) a ozvěny rozhodnutí + tabulka `ECHO_HOOKS` |
 | `js/events_court.js` | události podle povah rádců + výchova dědice u šlechtice |
 | `js/events_trade.js` | přepadení karavany, piráti, cizí kupec, clo, hlad na severu, vlastní loď |
@@ -132,7 +141,7 @@ musí být aktivní, jinak je mapa skrytá. Screenshoty ukládat mimo repozitá�
 obchodní `trade`, `tradeOffer`, `tradeMod`, `tradeStock`.
 
 **Textové tokeny:** `{ruler.name}`, `{heir.name}`, `{chancellor.Title}`,
-`{province.name}`, `{target.*}`, `{house.*}`, `{king.*}`, `{lord.*}`, `{village}`,
+`{province.name}`, `{target.*}`, `{house.*}`, `{king.*}`, `{lord.*}`, `{village}`, `{target.Role}` (role velkým písmenem na začátku věty),
 `{cargo.*}` a rodové tvary `{R:muž|žena}` (vládce), `{H:…}` (hlava rodu),
 `{T:…}` (cíl), `{D:…}` (dědic), `{L:…}` (pán), `{M:…}` (manžel/ka).
 
@@ -235,6 +244,29 @@ obchodní `trade`, `tradeOffer`, `tradeMod`, `tradeStock`.
 
 ---
 
+### Jedna kariéra, povstání a další království (session `claude/kind-lamport-19swo3`)
+- **Výběr scénáře zrušen.** Nová hra: jméno, muž/žena, jméno rodu → rovnou sedlák v Lipnici. `createNewGame(…, scenario)` přijímá stupeň jen kvůli simulacím a testům.
+- **Povýšení uvnitř hry:** `promote(state, 'ennobled' | 'crowned')` (`state.js`). Volá ho `resolveChoice` až po zápisu kroniky volby (`state.pendingPromotion`), takže kronika jde ve správném pořadí. Při erbu: noví rádci místo sousedů z Lipnice, grunt se prodá, lichvář si vybere dluh, panské zakázky a karavany zmizí (zboží zpět do skladu), rodina si nechá selské životopisy (`c.bio`). Při koruně: starý král odchází (`state.formerKing`), staří služebníci nad 60 let odcházejí na odpočinek, dospělý dědic už „nedovrší 16 let“. Při obou: ambice skončí, karta kapitoly jde jako první a ostatní vynucené události čekají ve frontě `state.eventQueue` (`queueEvent` v `engine.js`).
+- **Povstání proti koruně** (`war.js` `rebellionTarget`): cíl tažení `crown` pro významného šlechtice (tier 4), dokud žije král. Síla královského vojska 1,7 × 25 mužů, slabší o spojence (−0,22 za rod, a jejich družiny po 6 mužích jdou s tebou), nárok ≥ 40, spiknutí ≥ 2 a cizí pomoc (`flags.cizi_podpora` z události `n_cizi_posel`). Během vzpoury `flags.rebellion`: přízeň 0 bez vyhnanství, královské události (`ROYAL_EVENTS`) a zakázky dvora se nelosují. Výhra → `w_povstani_vitezstvi` (osud krále: klášter / poprava / vyhnanství s ozvěnou `ozvena_vyhnany_kral`) → koruna. Porážka nebo odvolání → `w_povstani_porazka` (milost, obrana tvrze, útěk). Mír z `w_mir` → přízeň 20. Test: bez spojenců ~38 % koruna, se 2 spojenci ~61 %.
+- **Mocný šlechtic:** vyhraná soukromá válka proti rodu s mocí ≤ 30 mu vezme sídlo (kraj přejde na hráče, `stats.seized`).
+- **Další království** (`realms.js`): `state.realms.{east,north,south}` s vládcem, silou a vztahem. Vládci stárnou a umírají (zprávy z ciziny), síla se obnovuje. Králova výhra proti zemi jí vezme 25 síly (tribut jako dřív); když tím klesne na 25 a méně, **koruna padne** a hráč ji nosí taky (+3 / +1 zlata za období). Dvě cizí koruny = **císař** (tier 6). Nespokojená dobytá země se může vzbouřit a odtrhnout. Jižní říši dobýt nejde. Větev události může měnit vztah: `realm: { east: { attitude, power } }`. Tokeny `{realm.east}` („král Ctibor“), `{realm.east.name}`.
+- **Mapa světa:** tlačítko „Svět“ v hlavičce mapy (`world.js`); pod hranicemi je malba `assets/map/world_map.jpg` (2000 × 1342, hranice obtažené podle ní, funkce `P` přepočítává na 1264 × 848), bez ní se kreslí SVG. Klik na zemi → panel s vládcem, silou, vztahem a tlačítkem „Připravit tažení“. Vlčí Úděl vrací na mapu království.
+- **Tokeny rodu panovníka:** `{king.title}`/`{king.Title}` (král/královna), `{K:…|…}` (podle krále), `{F:…|…}` a `{formerKing.name}` (sesazený), `{house.gen}` (2. pád rodu: „z rodu pánů z Bílé Brány“). Názvy událostí se teď taky interpolují.
+- **Opravy návazností** (audit): sňatek dědice jen jeden napříč stupni (`flags.heir_married`), noví králové mívají dědice, smrt vzdáleného krále nemění přízeň pána, rádci mimo královský dvůr v 66+ letech umírají a jsou nahrazeni, nová domácnost po nástupnictví odpovídá věku vládce, nevolník nedostává události o zahraničním obchodu.
+- **Začátek za sedláka:** grunt bez roční „práce na gruntu“ (výnos z mapy) chátrá; kdo ji neobjevil, krachoval (rozumný hráč 23 %). Když hráč do podzimu nic nenaplánuje, přijde po žních volná událost `s_prace_na_gruntu` (`events_farm.js`) se stejnými možnostmi; větev `decree: '<klíč>'` zadá práci stejně jako mapa (`issueDecree`). Kdo mapu používá, ji neuvidí. Simulace mají „rozumného hráče“ `tools/sim/smart.mjs` (váží účinky voleb podle toho, čeho je málo; parametr = podíl náhodných voleb). Pozor: čistě náhodný bot s touto událostí vychází hůř, protože v ní volí naslepo místo rozumné práce z mapy — to je vlastnost bota, ne hry.
+- **Druhé kolo (podle design review agenta):**
+  - *Boj o trůn* (`events_throne.js`, `engine.js processThroneArc`): 6 let po dosažení významného šlechtice (nebo když je králi 60) král padne na honu → regentská rada (místo regenta = nárok +15) → spor o nástupnictví → do 4–7 období rozhodnutí o trůnu v `n_smrt_krale`. Nový král spouští odpočet znovu (`state.throneReset`). Během války se linka nehýbe.
+  - *Zlatý věk* už kroniku sám neukončí: událost `zlaty_vek` nabídne konec ve slávě, ambici „Říše“ (`cisarstvi`) nebo vládu dál (znovu nejdřív za 10 let).
+  - *Karty kapitol* i pro svobodu (`kapitola_svoboda`), velmože (`kapitola_velmoz`) a císaře (`kapitola_cisar`); `TIER_CHAPTERS` v `engine.js`, `state.milestones.tierN`.
+  - *Grunt:* práce „Najmout čeledíny“ (`hire`), klučení stojí 1 čeledína, čeledník od úrovně 2, hlad −3 grunt za období místo −5, první zpustnutí = chalupa na kraji vsi (`s_chalupa`, `flags.chalupa`), hladová krize nabízí nákup obilí, ambice „Ruce k práci“ = +8 čeledi.
+  - *Převrat:* první nezdar `n_prevrat` = útěk tajnou chodbou (`flags.prevrat_selhal`), až druhý = poprava.
+  - *Prolog* (`events_prologue.js`): tři volné karty před první sezónou (původ: fara / pytlák / kovář / krčma → `traits: {…}` posune víc vlastností a později přijde jedna vlastní událost; první zima; hold pánovi). *Povaha pána* `LORD_NATURES` (chamtivý / spravedlivý / krutý) mění podzimní dávky a jak rychle pán zapomíná; token `{lord.nature}`, `{lord.natureText}`.
+  - *Nové události* (`events_stages.js`): 8 + 2 ozvěny pro svobodníka (`f_*`), 8 + 4 ozvěny pro významného šlechtice (`v_*`).
+  - *Popisky voleb* se interpolují (rodové tvary fungují i v nich).
+  - *Rozumný hráč* v simulacích: `tools/sim/smart.mjs`, `SMART=0.4 node tools/sim/sim_career.mjs`.
+- **Láska, svatba a děti** (`family.js`, `events_family.js`, témata v `talk.js`): nová kronika začíná svobodně a bez dědice (manžel/ka a dědic jsou zástupné objekty s `none: true, alive: false`; v Dvoře se nezobrazují). V listu postavy → Rodina jsou tři nápadnice / nápadníci (`state.suitors`, podle stupně: mlynářova dcera, dcera rytíře, cizí princezna…; dcera rodu = spojenectví, princezna = vztah s říší, věno do zdrojů). Klik → *Námluvy*: dát se do řeči, dárek, tanec (1× ročně), svést (od náklonnosti 35), požádat o ruku (od 55; úspěch = `marry`). S manželem/kou téma *Toužit spolu po dítěti* (šance podle věku matky, do 42 let, max. 5 dětí) → `state.pregnancy` → za 3 období událost `narozeni`. Dítě je dědic, pokud žádný není, jinak `state.children`; když dědic zemře, nastoupí nejstarší z dětí (`nextHeir`). Kdo nemluví: příroda občas dá dítě sama, od 26 let přijde dohazovač (`f_dohazovac`), od 38 let bez dědice schovanec (`f_schovanec`). Bot bez rozhovorů: svatba ~28 let, dědic ~33 let, vymření rodu ~3 %. Role v rozhovorech: `personOf(state, 'suitor:1' | 'child:0' | 'spouse')`. Tokeny `{child.name}`, `{child.word}`, `{C:…|…}`, `{suitor.0.name}`, `{suitor.0.kind}`.
+- Zbývající drobnosti z auditu: `docs/analyza-logiky.md`. Obrázky kariéry (`docs/obrazky-kariera.md`) jsou všechny dodané: scény kapitol a povstání, císař a císařovna (`ruler_emperor_*`, bez nich nosí portrét krále), cizí panovníci (`realm_<země>_<pohlaví>.jpg`) a mapa světa.
+
 ## 5. Obrázky — jak to funguje a co chybí
 
 **Hra si obrázky hledá sama** podle názvu souboru, když chybí, použije zálohu:
@@ -247,8 +279,10 @@ obchodní `trade`, `tradeOffer`, `tradeMod`, `tradeStock`.
 **Cílové formáty:** portréty 1024 × 1280 (4:5), scény 1024 × 1024, konce 1365 × 768.
 Originály se ukládají do `assets/_source/gemini/<dávka>/`.
 
-**Typická vada generátoru:** do spodní části (≈ 67–75 % výšky) vloží tmavý
-pás, někdy dokonce jiný výřez obrazu. `tools/images/process_batch.py` ho najde
+**Typická vada generátoru:** do spodní části (≈ 59–75 % výšky) vloží tmavý
+pás, někdy dokonce jiný výřez obrazu. Pás buď vede až dolů, nebo zase skončí
+(dávka kariéry: 59–84 %); `detect` vypíše i řádek konce a `place` s `FIX=` opraví
+jen pás (zesvětlení plynule mezi horní a dolní hranou). `tools/images/process_batch.py` ho najde
 a srovná jas a barvu. Falešné poplachy (okraj stolu, prkno) je nutné
 zkontrolovat okem. Ve hře spodní třetinu scény stejně kryje tmavý přechod.
 
@@ -272,7 +306,12 @@ FIX=s_drab.jpg python3 tools/images/process_batch.py dir1,dir2 <scratch> <repo> 
 | Scénář | Bot | Výsledek |
 |---|---|---|
 | Panovník | náhodné volby | medián ~33 let; zlatý věk ~38 %, kolaps ~38 %, zbytek přežije 100 let |
-| Šlechtic | cílí na trůn (ambice 1), neobchoduje | trůn ~45–49 %, poprava ~38 %, vyhnanství ~7 % |
+| Sedlák, rozumný hráč (`smart.mjs`) | práce na gruntu jen z příběhu (podzimní událost `s_prace_na_gruntu`), 35 % chybných voleb | zkrachovalý grunt ~2 % (bez podzimní události 23 %), erb medián rok ~21 |
+| Sedlák, napůl chybující hráč | 60 % chybných voleb | zkrachovalý grunt ~23 % (bez podzimní události ~50 %) |
+| Celá kronika, rozumný hráč | `SMART=0.4 sim_career.mjs 300 0.7` (po druhém kole) | svobodník 100 % (r. 7), erb 100 % (r. 20), velmož (r. 22), koruna ~91 % (r. 42), poprava ~2 % |
+| Sedlák podle povahy pána | `natures.mjs` (scratch), 60 % / 100 % náhodných voleb | spravedlivý 1 % / 30 %, krutý 2 % / 52 %, chamtivý 7 % / 65 % zpustlých gruntů |
+| Celá kronika | `sim_career.mjs`, ambice 0,7 (náhodné volby) | svobodník ~90 % (rok ~10), erb ~50 % (rok ~25), významný šlechtic ~48 %, koruna ~30–34 % (rok ~65); nejčastější konec je zpustlý grunt (~45 %) |
+| Šlechtic | cílí na trůn (ambice 1), neobchoduje | trůn ~42–55 %, poprava ~35 % (noví králové teď mívají dospělé dědice, nárok je těžší; povstání bot nepoužívá) |
 | Sedlák | ambice 0,5 | šlechtický stav ~45–50 %, svoboda kolem 10. roku, medián ~25 let; zbytek hlavně zpustlý grunt |
 | všechny | s obchodováním | mírné zlepšení, obchod hru nerozbíjí |
 | Panovník | staví všechno, co jde (bot ve scratchpadu) | zlatý věk ~49 %, kolaps ~25 % (bez stavění ~39 % / ~40 %) |

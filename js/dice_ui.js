@@ -2,7 +2,7 @@
 // is fought round by round with k6+ (see combat.js). Both are drawn in the
 // story panel in place of the choices; the result goes back to main.js.
 
-import { rollParts, rollDice } from './engine.js';
+import { rollParts, rollDice, interpolate } from './engine.js';
 import { ENEMIES, ACTIONS, startCombat, combatRound, settleCombat } from './combat.js';
 import { TRAIT_DEFS } from './data.js';
 import { esc } from './ui.js';
@@ -26,12 +26,12 @@ function d10(cls, value) {
 export function openRoll(state, choice, onDone, host = panel()) {
   if (host === panel()) hideCouncil();
   const parts = rollParts(state, choice);
-  const trait = choice.traitKey ? traitLabel(choice.traitKey) : '';
+  const trait = choice.traitKey && choice.traitScale !== 0 ? traitLabel(choice.traitKey) : '';
   const mods = parts.mods.length ? parts.mods.map((m) => `<li><span>${esc(m.label)}</span><b class="${m.value > 0 ? 'pos' : 'neg'}">${sign(m.value)}</b></li>`).join('')
     : '<li><span>Žádné úpravy</span><b>±0</b></li>';
   host.innerHTML = `
     <div class="dice-panel">
-      <div class="dice-head"><span class="dice-over">Zkouška${trait ? ` · ${esc(trait)}` : ''} · hod k%</span><b>${esc(choice.label)}</b></div>
+      <div class="dice-head"><span class="dice-over">Zkouška${trait ? ` · ${esc(trait)}` : ''} · hod k%</span><b>${esc(interpolate(state, choice.label))}</b></div>
       <div class="dice-row">
         <div class="dice-pair">${d10('tens', '?')}${d10('units', '?')}</div>
         <div class="dice-calc">
@@ -141,7 +141,7 @@ export function openCombat(state, choice, onDone) {
         : '<div class="dice-verdict neg"><b>Porážka</b><span>Boj je prohraný.</span></div>') : '';
     panel().innerHTML = `
       <div class="dice-panel combat-panel">
-        <div class="dice-head"><span class="dice-over">Souboj · kolo ${c.round + (over ? 0 : 1)} · hod k6+</span><b>${esc(choice.label)}</b></div>
+        <div class="dice-head"><span class="dice-over">Souboj · kolo ${c.round + (over ? 0 : 1)} · hod k6+</span><b>${esc(interpolate(state, choice.label))}</b></div>
         <div class="cb-fighters">
           <div class="cb-f you"><span class="cb-name">${esc(you.name)}</span>${hpBar(you.hp, you.maxHp)}<span class="cb-nums">ÚČ ${you.uc} · OČ ${you.oc} · zbraň +${you.dmg}</span>${c.ally ? `<span class="cb-ally">+ ${esc(c.ally.title)} ${esc(c.ally.name)} (ÚČ ${c.ally.uc})</span>` : ''}</div>
           <div class="cb-vs">⚔</div>

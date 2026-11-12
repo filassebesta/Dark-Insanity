@@ -121,6 +121,13 @@ export const AMBITIONS = {
     metric: (s) => s.ruler.statusTier,
     reward: { effects: { prestige: 6, stability: 3 } }, trait: 'patience',
   },
+  cisarstvi: {
+    name: 'Říše', goal: 1, kind: 'gain', years: 10, scenarios: ['panovnik'], unit: 'cizích korun',
+    text: 'Získat korunu sousední země.',
+    available: (s) => !!s.realms && Object.values(s.realms).filter((r) => r.owner === 'player').length < 2,
+    metric: (s) => stat(s, 'crownsTaken'),
+    reward: { effects: { prestige: 8, legitimacy: 5 } }, trait: 'strength',
+  },
   sypka: {
     name: 'Plná sýpka', goal: 60, kind: 'reach', years: 3, scenarios: ['sedlak'], unit: 'zásob',
     text: 'Mít v komoře a na půdě zásoby šedesát.',
@@ -128,8 +135,8 @@ export const AMBITIONS = {
     reward: { effects: { stability: 4, prestige: 2 } }, trait: 'patience',
   },
   celed: {
-    name: 'Ruce k práci', goal: 45, kind: 'reach', years: 3, scenarios: ['sedlak'], unit: 'čeledi',
-    text: 'Mít na gruntu čeleď čtyřicet pět.',
+    name: 'Ruce k práci', goal: 8, kind: 'gain', years: 4, scenarios: ['sedlak'], unit: 'čeledi navíc',
+    text: 'Rozšířit čeleď na gruntu o osm lidí.',
     metric: (s) => s.resources.army,
     reward: { effects: { stability: 3, food: 4 } }, trait: 'strength',
   },

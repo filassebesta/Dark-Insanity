@@ -4,7 +4,7 @@ const { createNewGame } = await import(root + 'state.js');
 const E = await import(root + 'engine.js');
 const runs = +(process.argv[2] || 400), AMB = +(process.argv[3] || 0.6);
 const ends = {}, seen = {}, lens = [], tiers = {}; let errors = 0, freedAt = [];
-const WANT = ['Zaplatit pánovi plnou cenu', 'Smlouvat o cenu', 'Koupit tvrz a žádat o erb', 'Pokleknout a přijmout pás', 'Vrhnout se do první řady', 'Jít osobně', 'Koupit pole', 'Ucházet se o úřad'];
+const WANT = ['Zaplatit plnou cenu', 'Smlouvat o cenu', 'Koupit tvrz a žádat o erb', 'Pokleknout a přijmout pás', 'Vrhnout se do první řady', 'Jít osobně', 'Koupit pole', 'Ucházet se o úřad'];
 for (let r = 0; r < runs; r++) {
   const st = createNewGame('A', 'B', 'male', 'sedlak');
   let freed = false;
@@ -23,6 +23,8 @@ for (let r = 0; r < runs; r++) {
       if (!freed && st.ruler.statusTier >= 2) { freed = true; freedAt.push(st.turn); }
       // spend the yearly decree sensibly: market when rich in food, otherwise cattle
       if (E.decreeAvailable(st)) E.issueDecree(st, st.resources.food > 45 ? 'market' : st.resources.favor < 35 ? 'lord' : 'clear');
+      // the coat of arms is now a promotion inside the same chronicle: this sim stops there
+      if (st.scenario === 'slechtic') { ends.ennobled = (ends.ennobled || 0) + 1; ends['via_' + e.id] = (ends['via_' + e.id] || 0) + 1; break; }
       const g = E.checkEndConditions(st);
       if (g) { ends[g.type] = (ends[g.type] || 0) + 1; if (g.type === 'ennobled') ends['via_' + e.id] = (ends['via_' + e.id] || 0) + 1; break; }
     } catch (err) { errors++; console.log(e.id, err.stack.split('\n').slice(0, 3).join(' | ')); break; }

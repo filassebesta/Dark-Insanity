@@ -238,6 +238,7 @@ kbd {
 .game-music-toggle { margin-left: -.4rem; }
 
 /* ---------- forms ---------- */
+.new-game-intro { font-style: italic; color: var(--ink-soft); margin: -.2rem 0 1.3rem; line-height: 1.45; }
 .field { display: flex; flex-direction: column; gap: .35rem; margin-bottom: 1.1rem; text-align: left; }
 .field span {
   font-family: var(--font-caps);
@@ -1030,13 +1031,13 @@ kbd {
   grid-template-columns: minmax(280px, 440px) minmax(0, 620px);
   gap: clamp(2rem, 5vw, 5rem);
   justify-content: center;
-  align-items: center;
+  align-items: start; /* the portrait sits at the top, not in the middle of a long sheet */
   padding: 4rem 2rem;
   color: var(--paper);
 }
 .character-view.open .cs-portrait-wrap { animation: cardEnter .7s var(--ease-out) .05s both; }
 .character-view.open .cs-info { animation: pageTurn .7s var(--ease-out) .15s both; }
-.cs-portrait-wrap { position: relative; }
+.cs-portrait-wrap { position: sticky; top: 4rem; } /* stays in view while the sheet scrolls */
 .cs-portrait {
   position: relative;
   aspect-ratio: 4 / 5;
@@ -1143,6 +1144,7 @@ kbd {
 .house-badges { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .3rem; }
 .house-badge { font-family: var(--font-caps); font-size: .64rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; padding: .15rem .5rem; border: 1px solid currentColor; }
 .house-badge.good { color: var(--olive); }
+.house-badge.bad { color: var(--blood); }
 .house-badge.gold { color: #8a6a2c; }
 .plot-steps { display: flex; gap: 4px; flex: 1; }
 .plot-steps i { flex: 1; height: 8px; background: rgba(90,70,45,.18); }
@@ -1171,7 +1173,7 @@ kbd {
 .person-close { position: absolute; top: 1rem; right: 1rem; z-index: 2; color: var(--ink); border-color: rgba(90,70,45,.35); }
 .person-sheet { display: grid; grid-template-columns: minmax(220px, 340px) 1fr; gap: 2.4rem; padding: 2.6rem; }
 .ps-portrait {
-  position: relative; aspect-ratio: 4 / 5; align-self: start; overflow: hidden;
+  position: sticky; top: 1rem; aspect-ratio: 4 / 5; align-self: start; overflow: hidden; /* stays in view while the detail scrolls */
   background: radial-gradient(circle at 50% 35%, var(--bg-3), var(--bg-0));
   border: 1px solid var(--gold-dim); box-shadow: 0 18px 40px rgba(0,0,0,.35);
 }
@@ -1245,8 +1247,8 @@ kbd {
   .character-sheet { grid-template-columns: 1fr; padding: 4rem 1.2rem 2rem; }
   .person-view { padding: .6rem; }
   .person-sheet { grid-template-columns: 1fr; padding: 3rem 1.2rem 1.6rem; gap: 1.4rem; }
-  .ps-portrait { max-width: 240px; width: 100%; margin: 0 auto; }
-  .cs-portrait-wrap { max-width: 300px; margin: 0 auto; width: 100%; }
+  .ps-portrait { max-width: 240px; width: 100%; margin: 0 auto; position: relative; top: 0; }
+  .cs-portrait-wrap { max-width: 300px; margin: 0 auto; width: 100%; position: relative; top: 0; }
 }
 @media (max-width: 560px) {
   .cs-traits, .cs-family { grid-template-columns: 1fr; }
@@ -1663,3 +1665,27 @@ kbd {
 .gear-buy i { position: absolute; top: .6rem; right: .75rem; font-style: normal; font-size: .85rem; color: var(--gold-bright); }
 .cb-ally { grid-column: 1 / -1; font-size: .78rem; color: #3f6b2a; }
 @media (max-width: 560px) { .cs-gear li { grid-template-columns: 4rem 1fr; } .cs-gear em { grid-column: 2; } }
+
+/* ---------- world map (world.js) ---------- */
+.world-svg { cursor: default; }
+.w-sea { fill: #8fa3a0; }
+.w-waves path { fill: none; stroke: rgba(240, 232, 210, .55); stroke-width: 2; stroke-linecap: round; }
+.w-land { fill: var(--rf); stroke: #3a2c1e; stroke-width: 2.4; stroke-linejoin: round; cursor: pointer; transition: filter .2s ease, stroke .2s ease; }
+.w-realm:hover .w-land { filter: brightness(1.08); }
+.w-realm.own .w-land { stroke: #e2b85a; stroke-width: 5; filter: drop-shadow(0 0 6px rgba(226, 184, 90, .6)); }
+.w-realm.selected .w-land { stroke: #7a1f15; stroke-width: 4.5; }
+.w-realm text { pointer-events: none; }
+.w-crown { fill: #e2b85a; stroke: #3a2c1e; stroke-width: 1.6; pointer-events: none; }
+.w-relief { pointer-events: none; }
+.w-peak { fill: #e8dcc0; stroke: #4a3b2c; stroke-width: 1.8; stroke-linejoin: round; }
+.w-tree { fill: #5d6b41; stroke: #34391f; stroke-width: 1.4; }
+.w-war-line { fill: none; stroke: #9c2a1c; stroke-width: 3; stroke-dasharray: 10 7; pointer-events: none; }
+.world-toggle { margin-left: .6rem; }
+.w-art { pointer-events: none; }
+.world-svg:not(.has-art) .w-art { display: none; }
+.world-svg.has-art .w-sea, .world-svg.has-art .w-waves, .world-svg.has-art .w-relief { display: none; }
+.world-svg.has-art .w-land { fill-opacity: .12; stroke-opacity: .6; }
+.world-svg.has-art .w-realm:hover .w-land { fill-opacity: .25; }
+.w-ruler { display: flex; gap: .8rem; align-items: center; margin: .4rem 0 .6rem; }
+.w-ruler-img { width: 64px; height: 80px; object-fit: cover; border: 1px solid rgba(58, 44, 30, .5); flex: none; }
+.w-ruler .map-desc { margin: 0; }

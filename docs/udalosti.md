@@ -1832,3 +1832,198 @@ Volby se ⚔ se bojují po kolech (`js/combat.js`).
 1. Popadnout zbraň a vyběhnout ⚔ *(souboj: Zbojníci)*
 2. Zabarikádovat se a čekat
 3. Vzbudit všechny a bránit se společně *(riskantní volba)*
+
+## Svobodník a významný šlechtic
+
+Události jen pro dva stupně, které dřív žily z cizí zásoby: **svobodníka** (Sedlák, `statusTier` 2) a **významného šlechtice** (Šlechtic, `statusTier` 4). Soubor `js/events_stages.js`. Ozvěny přicházejí jen v témže stupni.
+
+### Svobodník
+
+#### 1. Lidé u studny  `f_celed`
+
+> Na návsi u studny stojí lidé s uzlíky a ptají se po práci: dva bratři z vyhořelé vsi za hvozdem, vdova s dospívajícím synem a starý pasák, který prý rozumí dobytku líp než kdokoli v kraji. Poddaný si čeleď najímat nesmí. [vládce] je ale teď svobodný hospodář/svobodná hospodářka a kdo chce obdělat víc polí, potřebuje víc rukou. Ty ruce chtějí jíst — a dostat zaplaceno.
+
+1. Najmout je všechny za mzdu *(jen někdy)*
+2. Vzít jen dva bratry *(jen někdy)*
+3. Nabídnout jim místo mzdy stravu a střechu *(riskantní volba)*
+4. Poslat je dál
+
+#### 2. Farské lány  `f_farska_pole`
+
+> Farář z Lipnice drží za kostelem tři lány, které nemá kdo obdělat. Poddanému by je nepronajal — ten patří pánovi i s rukama. Svobodnému člověku ale nabízí nájem na tři roky: zaplatit předem a úrodu si nechat.
+
+1. Zaplatit nájem předem *(jen někdy)*
+2. Smlouvat o nižší nájem *(riskantní volba)* *(jen někdy)*
+3. Splácet nájem prací čeledi na farském
+4. Nechat lány ležet ladem
+
+#### 3. Hlas vsi  `f_hlas_vsi`
+
+> Večer se u tvých vrat sešli sousedé s čepicemi v rukou. Pán/Paní [pán] chce letos od každého gruntu o den roboty víc a k tomu nový poplatek za pastvu na panské louce. Poddaný, který by si stěžoval, skončí u drába. Ty už pánovi/paní nepatříš. „Promluv za nás,“ prosí. „Tebe vyslechne.“
+
+1. Jít na panský dvůr a mluvit za celou ves *(riskantní volba)*
+2. Domluvit se potichu s purkrabím *(jen někdy)*
+3. Odmítnout, tohle už není tvoje starost
+
+#### 4. Mýto na mostě  `f_myto_na_moste`
+
+> Pán/Paní [pán] ti nezapomněl/nezapomněla, že ses vymanil/vymanila z poddanství. Kdo jednou odejde zpod panské ruky, ukazuje cestu ostatním. Na mostě přes potok, kudy vozíš obilí do mlýna, teď stojí panský pacholek a chce mýto — od tvého vozu, a jen od tvého.
+
+1. Platit a nedat najevo hněv
+2. Ukázat listinu o svobodě královskému sudímu v Brodné *(riskantní volba)*
+3. Zanést na panský dvůr dar a připomenout staré služby *(jen někdy)*
+4. Vozit obilí oklikou přes brod
+
+#### 5. S kupeckou karavanou  `f_karavana`
+
+> Kupec z Brodné skládá karavanu na jarmark do Brodu a hledá společníky, kteří přiloží vůz a ruku k ochraně. Poddaný nesmí opustit panství bez dovolení, svobodný může jet, kam chce. Na jarmarku se za obilí platí stříbrem a za stříbro se tam dá koupit, co doma nikdo nemá — třeba levné obilí z jižních sýpek.
+
+1. Naložit obilí a jet s karavanou *(riskantní volba)* *(jen někdy)*
+2. Koupit na jarmarku obilí na zimu *(jen někdy)*
+3. Poslat s karavanou dva čeledíny jako stráž *(riskantní volba)*
+4. Zůstat doma
+
+#### 6. Klepání na okenici  `f_uprchly_syn`
+
+> Uprostřed noci zaklepal na okenici soused Matěj, poddaný jako kdysi ty. Jeho syn utekl z panské stáje, kde ho dráb zbil do krve, a teď ho hledají pacholci. „U svobodného hledat nebudou,“ šeptá Matěj. „Schovej ho, než přejde nejhorší.“ Za ukrývání uprchlého poddaného se ale platí, i když jsi svobodný/svobodná.
+
+1. Schovat ho na seníku a dát mu práci *(riskantní volba)*
+2. Dát mu groše a poslat ho v noci do města *(jen někdy)*
+3. Odmítnout, tohle není tvůj boj
+4. Dát vědět pánovým pacholkům
+
+#### 7. Kmotrovství  `f_kmotrovstvi`
+
+> [krčmář], krčmář od návsi, dnes ráno zaklepal/zaklepala na tvé dveře v nedělních šatech. V rodině se narodilo dítě. Za kmotra se obvykle zve rychtář nebo mlynář — kdo stojí výš, ten dítěti otevře dveře do světa. Tentokrát ale prosí tebe: svobodný grunt mezi kmotry je pro dítě z krčmy víc, než kdy doufali.
+
+1. Přijmout a dát štědrý křestní dar *(jen někdy)*
+2. Přijmout skromně, jak se mezi sousedy sluší
+3. Zdvořile odmítnout
+
+#### 8. Dříví z obecního lesa  `f_obecni_les`
+
+> Svobodní hospodáři odjakživa berou dříví z obecního lesa nad vsí. Nový panský hajný ale tvrdí, že les patří pánovi/paní a že svobodní mají práva jen do té doby, dokud jim je pán/paní [pán] nechá. Tvůj vůz s dřívím zabavil u cesty a sekeru si odnesl na panský dvůr. Zima je za dveřmi.
+
+1. Předložit listinu o svobodě i se starými právy *(riskantní volba)*
+2. Zaplatit lesné a mít pokoj *(jen někdy)*
+3. Jet do lesa s čeledí a sekerami *(riskantní volba)*
+4. Ustoupit a topit, čím se dá
+
+#### 9. Návrat z města  `f_ozvena_uprchlik` *(ozvěna)*
+
+> Na zápraží stojí urostlý chlap v kabátci z dobrého sukna. Trvá chvíli, než v něm poznáš syna souseda Matěje, který tenkrát utekl z panské stáje. V Brodné se vyučil formanem, má vlastní vůz a s sebou dva kamarády, kteří hledají práci. „Dlužím ti víc než groše,“ říká.
+
+1. Vzít jeho kamarády na grunt
+2. Přijmout splátku v groších
+3. Domluvit se, že bude vozit tvé obilí do města *(riskantní volba)*
+
+#### 10. Kmotrovská povinnost  `f_ozvena_kmotr` *(ozvěna)*
+
+> Krčmu od návsi v noci zachvátil požár. [krčmář] zachránil/zachránila děti a holé životy, sklep a výčep lehly popelem. Podle starého zvyku má kmotr pomoci, když rodina kmotřence padne na dno — a celá ves se teď dívá k tvému gruntu.
+
+1. Vzít dvě starší děti na grunt do služby
+2. Dát peníze na nový krov *(jen někdy)*
+3. Poslat pytel mouky a víc nic
+
+### Významný šlechtic
+
+#### 1. Místo v korunní radě  `v_korunni_rada`
+
+> Král/Královna [panovník] svolává korunní radu a mezi starými jmény, která u stolu sedí odjakživa, je poprvé i rod [rod]. Místo v radě znamená slyšet o válce dřív než ostatní a mít slovo při každém úřadu a každé berni — a nést vinu za každé špatné rozhodnutí, které se v radě udělá. Páni ostatních rodů ti už teď uhýbají pohledem.
+
+1. Zasednout a stát vždy za korunou
+2. Zasednout a tiše si skládat vlastní stranu
+3. Odmítnout s díky, panství potřebuje své pány doma
+
+#### 2. Dohazovači na tvrzi  `v_snatkovy_trh`
+
+> Od doby, kdy rod [rod] patří mezi velmože, se na tvrz sjíždějí dohazovači. [dědic] je teď partie, o kterou stojí i staré rody, a nejvíc nabízí pán/paní [hlava rodu] z rodu [rod]: věno, spojenectví a místo u stolu, kde se rozhoduje o zemi. Jiní by na takovou nabídku čekali celý život.
+
+1. Přijmout nabídku a zpečetit spojenectví
+2. Nechat rody přebíjet a vzít nejvyšší věno *(riskantní volba)*
+3. Dědic počká na lepší partii
+
+#### 3. Rytíři u brány  `v_rytiri_u_brany`
+
+> Na nádvoří tvrze klečí pět rytířů bez pána: synové zchudlých zemanů, vysloužilci z královských válek a jeden dokonce v rezavé zbroji po dědovi. Chtějí složit lenní slib rodu [rod] — meč a věrnost za kus půdy a místo u stolu. Velmož, který má vlastní muže, má váhu. Král/Královna [panovník] ale nerad/nerada vidí velmože, kteří mají víc mečů, než potřebují.
+
+1. Přijmout všech pět a dát jim léna *(jen někdy)*
+2. Vyzkoušet je na kolbišti a vzít jen nejlepší *(riskantní volba)*
+3. Poslat je ke dvoru, koruna potřebuje muže víc *(jen někdy)*
+4. Odmítnout
+
+#### 4. Opovědný list  `v_opovedny_list`
+
+> Posel rodu [rod] přibil na bránu tvrze opovědný list. Pán/Paní [hlava rodu] v něm rodu [rod] vypovídá mír: od příštího úplňku budou jeho/její muži pálit, brát a zajímat, dokud nedostane zpět, co mu/jí podle něj/ní patří. Mezi drobnou šlechtou by to byla rvačka o louku. Mezi velmoži je to válka, kterou bude sledovat celá země.
+
+1. Vyrazit proti nim dřív, než vyjedou *(riskantní volba)*
+2. Povolat spojence pod korouhve *(jen někdy)*
+3. Předložit spor koruně *(riskantní volba)* *(jen někdy)*
+4. Nabídnout smír a odškodné *(jen někdy)*
+
+#### 5. Turnaj pod tvrzí  `v_turnaj`
+
+> Velmož, který pořádá turnaj, ukazuje celé zemi, že si to může dovolit. Pod tvrzí rodu [rod] by se sjeli rytíři ze všech tří velkých rodů, z královského dvora i ze ciziny, a s nimi kupci, kejklíři a půlka pobřeží. Zbývá rozhodnout, kolik to bude stát — a jestli se na kolbišti ukáže i pán/paní domu.
+
+1. Uspořádat okázalý turnaj pro celou šlechtu *(jen někdy)*
+2. Vjet do klání osobně ⚔ *(souboj: Rytíř v plné zbroji)* *(jen někdy)*
+3. Skromný turnaj jen pro vlastní rytíře
+4. Odmítnout, peníze patří do hradeb
+
+#### 6. Zkouška věrnosti  `v_zkouska_vernosti`
+
+> Královský posel přivezl list s pečetí, kterou nikdo nesmí odmítnout. Král/Královna [panovník] obviňuje rod [rod] ze zrady a přikazuje: pán/paní [hlava rodu] má být zajat/zajata a do měsíce dopraven/dopravena v okovech do Vlčího Údělu — a to právě rodem [rod], protože ho/ji zná nejlíp. U dvora se šeptá, že důkazy nejsou žádné. Že jde o zkoušku, kdo poslechne.
+
+1. Poslechnout rozkaz
+2. Varovat je tajně a zajmout jen prázdné sídlo *(riskantní volba)*
+3. Postavit se za obviněné před korunou *(riskantní volba)*
+4. Odmítnout rozkaz
+
+#### 7. Galéra s purpurovými plachtami  `v_jizni_vyslanec`
+
+> Do přístavu pod tvrzí připlula galéra s purpurovými plachtami. Vyslanec, kterého posílá [císař] z Jižní říše, vystoupil na břeh s dary — hedvábím, kořením a skříňkou, ve které cinká zlato. Prý jen zdraví velmože, o kterém se mluví až za mořem. Mezi řečí se ale vyptává na královské loďstvo, na zdraví krále/královny a na to, kdo by po něm/ní mohl vládnout.
+
+1. Přijmout dary a mluvit jen o počasí *(riskantní volba)*
+2. Prodat mu, co chce vědět
+3. Doprovodit vyslance ke dvoru
+
+#### 8. Biskupova přízeň  `v_biskupova_prizen`
+
+> Biskup z Vlčího Údělu staví nový chór katedrály a hledá velmože, kteří by se jím chtěli proslavit. Kdo dá na stavbu, tomu kapitula vyhradí místo v kryptě a kazatelé jeho jméno na kazatelnách. Biskup má navíc ucho krále/královny i prostého lidu — a hlas při každé korunovaci.
+
+1. Zaplatit kapli s erbem rodu *(jen někdy)*
+2. Prosadit vlastního kaplana do kapituly *(riskantní volba)*
+3. Podpořit biskupa ve sporu s korunou o desátky *(jen někdy)*
+4. Poslat skromný dar
+
+#### 9. Hlasování v radě  `v_ozvena_rada` *(ozvěna)*
+
+> Korunní rada se přela do noci. Král/Královna [panovník] chce novou válečnou berni ze všech panství a ostatní velmoži už dali najevo, že jsou proti. Hlasy jsou vyrovnané a všichni se dívají na rod [rod]. Jedno slovo rozhodne, kdo bude zítra platit — a koho bude koruna příště poslouchat.
+
+1. Hlasovat s korunou
+2. Hlasovat s velmoži proti berni
+3. Navrhnout berni jen z královských měst *(riskantní volba)*
+
+#### 10. Rytíř z tvé korouhve  `v_ozvena_rytir` *(ozvěna)*
+
+> Rytíř Bořek, jeden z těch, kdo ti kdysi složili lenní slib na nádvoří, se v krčmě pohádal s mužem jiného rodu a zabil ho. Rodina zabitého žádá jeho hlavu. Ostatní vazalové mlčí a čekají, jestli velmož ochrání svého člověka — a celý dvůr čeká s nimi.
+
+1. Vydat ho spravedlnosti
+2. Ochránit ho, kdo přísahal rodu, toho rod nevydá
+3. Zaplatit rodině zabitého pokrevní pokutu *(jen někdy)*
+
+#### 11. Smírčí hostina  `v_ozvena_svar` *(ozvěna)*
+
+> Rod [rod] nezapomněl na noc, kdy jeho tábor hořel. Pán/Paní [hlava rodu] teď posílá vzkaz: válčit už nebude, zve na smírčí hostinu. A každý u dvora ví, jak takové hostiny mezi velmoži končívají.
+
+1. Přijet s početnou družinou *(riskantní volba)*
+2. Poslat místo sebe dar a omluvu *(jen někdy)*
+3. Odmítnout pozvání
+
+#### 12. Lodě u Šedých skal  `v_ozvena_vyslanec` *(ozvěna)*
+
+> Královské loďstvo narazilo u Šedých skal na jižní galéry, které věděly, kudy a kdy poplují. Tři lodě šly ke dnu. Ve Vlčím Údělu se hledá, kdo s vyslancem z jihu mluvil — a stopa vede do přístavu pod tvou tvrzí.
+
+1. Svést vinu jinam listinou z truhly *(jen někdy)*
+2. Podplatit královského vyšetřovatele *(jen někdy)*
+3. Zapírat před radou *(riskantní volba)*

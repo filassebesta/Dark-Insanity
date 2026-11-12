@@ -5,12 +5,12 @@ const E = await import(root + 'engine.js');
 const runs = 400, lens = [], ends = {}, seen = {}, quietStreakMax = [];
 let errors = 0;
 for (let r = 0; r < runs; r++) {
-  const st = createNewGame('A', 'B', 'male');
+  const st = createNewGame('A', 'B', 'male', 'panovnik');
   let quiet = 0, maxQ = 0;
   for (let t = 0; t < 400; t++) {
     const res = E.advanceTurn(st);
     if (res.event) res.event = settleFree(E, st, res.event);
-    if (res.gameOver) { ends[res.gameOver.type] = (ends[res.gameOver.type] || 0) + 1; break; }
+    if (res.gameOver) { const k = res.gameOver.type + ':' + (res.gameOver.reason || ''); ends[k] = (ends[k] || 0) + 1; break; }
     const ev = res.event;
     if (!ev) { errors++; break; }
     seen[ev.id] = (seen[ev.id] || 0) + 1;

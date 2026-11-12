@@ -6,6 +6,11 @@
 
 import { clamp, bumpStat, TRAIT_DEFS } from './data.js';
 import { roleLabel, COURT_ROLES } from './court.js';
+import { personOf, marry, canConceive, conceiveChance, startPregnancy } from './family.js';
+
+// 'suitor:2' → 'suitor', 'spouse' → 'spouse'
+const kindOf = (role) => String(role).split(':')[0];
+const GIFT = { sedlak: 2, slechtic: 6, panovnik: 12 };
 
 const ADVISERS = ['chancellor', 'marshal', 'spymaster'];
 const ALL = ['spouse', 'heir', ...ADVISERS];
@@ -20,7 +25,7 @@ const ADVICE = {
   spouse: { effects: { stability: 2 }, line: 'Mezi čtyřma očima padlo, co by před radou nikdy nezaznělo.' },
 };
 const ADVICE_PEASANT = {
-  chancellor: { effects: { gold: 2 }, line: 'Rychtář poradil, komu prodat a od koho nekupovat.' },
+  chancellor: { effects: { gold: 2 }, line: 'Probrali jste, komu prodat a od koho nekupovat.' },
   marshal: { effects: { stability: 2 }, line: 'Kovář zadarmo spravil pluh a radlici.' },
   spymaster: { effects: { prestige: 1 }, line: 'Krčmář ti řekl, co si o tobě ves myslí — a komu se vyplatí koupit pivo.' },
   spouse: { effects: { stability: 2 }, line: 'Doma jste spolu probrali hospodaření až do noci.' },
@@ -113,6 +118,50 @@ export const TOPICS = {
     win: { loyalty: 5, effects: { stability: 1 } },
     text: [(c) => `Večer jen pro vás dva, bez rádců a prosebníků. ${c.name} se po dlouhé době usmíval${g(c, '', 'a')}.`],
   },
+  // ---------- love and children (family.js) ----------
+  dite: {
+    label: 'Toužit spolu po dítěti', roles: ['spouse'],
+    available: (c, s) => canConceive(s),
+    roll: { trait: 'patience', base: (s) => conceiveChance(s), scale: 0 },
+    win: { loyalty: 4, child: true }, lose: { loyalty: 2 },
+    text: [(c) => `Noc patřila jen vám dvěma. Za pár týdnů ${g(c, 'ti ' + c.name + ' s úsměvem oznámil, že čekáš dítě', c.name + ' ti s úsměvem oznámila, že čeká dítě')}.`,
+      (c) => `Noc patřila jen vám dvěma. Dítě zatím nepřišlo — ale ${c.name} se usmívá a říká, že máte čas.`],
+  },
+  nam_rec: {
+    label: 'Dát se do řeči', roles: ['suitor'],
+    roll: { trait: 'eloquence', base: 0.55, scale: 0.04 },
+    win: { affection: 8 }, lose: { affection: 2 },
+    text: [(c) => `Slovo dalo slovo a ${c.name} se ${g(c, 'rozesmál', 'rozesmála')}. Když jste se loučili, ${g(c, 'ohlédl', 'ohlédla')} se.`,
+      (c) => `Rozhovor drhnul. ${c.name} odpovídal${g(c, '', 'a')} zdvořile, ale myšlenkami byl${g(c, '', 'a')} jinde.`],
+  },
+  nam_dar: {
+    label: 'Přinést dárek', roles: ['suitor'], cost: (s) => ({ gold: GIFT[s.scenario] || 2 }),
+    win: { affection: 10 },
+    text: [(c, s) => `${s.scenario === 'sedlak' ? 'Pentle z jarmarku' : s.scenario === 'slechtic' ? 'Stříbrná spona' : 'Prsten se smaragdem'} ${g(c, 'ho', 'ji')} potěšil${s.scenario === 'sedlak' ? 'a' : ''} víc, než ${g(c, 'chtěl', 'chtěla')} dát najevo.`],
+  },
+  nam_tanec: {
+    label: 'Pozvat na tanec', roles: ['suitor'], yearly: true,
+    roll: { trait: 'strength', base: 0.5, scale: 0.04 },
+    win: { affection: 15, effects: { prestige: 1 } }, lose: { affection: -3 },
+    text: [(c) => `Tančili jste spolu, dokud muzikanti nepadli únavou. Celé okolí si toho všimlo — a ${c.name} taky.`,
+      (c, st) => `Při tanci jsi ${g(c, 'mu', 'jí')} ${R(st, 'šlápl', 'šlápla')} na nohu dvakrát. ${c.name} se smál${g(c, '', 'a')}, ale spíš tobě než s tebou.`],
+  },
+  nam_svest: {
+    label: 'Svést', roles: ['suitor'],
+    available: (c) => c.affection >= 35,
+    roll: { trait: 'eloquence', base: 0.35, scale: 0.05 },
+    win: { affection: 25 }, lose: { affection: -15, effects: { prestige: -2 } },
+    text: [(c) => `Když jste konečně osaměli, ${c.name} přestal${g(c, '', 'a')} odolávat. Od té noci se na tebe dívá jinak.`,
+      (c) => `${c.name} ${g(c, 'tě odstrčil', 'tě odstrčila')} a odešel${g(c, '', 'a')}. A do večera to věděli všichni, kdo to vědět neměli.`],
+  },
+  nam_ruka: {
+    label: 'Požádat o ruku', roles: ['suitor'],
+    available: (c) => c.affection >= 55,
+    roll: { trait: 'eloquence', base: 0.35, scale: 0.04, bonus: (c) => (c.affection - 55) / 120 },
+    win: { marry: true }, lose: { affection: -10 },
+    text: [(c, s) => `${c.name} řekl${g(c, '', 'a')} ano. ${R(s, 'Ženich', 'Nevěsta')} i ${g(c, 'ženich', 'nevěsta')} se těší na svatbu.`,
+      (c) => `${c.name} sklopil${g(c, '', 'a')} oči: „Ještě ne. Dej mi čas.“`],
+  },
   drby: {
     label: 'Vyptat se na drby', roles: ['spymaster'],
     roll: { trait: 'eloquence', base: 0.5, scale: 0.04 },
@@ -124,8 +173,9 @@ export const TOPICS = {
 
 /** Why the ruler cannot talk to this person now (null = can). */
 export function talkBlock(state, role) {
-  const c = state[role];
+  const c = personOf(state, role);
   if (!c || c.alive === false) return 'Mrtví už nemluví.';
+  if (kindOf(role) === 'child') return c.age < 4 ? 'Je to ještě malé dítě.' : 'S dětmi si promluvíš, až budou dědici.';
   if (role === 'heir' && c.age < 4) return 'Dědic je ještě malé dítě.';
   if (c.talkTurn === state.turn) return `Tohle období jste spolu už mluvili. Příště v dalším období.`;
   if (state.gameOver) return 'Kronika skončila.';
@@ -134,9 +184,9 @@ export function talkBlock(state, role) {
 
 /** Topics open with this person now: [{ key, def, block }] (block = why not, if any). */
 export function topicsFor(state, role) {
-  const c = state[role];
+  const c = personOf(state, role);
   return Object.entries(TOPICS)
-    .filter(([, t]) => t.roles.includes(role) && (!t.quirk || t.quirk === c.quirk) && (!t.available || t.available(c)))
+    .filter(([, t]) => t.roles.includes(kindOf(role)) && (!t.quirk || t.quirk === c.quirk) && (!t.available || t.available(c, state)))
     .map(([key, t]) => {
       let block = null;
       if (t.yearly && c.topicYear && c.topicYear[key] === state.year) block = 'Letos už jste o tom mluvili.';
@@ -150,18 +200,26 @@ export function topicsFor(state, role) {
 export function topicRollChoice(state, role, key) {
   const t = TOPICS[key];
   if (!t.roll) return null;
-  const c = state[role];
-  const cold = c.loyalty < 40 ? -0.1 : c.loyalty >= 70 ? 0.05 : 0;
+  const c = personOf(state, role);
+  const suitor = kindOf(role) === 'suitor';
+  const heart = suitor ? c.affection : c.loyalty;
+  const cold = (heart < 40 ? -0.1 : heart >= 70 ? 0.05 : 0) + (t.roll.bonus ? t.roll.bonus(c) : 0);
   return {
-    label: t.label, isRoll: true, baseChance: t.roll.base, traitKey: t.roll.trait, traitScale: t.roll.scale,
-    chanceBonus: cold ? () => cold : null, bonusLabel: cold < 0 ? 'Chladný vztah' : 'Důvěra',
+    label: t.label, isRoll: true, baseChance: typeof t.roll.base === 'function' ? t.roll.base(state) : t.roll.base,
+    traitKey: t.roll.trait, traitScale: t.roll.scale,
+    chanceBonus: cold ? () => cold : null, bonusLabel: suitor ? 'Náklonnost' : cold < 0 ? 'Chladný vztah' : 'Důvěra',
   };
 }
 
 /** How the person greets the ruler, by loyalty. */
 export function greeting(state, role) {
-  const c = state[role];
-  const title = roleLabel(role, c.gender, state.scenario);
+  const c = personOf(state, role);
+  if (kindOf(role) === 'suitor') {
+    if (c.affection >= 60) return `${c.name} se rozzáří, sotva tě uvidí. „Doufal${g(c, '', 'a')} jsem, že přijdeš.“`;
+    if (c.affection >= 30) return `${c.name} se usměje a upraví si vlasy. „Dobrý den.“`;
+    return `${c.name} tě zdvořile pozdraví a čeká, co řekneš.`;
+  }
+  const title = roleLabel(role, c.gender, state.scenario, state.flags);
   if (c.loyalty >= 70) return `${title} ${c.name} se usměje a odloží práci. „Pro tebe mám vždycky čas.“`;
   if (c.loyalty >= 40) return `${title} ${c.name} se ukloní. „Čím mohu posloužit?“`;
   return `${title} ${c.name} se zvedne jen napůl a dívá se kamsi za tebe. „Ano?“`;
@@ -172,13 +230,30 @@ export function greeting(state, role) {
  * (true for topics without one). Returns { text, notes, delta }.
  */
 export function holdTalk(state, role, key, success) {
-  const c = state[role];
+  const c = personOf(state, role);
   const t = TOPICS[key];
   const res = success ? t.win : t.lose || t.win;
   const notes = [];
   const cost = t.cost ? t.cost(state) : null;
   for (const [k, v] of Object.entries(cost || {})) state.resources[k] = clamp(state.resources[k] - v);
-  let delta = res.loyalty || 0;
+  // a suitor's heart, a court member's loyalty
+  let delta = res.loyalty || res.affection || 0;
+  if (kindOf(role) === 'suitor') {
+    c.affection = clamp(c.affection + (res.affection || 0));
+    for (const [k, v] of Object.entries(res.effects || {})) if (state.resources[k] !== undefined) state.resources[k] = clamp(state.resources[k] + v);
+    const text = (success ? t.text[0] : t.text[1] || t.text[0])(c, state, role);
+    c.talkTurn = state.turn;
+    if (t.yearly) { c.topicYear = c.topicYear || {}; c.topicYear[key] = state.year; }
+    bumpStat(state, 'talks');
+    if (res.marry) {
+      // the suitor becomes the spouse: the sheet switches to them
+      marry(state, Number(String(role).split(':')[1]));
+      state.spouse.talkTurn = state.turn;
+      return { text, delta: 0, notes, role: 'spouse' };
+    }
+    return { text, delta, notes, role };
+  }
+  if (res.child) startPregnancy(state);
   if (key === 'dar' && c.quirk === 'chamtivy') delta += 4;
   // a promise to the ambitious is paid in loyalty now and remembered
   if (res.promise) { c.promised = state.turn; }
@@ -210,7 +285,7 @@ export function holdTalk(state, role, key, success) {
   c.history.push({ year: state.year, season: state.seasonIndex, title: `Rozhovor: ${t.label.toLowerCase()}`, choice: null, outcome: t.roll ? (success ? 'success' : 'failure') : null, delta: delta || null });
   if (c.history.length > 40) c.history.shift();
   bumpStat(state, 'talks');
-  return { text, delta, notes };
+  return { text, delta, notes, role };
 }
 
 /** The gossip: who at court is least loyal, and what the great houses think. */
@@ -218,7 +293,7 @@ function gossip(state, role) {
   const others = COURT_ROLES.filter((r) => r !== role && state[r] && state[r].alive !== false && r !== 'heir');
   const worst = others.sort((a, b) => state[a].loyalty - state[b].loyalty)[0];
   const w = state[worst];
-  const who = `${roleLabel(worst, w.gender, state.scenario).toLowerCase()} ${w.name}`;
+  const who = `${roleLabel(worst, w.gender, state.scenario, state.flags).toLowerCase()} ${w.name}`;
   let line = w.loyalty < 45
     ? `„Dej si pozor na ${who}. Mluví o tobě ve sklepě, když myslí, že nikdo neposlouchá.“`
     : `„Na dvoře je klid. Nejméně nadšený je ${who}, ale nic víc za tím nehledej.“`;

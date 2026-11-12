@@ -94,8 +94,15 @@ const PEASANT_ROLE_LABELS = {
   spymaster: ['Krčmář', 'Krčmářka'],
 };
 
-export function roleLabel(role, gender, scenario) {
+// once the player is the reeve (flags.s_rychtar), the old reeve's seat at the table is the alderman's
+const REEVE_ROLE_LABELS = {
+  chancellor: ['Konšel', 'Konšelka'],
+};
+
+/** Title of a court seat; pass state.flags so a peasant reeve's council reads right. */
+export function roleLabel(role, gender, scenario, flags) {
   const pair = (scenario === 'slechtic' && NOBLE_ROLE_LABELS[role])
+    || (scenario === 'sedlak' && flags && flags.s_rychtar && REEVE_ROLE_LABELS[role])
     || (scenario === 'sedlak' && PEASANT_ROLE_LABELS[role]) || ROLE_LABELS[role];
   return pair ? pair[gender === 'female' ? 1 : 0] : '';
 }
@@ -173,9 +180,70 @@ const PEASANT_BIOS = {
   },
 };
 
+// the alderman who sits beside a peasant reeve (flags.s_rychtar)
+const REEVE_BIOS = {
+  chancellor: {
+    origin: [
+      'Sedává v obecní radě od mládí a obecní knihu zná líp než kdokoli jiný ve vsi.',
+      'Je {synem|dcerou} bývalého rychtáře. Na pečetidlo nedosáhl{|a}, na konšelskou lavici ano.',
+      'Má největší grunt pod kostelem a slovo, na které ves dá.',
+    ],
+    nature: PEASANT_BIOS.chancellor.nature,
+  },
+};
+
+// a lesser noble's household: the steward, the captain of the retinue and the confidant
+const NOBLE_BIOS = {
+  chancellor: {
+    origin: [
+      'Je {synem|dcerou} purkrabího ze sousední tvrze a správu panství má v krvi: ví, kolik nese každá louka a kolik se z ní dá ukrást.',
+      'Býval{|a} písařem u zemského soudu v Brodné a zná každou listinu, kterou kdo kdy na panství zpečetil.',
+      'Vyrostl{|a} jako {chudý zeman|chudá zemanka} bez půdy. Cizí panství spravuje tak pečlivě, jako by bylo {jeho|její}.',
+      'Spravoval{|a} statky kláštera na útesu, dokud {ho|ji} opat nepustil za dobré slovo a sud vína.',
+    ],
+    nature: [
+      'Počítá na vrubech i na papíře a obojí sedí do groše.',
+      'Je opatrn{ý|á} a raději odloží žně o den, než by riskoval{|a} jedinou měřici obilí.',
+      'S poddanými mluví přísně, s vrchností uctivě a s účty upřímně.',
+      'Pamatuje si každý dluh, který rod dluží, a ještě lépe každý, který dluží rodu.',
+    ],
+  },
+  marshal: {
+    origin: [
+      'Sloužil{|a} jako žoldnéř v Marcích a domů se vrátil{|a} s jizvami a bez peněz.',
+      'Je {mladším synem|mladší dcerou} zemana ze Sokolího hvozdu. Půdu zdědil starší bratr, {jemu|jí} zbyl meč.',
+      'Velel{|a} hradní stráži v Brodné, dokud se nepohádal{|a} s purkrabím o žold.',
+      'Přišel{|a} s potulnou rotou a zůstal{|a}, protože tu poprvé dostal{|a} žold včas.',
+    ],
+    nature: [
+      'Družina za {ním|ní} jde bez řečí, protože {ho|ji} nikdy neviděla couvnout.',
+      'Je drsn{ý|á} a přímočar{ý|á}. Sousední páni {ho|ji} nemají rádi a {jemu|jí} to nevadí.',
+      'Každé ráno cvičí s mečem na nádvoří, ať prší, nebo sněží.',
+      'Věří víc dobře nabroušené čepeli než pečetím a slibům.',
+    ],
+  },
+  spymaster: {
+    origin: [
+      'Je nemanželským dítětem zemana ze sousedství a brzy se naučil{|a}, že kdo ví víc, přežije.',
+      'Býval{|a} kupeckým faktorem v Brodné a dodnes si dopisuje s půlkou trhu.',
+      'Vyrůstal{|a} na tvrzi jako {panoš|komorná} a zná každý kout, kde se dá poslouchat.',
+      'Přišel{|a} odnikud s doporučujícím listem, který nikdo nedokáže přečíst celý.',
+    ],
+    nature: [
+      'Ví, kdo ze sousedů komu dluží a kdo s kým tajně jedná.',
+      'Usmívá se na hosty a nevěří nikomu z nich.',
+      'Nikdy nepíše, co může říct, a nikdy neříká, co může zamlčet.',
+      'Na každé hostině sedí u dveří a odchází poslední.',
+    ],
+  },
+};
+
 /** Background story of a court member; stable for the same person (seeded by name and role). */
-export function biography(c, role, dynastyName, scenario) {
-  const pool = (scenario === 'sedlak' && PEASANT_BIOS[role]) || BIOS[role];
+export function biography(c, role, dynastyName, scenario, flags) {
+  if (c.bio) return c.bio.replace('{dynasty}', dynastyName); // written down when the house rose: a life story does not change with a title
+  const pool = (scenario === 'sedlak' && flags && flags.s_rychtar && REEVE_BIOS[role])
+    || (scenario === 'sedlak' && PEASANT_BIOS[role])
+    || (scenario === 'slechtic' && NOBLE_BIOS[role]) || BIOS[role];
   if (!pool) return '';
   const h = hash(`${c.name}|${role}`);
   const origin = pool.origin[h % pool.origin.length];

@@ -218,8 +218,8 @@ export const FARM_BUILDINGS = {
     text: 'Ponk, pila a soustruh. V zimě se vyrábí na prodej.',
   },
   celednik: {
-    name: 'Čeledník', cost: { gold: 10 }, turns: 2, minLevel: 3,
-    yearly: { army: 2 },
+    name: 'Čeledník', cost: { gold: 10 }, turns: 2, minLevel: 2, // a serf needs hands too, not only a free man
+    yearly: { army: 3 },
     text: 'Světnice pro čeleď. Kde je kde spát, tam se najdou i ruce k práci.',
   },
   rybnik: {

@@ -11,6 +11,8 @@ const STORE = 'insanityKingdom.achievements';
 const towns = (s) => Object.entries(s.towns || {});
 const hasBuilt = (s, key) => towns(s).some(([, t]) => t.buildings.some((b) => b.key === key && b.ready && !b.base));
 const ending = (s, type) => s.gameOver && s.gameOver.type === type;
+// a promotion is a milestone of the chronicle (older saves ended on it instead)
+const reached = (s, type) => !!(s.milestones && s.milestones[type] !== undefined) || ending(s, type);
 const injuryWords = new Set(Object.values(INJURY_EPITHETS).flatMap(([m, f]) => [m, f]));
 
 // group: shown as sections in the hall · secret: name and text hidden until unlocked
@@ -23,9 +25,9 @@ export const ACHIEVEMENTS = [
   { key: 'predek', group: 'Rod', name: 'Jméno do kroniky', text: 'Předek dostal od kroniky přídomek.', test: (s) => (s.pastRulers || []).some((r) => r.epithet) },
   { key: 'zjizveny_predek', group: 'Rod', name: 'Ten, co ztratil…', text: 'Předek dostal přídomek podle svého zranění.', test: (s) => (s.pastRulers || []).some((r) => injuryWords.has(r.epithet)) },
   // the endings
-  { key: 'zlaty_vek', group: 'Cíle', name: 'Zlatý věk', text: 'Dovést království ke zlatému věku.', test: (s) => ending(s, 'golden_age') },
-  { key: 'korunovace', group: 'Cíle', name: 'Z tvrze na trůn', text: 'Jako šlechtic získat královskou korunu.', test: (s) => ending(s, 'crowned') },
-  { key: 'erb', group: 'Cíle', name: 'Erb a tvrz', text: 'Jako sedlák získat šlechtický stav.', test: (s) => ending(s, 'ennobled') },
+  { key: 'zlaty_vek', group: 'Cíle', name: 'Zlatý věk', text: 'Dovést království ke zlatému věku.', test: (s) => ending(s, 'golden_age') || !!(s.flags && s.flags.zlaty_vek) },
+  { key: 'korunovace', group: 'Cíle', name: 'Z tvrze na trůn', text: 'Ze šlechtického stavu se dostat na královský trůn.', test: (s) => reached(s, 'crowned') },
+  { key: 'erb', group: 'Cíle', name: 'Erb a tvrz', text: 'Ze sedláka se vypracovat ke šlechtickému erbu.', test: (s) => reached(s, 'ennobled') },
   { key: 'od_pluhu', group: 'Cíle', name: 'Od pluhu ke koruně', text: 'V jedné kronice dojít od sedláka až na královský trůn.', test: (s) => s.origin === 'sedlak' && s.scenario === 'panovnik' },
   // building
   { key: 'stavitel', group: 'Stavby', name: 'Stavitel', text: 'Dokončit v jedné kronice deset staveb.', test: (s) => stat(s, 'built') >= 10 },
