@@ -7,11 +7,13 @@ Portréty nápadnic a nápadníků (po svatbě se stanou tváří manžela/ky), 
 | Stav | Dávka | Co | Kusů | Kde se zobrazí |
 |---|---|---|---|---|
 | ✅ | R1 | Nápadnice a nápadníci ve vsi + malé děti | 12 | list postavy → Rodina, námluvy, manžel/ka |
-| ⏳ | R2 | Prolog a rodina | 12 | první karty hry, narození, dohazovač, schovanec, podzimní práce |
+| ✅ 9/12 | R2 | Prolog a rodina | 12 | první karty hry, narození, dohazovač, schovanec, podzimní práce |
 | ⏳ | R3 | Boj o trůn, kapitoly a zlatý věk | 9 | velké zlomy kariéry |
 | ⏳ | R4 | Svobodník | 10 | události svobodného sedláka |
 | ⏳ | R5 | Významný šlechtic | 12 | události velmože |
 | ⏳ | R6 | Nápadnice a nápadníci šlechtice a krále | 16 | námluvy ve vyšších stupních |
+
+**Dávka R2 (dodáno 9 z 12):** v zipu byly názvy souborů poprohazované a tři obrázky se opakovaly. Roztříděno podle obsahu, tři scény chybí → dávka **R2b** níže.
 
 **Celkem 71 obrázků v 6 dávkách** (seřazeno podle priority).
 
@@ -89,6 +91,36 @@ f_dohazovac.jpg — An old village matchmaker woman sitting at a table across fr
 f_schovanec.jpg — A tired woman in a travel cloak at a cottage door holding the hand of a small shivering orphan child with a bundle, the house owner looking at the child.
 s_prace_na_gruntu.jpg — Late autumn after the harvest: a farmer standing on a field boundary at sunset, a full barn behind, the edge of a forest to clear in front, the days getting shorter.
 s_chalupa.jpg — A poor peasant family carrying their few belongings to a tiny crooked cottage at the edge of a village, overgrown fields behind them, the first spade put into the ground.
+```
+
+---
+
+## Dávka R2b — tři chybějící scény z R2 (1:1, 3 ks)
+
+```
+Generate one separate image for each line below. Each line has a file name
+and a description. Return every image as its own file named exactly as the
+file name, and make sure each file shows exactly the scene described on its
+own line. Do not combine images into a grid or sprite sheet.
+
+Format: aspect ratio 1:1, 2048 x 2048 (square, not wide). Main subject in the
+centre and upper part of the image, the lower third darker and calm (text is
+shown over it). Keep the brightness even from top to bottom: no darker band
+or second picture pasted into the lower part.
+
+Style for every image: painted in the style of a dark-fantasy narrative RPG,
+muted oil painting with visible loose brushwork and subtle canvas texture,
+desaturated earthy palette of ochre, rust, olive green and dusty slate blue,
+soft chiaroscuro lighting, late-medieval Central European (Bohemian)
+setting of the 14th century, realistic proportions, similar in mood to
+"The Life and Suffering of Sir Brante". Avoid: anime, cartoon, 3D render,
+photography, oversaturated colours, airbrushed digital art, any text,
+letters, watermark or signature.
+
+Images:
+narozeni.jpg — Morning in a dim peasant bedroom after a long night: a midwife hands a swaddled newborn baby to an exhausted mother lying in bed, the father and an older woman lean in, candles burnt down to stubs.
+p_pan.jpg — A village green in spring: a lord on a horse with a small armed retinue rides slowly along a row of village farmers who stand with their caps in their hands, looking at each face.
+f_schovanec.jpg — A tired woman in a travel cloak stands at the door of a peasant cottage holding the hand of a small shivering orphan child with a little bundle; the owner of the house looks down at the child.
 ```
 
 ---
