@@ -23,6 +23,12 @@ export const FARM_EVENTS = [
         chronicle: 'Celý podzim se na gruntu kácelo a pálily se pařezy. Na jaře se bude orat o kus dál.',
       },
       {
+        label: 'Najmout čeledíny na příští rok',
+        requires: can('hire'), hintType: 'resource', hintKey: 'army',
+        decree: 'hire',
+        chronicle: 'Na grunt přišli noví čeledíni. Za mzdu a misku polévky — a ruce mají silné.',
+      },
+      {
         label: 'Přikoupit krávu',
         requires: can('cattle'), hintType: 'resource', hintKey: 'gold',
         decree: 'cattle',
@@ -51,6 +57,34 @@ export const FARM_EVENTS = [
         label: 'Odpočinout si, dokud je čas',
         hintType: 'trait', hintKey: 'patience',
         chronicle: 'Letos se na gruntu nic navíc nedělalo. Ruce si odpočinuly — grunt ne.',
+      },
+    ],
+  },
+
+  {
+    id: 's_chalupa',
+    scenario: 'sedlak', forced: true,
+    image: 'assets/events/uprchlici.jpg',
+    title: 'Chalupa na kraji vsi',
+    text: 'Grunt zpustl. Pole zarostla plevelem, dobytek je pryč a {lord.title} {lord.name} dal{L:|a} statek jinému hospodáři. Rodu {dynastyName} ale zůstala chalupa na kraji vsi, kus políčka za humny a pár lidí, kteří neodešli. Začíná se znovu, skoro od nuly. Podruhé už milost nepřijde.',
+    choices: [
+      {
+        label: 'Kousnout se a začít od prvního záhonu',
+        hintType: 'trait', hintKey: 'patience',
+        effects: { stability: 4 }, traitGain: 'patience',
+        chronicle: 'Rodina přestěhovala, co zbylo, do chalupy na kraji vsi. První záhon byl zrytý ještě ten den.',
+      },
+      {
+        label: 'Prosit sousedy o pomoc',
+        hintType: 'trait', hintKey: 'eloquence',
+        effects: { food: 8, prestige: -3 },
+        chronicle: 'Sousedé přinesli, co mohli. Pomoc se v Lipnici nezapomíná — ani dluh za ni.',
+      },
+      {
+        label: 'Jít sloužit na panský dvůr, dokud se nepostavíme na nohy',
+        hintType: 'resource', hintKey: 'favor',
+        effects: { favor: 10, food: 4, army: -2 },
+        chronicle: '{ruler.name} {R:šel|šla} sloužit na panský dvůr. Pán si to poznamenal; ruce na vlastním políčku chybí.',
       },
     ],
   },

@@ -94,6 +94,9 @@ export function beatRealm(state, key) {
       state.ruler.statusTier = 6;
       state.milestones = state.milestones || {};
       state.milestones.empire = state.turn;
+      // the imperial chapter card goes first (events_career.js)
+      if (state.pendingEvent) (state.eventQueue = state.eventQueue || []).unshift(state.pendingEvent);
+      state.pendingEvent = 'kapitola_cisar';
       text += ` Tři koruny na jedné hlavě: ${state.ruler.name} ${state.ruler.gender === 'female' ? 'se dává korunovat císařovnou' : 'se dává korunovat císařem'}.`;
     }
     return { conquered: true, text };

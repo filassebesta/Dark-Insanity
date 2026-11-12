@@ -25,7 +25,7 @@ export const ACHIEVEMENTS = [
   { key: 'predek', group: 'Rod', name: 'Jméno do kroniky', text: 'Předek dostal od kroniky přídomek.', test: (s) => (s.pastRulers || []).some((r) => r.epithet) },
   { key: 'zjizveny_predek', group: 'Rod', name: 'Ten, co ztratil…', text: 'Předek dostal přídomek podle svého zranění.', test: (s) => (s.pastRulers || []).some((r) => injuryWords.has(r.epithet)) },
   // the endings
-  { key: 'zlaty_vek', group: 'Cíle', name: 'Zlatý věk', text: 'Dovést království ke zlatému věku.', test: (s) => ending(s, 'golden_age') },
+  { key: 'zlaty_vek', group: 'Cíle', name: 'Zlatý věk', text: 'Dovést království ke zlatému věku.', test: (s) => ending(s, 'golden_age') || !!(s.flags && s.flags.zlaty_vek) },
   { key: 'korunovace', group: 'Cíle', name: 'Z tvrze na trůn', text: 'Ze šlechtického stavu se dostat na královský trůn.', test: (s) => reached(s, 'crowned') },
   { key: 'erb', group: 'Cíle', name: 'Erb a tvrz', text: 'Ze sedláka se vypracovat ke šlechtickému erbu.', test: (s) => reached(s, 'ennobled') },
   { key: 'od_pluhu', group: 'Cíle', name: 'Od pluhu ke koruně', text: 'V jedné kronice dojít od sedláka až na královský trůn.', test: (s) => s.origin === 'sedlak' && s.scenario === 'panovnik' },

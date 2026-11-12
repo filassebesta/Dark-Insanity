@@ -4,7 +4,7 @@
 // consequences (flags, echoes) are invisible to it, as they are to a player.
 //   import { smartPick } from './smart.mjs';  const i = smartPick(E, state, event);
 
-const END_VALUE = { ennobled: 120, crowned: 120, executed: -400, exile: -250, expelled: -250 };
+const END_VALUE = { ennobled: 120, crowned: 120, golden_age: 0, executed: -400, exile: -250, expelled: -250 };
 
 /** How much one point of a resource is worth right now: scarce resources matter more. */
 function weight(state, key) {

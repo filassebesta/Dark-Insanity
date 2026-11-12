@@ -214,4 +214,114 @@ export const CAREER_EVENTS = [
       },
     ],
   },
+
+  // ---------- chapter cards for the titles inside a stage (engine.js TIER_CHAPTERS, realms.js) ----------
+  {
+    id: 'kapitola_svoboda',
+    scenario: 'sedlak', forced: true, free: true,
+    image: 'assets/events/doziny.jpg',
+    title: 'Svobodní',
+    text: 'V truhle leží listina s panskou pečetí a v ní stojí, že rod {dynastyName} už nikomu nepatří. Roboty je konec; dávky se platí v penězích a kdo chce, může jít, kam ho nohy nesou. Ve vsi se na tebe dívají jinak — jedni s obdivem, druzí se závistí. A {lord.title} {lord.name} si dobře pamatuje, že {R:jsi mu utekl|jsi mu utekla} z ruky.',
+    choices: [
+      {
+        label: 'Uspořádat hostinu pro celou ves',
+        hintType: 'resource', hintKey: 'prestige',
+        effects: { gold: -4, prestige: 5 },
+        chronicle: 'Na gruntu se slavilo do rána. Kdo přišel, ten si to pamatuje — a kdo nepřišel, taky.',
+      },
+      {
+        label: 'Hned zítra zase na pole — svoboda se musí uživit',
+        hintType: 'trait', hintKey: 'patience',
+        effects: { food: 4, stability: 3 },
+        chronicle: 'Žádné slavnosti. Svobodný sedlák orá stejně jako nevolník, jen pro sebe.',
+      },
+      {
+        label: 'Najmout první čeledíny za mzdu',
+        requires: (s) => s.resources.gold >= 8,
+        hintType: 'resource', hintKey: 'army',
+        effects: { gold: -8, army: 6 },
+        chronicle: 'Na grunt přišli první lidé, kteří tu pracují za groše, ne z povinnosti.',
+      },
+    ],
+  },
+  {
+    id: 'kapitola_velmoz',
+    scenario: 'slechtic', forced: true, free: true,
+    image: 'assets/events/n_povyseni.jpg',
+    title: 'Mezi velmoži',
+    text: 'Rod {dynastyName} sedí na sněmu mezi nejmocnějšími pány země. Ti, kdo se dřív smáli skokanovi, teď posílají dary a nabízejí sňatky. Výš už vede jen jedna cesta — a všichni u dvora vědí, kam se díváš. {king.Title} {king.name} taky.',
+    choices: [
+      {
+        label: 'Ujistit krále o své věrnosti',
+        hintType: 'resource', hintKey: 'favor',
+        effects: { favor: 8, legitimacy: -2 },
+        chronicle: '{ruler.name} {R:poklekl|poklekla} před trůnem a přísahal{R:|a} věrnost. Dvůr si oddechl. Zatím.',
+      },
+      {
+        label: 'Pozvat hlavy ostatních rodů na hostinu',
+        hintType: 'trait', hintKey: 'eloquence',
+        effects: { gold: -10 }, houseEffects: { '*': { attitude: 6 } },
+        chronicle: 'U stolu rodu {dynastyName} se sešly všechny velké rody. Mluvilo se o lovu, o počasí — a o králově zdraví.',
+      },
+      {
+        label: 'Začít tiše shromažďovat muže a zbraně',
+        hintType: 'resource', hintKey: 'army',
+        effects: { gold: -8, army: 6, favor: -4 },
+        chronicle: 'Do zbrojnice tvrze přibyla kopí a do kasáren muži. Kdo se ptá proč, dostane odpověď o lapcích na cestách.',
+      },
+    ],
+  },
+  {
+    id: 'kapitola_cisar',
+    scenario: 'panovnik', forced: true, free: true,
+    image: 'assets/events/kapitola_koruna.jpg',
+    title: 'Tři koruny',
+    text: 'Na sametu před oltářem leží tři koruny a biskup je zvedá jednu po druhé. {ruler.name} z rodu {dynastyName} vládne Vlčímu Údělu i dobytým zemím za horami a za hvozdem. Rod, který kdysi platil dávky, teď přijímá hold od králů. Takovou říši je ale těžší udržet než získat.',
+    choices: [
+      {
+        label: 'Dát dobytým zemím jejich vlastní práva',
+        hintType: 'trait', hintKey: 'patience',
+        effects: { gold: -10, stability: 4 }, realm: { east: { attitude: 12 }, north: { attitude: 12 } },
+        chronicle: 'Dobyté země si ponechaly své zákony a zvyky. Daně platí koruně, srdce zůstala jejich.',
+      },
+      {
+        label: 'Vládnout všem jednou rukou',
+        hintType: 'trait', hintKey: 'strength',
+        effects: { prestige: 8, gold: 6 }, realm: { east: { attitude: -8 }, north: { attitude: -8 } },
+        chronicle: 'Jeden zákon, jedna daň, jeden pán. Úředníci z Vlčího Údělu odjeli do nových zemí a nikdo je tam nevítal.',
+      },
+    ],
+  },
+  {
+    id: 'zlaty_vek',
+    scenario: 'panovnik', forced: true,
+    image: 'assets/endings/ending_golden_age.jpg',
+    title: 'Zlatý věk',
+    text: 'Tři roky míru, plných sýpek a věrných krajů. Kronikáři už píší o zlatém věku rodu {dynastyName} a v krčmách se zpívá o {R:moudrém králi|moudré královně} z rodu, na který si ještě nedávno nikdo nevzpomněl. Je to vrchol, na kterém se dá s ctí skončit. Za hranicemi ale leží další koruny — a sláva, která nic nechce, se rychle stává vzpomínkou.',
+    choices: [
+      {
+        label: 'Uzavřít kroniku na vrcholu slávy',
+        hintType: 'trait', hintKey: 'patience',
+        hiddenEffects: { setFlag: 'zlaty_vek' },
+        endGame: 'golden_age',
+        chronicle: 'Kronika rodu {dynastyName} končí zlatým věkem.',
+      },
+      {
+        label: 'Říše čeká — vládnout dál',
+        requires: (s) => !!s.realms && Object.values(s.realms).filter((r) => r.owner === 'player').length < 2,
+        hintType: 'trait', hintKey: 'strength',
+        hiddenEffects: { setFlag: 'zlaty_vek' },
+        effects: { prestige: 5 },
+        ambition: 'cisarstvi',
+        chronicle: '{ruler.name} se nespokojil{R:|a} se zlatým věkem. Pohled koruny se obrátil za hranice.',
+      },
+      {
+        label: 'Vládnout dál a střežit, co bylo dobyto',
+        hintType: 'trait', hintKey: 'intelligence',
+        hiddenEffects: { setFlag: 'zlaty_vek' },
+        effects: { stability: 3 },
+        chronicle: 'Kronika pokračuje. Zlatý věk se nevyhlašuje, ten se musí udržet.',
+      },
+    ],
+  },
 ];

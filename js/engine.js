@@ -1,6 +1,7 @@
 import { SEASONS, TERRAIN_DEFS, NOBLE_HOUSES, PEASANT_HOME, clamp, randomName, randInt, tierTitle, bumpStat, TRAIT_DEFS, RESOURCE_DEFS, resourceLabel } from './data.js';
 import { makeChronicleEntry, inheritTraits, promote } from './state.js';
 import { ageRealms, realmIncome, realmRulerLabel, REALMS } from './realms.js';
+import { THRONE_STEPS } from './events_throne.js';
 import { EVENTS, QUIET_EVENTS } from './events.js';
 import { roleLabel, QUIRK_ROLES, randomQuirk, quirkLabel } from './court.js';
 import { processTrade, resolveIncident, resolveOffer, addTradeMod, ensureTrade, cargoTokens, GOODS, MAX_STOCK } from './trade.js';
@@ -356,6 +357,7 @@ function applyNobleEffects(state, fx, notes) {
 
 export const NOBLE_ENDINGS = {
   crowned: (s) => `${s.ruler.name} z rodu ${s.dynastyName} usedá na trůn. Rod, který začínal s jedinou tvrzí na pobřeží, teď vládne celé zemi.`,
+  golden_age: () => 'Vaše vláda přinesla království dlouhotrvající prosperitu a mír — zlatý věk, na který budou kronikáři vzpomínat po staletí.',
   executed: (s) => `${s.flags && s.flags.rebellion ? 'Povstání proti koruně bylo zlomeno' : 'Spiknutí bylo odhaleno'}. ${s.ruler.name} končí na popravišti a jméno rodu ${s.dynastyName} je vymazáno z listin.`,
   ennobled: (s) => `${s.ruler.name} z rodu ${s.dynastyName} {R:povstal|povstala} jako {R:šlechtic|šlechtična}. Rod, který oral cizí pole, bude mít vlastní erb a vlastní tvrz.`,
   expelled: (s) => `Pán ztratil s rodem ${s.dynastyName} trpělivost. Grunt dostal jiný hospodář a ${s.ruler.name} odchází s rodinou a uzlíkem na cestu, která nikam nevede.`,
@@ -376,6 +378,7 @@ function crownNewKing(state) {
     reign: (old.reign || 1) + 1,
   };
   if (isNoble(state)) state.resources.favor = clamp(Math.round((state.resources.favor + 50) / 2));
+  state.throneReset = state.turn;
 }
 
 /** A forced event that must not push out another one already waiting (a chapter card, a war's end). */
@@ -397,8 +400,16 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
     if (fx.power) r.power = clamp(r.power + fx.power);
   }
   if (branch.setTier && branch.setTier !== state.ruler.statusTier) {
+    const rising = branch.setTier > state.ruler.statusTier;
     state.ruler.statusTier = branch.setTier;
+    if (rising) (state.milestones = state.milestones || {})[`tier${branch.setTier}`] = state.turn;
     notes.push({ text: `Nový titul: ${tierTitle(branch.setTier, state.ruler.gender)}`, tone: 'pos' });
+    // freedom and a great lord's rank open chapters of their own (coat of arms and crown: promote in state.js)
+    const card = rising && TIER_CHAPTERS[branch.setTier];
+    if (card && !(state.flags[`kapitola_${branch.setTier}`])) {
+      state.flags[`kapitola_${branch.setTier}`] = true;
+      queueEvent(state, card);
+    }
   }
   if (branch.newKing && state.king) {
     crownNewKing(state);
@@ -434,6 +445,44 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
     notes.push({ text: promotion === 'ennobled' ? 'Nová kapitola: šlechtický stav' : 'Nová kapitola: koruna', tone: 'pos' });
   }
   return notes;
+}
+
+const TIER_CHAPTERS = { 2: 'kapitola_svoboda', 4: 'kapitola_velmoz' };
+
+// ---------- the struggle for the throne (events_throne.js) ----------
+
+const ARC_START_AFTER = 24; // seasons as a great lord before the king falls (six years)
+
+/**
+ * A great lord does not wait for the king to die of old age: after six years among the great
+ * (or once the king nears sixty) the king falls, a regency forms, the succession is disputed,
+ * and a few years later the crown is decided in n_smrt_krale. state.throneArc = { step, next }.
+ */
+function processThroneArc(state) {
+  const k = state.king;
+  if (state.scenario !== 'slechtic' || state.ruler.statusTier < 4 || !k || !k.alive) return;
+  state.milestones = state.milestones || {};
+  if (state.milestones.tier4 === undefined) state.milestones.tier4 = state.turn; // a save from before this storyline
+  // a new king (the old one died, the claim failed) starts the clock again
+  if (state.throneArc && state.throneArc.reign !== k.reign) state.throneArc = null;
+  if (!state.throneArc) {
+    const waited = state.turn - Math.max(state.milestones.tier4, state.throneReset ?? -Infinity);
+    if (waited < ARC_START_AFTER && k.age < 60) return;
+    state.throneArc = { step: 0, next: state.turn, reign: k.reign };
+  }
+  const arc = state.throneArc;
+  if (arc.done || state.turn < arc.next || state.pendingEvent || state.war) return; // one thing at a time; not while the army is out
+  if (arc.step < THRONE_STEPS.length) {
+    state.pendingEvent = THRONE_STEPS[arc.step];
+    arc.step += 1;
+    arc.next = state.turn + randInt(4, 7);
+    return;
+  }
+  // the end of the storyline: the king does not rise again
+  k.alive = false;
+  arc.done = true;
+  state.throneReset = state.turn; // a successor gets six years before the next struggle
+  state.pendingEvent = 'n_smrt_krale';
 }
 
 // endings that open the next stage of the same chronicle (state.js promote)
@@ -487,7 +536,8 @@ export const DECREES = {
 
 // a peasant has no province to command, only the farm and the village
 export const FARM_DECREES = {
-  clear: { label: 'Vyklučit kus lesa', text: 'Nové pole za cenu potu a jedné zimy.', effects: { stability: 6, food: 3, army: -2 } },
+  clear: { label: 'Vyklučit kus lesa', text: 'Nové pole za cenu potu a jedné zimy.', effects: { stability: 6, food: 3, army: -1 } },
+  hire: { label: 'Najmout čeledíny', text: 'Dva tři páry rukou navíc za mzdu a stravu.', effects: { gold: -8, army: 6 } },
   market: { label: 'Prodat přebytky na trhu', text: 'Obilí a sýry na trh do Brodné.', effects: { food: -10, gold: 6 } },
   cattle: { label: 'Přikoupit dobytek', text: 'Kráva navíc znamená mléko i tah.', effects: { gold: -10, food: 4, stability: 5 } },
   neighbours: { label: 'Pomoci sousedům', text: 'Půjčit ruce a sdílet zásoby.', effects: { food: -5, prestige: 6 } },
@@ -839,6 +889,7 @@ export function pickNextEvent(state) {
 // A peasant lives off the farm: the land (Grunt) and the hands that work it (Čeleď).
 // Every autumn the lord takes his due: labour and grain from a serf, coin from a freeman.
 function processPeasantEconomy(state) {
+  // (an empty larder costs the farm 3 a season, not 5: hunger should hurt, not end the chronicle in a winter)
   const r = state.resources;
   const free = state.ruler.statusTier >= 2;
   const SEASON_FOOD = [-2, 1, 7, -6];
@@ -854,7 +905,7 @@ function processPeasantEconomy(state) {
   r.food = clamp(r.food + foodIncome);
   if (r.army < 15 && state.turn % 2 === 0) r.stability = clamp(r.stability - 1); // too few hands for the fields
   else if (r.food >= 20 && r.favor >= 40 && r.stability < 65 && state.turn % 2 === 1) r.stability = clamp(r.stability + 1);
-  if (r.food <= 5) r.stability = clamp(r.stability - 5);
+  if (r.food <= 5) r.stability = clamp(r.stability - 3);
   if (r.prestige > 50 && state.turn % 2 === 1) r.prestige -= 1;
   if (r.faith !== 50 && state.turn % 3 === 0) r.faith += r.faith > 50 ? -1 : 1;
   // a lord forgets good service quickly and remembers nothing else
@@ -1088,6 +1139,15 @@ export function checkEndConditions(state) {
   if (state.gameOver) return state.gameOver;
   if (isPeasant(state)) {
     if (state.resources.favor <= 0) return { type: 'expelled', text: NOBLE_ENDINGS.expelled(state) };
+    if (state.resources.stability <= 0 && !state.flags.chalupa) {
+      // the first ruin is not the end: the lord gives the family a cottage at the edge of the village
+      state.flags.chalupa = true;
+      const r = state.resources;
+      Object.assign(r, { stability: 30, gold: 0, food: Math.max(r.food, 15), army: Math.max(r.army, 12), prestige: clamp(r.prestige - 10) });
+      state.chronicle.push(makeChronicleEntry(state, `Grunt rodu ${state.dynastyName} zpustl. Rodina dostala chalupu na kraji vsi a začíná znovu.`));
+      queueEvent(state, 's_chalupa');
+      return null;
+    }
     if (state.resources.stability <= 0) {
       return { type: 'ruined', reason: 'stability', text: `Grunt zpustl. Pole zarostla, dobytek pošel a rod ${state.dynastyName} odchází žebrat po cestách.` };
     }
@@ -1112,9 +1172,7 @@ export function checkEndConditions(state) {
   if ((capital && capital.lost) || provincesLeft === 0) {
     return { type: 'conquest', text: 'Nepřátelská vojska obsadila vaše hlavní město. Vaše království padlo.' };
   }
-  if (state.goldenAgeStreak >= GOLDEN_AGE_TARGET) {
-    return { type: 'golden_age', text: 'Vaše vláda přinesla království dlouhotrvající prosperitu a mír — zlatý věk, na který budou kronikáři vzpomínat po staletí.' };
-  }
+  // a golden age no longer ends the chronicle by itself: the event 'zlaty_vek' lets the player end it in glory or play on
   return null;
 }
 
@@ -1192,6 +1250,12 @@ export function advanceTurn(state) {
   tradeNews.unshift(...processWar(state));
   // now and then the ruler is asked to set a goal for the coming years
   if (!state.pendingEvent && readyToOffer(state)) state.pendingEvent = 'ambice';
+  processThroneArc(state);
+  // three years of prosperity: the chronicle may end in glory, or the king reaches for more (once in ten years)
+  if (state.scenario === 'panovnik' && state.goldenAgeStreak >= GOLDEN_AGE_TARGET && state.turn - (state.goldenOffered ?? -99) >= 40) {
+    state.goldenOffered = state.turn;
+    queueEvent(state, 'zlaty_vek');
+  }
   // after the harvest a farm that got no extra work this year gets its chance in the story
   // (autumn, or winter when the autumn was taken by something more pressing)
   if (!state.pendingEvent && isPeasant(state) && state.seasonIndex >= 2 && decreeAvailable(state)) state.pendingEvent = 's_prace_na_gruntu';
