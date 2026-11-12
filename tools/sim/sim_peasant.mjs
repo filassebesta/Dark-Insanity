@@ -1,6 +1,7 @@
 const root = new URL('../../js/', import.meta.url).href;
 const { createNewGame } = await import(root + 'state.js');
 const E = await import(root + 'engine.js');
+const { EVENTS } = await import(root + 'events.js');
 const runs = +(process.argv[2] || 400), AMB = +(process.argv[3] || 0.6);
 const ends = {}, seen = {}, lens = [], tiers = {}; let errors = 0, freedAt = [];
 const WANT = ['Zaplatit pánovi plnou cenu', 'Smlouvat o cenu', 'Koupit tvrz a žádat o erb', 'Pokleknout a přijmout pás', 'Vrhnout se do první řady', 'Jít osobně', 'Koupit pole', 'Ucházet se o úřad'];
@@ -32,4 +33,5 @@ lens.sort((a, b) => a - b); freedAt.sort((a, b) => a - b);
 console.log('years median', (lens[runs >> 1] / 4).toFixed(1), 'p10', (lens[runs * 0.1 | 0] / 4).toFixed(1), 'p90', (lens[runs * 0.9 | 0] / 4).toFixed(1));
 console.log('endings', JSON.stringify(ends), 'tiers', tiers, 'errors', errors, 'freed', freedAt.length, 'median freed year', freedAt.length ? (freedAt[freedAt.length >> 1] / 4).toFixed(1) : '-');
 console.log('top', Object.entries(seen).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, v]) => k + ':' + v).join(' '));
-console.log('never', Object.keys(seen).length);
+const pool = EVENTS.filter((e) => (e.scenarios || [e.scenario]).includes('sedlak') && !e.forced).map((e) => e.id);
+console.log('distinct events seen', Object.keys(seen).length, '· never seen:', pool.filter((id) => !seen[id]));

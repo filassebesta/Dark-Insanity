@@ -3,12 +3,11 @@ const { createNewGame } = await import(root + 'state.js');
 const E = await import(root + 'engine.js');
 const T = await import(root + 'trade.js');
 const scen = process.argv[2] || 'panovnik', runs = +(process.argv[3] || 200), trade = process.argv[4] !== 'notrade';
-const ends = {}, lens = [], stats = { sent: 0, delivered: 0, incidents: 0, goldFromTrade: 0 };
+const ends = {}, lens = [], stats = { sent: 0, delivered: 0, incidents: 0 };
 let errors = 0;
 for (let r = 0; r < runs; r++) {
   const st = createNewGame('A', 'B', 'male', scen);
   for (let t = 0; t < 400; t++) {
-    const g0 = st.resources.gold;
     const res = E.advanceTurn(st);
     if (res.tradeNews) stats.delivered += res.tradeNews.filter((n) => n.includes('vrátila')).length;
     if (res.gameOver) { ends[res.gameOver.type] = (ends[res.gameOver.type] || 0) + 1; break; }

@@ -17,8 +17,9 @@ vlastník souboru (viz `docs/tym/README.md`).
 1. **Kontext:** přečti brief (`docs/tym/briefy/NNN-*.md`) — hlavně akceptační
    kritéria a sekce Implementace/Grafika. Zjisti rozsah změn:
    ```bash
-   git status --short && git diff --stat && git diff
+   git status --short --untracked-files=all && git diff --stat && git diff
    ```
+   `git diff` nevidí nové (untracked) soubory — ty přečti celé.
 2. **Automatické kontroly — vždy všechny, i když „se to netýká“:**
    ```bash
    node tools/check/validate.mjs               # 0 chyb, jinak FAIL
@@ -28,10 +29,23 @@ vlastník souboru (viz `docs/tym/README.md`).
    node tools/sim/sim_trade.mjs sedlak 200
    node tools/check/smoke.mjs 40 <scratchpad>  # skutečné UI ve 3 scénářích
    ```
+   Délka: simulace po ~3 s, smoke test 40 kol ~45 s. Kratší smoke (20 kol) jen na
+   rychlou průběžnou kontrolu, verdikt PASS vždy se 40. Když Playwright/Chromium
+   chybí, smoke označ „nespuštěno“ a verdikt nejvýš „PASS bez UI testu“ — nikdy čistý PASS.
+
+   **Tolerance:** výsledky simulací kolísají mezi běhy (medián délky hry ±5 let,
+   podíly konců ±4 p. b.). Pokud je výsledek mimo rozmezí z briefu nebo z HANDOFF
+   kap. 6, spusť simulaci ještě 2× a hlas posun teprve, když je mimo ve většině běhů
+   (víc než ±5 p. b.). `sim_trade` hraje náhodně bez ambicí — nesrovnávej ho se
+   `sim_peasant`/`sim_noble`, ale se sebou samým: `sim_trade <scénář> 200` proti
+   `sim_trade <scénář> 200 notrade`. Obchodní události `o_*` padají jen s obchodujícím
+   botem, v `sim_peasant` jsou v „never seen“ očekávaně.
    `errors` v simulacích > 0 = FAIL. Porovnej rozdělení konců s čísly v briefu a v
    `docs/HANDOFF.md` kap. 6; výrazný posun bez záměru = chyba vyvážení.
-   Zkontroluj, že se nové události v simulacích **opravdu objevují** (výpis
-   `event frequency`) — událost, která nepadne nikdy, je chyba.
+   Zkontroluj, že se nové události v simulacích **opravdu objevují** (`sim.mjs`:
+   `event frequency`, `sim_noble`/`sim_peasant`: `never seen`) — událost, která
+   nepadne nikdy, je chyba (výjimka: krize a ozvěny, které vyžadují cílené chování;
+   ty ověř vynucením přes `state.pendingEvent`).
 3. **Code review změněných řádků** — hledej hlavně:
    - efekty s neexistujícím klíčem, `requires`, které nikdy neplatí / platí vždy,
      volby, kde hráč může zůstat bez možnosti
@@ -43,9 +57,18 @@ vlastník souboru (viz `docs/tym/README.md`).
    - porušení pravidel uživatele: viditelné důsledky voleb, změna hlavního menu,
      červené zvýraznění, screenshoty v repozitáři (`git status` na `*.png`)
 4. **Cílený test** chování z akceptačních kritérií, které automatika nepokryje —
-   napiš krátký node skript nebo Playwright skript do scratchpadu (vzor: moduly lze
-   importovat přímo, `createNewGame(...)`, nastavit `state.pendingEvent = '<id>'`,
-   `advanceTurn`, `resolveChoice` a kontrolovat stav). Podívej se na screenshoty (Read).
+   napiš krátký node skript nebo Playwright skript do scratchpadu. Vzor:
+   ```js
+   const R = 'file:///<absolutní cesta k repozitáři>/js/';   // relativní cesta ze scratchpadu nefunguje
+   const { createNewGame } = await import(R + 'state.js');
+   const E = await import(R + 'engine.js');
+   const st = createNewGame('A', 'B', 'female', 'sedlak');
+   st.pendingEvent = '<id>';                       // vynutí událost v příštím kole
+   const ev = E.advanceTurn(st).event;
+   if (ev.type === 'route') E.resolveRouteChoice(st, ev, 'forest');   // route události nemají choices
+   else E.resolveChoice(st, ev, 0);
+   ```
+   Podívej se na screenshoty ze smoke testu (Read).
 5. **Každou chybu zreprodukuj** dřív, než ji nahlásíš. Hypotéza bez důkazu patří do
    „Podezření“, ne mezi chyby.
 
@@ -65,4 +88,6 @@ Producentovi vrať krátce česky: verdikt, počet chyb podle závažnosti, komu
 předat. **PASS** dej jen tehdy, když prošly všechny automatické kontroly a všechna
 akceptační kritéria; minor chyby mohou projít jen se souhlasem producenta.
 Pokud brief neexistuje (např. hlášení chyby od uživatele), výsledek jen vrať
-v odpovědi se stejnou strukturou.
+v odpovědi se stejnou strukturou; „Ověřená kritéria“ nahraď popisem, co přesně jsi
+ověřil. Vlastník chyb v `tools/` je `game-coder`, v textech `lore-designer`,
+v `css/` a `assets/` `graphic-designer`.
