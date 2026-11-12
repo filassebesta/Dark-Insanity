@@ -16,25 +16,28 @@ export const WORLD_IMAGE = 'assets/map/world_map.jpg';
 export const WORLD_W = 1264;
 export const WORLD_H = 848;
 
-// shared borders, so neighbouring lands meet without gaps
-const HOME_NORTH = [[240, 250], [330, 205], [460, 190], [600, 200], [760, 195], [850, 215]];
-const HOME_EAST = [[850, 215], [880, 300], [870, 420], [860, 540], [800, 600]];
-const EAST_NORTH = [[850, 215], [960, 200], [1080, 185], [1230, 170]];
-const HOME_COAST = [[690, 640], [560, 660], [430, 650], [320, 620], [250, 560], [215, 470], [225, 360]];
+// Traced from the painting (assets/map/world_map.jpg, 2000 × 1342 px) and scaled to the 1264 × 848 view.
+// Shared borders, so neighbouring lands meet without gaps.
+const P = (pts) => pts.map(([x, y]) => [Math.round(x * 0.632), Math.round(y * 0.632)]);
+const HOME_NORTH = P([[440, 320], [560, 250], [700, 228], [850, 218], [1000, 235], [1150, 262], [1300, 290], [1430, 330]]);
+const HOME_EAST = P([[1430, 330], [1462, 450], [1462, 620], [1455, 780], [1450, 880]]);
+const EAST_NORTH = P([[1430, 330], [1600, 318], [1800, 300], [2000, 290]]);
+const HOME_COAST = P([[1350, 868], [1250, 860], [1100, 870], [1000, 880], [900, 900], [850, 930], [760, 920], [650, 900], [520, 890],
+  [420, 850], [360, 800], [330, 720], [310, 620], [310, 500], [330, 390]]);
 
 const SHAPES = {
   home: [...HOME_NORTH, ...HOME_EAST.slice(1), ...HOME_COAST],
-  north: [[180, 140], [210, 80], [420, 40], [700, 30], [1000, 35], [1240, 50], [1230, 170], ...[...EAST_NORTH].reverse().slice(1, -1), ...[...HOME_NORTH].reverse(), [200, 210]],
-  east: [...EAST_NORTH, [1250, 300], [1240, 450], [1220, 600], [1150, 690], [1050, 705], [950, 685], [860, 650], [800, 600], ...[...HOME_EAST].reverse().slice(1, -1)],
-  south: [[40, 775], [200, 738], [380, 728], [560, 748], [720, 762], [880, 795], [950, 848], [30, 848]],
+  north: [...P([[200, 0], [2000, 0]]), ...[...EAST_NORTH].reverse(), ...[...HOME_NORTH].reverse().slice(1), ...P([[360, 230], [300, 140], [230, 60]])],
+  east: [...EAST_NORTH, ...P([[2000, 1000], [1900, 990], [1800, 960], [1700, 920], [1600, 890], [1500, 880]]), ...[...HOME_EAST].reverse().slice(0, -1)],
+  south: P([[0, 1240], [100, 1180], [300, 1140], [600, 1120], [900, 1100], [1200, 1080], [1500, 1060], [1700, 1040], [1900, 1030], [2000, 1030], [2000, 1342], [0, 1342]]),
 };
 
-// label, colour and where the army plants its banner
+// label, colour and where the army plants its banner (away from the painted castle and towns)
 const LOOK = {
-  home: { at: [540, 410], color: '#c9a76a' },
-  north: { at: [720, 112], color: '#a2a9a6' },
-  east: { at: [1060, 430], color: '#9a7a5c' },
-  south: { at: [470, 800], color: '#bb8c63' },
+  home: { at: P([[1010, 540]])[0], color: '#c9a76a' },
+  north: { at: P([[1060, 150]])[0], color: '#a2a9a6' },
+  east: { at: P([[1730, 660]])[0], color: '#9a7a5c' },
+  south: { at: P([[1000, 1250]])[0], color: '#bb8c63' },
 };
 
 function smoothPath(pts) {
@@ -107,11 +110,11 @@ export function worldSvg(state, selected) {
   return `<svg class="map-svg world-svg" viewBox="0 0 ${WORLD_W} ${WORLD_H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Mapa světa">
     <rect class="w-sea" x="0" y="0" width="${WORLD_W}" height="${WORLD_H}"/>
     <image class="w-art" href="${WORLD_IMAGE}" x="0" y="0" width="${WORLD_W}" height="${WORLD_H}" preserveAspectRatio="none"/>
-    <g class="w-waves">${[[120, 640], [160, 300], [980, 760], [700, 715], [1180, 760]].map(([x, y]) => `<path d="M${x} ${y}q12 -8 24 0t24 0"/>`).join('')}</g>
+    <g class="w-waves">${[[120, 640], [90, 260], [300, 640], [760, 650], [1060, 680]].map(([x, y]) => `<path d="M${x} ${y}q12 -8 24 0t24 0"/>`).join('')}</g>
     ${['south', 'north', 'east', 'home'].map(realm).join('')}
     <g class="w-relief">${ridge(HOME_NORTH, 44, peak)}${ridge(EAST_NORTH, 44, peak)}${ridge(HOME_EAST, 30, tree)}</g>
-    <text class="map-natural sea-label" x="110" y="470" transform="rotate(-84 110 470)">Šedé moře</text>
-    <text class="map-natural sea-label" x="1010" y="770">Šedé moře</text>
+    <text class="map-natural sea-label" x="100" y="420" transform="rotate(-84 100 420)">Šedé moře</text>
+    <text class="map-natural sea-label" x="560" y="640">Šedé moře</text>
     ${army}
   </svg>`;
 }

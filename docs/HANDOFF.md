@@ -250,10 +250,10 @@ obchodní `trade`, `tradeOffer`, `tradeMod`, `tradeStock`.
 - **Povstání proti koruně** (`war.js` `rebellionTarget`): cíl tažení `crown` pro významného šlechtice (tier 4), dokud žije král. Síla královského vojska 1,7 × 25 mužů, slabší o spojence (−0,22 za rod, a jejich družiny po 6 mužích jdou s tebou), nárok ≥ 40, spiknutí ≥ 2 a cizí pomoc (`flags.cizi_podpora` z události `n_cizi_posel`). Během vzpoury `flags.rebellion`: přízeň 0 bez vyhnanství, královské události (`ROYAL_EVENTS`) a zakázky dvora se nelosují. Výhra → `w_povstani_vitezstvi` (osud krále: klášter / poprava / vyhnanství s ozvěnou `ozvena_vyhnany_kral`) → koruna. Porážka nebo odvolání → `w_povstani_porazka` (milost, obrana tvrze, útěk). Mír z `w_mir` → přízeň 20. Test: bez spojenců ~38 % koruna, se 2 spojenci ~61 %.
 - **Mocný šlechtic:** vyhraná soukromá válka proti rodu s mocí ≤ 30 mu vezme sídlo (kraj přejde na hráče, `stats.seized`).
 - **Další království** (`realms.js`): `state.realms.{east,north,south}` s vládcem, silou a vztahem. Vládci stárnou a umírají (zprávy z ciziny), síla se obnovuje. Králova výhra proti zemi jí vezme 25 síly (tribut jako dřív); když tím klesne na 25 a méně, **koruna padne** a hráč ji nosí taky (+3 / +1 zlata za období). Dvě cizí koruny = **císař** (tier 6). Nespokojená dobytá země se může vzbouřit a odtrhnout. Jižní říši dobýt nejde. Větev události může měnit vztah: `realm: { east: { attitude, power } }`. Tokeny `{realm.east}` („král Ctibor“), `{realm.east.name}`.
-- **Mapa světa:** tlačítko „Svět“ v hlavičce mapy (`world.js`), klik na zemi → panel s vládcem, silou, vztahem a tlačítkem „Připravit tažení“. Vlčí Úděl vrací na mapu království.
+- **Mapa světa:** tlačítko „Svět“ v hlavičce mapy (`world.js`); pod hranicemi je malba `assets/map/world_map.jpg` (2000 × 1342, hranice obtažené podle ní, funkce `P` přepočítává na 1264 × 848), bez ní se kreslí SVG. Klik na zemi → panel s vládcem, silou, vztahem a tlačítkem „Připravit tažení“. Vlčí Úděl vrací na mapu království.
 - **Tokeny rodu panovníka:** `{king.title}`/`{king.Title}` (král/královna), `{K:…|…}` (podle krále), `{F:…|…}` a `{formerKing.name}` (sesazený), `{house.gen}` (2. pád rodu: „z rodu pánů z Bílé Brány“). Názvy událostí se teď taky interpolují.
 - **Opravy návazností** (audit): sňatek dědice jen jeden napříč stupni (`flags.heir_married`), noví králové mívají dědice, smrt vzdáleného krále nemění přízeň pána, rádci mimo královský dvůr v 66+ letech umírají a jsou nahrazeni, nová domácnost po nástupnictví odpovídá věku vládce, nevolník nedostává události o zahraničním obchodu.
-- Zbývající drobnosti z auditu: `docs/analyza-logiky.md`. Obrázky k dodání: `docs/obrazky-kariera.md`.
+- Zbývající drobnosti z auditu: `docs/analyza-logiky.md`. Obrázky kariéry (`docs/obrazky-kariera.md`) jsou všechny dodané: scény kapitol a povstání, císař a císařovna (`ruler_emperor_*`, bez nich nosí portrét krále), cizí panovníci (`realm_<země>_<pohlaví>.jpg`) a mapa světa.
 
 ## 5. Obrázky — jak to funguje a co chybí
 
@@ -267,8 +267,10 @@ obchodní `trade`, `tradeOffer`, `tradeMod`, `tradeStock`.
 **Cílové formáty:** portréty 1024 × 1280 (4:5), scény 1024 × 1024, konce 1365 × 768.
 Originály se ukládají do `assets/_source/gemini/<dávka>/`.
 
-**Typická vada generátoru:** do spodní části (≈ 67–75 % výšky) vloží tmavý
-pás, někdy dokonce jiný výřez obrazu. `tools/images/process_batch.py` ho najde
+**Typická vada generátoru:** do spodní části (≈ 59–75 % výšky) vloží tmavý
+pás, někdy dokonce jiný výřez obrazu. Pás buď vede až dolů, nebo zase skončí
+(dávka kariéry: 59–84 %); `detect` vypíše i řádek konce a `place` s `FIX=` opraví
+jen pás (zesvětlení plynule mezi horní a dolní hranou). `tools/images/process_batch.py` ho najde
 a srovná jas a barvu. Falešné poplachy (okraj stolu, prkno) je nutné
 zkontrolovat okem. Ve hře spodní třetinu scény stejně kryje tmavý přechod.
 

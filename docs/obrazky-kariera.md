@@ -10,14 +10,17 @@ správným názvem do správné složky.
 stáhni. Nahraj je na GitHub do `assets/_incoming/` (názvy nemusí sedět,
 roztřídím je podle obsahu a zpracuju).
 
-| Dávka | Co | Kusů | Formát | Složka | Kde se zobrazí |
-|---|---|---|---|---|---|
-| K1 | Scény kapitol a povstání | 7 | 1:1 | `assets/events/` | scény událostí |
-| K2 | Císař a císařovna | 4 | 4:5 | `assets/portraits/` | plaketa, Postava, Dvůr |
-| K3 | Cizí panovníci | 6 | 4:5 | `assets/portraits/` | mapa světa → klik na zemi |
-| K4 | Malovaná mapa světa | 1 | 3:2 | `assets/map/` | Mapa → Svět |
+| Stav | Dávka | Co | Kusů | Formát | Složka | Kde se zobrazí |
+|---|---|---|---|---|---|---|
+| ✅ | K1 | Scény kapitol a povstání | 7 | 1:1 | `assets/events/` | scény událostí |
+| ✅ | K2 | Císař a císařovna | 4 | 4:5 | `assets/portraits/` | plaketa, Postava, Dvůr |
+| ✅ | K3 | Cizí panovníci | 6 | 4:5 | `assets/portraits/` | mapa světa → klik na zemi |
+| ✅ | K4 | Malovaná mapa světa | 1 | 3:2 | `assets/map/` | Mapa → Svět |
 
-**Celkem 18 obrázků ve 4 dávkách.**
+**Všech 18 obrázků je dodaných a zapojených** (originály v `assets/_source/gemini/kariera/`).
+Šest scén mělo vložený tmavý pás mezi ~59 % a ~84 % výšky; opraveno jen v tom rozsahu.
+Malovaná mapa má jiné rozložení, než popisoval prompt (hory a les patří k domácímu
+království), hranice v `js/world.js` jsou obtažené podle ní.
 
 ---
 
