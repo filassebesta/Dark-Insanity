@@ -238,6 +238,7 @@ kbd {
 .game-music-toggle { margin-left: -.4rem; }
 
 /* ---------- forms ---------- */
+.new-game-intro { font-style: italic; color: var(--ink-soft); margin: -.2rem 0 1.3rem; line-height: 1.45; }
 .field { display: flex; flex-direction: column; gap: .35rem; margin-bottom: 1.1rem; text-align: left; }
 .field span {
   font-family: var(--font-caps);
@@ -1143,6 +1144,7 @@ kbd {
 .house-badges { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .3rem; }
 .house-badge { font-family: var(--font-caps); font-size: .64rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; padding: .15rem .5rem; border: 1px solid currentColor; }
 .house-badge.good { color: var(--olive); }
+.house-badge.bad { color: var(--blood); }
 .house-badge.gold { color: #8a6a2c; }
 .plot-steps { display: flex; gap: 4px; flex: 1; }
 .plot-steps i { flex: 1; height: 8px; background: rgba(90,70,45,.18); }
@@ -1663,3 +1665,27 @@ kbd {
 .gear-buy i { position: absolute; top: .6rem; right: .75rem; font-style: normal; font-size: .85rem; color: var(--gold-bright); }
 .cb-ally { grid-column: 1 / -1; font-size: .78rem; color: #3f6b2a; }
 @media (max-width: 560px) { .cs-gear li { grid-template-columns: 4rem 1fr; } .cs-gear em { grid-column: 2; } }
+
+/* ---------- world map (world.js) ---------- */
+.world-svg { cursor: default; }
+.w-sea { fill: #8fa3a0; }
+.w-waves path { fill: none; stroke: rgba(240, 232, 210, .55); stroke-width: 2; stroke-linecap: round; }
+.w-land { fill: var(--rf); stroke: #3a2c1e; stroke-width: 2.4; stroke-linejoin: round; cursor: pointer; transition: filter .2s ease, stroke .2s ease; }
+.w-realm:hover .w-land { filter: brightness(1.08); }
+.w-realm.own .w-land { stroke: #e2b85a; stroke-width: 5; filter: drop-shadow(0 0 6px rgba(226, 184, 90, .6)); }
+.w-realm.selected .w-land { stroke: #7a1f15; stroke-width: 4.5; }
+.w-realm text { pointer-events: none; }
+.w-crown { fill: #e2b85a; stroke: #3a2c1e; stroke-width: 1.6; pointer-events: none; }
+.w-relief { pointer-events: none; }
+.w-peak { fill: #e8dcc0; stroke: #4a3b2c; stroke-width: 1.8; stroke-linejoin: round; }
+.w-tree { fill: #5d6b41; stroke: #34391f; stroke-width: 1.4; }
+.w-war-line { fill: none; stroke: #9c2a1c; stroke-width: 3; stroke-dasharray: 10 7; pointer-events: none; }
+.world-toggle { margin-left: .6rem; }
+.w-art { pointer-events: none; }
+.world-svg:not(.has-art) .w-art { display: none; }
+.world-svg.has-art .w-sea, .world-svg.has-art .w-waves, .world-svg.has-art .w-relief { display: none; }
+.world-svg.has-art .w-land { fill-opacity: .12; stroke-opacity: .6; }
+.world-svg.has-art .w-realm:hover .w-land { fill-opacity: .25; }
+.w-ruler { display: flex; gap: .8rem; align-items: center; margin: .4rem 0 .6rem; }
+.w-ruler-img { width: 64px; height: 80px; object-fit: cover; border: 1px solid rgba(58, 44, 30, .5); flex: none; }
+.w-ruler .map-desc { margin: 0; }

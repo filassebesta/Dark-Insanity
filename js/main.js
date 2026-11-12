@@ -1,11 +1,11 @@
-import { createNewGame, crownNoble, ennoblePeasant, saveGame, listSaves, loadGame, loadMostRecentSave, deleteSave, loadSettings, saveSettings } from './state.js';
+import { createNewGame, promote, saveGame, listSaves, loadGame, loadMostRecentSave, deleteSave, loadSettings, saveSettings } from './state.js';
 import { advanceTurn, resolveChoice, resolveRouteChoice, checkEndConditions, pickNextEvent } from './engine.js';
 import {
   showScreen, renderResourceBar, updateBookTabFlags, renderTurnSummary, renderEventCard,
   renderCourtPanel, renderChroniclePanel, openPanel, closePanels, isPanelOpen,
   renderEndingScreen, toast, setTypewriterEnabled, skipTypewriter, setMusicMuted,
   renderReignInfo, renderCharacterPlaque, renderOutcome, renderStaticIcons,
-  resetResourceMemory, esc, upgradeScenarioArt, renderHousesPanel, renderTradeNews,
+  resetResourceMemory, esc, renderHousesPanel, renderTradeNews,
 } from './ui.js';
 import { openMap, closeMap, isMapOpen, wireMapChrome, closeTownIfOpen } from './map.js';
 import { openCharacter, closeCharacter, isCharacterOpen, openPerson, closePerson, isPersonOpen, renderPersonSheet } from './character.js';
@@ -18,18 +18,15 @@ import { renderAmbitionBar, renderWarBar, renderHall, renderEndingAchievements, 
 let currentState = null;
 let activeEvent = null;
 let awaitingChoice = false;
-let pendingRulerName = '';
-let pendingDynastyName = '';
-let pendingGender = 'male';
 
 const settings = loadSettings();
 setTypewriterEnabled(settings.typewriter);
 setMusicVolume(settings.musicVolume / 100);
 setMusicMuted(settings.musicMuted);
 renderStaticIcons();
-upgradeScenarioArt();
 
 function refreshAllPanels(bumpedTrait = null) {
+  document.body.className = 'mood-' + currentState.scenario; // the stage of life can change mid-game (promote)
   renderResourceBar(currentState);
   renderReignInfo(currentState);
   renderCharacterPlaque(currentState, bumpedTrait);
@@ -146,7 +143,7 @@ function runNextTurn() {
   award();
 
   if (result.successionOccurred) {
-    toast(`Nastupuje nová generace: ${currentState.ruler.name} usedá na trůn.`);
+    toast(`Nastupuje nová generace: ${currentState.ruler.name} ${currentState.scenario === 'panovnik' ? 'usedá na trůn' : currentState.scenario === 'slechtic' ? 'přebírá panství' : 'přebírá grunt'}.`);
   }
 
   if (result.gameOver) {
@@ -175,7 +172,6 @@ function startGame(state) {
   currentState = state;
   activeEvent = null;
   resetResourceMemory();
-  document.body.className = 'mood-' + state.scenario;
   showScreen('screen-game');
   refreshAllPanels();
   runNextTurn();
@@ -232,9 +228,6 @@ function wireActions() {
         closeOverlays();
         showScreen('screen-menu');
         break;
-      case 'back-to-new-game':
-        showScreen('screen-new-game');
-        break;
       case 'continue-game': {
         const state = loadMostRecentSave();
         if (state && !state.gameOver) startGame(state);
@@ -259,12 +252,14 @@ function wireActions() {
       case 'quit-game':
         toast('Hru lze zavřít v prohlížeči.');
         break;
-      case 'goto-scenario-select':
-        pendingRulerName = document.getElementById('input-ruler-name').value.trim();
-        pendingDynastyName = document.getElementById('input-dynasty-name').value.trim();
-        pendingGender = document.querySelector('input[name="ruler-gender"]:checked')?.value || 'male';
-        showScreen('screen-scenario');
+      case 'start-new-game': {
+        // no scenario menu: every chronicle starts on the plough and rises in the same save
+        const name = document.getElementById('input-ruler-name').value.trim();
+        const dynasty = document.getElementById('input-dynasty-name').value.trim();
+        const gender = document.querySelector('input[name="ruler-gender"]:checked')?.value || 'male';
+        startGame(createNewGame(name, dynasty, gender));
         break;
+      }
       case 'close-panel':
         closePanels();
         break;
@@ -285,17 +280,12 @@ function wireActions() {
         closePerson();
         break;
       case 'continue-as-king':
-        // the noble took the throne: the same save carries on as the Panovník scenario
-        if (currentState && currentState.gameOver && currentState.gameOver.type === 'crowned') {
-          crownNoble(currentState);
+        // saves from before the single chronicle ended on a coat of arms or a crown: carry them on
+        if (currentState && currentState.gameOver && ['crowned', 'ennobled'].includes(currentState.gameOver.type)) {
+          const type = currentState.gameOver.type;
+          currentState.gameOver = null;
+          promote(currentState, type);
           saveGame(currentState);
-          toast(`${currentState.ruler.name} usedá na trůn.`);
-          startGame(currentState);
-        } else if (currentState && currentState.gameOver && currentState.gameOver.type === 'ennobled') {
-          // the peasant earned a coat of arms: the save carries on as the Šlechtic scenario
-          ennoblePeasant(currentState);
-          saveGame(currentState);
-          toast(`${currentState.ruler.name} přebírá tvrz v Pobřežní marce.`);
           startGame(currentState);
         }
         break;
@@ -307,16 +297,6 @@ function wireActions() {
       default:
         break;
     }
-  });
-
-  document.querySelectorAll('.scenario-card').forEach((card) => {
-    card.addEventListener('click', () => {
-      if (card.classList.contains('locked')) {
-        toast('Tento scénář se ještě připravuje.');
-        return;
-      }
-      startGame(createNewGame(pendingRulerName, pendingDynastyName, pendingGender, card.dataset.scenario));
-    });
   });
 
   document.querySelectorAll('.book-tab').forEach((tab) => {
@@ -402,8 +382,15 @@ function wireActions() {
     if (e.target.id === 'panel-overlay') closePanels();
   });
 
+  // the new game form speaks of a farmer or a farmer's wife, not of a king or a queen
+  document.querySelectorAll('input[name="ruler-gender"]').forEach((radio) => radio.addEventListener('change', () => {
+    const female = radio.value === 'female' && radio.checked;
+    document.getElementById('ruler-name-label').textContent = female ? 'Jméno hospodyně' : 'Jméno hospodáře';
+    document.getElementById('input-ruler-name').placeholder = female ? 'např. Anežka' : 'např. Vojtěch';
+  }));
+
   document.getElementById('input-dynasty-name').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') document.querySelector('[data-action="goto-scenario-select"]').click();
+    if (e.key === 'Enter') document.querySelector('[data-action="start-new-game"]').click();
   });
 }
 

@@ -1,7 +1,7 @@
 """Process a batch of generated images into the game's assets.
 
 usage: python3 process_batch.py <dir1,dir2,...> <scratch_dir> <repo_root> detect|place
-  detect  — print the suspected pasted dark band (row, coverage, strength) for each file
+  detect  — print the suspected pasted dark band (row, coverage, strength, row where it ends) for each file
   place   — resize/crop to the game format and save into assets/{portraits,endings,events}
             FIX=a.jpg,b.jpg  files whose band should be corrected (before/after preview
                              goes to <scratch_dir>/bandfix_<name>.png)
@@ -25,20 +25,46 @@ def detect(a, lo=0.55, hi=0.8):
             best = (y, frac, mean)
     return best
 
+def band_end(a, y):
+    """Where a pasted dark band ends again (the image below it is normal), or None if it runs to the bottom."""
+    g = a.mean(axis=2)
+    h, w = g.shape
+    strips = g[:, : w // 32 * 32].reshape(h, 32, w // 32).mean(axis=2)
+    best = None
+    for yy in range(y + 40, h - 5):
+        d = strips[yy + 1:yy + 4].mean(axis=0) - strips[yy - 4:yy - 1].mean(axis=0)  # brighter below = the band ends
+        frac, mean = float((d > 3).mean()), float(d.mean())
+        if frac >= 0.6 and mean >= 8 and (best is None or frac * mean > best[1] * best[2]):
+            best = (yy, frac, mean)
+    return best[0] if best else None
+
+def chan(a, rows):
+    ww = a.shape[1] // 32 * 32
+    n = rows.stop - rows.start
+    return np.median(a[rows, :ww].reshape(n, 32, ww // 32, 3).mean(axis=(0, 2)), axis=0)
+
 def fix(a, y):
-    h, w = a.shape[:2]
-    ww = w // 32 * 32
-    above = np.median(a[y - 8:y - 1, :ww].reshape(7, 32, ww // 32, 3).mean(axis=(0, 2)), axis=0)
-    below = np.median(a[y + 2:y + 9, :ww].reshape(7, 32, ww // 32, 3).mean(axis=(0, 2)), axis=0)
-    ratio = np.clip(above / np.maximum(below, 1), 1, 4)
+    """Brightens the band from row y: to the bottom, or only to where it ends (ratio blended between both edges)."""
+    h = a.shape[0]
+    end = band_end(a, y)
+    top = np.clip(chan(a, slice(y - 8, y - 1)) / np.maximum(chan(a, slice(y + 2, y + 9)), 1), 1, 4)
     out = a.copy()
-    out[y:] = np.clip(a[y:] * ratio, 0, 255)
-    seam = slice(max(0, y - 2), min(h, y + 3))
-    out[seam] = np.mean(out[max(0, y - 4):min(h, y + 5)], axis=0)
+    if end is None:
+        out[y:] = np.clip(a[y:] * top, 0, 255)
+        seams = [y]
+    else:
+        bottom = np.clip(chan(a, slice(end + 2, end + 9)) / np.maximum(chan(a, slice(end - 9, end - 2)), 1), 1, 4)
+        n = end - y
+        for i in range(n):
+            t = i / max(1, n - 1)
+            out[y + i] = np.clip(a[y + i] * (top * (1 - t) + bottom * t), 0, 255)
+        seams = [y, end]
+    for sy in seams:
+        out[max(0, sy - 2):min(h, sy + 3)] = np.mean(out[max(0, sy - 4):min(h, sy + 5)], axis=0)
     return out
 
 def target(name):
-    if name.startswith('ruler_') or name.split('_')[0] == 's' and name.rsplit('_', 1)[-1] in ('male.jpg', 'female.jpg'):
+    if name.startswith(('ruler_', 'realm_')) or name.split('_')[0] == 's' and name.rsplit('_', 1)[-1] in ('male.jpg', 'female.jpg'):
         return 'portraits', (1024, 1280)
     if name.startswith('ending_'):
         return 'endings', (1365, 768)
@@ -60,7 +86,7 @@ for f in files:
     a = np.asarray(Image.open(f).convert('RGB')).astype(np.float32)
     band = detect(a)
     if MODE == 'detect':
-        print(name, band)
+        print(name, band, 'ends at', band_end(a, band[0]) if band else None)
         continue
     folder, size = target(name)
     fixes = os.environ.get('FIX', '').split(',')

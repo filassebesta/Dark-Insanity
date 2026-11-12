@@ -11,7 +11,7 @@ import { talkSection } from './talk_ui.js';
 import { ensureGear, shopFor, ITEMS, SLOTS } from './gear.js';
 import { fighterOf } from './combat.js';
 
-const TIER_SLUGS = [null, 'peasant', 'freeman', 'minor_noble', 'noble', 'king'];
+const TIER_SLUGS = [null, 'peasant', 'freeman', 'minor_noble', 'noble', 'king', 'emperor'];
 const OLD_AGE = 55;
 
 const TRAIT_TEXT = {
@@ -32,7 +32,9 @@ export function rulerPortraitCandidates(ruler) {
   const g = ruler.gender === 'female' ? 'female' : 'male';
   const base = `assets/portraits/ruler_${slug}_${g}`;
   const young = [`${base}.jpg`, `${base}.png`];
-  return ruler.age >= OLD_AGE ? [`${base}_old.jpg`, `${base}_old.png`, ...young] : young;
+  // an emperor without a portrait of his own wears the king's
+  const king = slug === 'emperor' ? rulerPortraitCandidates({ ...ruler, statusTier: 5 }) : [];
+  return [...(ruler.age >= OLD_AGE ? [`${base}_old.jpg`, `${base}_old.png`, ...young] : young), ...king];
 }
 
 /** <img> that walks through candidate URLs and finally hides itself, revealing the initial underneath. */
@@ -268,7 +270,7 @@ export function renderPersonSheet(state, role) {
   const c = state[role];
   if (!c) return;
   const alive = c.alive !== false;
-  const title = roleLabel(role, c.gender, state.scenario);
+  const title = roleLabel(role, c.gender, state.scenario, state.flags);
   const history = (c.history || []).slice().reverse();
   const him = c.gender === 'female' ? 'ji' : 'ho';
   const rows = history.map((h) => {
@@ -293,7 +295,7 @@ export function renderPersonSheet(state, role) {
       <h2 class="ps-name">${esc(c.name)}</h2>
       <div class="ps-meta">${c.age} let · <span class="ps-loyal">${loyaltyLabel(c.loyalty, c.gender)}</span></div>
       <div class="ps-bar"><span style="width:${c.loyalty}%"></span><b>věrnost ${c.loyalty}</b></div>
-      <p class="ps-bio">${esc(biography(c, role, state.dynastyName, state.scenario))}</p>
+      <p class="ps-bio">${esc(biography(c, role, state.dynastyName, state.scenario, state.flags))}</p>
       ${c.quirk ? `<div class="ps-quirk"><b>Povaha: ${esc(quirkLabel(c))}</b><span>${esc(quirkText(c, role))}</span></div>` : ''}
       ${role === 'heir' && c.traits ? `<h4 class="ps-section">Vlastnosti ${c.gender === 'female' ? 'dědičky' : 'dědice'}</h4>
         <p class="ps-note">S těmito vlastnostmi jednou převezme vládu. Utváří je výchova a léta dospívání.</p>

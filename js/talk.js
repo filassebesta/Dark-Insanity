@@ -20,7 +20,7 @@ const ADVICE = {
   spouse: { effects: { stability: 2 }, line: 'Mezi čtyřma očima padlo, co by před radou nikdy nezaznělo.' },
 };
 const ADVICE_PEASANT = {
-  chancellor: { effects: { gold: 2 }, line: 'Rychtář poradil, komu prodat a od koho nekupovat.' },
+  chancellor: { effects: { gold: 2 }, line: 'Probrali jste, komu prodat a od koho nekupovat.' },
   marshal: { effects: { stability: 2 }, line: 'Kovář zadarmo spravil pluh a radlici.' },
   spymaster: { effects: { prestige: 1 }, line: 'Krčmář ti řekl, co si o tobě ves myslí — a komu se vyplatí koupit pivo.' },
   spouse: { effects: { stability: 2 }, line: 'Doma jste spolu probrali hospodaření až do noci.' },
@@ -161,7 +161,7 @@ export function topicRollChoice(state, role, key) {
 /** How the person greets the ruler, by loyalty. */
 export function greeting(state, role) {
   const c = state[role];
-  const title = roleLabel(role, c.gender, state.scenario);
+  const title = roleLabel(role, c.gender, state.scenario, state.flags);
   if (c.loyalty >= 70) return `${title} ${c.name} se usměje a odloží práci. „Pro tebe mám vždycky čas.“`;
   if (c.loyalty >= 40) return `${title} ${c.name} se ukloní. „Čím mohu posloužit?“`;
   return `${title} ${c.name} se zvedne jen napůl a dívá se kamsi za tebe. „Ano?“`;
@@ -218,7 +218,7 @@ function gossip(state, role) {
   const others = COURT_ROLES.filter((r) => r !== role && state[r] && state[r].alive !== false && r !== 'heir');
   const worst = others.sort((a, b) => state[a].loyalty - state[b].loyalty)[0];
   const w = state[worst];
-  const who = `${roleLabel(worst, w.gender, state.scenario).toLowerCase()} ${w.name}`;
+  const who = `${roleLabel(worst, w.gender, state.scenario, state.flags).toLowerCase()} ${w.name}`;
   let line = w.loyalty < 45
     ? `„Dej si pozor na ${who}. Mluví o tobě ve sklepě, když myslí, že nikdo neposlouchá.“`
     : `„Na dvoře je klid. Nejméně nadšený je ${who}, ale nic víc za tím nehledej.“`;

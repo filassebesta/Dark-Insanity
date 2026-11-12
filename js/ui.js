@@ -39,15 +39,6 @@ export function setMusicMuted(muted) {
   });
 }
 
-/** Swap in dedicated scenario-card art when the files exist (assets/ui/scenario_<key>.jpg). */
-export function upgradeScenarioArt() {
-  document.querySelectorAll('.scenario-card').forEach((card) => {
-    const src = `assets/ui/scenario_${card.dataset.scenario}.jpg`;
-    firstExistingImage([src, src.replace(/\.jpg$/, '.png')], null).then((found) => {
-      if (found) card.querySelector('.scenario-art').style.backgroundImage = `url("${found}")`;
-    });
-  });
-}
 
 export function renderStaticIcons() {
   const back = document.querySelector('.menu-return-button');
@@ -273,7 +264,7 @@ export function renderEventCard(state, event, handlers) {
     `assets/events/${event.id}.png`,
     event.image,
   ]);
-  document.getElementById('event-title').textContent = event.title;
+  document.getElementById('event-title').textContent = interpolate(state, event.title); // titles may follow the monarch's gender
   renderSceneEcho(state, event);
   const choiceList = document.getElementById('choice-list');
   choiceList.innerHTML = '';
@@ -313,7 +304,7 @@ export function renderEventCard(state, event, handlers) {
       tag = `<span class="risk-tag" title="Hod k% — šance závisí na: ${basis || 'náhodě'}">${basis ? `${esc(basis)} · ` : ''}k% · ${pct} %</span>`;
     }
     // what a choice costs or brings stays hidden until it is made
-    const btn = makeChoiceButton(shown++, hintIcon(choice.hintType, choice.hintKey), choice.label, tag);
+    const btn = makeChoiceButton(shown++, hintIcon(choice.hintType, choice.hintKey), esc(interpolate(state, choice.label)), tag); // labels may follow genders too
     btn.addEventListener('click', () => handlers.onChoiceSelected(index));
     choiceList.appendChild(btn);
   });
@@ -334,14 +325,14 @@ function renderCouncil(state, event, shownAt) {
   if (!advice.length) { clearCouncil(); return; }
   el.innerHTML = `<span class="council-title">Rada</span>` + advice.map((a) => {
     const c = a.person;
-    const role = roleLabel(a.role, c.gender, state.scenario);
+    const role = roleLabel(a.role, c.gender, state.scenario, state.flags);
     const choice = event.choices[a.index];
     return `<div class="council-row" data-person="${a.role}" role="button" tabindex="0" title="${esc(role)} ${esc(c.name)} · ${esc(loyaltyLabel(c.loyalty, c.gender))}${c.quirk ? ' · ' + esc(quirkLabel(c)) : ''}">
       <div class="council-avatar">${esc(c.name[0])}${portraitImg(memberPortraitCandidates(c, a.role, state.scenario), c.name, 'council-avatar-img')}</div>
       <div class="council-body">
         <span class="council-who">${esc(role)} ${esc(c.name)} <em>${esc(loyaltyLabel(c.loyalty, c.gender).toLowerCase())}</em></span>
         <span class="council-line">„${esc(a.line)}“</span>
-        <span class="council-pick">Doporučuje: <b>${shownAt[a.index] + 1}. ${esc(choice.label)}</b></span>
+        <span class="council-pick">Doporučuje: <b>${shownAt[a.index] + 1}. ${esc(interpolate(state, choice.label))}</b></span>
       </div>
     </div>`;
   }).join('');
@@ -429,7 +420,7 @@ export function renderCourtPanel(state) {
   const members = [
     { data: state.ruler, role: state.scenario === 'sedlak' ? f(state.ruler, 'Hospodář', 'Hospodyně') : f(state.ruler, 'Vládce', 'Vládkyně'), extra: tierLabel(state.ruler), portraits: rulerPortraitCandidates(state.ruler) },
     ...['heir', 'spouse', 'chancellor', 'marshal', 'spymaster'].map((r) => (
-      { data: state[r], role: roleLabel(r, state[r].gender, state.scenario), portraits: memberPortraitCandidates(state[r], r, state.scenario), person: r })),
+      { data: state[r], role: roleLabel(r, state[r].gender, state.scenario, state.flags), portraits: memberPortraitCandidates(state[r], r, state.scenario), person: r })),
   ];
   for (const m of members) {
     const card = document.createElement('button');
@@ -500,12 +491,15 @@ export function renderHousesPanel(state) {
       </div>`;
   }).join('');
   const plot = state.noble.plot;
+  const held = state.provinces.filter((p) => p.owner === 'player').length;
   host.innerHTML = kingCard + houses + `
     <div class="house-card intrigue">
       <h4>Tajná hra</h4>
       <div class="stat-bar-row"><span class="label">Spiknutí</span><div class="plot-steps">${[1, 2, 3].map((i) => `<i class="${i <= plot ? 'on' : ''}"></i>`).join('')}</div><span>${plot}/3</span></div>
       <div class="stat-bar-row"><span class="label">Tajemství</span><span class="secrets">${'✦'.repeat(Math.min(state.noble.secrets, 8)) || '—'}</span><span>${state.noble.secrets}</span></div>
-      <p class="house-text">Cesty k trůnu: nárok po smrti krále (podpoří ho spojenci a sňatek s korunou), nebo spiknutí dovedené do konce. Spojenci zvyšují šance obou.</p>
+      <p class="house-text">Cesty k trůnu: nárok po smrti krále (podpoří ho spojenci a sňatek s korunou), spiknutí dovedené do konce, nebo — pro významného šlechtice — otevřené povstání ve válečném tažení. Spojenci zvyšují šance všech tří.</p>
+      ${state.flags.rebellion ? '<span class="house-badge bad">Otevřená vzpoura proti koruně</span>' : ''}
+      ${held > 1 ? `<p class="house-text">Panství rodu: ${held} kraje.</p>` : ''}
     </div>`;
 }
 

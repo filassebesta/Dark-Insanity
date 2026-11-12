@@ -44,7 +44,7 @@ export const MARKETS = {
   manor: {
     name: 'Panský dvůr', short: 'Pán', to: 'na panský dvůr', from: 'z panského dvora', at: [505, 600], days: 1, risk: 0.03,
     danger: 'lapkové u cesty', scenarios: ['sedlak'],
-    text: 'Dvůr pánů z Bílé Brány. Pán bere, co mu sedlák přiveze, a dobrou dodávku si zapamatuje.',
+    text: 'Dvůr pánů z Bílé Brány. Bere, co sedlák přiveze, a dobrou dodávku si zapamatuje.',
     sell: { grain: 2, iron: 2, furs: 3, salt: 2, cloth: 3, wine: 4 }, favor: true,
   },
   east: {
@@ -68,7 +68,7 @@ export const MARKETS = {
 };
 
 const CONTRACT_GIVER = {
-  court: 'Král {king.name} žádá',
+  court: '{king.Title} {king.name} žádá',
   manor: '{lord.Title} {lord.name} žádá',
   east: 'Markrabě z Východních marek poptává',
   south: 'Kupci z Jižní říše poptávají',
@@ -360,7 +360,7 @@ function driftPrices(state) {
 
 function contractMarkets(state) {
   if (state.scenario === 'sedlak') return state.ruler.statusTier >= 2 ? ['manor', 'manor', 'east', 'south'] : ['manor'];
-  if (state.scenario === 'slechtic') return ['court', 'court', 'east', 'south', 'north'];
+  if (state.scenario === 'slechtic') return state.flags.rebellion ? ['east', 'south', 'north'] : ['court', 'court', 'east', 'south', 'north'];
   return ['east', 'south', 'north'];
 }
 

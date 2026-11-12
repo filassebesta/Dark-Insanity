@@ -11,6 +11,7 @@
 import { clamp, bumpStat, NOBLE_HOUSES } from './data.js';
 import { makeChronicleEntry } from './state.js';
 import { injure } from './injuries.js';
+import { REALMS, ensureRealms, realmStrength, realmRulerLabel, beatRealm, ownsRealm } from './realms.js';
 
 const HUB = [633, 368];
 const NOBLE_SEAT = [345, 372];
@@ -44,7 +45,17 @@ const WAR_GAP = 8; // seasons of rest between campaigns
 /** Every target open to this scenario: lands abroad, lost provinces, rival houses. */
 export function warTargets(state) {
   const out = {};
-  for (const [k, t] of Object.entries(WAR_TARGETS)) if (t.scenarios.includes(state.scenario)) out[k] = t;
+  for (const [k, t] of Object.entries(WAR_TARGETS)) {
+    if (!t.scenarios.includes(state.scenario) || ownsRealm(state, k)) continue;
+    // a foreign realm fights as hard as it is strong; a broken one can lose its crown
+    const r = ensureRealms(state)[k];
+    const canFall = REALMS[k].conquerable && r.power - 25 <= 25; // beatRealm takes 25 power; at 25 or less the crown falls
+    out[k] = {
+      ...t, strength: +(t.strength * realmStrength(state, k)).toFixed(2),
+      text: `${t.text} Vládne ${realmRulerLabel(state, k)}.`,
+      reward: canFall ? `koruna ${REALMS[k].gen} — budeš vládnout i jim` : t.reward,
+    };
+  }
   if (state.scenario === 'panovnik') {
     for (const p of state.provinces.filter((x) => x.lost)) {
       const name = p.name.replace(/ \(.*\)$/, '');
@@ -56,10 +67,13 @@ export function warTargets(state) {
     }
   }
   if (state.scenario === 'slechtic') {
+    const crown = rebellionTarget(state);
+    if (crown) out.crown = crown;
     for (const h of state.houses || []) {
       const def = NOBLE_HOUSES.find((d) => d.id === h.id);
       if (h.ally || h.married) continue; // one does not raid allies or in-laws
       const prov = state.provinces.find((p) => p.id === def.seat);
+      if (prov && prov.owner === 'player') continue; // their seat is already yours
       out[`house:${h.id}`] = {
         name: `Soukromá válka: ${def.short}`, enemy: `družina rodu ${def.short}`, loc: `na panství rodu ${def.short}`,
         strength: 0.6 + h.power / 140, march: 1, house: h.id, province: prov ? prov.id : null,
@@ -69,6 +83,37 @@ export function warTargets(state) {
     }
   }
   return out;
+}
+
+// ---------- the great lord against the king ----------
+
+/** Houses that would ride with the player against the crown. */
+export function rebelAllies(state) {
+  return (state.houses || []).filter((h) => (h.ally || h.married) && h.attitude >= 50);
+}
+
+/**
+ * A great lord (významný šlechtic) can rise against the king. The royal army is strong;
+ * allied houses, a claim to the throne, conspirators at court and foreign help weaken it.
+ */
+function rebellionTarget(state) {
+  if (state.ruler.statusTier < 4 || !state.king || !state.king.alive) return null;
+  const allies = rebelAllies(state);
+  const r = state.resources;
+  const f = state.flags || {};
+  const strength = Math.max(0.7, 1.7 - 0.22 * allies.length - (r.legitimacy >= 40 ? 0.15 : 0)
+    - (state.noble && state.noble.plot >= 2 ? 0.15 : 0) - (f.cizi_podpora ? 0.25 : 0));
+  const help = [
+    allies.length ? `s tebou půjdou ${allies.map((h) => NOBLE_HOUSES.find((d) => d.id === h.id).short).join(' a ')}` : 'žádný rod s tebou nepůjde',
+    r.legitimacy >= 40 ? 'tvůj nárok na trůn zná celá země' : 'tvůj nárok na trůn je slabý',
+    f.cizi_podpora ? 'cizí panovník pošle muže' : '',
+  ].filter(Boolean).join(', ');
+  return {
+    name: 'Povstání proti koruně', enemy: 'královské vojsko', loc: 'u Vlčího Údělu',
+    strength, march: 1, province: 'capital', rebellion: true,
+    text: `Otevřená vzpoura proti koruně. Když vyhraješ, usedneš na trůn; když prohraješ, čeká tě kat nebo cizina. Spojenci a nárok oslabují královo vojsko: ${help}.`,
+    reward: 'královská koruna',
+  };
 }
 
 export function warPoint(state, key) {
@@ -102,7 +147,16 @@ export function startWar(state, key, size, leader = 'marshal') {
     leader: leader === 'ruler' ? 'ruler' : 'marshal', arrive: state.turn + t.march, seasons: 0, log: [],
   };
   const who = leader === 'ruler' ? state.ruler.name : state.marshal.name;
-  const text = `Vojsko vytáhlo do pole: ${t.name}. ${men} mužů vede ${who}.`;
+  let text = `Vojsko vytáhlo do pole: ${t.name}. ${men} mužů vede ${who}.`;
+  if (t.rebellion) {
+    // open revolt: the king's favour is gone, the houses take sides
+    state.flags.rebellion = true;
+    state.resources.favor = 0;
+    const allies = rebelAllies(state);
+    state.war.power += allies.length * 6; // the allied houses send their retinues
+    for (const h of state.houses) h.attitude = clamp(h.attitude + (allies.includes(h) ? 5 : -6));
+    text = `Rod ${state.dynastyName} pozvedl zbraně proti koruně! ${men} mužů${allies.length ? ` a družiny spojenců (${allies.length * 6} mužů)` : ''} vede ${who} na Vlčí Úděl.`;
+  }
   state.chronicle.push(makeChronicleEntry(state, text));
   return { message: text };
 }
@@ -251,6 +305,12 @@ function warEventFits(state, id) {
   return true;
 }
 
+/** The closing scene of a war; a stale war event of this campaign gives way, anything else (a chapter card) goes first. */
+function queueAfter(state, id) {
+  if (!state.pendingEvent || SEASON_WAR_EVENTS.includes(state.pendingEvent)) state.pendingEvent = id;
+  else (state.eventQueue = state.eventQueue || []).push(id);
+}
+
 function endWar(state, how, news) {
   const w = state.war;
   const t = warTarget(state);
@@ -260,9 +320,11 @@ function endWar(state, how, news) {
   state.lastWar = { ...warTokens(state), 'war.men': String(back) };
   state.resources.army = clamp(state.resources.army + back);
   state.war = null;
-  // a won or lost campaign gets its own closing scene
-  if ((how === 'win' || how === 'lose') && !t.gone && !state.pendingEvent) state.pendingEvent = how === 'win' ? 'w_triumf' : 'w_porazka';
   state.warNext = state.turn + WAR_GAP;
+  if (t.rebellion && !t.gone) return endRebellion(state, how, back, news);
+  // a won or lost campaign gets its own closing scene
+  if ((how === 'win' || how === 'lose') && !t.gone) queueAfter(state, how === 'win' ? 'w_triumf' : 'w_porazka');
+  if (key === 'crown') delete state.flags.rebellion; // the king died meanwhile: the revolt has no one left to fight
   let text;
   if (how === 'win') {
     bumpStat(state, 'warsWon');
@@ -288,6 +350,32 @@ function endWar(state, how, news) {
   state.chronicle.push(makeChronicleEntry(state, text));
 }
 
+/** The revolt is decided: the gates open, the rebels scatter, or the king offers terms. */
+function endRebellion(state, how, back, news) {
+  let text;
+  if (how === 'win') {
+    bumpStat(state, 'warsWon');
+    queueAfter(state, 'w_povstani_vitezstvi'); // the player decides the old king's fate and takes the crown
+    text = `Královské vojsko je poraženo! Brány Vlčího Údělu se otevřely rodu ${state.dynastyName}.`;
+  } else if (how === 'peace') {
+    delete state.flags.rebellion;
+    state.resources.favor = 20;
+    state.resources.legitimacy = clamp(state.resources.legitimacy + 5);
+    state.resources.prestige = clamp(state.resources.prestige + 4);
+    const kq = state.king.gender === 'female';
+    text = `${kq ? 'Královna' : 'Král'} ${state.king.name} uzavřel${kq ? 'a' : ''} s povstalci smír. Rod ${state.dynastyName} si udržel panství i hlavu a celá země ví, že se s ním musí počítat.`;
+  } else {
+    // a lost or abandoned revolt: the king will not forget
+    bumpStat(state, 'warsLost');
+    queueAfter(state, 'w_povstani_porazka');
+    text = how === 'retreat'
+      ? `Povstalci se stáhli od Vlčího Údělu. ${back} mužů se vrací na tvrz — a královo vojsko táhne za nimi.`
+      : `Povstání proti králi skončilo porážkou. Domů se ${back ? `vrací jen ${back} mužů` : 'nevrátil nikdo'}.`;
+  }
+  news.push(text);
+  state.chronicle.push(makeChronicleEntry(state, text));
+}
+
 function winWar(state, key, t, back) {
   const r = state.resources;
   const add = (k, v) => { if (r[k] !== undefined) r[k] = clamp(r[k] + v); };
@@ -302,16 +390,31 @@ function winWar(state, key, t, back) {
     const h = (state.houses || []).find((x) => x.id === t.house);
     if (h) { h.power = clamp(h.power - 12); h.attitude = clamp(h.attitude - 25); }
     add('gold', 15); add('prestige', 4); add('favor', -6);
+    // a house with nothing left to fight with loses its seat: the player's estate grows
+    const seat = h && h.power <= 30 && state.provinces.find((p) => p.id === t.province);
+    if (seat && seat.owner === t.house) {
+      Object.assign(seat, { owner: 'player', loyalty: 35, unrest: 50, garrison: 25 });
+      add('favor', -8);
+      bumpStat(state, 'seized');
+      return `Rod ${t.name.replace('Soukromá válka: ', '')} je zlomen. Jeho sídlo ${seat.name.replace(/ \(.*\)$/, '')} teď patří rodu ${state.dynastyName}. Král se mračí, ale panství máš ty.`;
+    }
     return `Nájezd se vydařil. Družina rodu ${t.name.replace('Soukromá válka: ', '')} je rozprášena a vozy plné kořisti míří domů. Král se mračí.`;
   }
   state.tributes = state.tributes || [];
+  const beaten = REALMS[key] ? beatRealm(state, key) : null;
+  if (beaten && beaten.conquered) {
+    add('prestige', 12); add('legitimacy', 6);
+    state.tributes = state.tributes.filter((x) => x.realm !== key); // a crown of your own pays no tribute
+    bumpStat(state, 'crownsTaken');
+    return `${beaten.text} Vojsko se vrací s ${back} muži.`;
+  }
   if (key === 'east') {
-    state.tributes.push({ from: 'z Východních marek', gold: 3, until: state.turn + 24 });
+    state.tributes.push({ from: 'z Východních marek', realm: 'east', gold: 3, until: state.turn + 24 });
     add('prestige', 10); add('legitimacy', 4);
     return `Markrabata se vzdala! Východní marky budou šest let platit tribut. Vojsko se vrací s ${back} muži.`;
   }
   if (key === 'north') {
-    state.tributes.push({ from: 'ze Severních pustin', gold: 1, until: state.turn + 12 });
+    state.tributes.push({ from: 'ze Severních pustin', realm: 'north', gold: 1, until: state.turn + 12 });
     if (state.trade && state.trade.stock) state.trade.stock.furs = Math.min(10, (state.trade.stock.furs || 0) + 4);
     add('prestige', 6);
     return `Severní kmeny se poddaly. Přinesly kožešiny a slíbily tribut na tři roky. Vojsko se vrací s ${back} muži.`;
