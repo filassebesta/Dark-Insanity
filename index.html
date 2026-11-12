@@ -119,7 +119,10 @@
         <span>Hlasitost hudby <output id="music-volume-value">60 %</output></span>
         <input id="input-music-volume" type="range" min="0" max="100" step="5" value="60">
       </label>
-      <p class="hint">Ovládání: <kbd>1</kbd>–<kbd>4</kbd> volba, <kbd>Enter</kbd> pokračovat / dočíst text, <kbd>M</kbd> mapa, <kbd>P</kbd> postava, <kbd>Esc</kbd> zavřít panel.</p>
+      <p class="hint">Ovládání: <kbd>1</kbd>–<kbd>4</kbd> volba, <kbd>Enter</kbd> pokračovat / dočíst text, <kbd>M</kbd> mapa, <kbd>P</kbd> postava, <kbd>O</kbd> obchod, <kbd>V</kbd> válka, <kbd>Esc</kbd> zavřít panel.</p>
+      <div class="options-extra">
+        <button class="seal-button ghost" data-action="goto-hall">Síň slávy</button>
+      </div>
       <div class="dialog-actions">
         <button class="seal-button ghost" data-action="back-to-menu">Zpět</button>
       </div>
@@ -142,6 +145,7 @@
         <button class="book-tab" data-panel="character">Postava</button>
         <button class="book-tab" data-panel="map">Mapa</button>
         <button class="book-tab" data-panel="trade">Obchod</button>
+        <button class="book-tab" data-panel="war">Válka</button>
         <button class="book-tab" data-panel="court">Dvůr</button>
         <button class="book-tab" data-panel="houses" hidden>Rody</button>
         <button class="book-tab" data-panel="chronicle">Kronika</button>
@@ -162,6 +166,8 @@
 
       <main id="event-card" class="story-panel">
         <div class="story-inner">
+          <div id="war-bar" class="war-bar" hidden></div>
+          <div id="ambition-bar" class="ambition-bar" hidden></div>
           <div id="turn-summary" class="turn-summary"></div>
           <ul id="trade-news" class="trade-news" hidden></ul>
           <div id="outcome-label" class="outcome-label" hidden></div>
@@ -233,9 +239,24 @@
       <p id="ending-text" class="ending-text"></p>
       <p id="ending-epithet" class="ending-epithet" hidden></p>
       <div id="ending-stats" class="ending-stats"></div>
+      <div id="ending-achievements" class="ending-achievements" hidden></div>
       <div class="dialog-actions ending-actions">
         <button id="ending-continue" class="seal-button primary" data-action="continue-as-king" hidden>Vládnout jako panovník</button>
+        <button class="seal-button ghost light" data-action="goto-hall">Síň slávy</button>
         <button class="seal-button ghost light" data-action="back-to-menu">Zpět do menu</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- HALL OF FAME: achievements across every chronicle -->
+  <section id="screen-hall" class="screen backdrop-screen">
+    <div class="dialog-panel paper-panel hall-panel">
+      <span class="panel-overline">Napříč všemi kronikami</span>
+      <h2 class="panel-title">Síň slávy</h2>
+      <p id="hall-count" class="hall-count"></p>
+      <div id="hall-list" class="hall-list"></div>
+      <div class="dialog-actions">
+        <button class="seal-button ghost" data-action="back-from-hall">Zpět</button>
       </div>
     </div>
   </section>

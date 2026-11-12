@@ -5,6 +5,9 @@ import { TRAIT_DEFS, STATUS_TIERS, SEASONS, tierTitle } from './data.js';
 import { traitBonuses, reignEpithet } from './engine.js';
 import { biography, loyaltyLabel, roleLabel, quirkLabel, quirkText } from './court.js';
 import { esc } from './ui.js';
+import { effectiveTraits, injuriesOf, injuryFx, INJURIES } from './injuries.js';
+import { ambitionSection } from './fame.js';
+import { talkSection } from './talk_ui.js';
 
 const TIER_SLUGS = [null, 'peasant', 'freeman', 'minor_noble', 'noble', 'king'];
 const OLD_AGE = 55;
@@ -63,6 +66,35 @@ function yearsWord(n) {
   return 'let';
 }
 
+const TRAIT_NAME = { strength: 'síla', eloquence: 'výřečnost', intelligence: 'inteligence', patience: 'trpělivost' };
+const SEASON_LOC = ['na jaře', 'v létě', 'na podzim', 'v zimě'];
+
+/** The ruler's wounds: what they take away and when (if ever) they heal. */
+function injuryBlock(state) {
+  const list = injuriesOf(state.ruler);
+  if (!list.length) return '';
+  const items = list.map((inj) => {
+    const fx = injuryFx(inj);
+    const def = INJURIES[inj.key];
+    const chips = [
+      ...Object.entries(fx.traits || {}).map(([k, v]) => `${TRAIT_NAME[k]} ${v}`),
+      fx.army ? `boj ${Math.round(fx.army * 100)} %` : '',
+      fx.rolls ? `všechny hody ${Math.round(fx.rolls * 100)} %` : '',
+      fx.work && state.scenario === 'sedlak' ? `práce na gruntu −${fx.work} zásob za období` : '',
+      fx.deathRisk ? 'kratší život' : '',
+      def.infection && !inj.treated ? 'může se zanítit' : '',
+    ].filter(Boolean).map((c) => `<i>${esc(c)}</i>`).join('');
+    let when = 'Natrvalo.';
+    if (def.heals) {
+      const ahead = inj.healsAt - state.turn;
+      const year = state.year + Math.floor((state.seasonIndex + ahead) / 4);
+      when = `Zahojí se ${SEASON_LOC[inj.healsAt % 4]} roku ${year}${inj.treated ? ' (ošetřeno)' : ''}.`;
+    } else if (inj.aided) when = `Natrvalo — ${def.aid.name.toLowerCase()} postih zmírňuje.`;
+    return `<li><b>${esc(fx.name)}</b><span>${esc(def.text)}</span><em>${chips}</em><small>${esc(when)}</small></li>`;
+  }).join('');
+  return `<h4 class="cs-section">Zranění</h4><ul class="cs-injuries">${items}</ul>`;
+}
+
 export function renderCharacterSheet(state) {
   const r = state.ruler;
   const title = tierTitle(r.statusTier, r.gender);
@@ -76,14 +108,17 @@ export function renderCharacterSheet(state) {
     return `<div class="cs-step ${cls}"><i></i>${esc(shown)}</div>`;
   }).join('');
 
+  const eff = effectiveTraits(r);
   const traits = TRAIT_DEFS.map((t) => {
-    const v = r.traits[t.key];
-    const pips = Array.from({ length: 10 }, (_, i) => `<span class="${i < v ? 'on' : ''}"></span>`).join('');
+    const v = eff[t.key];
+    const base = r.traits[t.key];
+    // pips lost to wounds show as broken
+    const pips = Array.from({ length: 10 }, (_, i) => `<span class="${i < v ? 'on' : i < base ? 'lost' : ''}"></span>`).join('');
     return `
-      <div class="cs-trait">
+      <div class="cs-trait${v < base ? ' hurt' : ''}">
         ${t.icon}
         <b>${t.label}</b>
-        <em>${v}</em>
+        <em>${v}${v < base ? `<small> z ${base}</small>` : ''}</em>
         <div class="cs-pips">${pips}</div>
         <small>${TRAIT_TEXT[t.key]}</small>
       </div>`;
@@ -126,7 +161,8 @@ export function renderCharacterSheet(state) {
     return `
       <li><strong>${esc(a.name)}${a.epithet ? ` <em>${esc(a.epithet)}</em>` : ''}</strong>
         ${a.epithetReason ? `<span class="cs-reason">${esc(a.epithetReason)}</span>` : ''}
-        <span>${a.generation}. generace · vládl${f} ${a.years} ${yearsWord(a.years)} · zemřel${f} v ${a.diedAt} letech</span>
+        <span>${a.generation}. generace · vládl${f} ${a.years} ${yearsWord(a.years)} · zemřel${f} v ${a.diedAt} letech${a.cause ? ` ${esc(a.cause)}` : ''}</span>
+        ${a.injuries && a.injuries.length ? `<span class="cs-reason">Nesl${f} si do hrobu: ${esc(a.injuries.join(', '))}</span>` : ''}
         ${deeds ? `<ul class="cs-deeds">${deeds}</ul>` : ''}</li>`;
   }).join('');
   const epithet = reignEpithet(state);
@@ -157,6 +193,8 @@ export function renderCharacterSheet(state) {
       <div class="cs-ladder">${ladder}</div>
       <h4 class="cs-section">Vlastnosti</h4>
       <div class="cs-traits">${traits}</div>
+      ${ambitionSection(state)}
+      ${injuryBlock(state)}
       <h4 class="cs-section">Vliv na vládu</h4>
       <ul class="cs-influence">${influence}</ul>
       <h4 class="cs-section">Rodina</h4>
@@ -223,6 +261,7 @@ export function renderPersonSheet(state, role) {
       ${role === 'heir' && c.traits ? `<h4 class="ps-section">Vlastnosti ${c.gender === 'female' ? 'dědičky' : 'dědice'}</h4>
         <p class="ps-note">S těmito vlastnostmi jednou převezme vládu. Utváří je výchova a léta dospívání.</p>
         <div class="ps-traits">${TRAIT_DEFS.map((t) => `<div>${t.icon}<span>${t.label}</span><b>${c.traits[t.key]}</b></div>`).join('')}</div>` : ''}
+      ${talkSection(state, role)}
       <h4 class="ps-section">Co ${him} ovlivnilo</h4>
       ${rows ? `<ul class="ps-history">${rows}</ul>` : `<p class="ps-empty">Zatím žádné tvé rozhodnutí ${him} nezasáhlo. Až se ${c.gender === 'female' ? 'jí' : 'ho'} nějaké bude týkat, uvidíš ho tady.</p>`}
     </div>

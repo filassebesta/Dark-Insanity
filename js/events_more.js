@@ -819,7 +819,8 @@ export const MORE_EVENTS = [
       {
         label: 'Financovat stavbu',
         hintType: 'resource', hintKey: 'faith',
-        effects: { gold: -30, faith: 10, prestige: 6, legitimacy: 3 },
+        effects: { gold: -30, faith: 5 },
+        town: { at: 'capital', start: 'katedrala' }, // rises on a plot in Vlčí Úděl; the rest of the glory comes when it stands
         chronicle: 'Byl položen základní kámen katedrály. Kameníci z celé země se sjíždějí do hlavního města.',
       },
       {
@@ -1265,10 +1266,11 @@ export const MORE_EVENTS = [
     choices: [
       {
         label: 'Vyjet na hon osobně',
+        combat: 'vlci', // fought out in rounds (combat.js)
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.45, traitKey: 'strength', traitScale: 0.05,
         onSuccess: { effects: { prestige: 6 }, provinceEffects: { 'sokoli-hvozd': { loyalty: 10 } }, traitGain: 'strength', chronicle: 'Vládce sám skolil vůdce smečky. Kožešina visí v síni a v Sokolově se o lovu zpívá.' },
-        onFailure: { effects: { prestige: -4, stability: -2 }, chronicle: 'Hon skončil zraněným koněm a pokousaným psovodem. Vlci odešli, až když se oteplilo.' },
+        onFailure: { effects: { prestige: -4, stability: -2 }, injury: { pool: ['rana', 'kulhani', 'noha', 'zlomenina'] }, chronicle: 'Smečka strhla koně i s jezdcem. Vládce se domů vrátil na nosítkách a vlci odešli, až když se oteplilo.' },
       },
       {
         label: 'Vypsat odměnu za každou vlčí hlavu',

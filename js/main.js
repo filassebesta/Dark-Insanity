@@ -1,5 +1,5 @@
 import { createNewGame, crownNoble, ennoblePeasant, saveGame, listSaves, loadGame, loadMostRecentSave, deleteSave, loadSettings, saveSettings } from './state.js';
-import { advanceTurn, resolveChoice, resolveRouteChoice, checkEndConditions } from './engine.js';
+import { advanceTurn, resolveChoice, resolveRouteChoice, checkEndConditions, pickNextEvent } from './engine.js';
 import {
   showScreen, renderResourceBar, updateBookTabFlags, renderTurnSummary, renderEventCard,
   renderCourtPanel, renderChroniclePanel, openPanel, closePanels, isPanelOpen,
@@ -7,9 +7,13 @@ import {
   renderReignInfo, renderCharacterPlaque, renderOutcome, renderStaticIcons,
   resetResourceMemory, esc, upgradeScenarioArt, renderHousesPanel, renderTradeNews,
 } from './ui.js';
-import { openMap, closeMap, isMapOpen, wireMapChrome } from './map.js';
-import { openCharacter, closeCharacter, isCharacterOpen, openPerson, closePerson, isPersonOpen } from './character.js';
+import { openMap, closeMap, isMapOpen, wireMapChrome, closeTownIfOpen } from './map.js';
+import { openCharacter, closeCharacter, isCharacterOpen, openPerson, closePerson, isPersonOpen, renderPersonSheet } from './character.js';
 import { playMusic, setMusicVolume } from './audio.js';
+import { checkAchievements } from './achievements.js';
+import { openRoll, openCombat } from './dice_ui.js';
+import { wireTalk } from './talk_ui.js';
+import { renderAmbitionBar, renderWarBar, renderHall, renderEndingAchievements, announceAchievement } from './fame.js';
 
 let currentState = null;
 let activeEvent = null;
@@ -33,7 +37,17 @@ function refreshAllPanels(bumpedTrait = null) {
   renderCourtPanel(currentState);
   renderChroniclePanel(currentState);
   renderHousesPanel(currentState);
+  renderAmbitionBar(currentState);
+  renderWarBar(currentState);
 }
+
+// achievements earned by what just happened go to the Hall of Fame
+function award() {
+  const fresh = checkAchievements(currentState);
+  fresh.forEach((a, i) => setTimeout(() => announceAchievement(a), i * 900));
+}
+
+let hallReturn = 'screen-menu';
 
 function closeOverlays() {
   closePanels();
@@ -60,8 +74,10 @@ function endGame(gameOver) {
   closeOverlays();
   playMusic(BATTLE_ENDINGS.includes(gameOver.type) ? 'battle' : 'menu');
   currentState.gameOver = gameOver;
+  award();
   saveGame(currentState);
   renderEndingScreen(currentState, gameOver);
+  renderEndingAchievements(currentState);
   showScreen('screen-ending');
 }
 
@@ -83,18 +99,38 @@ const TRAIT_LABELS = { strength: 'Síla', eloquence: 'Výřečnost', intelligenc
 function showOutcome(result) {
   awaitingChoice = false;
   if (result.traitGained) toast(`+1 ${TRAIT_LABELS[result.traitGained]}`);
+  award();
   saveGame(currentState);
   refreshAllPanels(result.traitGained);
   const gameOver = checkEndConditions(currentState);
+  const free = activeEvent && activeEvent.free;
   renderOutcome(currentState, result, () => {
     if (gameOver) endGame(gameOver);
+    else if (free) nextEventSameSeason();
     else runNextTurn();
   });
 }
 
 function handleChoiceSelected(index) {
   if (!awaitingChoice) return;
-  showOutcome(resolveChoice(currentState, activeEvent, index));
+  const choice = activeEvent.choices[index];
+  if (!choice.isRoll) {
+    showOutcome(resolveChoice(currentState, activeEvent, index));
+    return;
+  }
+  // a risky choice goes to the table: a fight in rounds, or a roll of k%
+  awaitingChoice = false;
+  skipTypewriter();
+  const event = activeEvent;
+  if (choice.combat) {
+    openCombat(currentState, choice, (fought) => {
+      const result = resolveChoice(currentState, event, index, fought);
+      result.notes = [...fought.notes, ...(result.notes || [])];
+      showOutcome(result);
+    });
+  } else {
+    openRoll(currentState, choice, (rolled) => showOutcome(resolveChoice(currentState, event, index, rolled)));
+  }
 }
 
 function handleRouteSelected(terrainKey) {
@@ -107,6 +143,7 @@ function handleRouteSelected(terrainKey) {
 function runNextTurn() {
   const result = advanceTurn(currentState);
   refreshAllPanels();
+  award();
 
   if (result.successionOccurred) {
     toast(`Nastupuje nová generace: ${currentState.ruler.name} usedá na trůn.`);
@@ -121,6 +158,16 @@ function runNextTurn() {
   renderTradeNews(result.tradeNews);
 
   presentEvent(result.event); // the engine falls back to the quiet-season event
+}
+
+// after a 'free' event (the ambition offer) the season's own event comes without a new season
+function nextEventSameSeason() {
+  const event = pickNextEvent(currentState);
+  currentState.currentEvent = event ? event.id : null;
+  saveGame(currentState);
+  renderTurnSummary('');
+  renderTradeNews([]);
+  presentEvent(event);
 }
 
 function startGame(state) {
@@ -201,6 +248,14 @@ function wireActions() {
       case 'goto-options':
         showScreen('screen-options');
         break;
+      case 'goto-hall':
+        hallReturn = document.querySelector('.screen.active')?.id || 'screen-menu';
+        renderHall();
+        showScreen('screen-hall');
+        break;
+      case 'back-from-hall':
+        showScreen(hallReturn === 'screen-hall' ? 'screen-menu' : hallReturn);
+        break;
       case 'quit-game':
         toast('Hru lze zavřít v prohlížeči.');
         break;
@@ -275,6 +330,10 @@ function wireActions() {
       }
       if (panel === 'trade') {
         openMap(currentState, { layer: 'trade' });
+        return;
+      }
+      if (panel === 'war') {
+        openMap(currentState, { layer: 'war' });
         return;
       }
       if (panel === 'character') {
@@ -356,6 +415,7 @@ function wireKeyboard() {
     if (e.target.matches('input, textarea')) return;
 
     if (e.key === 'Escape') {
+      if (closeTownIfOpen()) return; // from a town back to the map first
       closeOverlays();
       return;
     }
@@ -369,6 +429,11 @@ function wireKeyboard() {
       else { closeOverlays(); openMap(currentState, { layer: 'trade' }); }
       return;
     }
+    if ((e.key === 'v' || e.key === 'V') && currentState && currentState.scenario !== 'sedlak') {
+      if (isMapOpen()) closeMap();
+      else { closeOverlays(); openMap(currentState, { layer: 'war' }); }
+      return;
+    }
     if (e.key === 'p' || e.key === 'P') {
       if (isCharacterOpen()) closeCharacter();
       else { closeOverlays(); openCharacter(currentState); }
@@ -376,6 +441,22 @@ function wireKeyboard() {
     }
     if (isOverlayOpen()) return;
 
+    // at the table: number keys pick a combat action, Enter rolls or continues
+    const table = document.querySelector('#choice-list .dice-panel');
+    if (table) {
+      if (/^[1-9]$/.test(e.key)) {
+        const act = table.querySelectorAll('.cb-action')[Number(e.key) - 1];
+        if (act && !act.disabled) act.click();
+        return;
+      }
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (skipTypewriter()) return;
+        const primary = table.querySelector('.dice-primary');
+        if (primary && !primary.disabled) primary.click();
+      }
+      return;
+    }
     const buttons = [...document.querySelectorAll('#choice-list .choice-button')];
     if (/^[1-9]$/.test(e.key)) {
       const btn = buttons[Number(e.key) - 1];
@@ -446,6 +527,14 @@ document.addEventListener('kingdom:trade', (e) => {
   if (e.detail.message) toast(e.detail.message);
 });
 
+// a campaign started or recalled on the map
+document.addEventListener('kingdom:war', (e) => {
+  if (!currentState) return;
+  saveGame(currentState);
+  refreshAllPanels();
+  if (e.detail.message) toast(e.detail.message);
+});
+
 // a decree issued on the map: save, refresh the bars and tell the player
 document.addEventListener('kingdom:decree', (e) => {
   if (!currentState) return;
@@ -454,8 +543,25 @@ document.addEventListener('kingdom:decree', (e) => {
   toast(`${currentState.scenario === 'sedlak' ? 'Naplánováno' : 'Výnos vydán'}: ${e.detail.label}`);
 });
 
+// building in a town or on the farm: save, refresh the bars and tell the player
+document.addEventListener('kingdom:build', (e) => {
+  if (!currentState) return;
+  if (!e.detail.error) saveGame(currentState);
+  refreshAllPanels();
+  if (e.detail.message) toast(e.detail.message);
+});
+
+// a conversation at court: save, refresh the court and show the answer in the sheet
+document.addEventListener('kingdom:talk', (e) => {
+  if (!currentState) return;
+  saveGame(currentState);
+  refreshAllPanels();
+  renderPersonSheet(currentState, e.detail.role);
+});
+
 wireActions();
 wireMapChrome();
+wireTalk();
 wireKeyboard();
 wireMenuAmbience();
 wireClickSound();

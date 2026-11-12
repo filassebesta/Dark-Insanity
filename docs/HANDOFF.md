@@ -67,7 +67,9 @@ musí být aktivní, jinak je mapa skrytá. Screenshoty ukládat mimo repozitá�
 | `js/court.js` | role a tituly dvora podle scénáře, životopisy, povahy rádců |
 | `js/council.js` | rada: rádci doporučují volbu |
 | `js/trade.js` | obchod: zboží, trhy, karavany, zakázky (bez DOM) |
-| `js/map.js` | interaktivní malovaná mapa (SVG nad obrázkem), vrstvy, výnosy, obchodní vrstva |
+| `js/map.js` | interaktivní malovaná mapa (SVG nad obrázkem), vrstvy, výnosy, obchodní vrstva, vstup do měst |
+| `js/build.js` | stavění: sídla, úrovně, parcely, budovy, stavební hutě, výnosy staveb (bez DOM) |
+| `js/town.js` | plán sídla (SVG s parcelami a ikonami budov) a boční panel stavění |
 | `js/ui.js` | vykreslení karty události, výsledků, panelů, konce |
 | `js/character.js` | list postavy, Síň předků, detail člena dvora |
 | `js/audio.js` | hlavní téma a bitevní hudba s prolínáním, hlasitost |
@@ -78,13 +80,25 @@ musí být aktivní, jinak je mapa skrytá. Screenshoty ukládat mimo repozitá�
 | `js/events_echoes.js` | krize (vyčerpané zdroje) a ozvěny rozhodnutí + tabulka `ECHO_HOOKS` |
 | `js/events_court.js` | události podle povah rádců + výchova dědice u šlechtice |
 | `js/events_trade.js` | přepadení karavany, piráti, cizí kupec, clo, hlad na severu, vlastní loď |
+| `js/combat.js` | souboj po kolech: nepřátelé, akce, hody k6+, zranění z boje (bez DOM) |
+| `js/dice_ui.js` | „stůl“: hod k% u riskantních voleb a souboj po kolech v příběhovém panelu |
+| `js/events_bandits.js` | zbojníci: na cestě, noční přepadení, zbojnický hejtman |
+| `js/war.js` | válečná tažení: cíle, vojsko v poli, zásoby, morálka, postup, konec tažení, tributy (bez DOM) |
+| `js/events_war.js` | 8 událostí v poli (bitva, obléhání, úplavice, dezertéři, mír, hlad, hrdina, zvěd) + triumf a porážka |
+| `js/ambitions.js` | ambice: cíle vládce s termínem, postup, odměna, nesplnění (bez DOM) |
+| `js/events_ambition.js` | událost „Čeho chceš dosáhnout“ (nabídka tří ambicí, `free: true`) |
+| `js/achievements.js` | Síň slávy: 28 úspěchů napříč všemi hrami (localStorage) |
+| `js/fame.js` | lišta ambice nad příběhem, obrazovka Síň slávy, úspěchy na konci kroniky, oznámení |
+| `js/injuries.js` | zranění vládce: druhy, postihy, hojení, zánět, náhrady, přídomky podle zranění (bez DOM) |
+| `js/events_injury.js` | ranhojič, řemeslník s náhradou (dřevěná noha, železná ruka, páska), posměch u dvora |
+| `js/events_build.js` | 16 událostí kolem staveb (požár, nákaza, cech, žold, nájezd, městská práva, poutníci… a 4 pro grunt) |
 | `docs/gemini-prompts.md` | objednávkový list obrázků (prompty, stav, dávkový prompt) |
 | `docs/udalosti.md` | čitelný přehled všech událostí a voleb |
-| `tools/sim/` | simulace (viz výše) |
+| `tools/sim/` | simulace (viz výše); `free.mjs` vyřeší událost „navíc“ (nabídku ambice) stejně jako hra |
 | `tools/images/process_batch.py` | zpracování dávky obrázků (detekce a oprava tmavého pruhu, ořez a změna velikosti) |
 
-**Celkem:** ~10 500 řádků JS, 186 událostí (95 Panovník, 39 Šlechtic, 37 Sedlák,
-15 pro více scénářů).
+**Celkem:** ~10 500 řádků JS, 205 událostí (95 Panovník, 39 Šlechtic, 41 Sedlák,
+30 pro více scénářů — z toho 12 o stavbách a 3 o zraněních).
 
 ### Formát události (zkráceně)
 
@@ -157,6 +171,52 @@ obchodní `trade`, `tradeOffer`, `tradeMod`, `tradeStock`.
 - Zakázky s termínem; královské a panské jsou závazné (nesplnění stojí přízeň).
 - Obchodní vrstva mapy (cesty, trhy, pohybující se karavany), záložka **Obchod**, klávesa **O**, zprávy z cest u události.
 
+### Stavění ve městech a vsích
+- Klik na město/ves na mapě otevře **plán sídla** s parcelami; klik na volnou parcelu nabídne stavby, klik na stavbu ukáže detail (strhnout, zastavit stavbu).
+- 9 sídel (`SETTLEMENTS` v `build.js`): Vlčí Úděl, Brod, Přístav Mark, Klášter na útesu, Železná Huť, Sokolov a nové vsi Lipnice, Dubovice, Zářečí. Sedlák místo Lipnice staví na **vlastním gruntu** (`towns.grunt`).
+- Úrovně Osada → Ves → Městys → Město → Královské město (klášter a grunt mají vlastní názvy), každá otevírá víc parcel; povýšení stojí zlato, čas a hotové stavby (Město potřebuje hradby, Královské město katedrálu, Statek svobodný stav).
+- 16 budov království (3 jen pro přístav, důl a myslivce) a 8 staveb gruntu. Účinky: `income` (každé období), `yearly` (na jaře), `drift` (klid a věrnost kraje, strop 8/6), `stock` (zboží do skladu), `onBuild`/`onProv` (jednou).
+- Jen jedna stavba v sídle naráz a omezený počet **stavebních hutí** v celé zemi (Panovník 2, Šlechtic a Sedlák 1).
+- Stavět jde jen ve vlastních krajích (šlechtic jen na svém panství, po korunovaci všude). Cizí sídla jde prohlížet.
+- Stavby, které stojí od začátku (`base: true`), nic navíc nedávají — jsou započtené v původní ekonomice, aby se nezměnilo vyvážení.
+- Ukládá se do `state.towns`; staré uložené hry si sídla vytvoří samy.
+- **Události o stavbách** (`events_build.js`): cílí na konkrétní sídlo (`target` vrací `'town:<id>'`, v textu `{town.loc}` = „v Brodu“, `{town.Loc}`, `{town.name}`). Větev může mít `town: { destroy: 'random' | '<klíč>', start: '<klíč>', hurry: n, levelUp: true, at: '<id>' }`. Stavby tak mají i rizika: požár nebo nájezd může stavbu zničit, hradby nájezd odrazí, špitál zastaví nákazu, mistr stavitel přidá stavební huť (`flags.mistr_stavitel`).
+- Stará událost „Katedrála“ teď při plném financování opravdu začne stavět katedrálu ve Vlčím Údělu; po dostavbě přijde „Svěcení katedrály“.
+- Obrázky budov a sídel jsou volitelné (prompty v `docs/gemini-prompts.md`, sekce 16); po dodání je zapnout v `BUILDING_ART` / `TOWN_ART` v `js/town.js`.
+
+### Zranění vládce
+- `state.ruler.injuries = [{ key, since, healsAt?, treated?, aided? }]`; definice v `INJURIES` (`js/injuries.js`).
+- Dočasná: pohmožděniny (1–2 období), zlomená ruka (3–5), hluboká rána (4–6, 4 % za období, že se zanítí a vládce zemře, dokud není ošetřená).
+- Trvalá: chromá noha, zohyzděná tvář, ztracené oko, ztracená ruka, ztracená noha. Náhrada (páska, železná ruka, dřevěná noha) postih zmírní.
+- Postihy: nižší **efektivní vlastnosti** (`effectiveTraits` — hody, roční vliv vlastností, přídomky; základ zůstává a dědic ho dědí), horší šance v boji (`army`), u sedláka méně zásob (`work`), kratší život (`deathRisk`), jednorázová ztráta prestiže.
+- Vznik: větev události `injury: '<klíč>' | 'random' | { pool, chance }` (rvačka, atentát, turnaj, hon, souboj, první linie, vlk, roj) a obecně 30 % po každém neúspěšném hodu na sílu (`noInjury: true` to vypne, např. u „síly“ ve smyslu tvrdosti při jednání).
+- Větve `heal`, `treat`, `worsen`, `aid` léčí, ošetřují, zhoršují a dávají náhradu.
+- Zranění se ukazují na plaketě (červeně snížené vlastnosti, „bez nohy“), v listu postavy (sekce Zranění) a v Síni předků; trvalé zranění může dát přídomek (Jednooký, Chromá…).
+
+### Kostky a souboje
+- **Každá riskantní volba se hází k% (1–100)** jako v Dračím doupěti: `rollParts` (`engine.js`) rozloží šanci na **cílové číslo** (obtížnost pro průměrného vládce) a **modifikátory k hodu**: vlastnost od průměru 5 (Síla 7 při `traitScale` 0,05 = +10), zdroj od 50, zranění, schopný rádce (+6), okolnosti (`chanceBonus`, popisek `bonusLabel`). Hod + modifikátory ≥ cíl = úspěch, 96–100 vždy úspěch, 1–5 vždy neúspěch. Pravděpodobnost je přesně stejná jako dřív (`computeSuccessChance` = `rollParts().chance`), vyvážení se nemění.
+- Hráč klikne na volbu → panel s cílem, modifikátory a tlačítkem **Hodit kostkou** (Enter) → animace dvou k10 → verdikt → Pokračovat. `resolveChoice(state, event, i, { success })` přijme výsledek ze stolu; bez něj hází engine sám (simulace).
+- **Souboj** (`combat: '<nepřítel>'` u volby s `isRoll`): po kolech, hody **k6+** (šestka se hází znovu a přičítá). Útok = k6+ + ÚČ proti k6+ + OČ, zásah bere rozdíl + zbraň. Vládce: životy 8 + Síla, ÚČ = Síla/2, OČ = (Síla + Trpělivost)/4 (+1 zbroj u pána), zbraň +2 (sedlák +1). Akce: Útok, Silný úder (ÚČ −1, rána +3), Kryt (OČ +3, příští útok +1), Zastrašit (výřečnost proti odvaze), Lest (inteligence: nepříteli OČ −2, útok +2), Útěk (trpělivost). Klávesy 1–6, Enter.
+- Nepřátelé (`ENEMIES`): rváči, zbojníci, zbojnický hejtman, najatý vrah, vlčí smečka, vlk, turnajový rytíř, šlechtic s mečem, dráb s pacholky, soused Hrubý. Těžký zásah (5+) může zranit, prohraný boj zraní vždy (u rváčů jen modřiny). Zranění z boje nahrazují `injury` větve.
+- Souboje jsou u: rvačka v krčmě, atentát, turnaj, vlčí hon, souboj s autorem písně, Sedlák: dráb, vlk, Hrubý, a v nových událostech se zbojníky. Průměrný vládce (vše 5) vyhraje se zbojníky ~75 %, s hejtmanem ~45–50 %, sedlák se zbojníky ~55 %; silná postava (Síla 8) vyhrává výrazně častěji.
+- Simulace souboje nehrají, berou šanci z `baseChance` a `traitKey` volby (proto je volba se soubojem i dál `isRoll`).
+
+### Válečná tažení
+- Záložka **Válka** (klávesa **V**, vrstva mapy „Válka“) u Panovníka a Šlechtice; Sedlák války nevede.
+- Cíle (`warTargets`): Východní marky (síla 1,3, tribut 3 zlata/období na 6 let), Severní pustiny (0,9, zima, kožešiny a malý tribut), Jižní říše (1,6, nájezd po moři, kořist), **znovudobytí ztraceného kraje** (bez něj nepřijde zlatý věk) a u Šlechtice **soukromá válka** proti rodu, který není spojenec ani příbuzný (kořist, rod oslabí, král se mračí).
+- Hráč volí velikost (15/25/40 mužů z vojska, doma musí zůstat aspoň 8) a velitele: vládce osobně (morálka +, šance +8 %, riziko zranění, doma chybí: stabilita −1 každé 2. období), nebo maršál.
+- `state.war`: pochod 1–2 období, pak v poli každé období +6 % postupu a jedna válečná událost (`state.pendingEvent`), větve `war: { progress, morale, power, won, wound, end }`. Vojsko jí `ceil(muži/8)` jídla za období; dlouhá válka a zima berou morálku.
+- Konec: 100 % postupu = vítězství (událost `w_triumf`), morálka 0 nebo ≤ 2 muži = porážka (`w_porazka`), mír z události, nebo odvolání (prestiž −3). Mezi taženími 8 období odpočinku.
+- Šance (`warBonus`): poměr mužů k síle nepřítele, morálka, velitel. Rozumný hráč s celou hotovostí vyhraje nebo uzavře mír téměř vždy, s malým oddílem je to hazard.
+- Simulace botů tažení nezačínají, takže vyvážení bez války je beze změny. Bot, který válčí pořád a volí náhodně, ale Panovníka vyčerpá (kolapsy ~60 %).
+
+### Ambice a Síň slávy
+- **Ambice** (`ambitions.js`): zhruba jednou za 1–2 roky (pokud žádná neběží) přijde událost `ambice` se třemi cíli podle scénáře (19 ambicí: stavby, povýšení sídla, pokladna, bitvy, víra, prestiž, klid v krajích, obchod, výchova dědice, legitimita, královská přízeň, spojenectví, a 8 selských). Druh `gain` (přírůstek od začátku), `reach` (dosáhnout), `below` (nejvýš). Splnění: odměna (větev události) + bod vlastnosti; nesplnění v termínu: prestiž −2 (sedlák −1). Nový vládce začíná bez ambice.
+- Událost s `free: true` nezabírá období: po ní hned přijde běžná událost téhož období (`nextEventSameSeason` v `main.js`). Jinak by nabídka ubírala události a měnila vyvážení.
+- **Statistiky** `state.stats` (`bumpStat` v `data.js`): `built`, `upgrades`, `battlesWon`, `delivered`, `tradeGold`, `injuries`, `scars`, `crises`, `ambitionsDone`; `state.origin` = scénář, kterým kronika začala.
+- **Síň slávy** (`achievements.js`): úspěchy se kontrolují po každé volbě a období, ukládají se do `localStorage` (`insanityKingdom.achievements`) a platí pro všechny hry. Obrazovka `screen-hall` (z Možností a z konce kroniky), 3 skryté „temné“ úspěchy.
+- Rady pro začátečníky byly na přání uživatele odstraněny — nepřidávat je znovu.
+
 ### Obrázky pro Sedláka
 - Zapracováno 31 obrázků: 8 portrétů sedláka, 10 portrétů rodiny a vsi, 3 konce, 10 scén.
 
@@ -202,6 +262,9 @@ FIX=s_drab.jpg python3 tools/images/process_batch.py dir1,dir2 <scratch> <repo> 
 | Šlechtic | cílí na trůn (ambice 1), neobchoduje | trůn ~45–49 %, poprava ~38 %, vyhnanství ~7 % |
 | Sedlák | ambice 0,5 | šlechtický stav ~45–50 %, svoboda kolem 10. roku, medián ~25 let; zbytek hlavně zpustlý grunt |
 | všechny | s obchodováním | mírné zlepšení, obchod hru nerozbíjí |
+| Panovník | staví všechno, co jde (bot ve scratchpadu) | zlatý věk ~49 %, kolaps ~25 % (bez stavění ~39 % / ~40 %) |
+| Šlechtic | staví všechno, co jde (náhodné volby) | trůn ~25 % → ~42 %, poprav ubude |
+| Sedlák | staví všechno, co jde (ambice 0) | šlechtický stav ~9 % → ~31 %, zpustlý grunt 84 % → 60 % |
 
 Hlavní páky: šance u `n_smrt_krale` (Šlechtic), ceny `s_vykup` a `s_zemansky_statek`
 a šance rytířské bitvy (Sedlák), ekonomika v `processPeasantEconomy` a `processTurnEconomy`.
@@ -215,6 +278,7 @@ a šance rytířské bitvy (Sedlák), ekonomika v `processPeasantEconomy` a `pro
 - **Prompty dávkově** a samostatné (uživatel je posílá do AI bez přístupu k repozitáři).
 - **Hlavní menu = původní rytina**, nic na něm neměnit; žádné červené zvýraznění klikacích míst.
 - **Důsledky voleb skryté** (žádné náhledy efektů ani růstu vlastností u voleb).
+- **Žádné tutoriálové rady** ani vyskakovací nápovědy — uživatel je nechce.
 - Hudba: hlavní téma běží celou hru, bitevní jen při bojích.
 - Git: vyvíjet a pushovat jen na větev `claude/insanity-kingdom-html-game-dccy50`; **PR nevytvářet**, pokud o to uživatel výslovně nepožádá; commity končí atribučními řádky podle pokynů prostředí.
 - Testovací screenshoty nikdy neukládat do repozitáře (jednou se to stalo a bylo odstraněno).
@@ -228,3 +292,6 @@ a šance rytířské bitvy (Sedlák), ekonomika v `processPeasantEconomy` a `pro
 - Jedinečná jména i u nové generace dvora (při nástupnictví se mohou opakovat).
 - Rada zatím nezná budoucí důsledky kromě dluhů (příznaky jako `loan_taken`); šlo by ji naučit víc.
 - Případně ukládání do více slotů s přehledem scénáře a přídomku vládce.
+- Válka: ztráta kraje může přijít i jako protiútok po porážce; spojenci, kteří pošlou posily; obrázky válečných scén (sekce 19 promptů).
+- Ambice: víc cílů a ambice pro dědice a rádce; úspěchy za konkrétní rozhodnutí v událostech.
+- Stavění: rada, která doporučuje stavby, další události o stavbách (hlavně pro Sedláka), ozvěny navázané na stavby a obrázky budov (sekce 16 promptů).

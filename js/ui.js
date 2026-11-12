@@ -5,6 +5,8 @@ import { playMusic, setAllMuted } from './audio.js';
 import { rulerPortraitCandidates, memberPortraitCandidates, portraitImg } from './character.js';
 import { roleLabel, loyaltyLabel, quirkLabel } from './court.js';
 import { councilAdvice } from './council.js';
+import { effectiveTraits, injuryWords } from './injuries.js';
+import { ENEMIES } from './combat.js';
 
 const DEFAULT_SCENE = 'assets/events/scene_default.jpg';
 
@@ -136,6 +138,7 @@ export function updateBookTabFlags(state) {
   const anyUnrest = ownProvinces(state).some((p) => p.unrest >= 70);
   const housesTab = document.querySelector('.book-tab[data-panel="houses"]');
   housesTab.hidden = state.scenario !== 'slechtic';
+  document.querySelector('.book-tab[data-panel="war"]').hidden = state.scenario === 'sedlak'; // a peasant wages no wars
   if (state.houses) housesTab.classList.toggle('flagged', state.resources.favor <= 25 || state.houses.some((h) => h.attitude < 25));
   const anyDisloyal = [state.heir, state.spouse, state.chancellor, state.marshal, state.spymaster]
     .some((c) => c.alive && c.loyalty <= 25);
@@ -165,14 +168,19 @@ function tierLabel(r) {
 export function renderCharacterPlaque(state, bumpedTrait = null) {
   const r = state.ruler;
   const initial = esc(r.name ? r.name[0] : '?');
+  const eff = effectiveTraits(r);
+  const hurt = injuryWords(r);
   document.getElementById('character-plaque').innerHTML = `
     <div class="plaque-portrait" data-action="open-character" title="Zobrazit postavu">${initial}${portraitImg(rulerPortraitCandidates(r), r.name)}</div>
     <div class="plaque-id">
       <span class="plaque-name">${esc(r.name)}</span>
-      <span class="plaque-sub">${esc(tierLabel(r))} · ${r.age} let</span>
+      <span class="plaque-sub">${esc(tierLabel(r))} · ${r.age} let${state.war && state.war.leader === 'ruler' ? ' · <em class="plaque-hurt">v poli</em>' : ''}${hurt.length ? ` · <em class="plaque-hurt">${esc(hurt.join(', '))}</em>` : ''}</span>
     </div>
     <div class="plaque-traits">
-      ${TRAIT_DEFS.map((t) => `<span class="plaque-trait${t.key === bumpedTrait ? ' bump' : ''}" title="${t.label}">${t.icon}${r.traits[t.key]}</span>`).join('')}
+      ${TRAIT_DEFS.map((t) => {
+        const low = eff[t.key] < r.traits[t.key];
+        return `<span class="plaque-trait${t.key === bumpedTrait ? ' bump' : ''}${low ? ' hurt' : ''}" title="${t.label}${low ? ` ${eff[t.key]} (bez zranění ${r.traits[t.key]})` : ''}">${t.icon}${eff[t.key]}</span>`;
+      }).join('')}
     </div>
   `;
 }
@@ -291,15 +299,18 @@ export function renderEventCard(state, event, handlers) {
     if (choice.requires && !choice.requires(state)) return; // e.g. needs a secret or a conspiracy
     shownAt[index] = shown;
     let tag = '';
-    if (choice.isRoll) {
+    if (choice.isRoll && choice.combat) {
+      const foe = ENEMIES[choice.combat];
+      tag = `<span class="risk-tag combat-tag" title="Souboj po kolech s kostkou k6">⚔ Souboj · ${esc(foe ? foe.name : '')}</span>`;
+    } else if (choice.isRoll) {
       const pct = Math.round(computeSuccessChance(state, choice) * 100);
       const trait = TRAIT_DEFS.find((d) => d.key === choice.traitKey);
       const res = RESOURCE_DEFS.find((d) => d.key === choice.resourceKey);
       const basis = [
-        trait ? `${trait.label} ${state.ruler.traits[trait.key]}` : '',
+        trait ? `${trait.label} ${effectiveTraits(state.ruler)[trait.key]}` : '',
         res ? `${resourceLabel(res, state.scenario)} ${state.resources[res.key]}` : '',
       ].filter(Boolean).join(' + ');
-      tag = `<span class="risk-tag" title="Šance na úspěch závisí na: ${basis || 'náhodě'}">${basis ? `${esc(basis)} · ` : ''}${pct} %</span>`;
+      tag = `<span class="risk-tag" title="Hod k% — šance závisí na: ${basis || 'náhodě'}">${basis ? `${esc(basis)} · ` : ''}k% · ${pct} %</span>`;
     }
     // what a choice costs or brings stays hidden until it is made
     const btn = makeChoiceButton(shown++, hintIcon(choice.hintType, choice.hintKey), choice.label, tag);
@@ -445,7 +456,7 @@ export function renderCourtPanel(state) {
   const traitsHost = document.createElement('div');
   traitsHost.className = 'ruler-status';
   traitsHost.innerHTML = '<h4>Vlastnosti vládce</h4>' + TRAIT_DEFS.map((t) =>
-    `<div class="trait-row"><span>${t.icon}${t.label}</span><span>${state.ruler.traits[t.key]}</span></div>`
+    `<div class="trait-row"><span>${t.icon}${t.label}</span><span>${effectiveTraits(state.ruler)[t.key]}</span></div>`
   ).join('');
   grid.after(traitsHost);
 }

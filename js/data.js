@@ -98,3 +98,13 @@ export function randomName(gender) {
 export function clamp(value, min = 0, max = 100) {
   return Math.max(min, Math.min(max, Math.round(value)));
 }
+
+/** Counters of what happened in this save (stavby, bitvy, karavany…), read by ambitions and achievements. */
+export function bumpStat(state, key, n = 1) {
+  state.stats = state.stats || {};
+  state.stats[key] = (state.stats[key] || 0) + n;
+}
+
+export function stat(state, key) {
+  return (state.stats && state.stats[key]) || 0;
+}

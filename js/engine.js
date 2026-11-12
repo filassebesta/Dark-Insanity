@@ -1,8 +1,15 @@
-import { SEASONS, TERRAIN_DEFS, NOBLE_HOUSES, PEASANT_HOME, clamp, randomName, randInt, tierTitle } from './data.js';
+import { SEASONS, TERRAIN_DEFS, NOBLE_HOUSES, PEASANT_HOME, clamp, randomName, randInt, tierTitle, bumpStat, TRAIT_DEFS, RESOURCE_DEFS, resourceLabel } from './data.js';
 import { makeChronicleEntry, inheritTraits } from './state.js';
 import { EVENTS, QUIET_EVENTS } from './events.js';
 import { roleLabel, QUIRK_ROLES, randomQuirk, quirkLabel } from './court.js';
 import { processTrade, resolveIncident, resolveOffer, addTradeMod, ensureTrade, cargoTokens, GOODS, MAX_STOCK } from './trade.js';
+import { processBuilding, buildingDrift, applyTownEffects, settlementDef } from './build.js';
+import {
+  effectiveTraits, injuryMods, injure, applyInjuryEffects, processInjuries, injuryTokens,
+  injuryEpithetScores, INJURY_EPITHETS, lastingInjuryNames, STRENGTH_FAIL_INJURY,
+} from './injuries.js';
+import { readyToOffer, startAmbition, skipAmbition, settleAmbition, dropAmbition, FAILURE } from './ambitions.js';
+import { processWar, applyWarEffects, warTokens } from './war.js';
 
 const TRAIT_MIN = 1;
 const TRAIT_MAX = 10;
@@ -42,6 +49,13 @@ export function interpolate(state, text) {
     });
   }
   Object.assign(dict, cargoTokens(state));
+  Object.assign(dict, injuryTokens(state));
+  Object.assign(dict, warTokens(state));
+  const town = ctx.town && settlementDef(ctx.town);
+  if (town) {
+    // {town.name} Brod, {town.loc} v Brodu, {town.Loc} V Brodu
+    Object.assign(dict, { 'town.name': town.name, 'town.loc': town.loc, 'town.Loc': town.loc[0].toUpperCase() + town.loc.slice(1) });
+  }
   const lord = lordOf(state);
   if (lord) {
     Object.assign(dict, {
@@ -369,6 +383,14 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
   applyCourtReplacement(state, branch.replaceCourt, notes, meta);
   applyHeirTraits(state, branch.heirTraits, notes);
   applyTradeEffects(state, branch, notes);
+  applyTownEffects(state, state.eventContext?.town, branch.town, notes);
+  applyInjuryEffects(state, branch, notes); // wounds, cures and wooden legs
+  if (branch.ambition) {
+    const a = startAmbition(state, branch.ambition);
+    if (a) notes.push({ text: `Ambice: ${a.name} (do ${a.years} let)`, tone: 'pos' });
+  }
+  if (branch.ambitionSkip) skipAmbition(state);
+  applyWarEffects(state, branch.war, notes); // a war event moves the campaign
   recordCourtHistory(state, meta, touched, outcome);
   scheduleEcho(state, branch.echo, meta);
   tallyReign(state, branch, meta, outcome);
@@ -519,10 +541,12 @@ function tallyReign(state, branch, meta, outcome) {
   if (outcome === 'success' || outcome === 'failure') {
     reign.rolls[outcome === 'success' ? 'won' : 'lost'] += 1;
     if (meta.battle) reign.battles[outcome === 'success' ? 'won' : 'lost'] += 1;
+    if (meta.battle && outcome === 'success') bumpStat(state, 'battlesWon');
     weight += 10;
   }
   if (branch.setTier || branch.newKing || branch.endGame) weight += 60;
   if (meta.event.forced) weight += 15;
+  if (/^krize/.test(meta.event.id)) bumpStat(state, 'crises');
   // the three weightiest decisions of a reign are what the chronicle remembers
   reign.deeds.push({ year: state.year, title: meta.event.title, choice: meta.label, outcome, weight });
   reign.deeds.sort((x, y) => y.weight - x.weight);
@@ -552,7 +576,7 @@ const EPITHETS = {
 export function reignEpithet(state, ruler = state.ruler) {
   const reign = reignOf(state);
   const s = reign.sums;
-  const t = ruler.traits;
+  const t = effectiveTraits(ruler);
   const years = Math.round((state.turn - (ruler.reignStartTurn || 0)) / 4);
   const scores = {
     brave: reign.battles.won >= 3 && reign.battles.won > reign.battles.lost ? 20 + reign.battles.won * 8 : 0,
@@ -569,6 +593,7 @@ export function reignEpithet(state, ruler = state.ruler) {
     wise: (t.intelligence - 7) * 16,
     patient: (t.patience - 7) * 16,
     old: ruler.age >= 72 ? 20 + (ruler.age - 72) * 3 : 0,
+    ...injuryEpithetScores(ruler), // Jednooký, Chromá…
   };
   let best = 'quiet';
   let bestScore = 28; // anything weaker than this leaves a quiet name
@@ -576,7 +601,7 @@ export function reignEpithet(state, ruler = state.ruler) {
     if (score > bestScore) { best = key; bestScore = score; }
   }
   if (best === 'quiet' && years < 2) return null; // too early to tell
-  const [male, female, reason] = EPITHETS[best];
+  const [male, female, reason] = EPITHETS[best] || INJURY_EPITHETS[best.replace('injury_', '')];
   const f = ruler.gender === 'female';
   return {
     key: best,
@@ -585,17 +610,59 @@ export function reignEpithet(state, ruler = state.ruler) {
   };
 }
 
-export function computeSuccessChance(state, choice) {
-  let chance = choice.baseChance ?? 0.5;
-  if (choice.traitKey) chance += (state.ruler.traits[choice.traitKey] || 0) * (choice.traitScale ?? 0.03);
-  // optional resource weight, e.g. a battle depends on the size of the army
-  if (choice.resourceKey) chance += ((state.resources[choice.resourceKey] ?? 50) - 50) / 100 * (choice.resourceScale ?? 0.4);
-  if (choice.chanceBonus) chance += choice.chanceBonus(state); // e.g. allies backing a claim
+// ---------- the dice: every risky choice is a roll of k% (1–100) ----------
+//
+// A risky choice has a target number (how hard the deed is for an average
+// ruler with average means) and modifiers added to the roll: traits counted
+// from the average 5, resources from 50, wounds, capable advisers and the
+// circumstances (allies, the state of the army…). roll + modifiers ≥ target
+// succeeds; 96–100 always succeeds, 1–5 always fails. The chance shown to
+// the player is exactly the chance of that roll.
+
+/** { target, mods: [{ label, value }], bonus, chance } for a risky choice. */
+export function rollParts(state, choice) {
+  let base = choice.baseChance ?? 0.5;
+  const mods = [];
+  const add = (label, value) => { if (Math.round(value)) mods.push({ label, value: Math.round(value) }); };
+  if (choice.traitKey) {
+    const scale = choice.traitScale ?? 0.03;
+    const v = effectiveTraits(state.ruler)[choice.traitKey] || 0;
+    base += 5 * scale; // an average trait (5) is part of the difficulty, the rest is a bonus or a malus
+    const def = TRAIT_DEFS.find((d) => d.key === choice.traitKey);
+    add(`${def ? def.label : choice.traitKey} ${v}`, (v - 5) * scale * 100);
+  }
+  if (choice.resourceKey) {
+    const v = state.resources[choice.resourceKey] ?? 50;
+    const def = RESOURCE_DEFS.find((d) => d.key === choice.resourceKey);
+    add(`${def ? resourceLabel(def, state.scenario) : choice.resourceKey} ${v}`, (v - 50) / 100 * (choice.resourceScale ?? 0.4) * 100);
+  }
+  // wounds weigh on every test, a lost limb most of all on those of the sword
+  const hurt = injuryMods(state.ruler);
+  add('Zranění', (hurt.rolls + (choice.resourceKey === 'army' || choice.traitKey === 'strength' ? hurt.army : 0)) * 100);
+  if (choice.chanceBonus) add(choice.bonusLabel || 'Okolnosti', choice.chanceBonus(state) * 100); // e.g. allies backing a claim
   // a capable adviser helps in their own field
-  if (choice.resourceKey === 'army' && capable(state, 'marshal')) chance += 0.06;
-  if (choice.traitKey === 'intelligence' && capable(state, 'spymaster')) chance += 0.06;
-  if (choice.traitKey === 'eloquence' && capable(state, 'spouse')) chance += 0.06;
-  return Math.max(0.05, Math.min(0.95, chance));
+  const helper = (role) => `Schopn${state[role].gender === 'female' ? 'á' : 'ý'} ${roleLabel(role, state[role].gender, state.scenario).toLowerCase()}`;
+  if (choice.resourceKey === 'army' && capable(state, 'marshal')) add(helper('marshal'), 6);
+  if (choice.traitKey === 'intelligence' && capable(state, 'spymaster')) add(helper('spymaster'), 6);
+  if (choice.traitKey === 'eloquence' && capable(state, 'spouse')) add(helper('spouse'), 6);
+  const target = 101 - Math.round(base * 100);
+  const bonus = mods.reduce((s, m) => s + m.value, 0);
+  const chance = Math.max(0.05, Math.min(0.95, (101 - target + bonus) / 100));
+  return { target, mods, bonus, chance };
+}
+
+/** Rolls k% for a risky choice: { roll, bonus, total, target, success, crit: 'hit' | 'miss' | null }. */
+export function rollDice(state, choice) {
+  const parts = rollParts(state, choice);
+  const roll = 1 + Math.floor(Math.random() * 100);
+  const total = roll + parts.bonus;
+  const crit = roll >= 96 ? 'hit' : roll <= 5 ? 'miss' : null;
+  const success = crit === 'hit' || (crit !== 'miss' && total >= parts.target);
+  return { ...parts, roll, total, crit, success };
+}
+
+export function computeSuccessChance(state, choice) {
+  return rollParts(state, choice).chance;
 }
 
 function markEventSeen(state, event) {
@@ -607,19 +674,28 @@ function markEventSeen(state, event) {
   if (event.markSeen) event.markSeen(state);
 }
 
-export function resolveChoice(state, event, choiceIndex) {
+/**
+ * Resolves a choice. `decided` comes from the table: a dice roll the player made
+ * ({ success, roll }) or a fight fought out ({ success, combat: true }); without it the
+ * engine rolls by itself (the sims).
+ */
+export function resolveChoice(state, event, choiceIndex, decided = null) {
   const choice = event.choices[choiceIndex];
   let outcome = 'normal';
   let branch = choice;
 
   if (choice.isRoll) {
-    const chance = computeSuccessChance(state, choice);
-    const success = Math.random() < chance;
+    const success = decided ? decided.success : rollDice(state, choice).success;
     branch = success ? choice.onSuccess : choice.onFailure;
     outcome = success ? 'success' : 'failure';
+    // a fight already dealt its own wounds blow by blow
+    if (decided && decided.combat) branch = { ...branch, injury: undefined, noInjury: true };
   }
 
   const notes = applyBranch(state, branch, { event, label: choice.label, battle: choice.resourceKey === 'army' }, outcome);
+  // a lost test of strength (a brawl, a hunt, a duel) can leave a wound even where the story does not say so
+  if (outcome === 'failure' && choice.traitKey === 'strength' && !branch.injury && !branch.noInjury && !choice.noInjury
+    && Math.random() < STRENGTH_FAIL_INJURY) injure(state, 'random', notes);
   const traitGained = branch.traitGain || null;
   if (traitGained) {
     state.ruler.traits[traitGained] = clampTrait(state.ruler.traits[traitGained] + 1);
@@ -687,7 +763,11 @@ export function pickNextEvent(state) {
   if (event.onPick) event.onPick(state); // e.g. a buyer asking for whatever fills the warehouse
   if (event.target) {
     const t = event.target(state);
-    if (state.provinces.some((p) => p.id === t)) state.eventContext = { province: t };
+    // 'town:<id>' = a settlement; its province counts as the event's province too
+    if (typeof t === 'string' && t.startsWith('town:')) {
+      const id = t.slice(5);
+      state.eventContext = { town: id, province: settlementDef(id).province };
+    } else if (state.provinces.some((p) => p.id === t)) state.eventContext = { province: t };
     else if ((state.houses || []).some((h) => h.id === t)) state.eventContext = { house: t };
     else state.eventContext = { role: t };
   }
@@ -702,7 +782,8 @@ function processPeasantEconomy(state) {
   const SEASON_FOOD = [-2, 1, 7, -6];
   let goldIncome = Math.round(r.stability / 35) - 1 + traitBonuses(state).gold
     + (capable(state, 'chancellor') ? 1 : 0) + (state.flags.s_rychtar ? 1 : 0);
-  let foodIncome = Math.round((r.stability + r.army) / 35) - 2 + SEASON_FOOD[state.seasonIndex];
+  let foodIncome = Math.round((r.stability + r.army) / 35) - 2 + SEASON_FOOD[state.seasonIndex]
+    - injuryMods(state.ruler).work; // a farmer without a leg or a hand does half the work
   if (state.seasonIndex === 2) {
     foodIncome -= free ? 2 : 5;
     goldIncome -= free ? 3 : 1;
@@ -753,7 +834,7 @@ function processTurnEconomy(state) {
 // the provinces, eloquence wins their loyalty, intelligence fills the treasury,
 // patience keeps unrest from eating into stability.
 export function traitBonuses(state) {
-  const t = state.ruler.traits;
+  const t = effectiveTraits(state.ruler); // an injured ruler governs with what is left
   return {
     order: t.strength - 5,        // lower unrest target in every province
     loyalty: t.eloquence - 5,     // higher loyalty target in every province
@@ -774,12 +855,13 @@ function driftProvinces(state) {
   const bonus = traitBonuses(state);
   const noble = isNoble(state);
   for (const p of ownProvinces(state)) {
+    const built = buildingDrift(state, p.id); // churches, walls, taverns… in the province's towns
     // a noble's villages answer to their lord, not to a claim on the throne
     const unrestBase = noble ? 34 : 45;
-    const unrestTarget = unrestBase - (r.stability - 50) * 0.6 - (p.garrison - 50) * 0.25 - (p.wealth - 50) * 0.15 + (r.food < 20 ? 20 : 0) - bonus.order;
+    const unrestTarget = unrestBase - (r.stability - 50) * 0.6 - (p.garrison - 50) * 0.25 - (p.wealth - 50) * 0.15 + (r.food < 20 ? 20 : 0) - bonus.order - built.order;
     p.unrest = clamp(toward(p.unrest, unrestTarget, 0.2, 4) + randInt(-3, 3));
     const standing = noble ? 55 + (r.stability - 50) * 0.4 + (r.prestige - 50) * 0.2 : 45 + (r.legitimacy - 50) * 0.7 + (r.prestige - 50) * 0.2;
-    const loyaltyTarget = standing - Math.max(0, p.unrest - 50) * 0.4 + bonus.loyalty;
+    const loyaltyTarget = standing - Math.max(0, p.unrest - 50) * 0.4 + bonus.loyalty + built.loyalty;
     p.loyalty = clamp(toward(p.loyalty, loyaltyTarget, 0.15, 3) + randInt(-2, 2));
   }
   // fame and legitimacy fade unless renewed; faith settles back toward custom
@@ -842,8 +924,8 @@ function ageCharacters(state) {
 
 function checkNaturalDeath(state) {
   const age = state.ruler.age;
-  if (age < 50) return false;
-  const chance = Math.min(0.6, (age - 50) * 0.02);
+  // old wounds shorten life at any age
+  const chance = Math.min(0.6, Math.max(0, (age - 50) * 0.02) + injuryMods(state.ruler).deathRisk);
   return Math.random() < chance;
 }
 
@@ -862,7 +944,9 @@ function generateSuccessorHousehold(state) {
   };
 }
 
-function handleSuccession(state) {
+function handleSuccession(state, cause = 'stářím') {
+  dropAmbition(state); // the new ruler sets their own goals
+  if (state.war && state.war.leader === 'ruler') state.war.leader = 'marshal'; // the marshal takes over the campaign
   if (state.heir.alive) {
     const oldName = state.ruler.name;
     const newRulerName = state.heir.name;
@@ -878,9 +962,11 @@ function handleSuccession(state) {
       epithet: epithet ? epithet.word : null,
       epithetReason: epithet ? epithet.reason : null,
       deeds: reignOf(state).deeds,
+      injuries: lastingInjuryNames(state.ruler),
+      cause: cause === 'stářím' ? null : cause,
     });
     state.reign = newReign();
-    state.chronicle.push(makeChronicleEntry(state, `${oldName}${state.pastRulers.at(-1).epithet ? ` ${state.pastRulers.at(-1).epithet}` : ''} umírá stářím. ${isPeasant(state) ? 'Grunt' : isNoble(state) ? 'Panství' : 'Korunu'} přebírá ${newRulerName}.`));
+    state.chronicle.push(makeChronicleEntry(state, `${oldName}${state.pastRulers.at(-1).epithet ? ` ${state.pastRulers.at(-1).epithet}` : ''} umírá ${cause}. ${isPeasant(state) ? 'Grunt' : isNoble(state) ? 'Panství' : 'Korunu'} přebírá ${newRulerName}.`));
     state.ruler = {
       name: newRulerName,
       gender: state.heir.gender,
@@ -951,6 +1037,28 @@ export function checkEndConditions(state) {
   return null;
 }
 
+// ---------- ambitions: goals the ruler sets (ambitions.js) ----------
+
+/** Pays a met ambition, punishes an expired one. Returns news lines. */
+function processAmbition(state) {
+  const done = settleAmbition(state);
+  if (!done) return [];
+  const { result, def } = done;
+  const f = state.ruler.gender === 'female';
+  if (result === 'met') {
+    applyBranch(state, def.reward, null);
+    if (def.trait) state.ruler.traits[def.trait] = clampTrait(state.ruler.traits[def.trait] + 1);
+    bumpStat(state, 'ambitionsDone');
+    const text = `Ambice splněna: ${def.name}. ${state.ruler.name} ${f ? 'dostála' : 'dostál'} svému předsevzetí a lidé to vidí.`;
+    state.chronicle.push(makeChronicleEntry(state, text));
+    return [text];
+  }
+  applyEffects(state, FAILURE[state.scenario] || FAILURE.panovnik);
+  const text = `Ambice nenaplněna: ${def.name}. Čas vypršel a předsevzetí zůstalo jen slovem.`;
+  state.chronicle.push(makeChronicleEntry(state, text));
+  return [text];
+}
+
 // Advances one round (season). Returns { turnSummary, event, successionOccurred, gameOver }.
 export function advanceTurn(state) {
   ensureCourtData(state);
@@ -958,11 +1066,21 @@ export function advanceTurn(state) {
   state.seasonIndex = state.turn % SEASONS.length;
   if (state.seasonIndex === 0) state.year += 1;
 
-  const { goldIncome, foodIncome } = processTurnEconomy(state);
+  const economy = processTurnEconomy(state);
+  const built = processBuilding(state); // finished work and what the towns' buildings yield
+  const goldIncome = economy.goldIncome + built.gold;
+  const foodIncome = economy.foodIncome + built.food;
   let successionOccurred = false;
   let deathCheckText = '';
 
-  if (state.seasonIndex === 0) {
+  // wounds heal, or a festering one kills
+  const wounds = processInjuries(state);
+  if (wounds.died) {
+    successionOccurred = handleSuccession(state, 'na následky zranění');
+    deathCheckText = ' Vládce podlehl zranění.';
+  }
+
+  if (state.seasonIndex === 0 && !wounds.died) {
     ageCharacters(state);
     if (checkNaturalDeath(state)) {
       successionOccurred = handleSuccession(state);
@@ -970,8 +1088,9 @@ export function advanceTurn(state) {
     }
   }
 
+  const ambitionNews = processAmbition(state);
   updateGoldenAgeStreak(state);
-  const tradeNews = processTrade(state);
+  const tradeNews = [...wounds.news, ...ambitionNews, ...built.news, ...processTrade(state)];
 
   const seasonLabel = SEASONS[state.seasonIndex];
   const [goldWord, foodWord] = isPeasant(state) ? ['grošů', 'zásob'] : ['zlata', 'jídla'];
@@ -985,6 +1104,10 @@ export function advanceTurn(state) {
   }
 
   raiseCrisis(state);
+  // the army in the field: supplies, the end of a campaign, the season's war event
+  tradeNews.unshift(...processWar(state));
+  // now and then the ruler is asked to set a goal for the coming years
+  if (!state.pendingEvent && readyToOffer(state)) state.pendingEvent = 'ambice';
   const event = pickNextEvent(state);
   state.currentEvent = event ? event.id : null;
   return { turnSummary, event, successionOccurred, gameOver: null, tradeNews };

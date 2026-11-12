@@ -2,7 +2,7 @@
 
 Vygenerováno z `js/events*.js`. Jména v hranatých závorkách hra doplní podle aktuálního stavu.
 
-Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí · Scénář **Sedlák**: 33 událostí (+ 3 krize, 2 ozvěny) · Krize: 7 · Ozvěny rozhodnutí: 17 · Povahy rádců a výchova: 5 · Obchod: 6.
+Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí · Scénář **Sedlák**: 33 událostí (+ 3 krize, 2 ozvěny) · Krize: 7 · Ozvěny rozhodnutí: 17 · Povahy rádců a výchova: 5 · Obchod: 6 · Stavby: 16 (12 království, 4 grunt) · Zranění: 3 · Ambice: 1 (nabídka cílů) · Válka: 10 · Zbojníci: 3. Volby označené ⚔ se bojují po kolech s k6, ostatní riskantní volby se hází k%.
 
 ## Scénář Panovník
 
@@ -1554,3 +1554,281 @@ Přepadení karavany a pirátů přijde samo, když se náklad cestou dostane do
 
 1. Loď postavit
 2. Spokojit se s pronajatými loděmi
+
+## Stavby ve městech a na gruntu
+
+Přijdou jen tehdy, když v sídle stojí příslušná stavba. `[ve městě]` hra nahradí konkrétním sídlem (v Brodu, ve Vlčím Údělu…).
+
+### 1. Oheň nad střechami  `t_pozar`
+
+> [Ve městě] hoří. Oheň vyskočil z pekárny u cesty a vítr ho žene přes doškové střechy. Lidé běhají s vědry, ale plameny jsou rychlejší než oni.
+
+1. Poslat vojáky hasit *(riskantní volba)*
+2. Strhnout domy v cestě ohni
+3. Svolat lid k modlitbě o déšť *(riskantní volba)*
+
+### 2. Horečka v ulicích  `t_nakaza`
+
+> [Ve městě] se lidé začali probouzet s horečkou a skvrnami na krku. Lazebníci krčí rameny a kněží zvoní umíráčkem čím dál častěji.
+
+1. Otevřít špitál nemocným *(jen někdy)*
+2. Zavřít cesty a nikoho nepouštět
+3. Nechat to na lazebnících *(riskantní volba)*
+
+### 3. Cech žádá výsady  `t_cech_vysady`
+
+> Cechmistři [ve městě] přišli v nejlepších šatech a s pečetí na listině. Chtějí, aby nikdo mimo cech nesměl ve městě prodávat sukno — a aby jim to vládce potvrdil navždy.
+
+1. Udělit cechu výsady
+2. Odmítnout — trh má být svobodný *(riskantní volba)*
+3. Výsady prodat za zlato
+
+### 4. Mistr stavitel  `t_stavitel`
+
+> Na staveniště [ve městě] přišel cizí mistr s olovnicí za pasem. Prohlédl lešení, plivl a řekl, že tohle by se svými lidmi postavil za polovinu času. Za odpovídající cenu, pochopitelně.
+
+1. Najmout ho na tuhle stavbu *(jen někdy)*
+2. Nabídnout mu stálou službu *(jen někdy)*
+3. Poslat ho dál
+
+### 5. Kasárna bez žoldu  `t_zold`
+
+> Posádka kasáren [ve městě] dva měsíce neviděla ani groš. Vojáci sedí na nádvoří, místo cvičení hrají v kostky o vlastní zbraně a velitel posílá posla, že dlouho je už neudrží.
+
+1. Vyplatit žold *(jen někdy)*
+2. Slíbit žold po žních *(riskantní volba)*
+3. Rozpustit posádku
+
+### 6. Lupiči před branou  `t_najezd`
+
+> Za úsvitu se z lesa vynořila tlupa lupičů na koních. Míří k branám, protože [ve městě] je co brát: plné sklady, kostelní stříbro a všechno, co se dá odvézt nebo zapálit.
+
+1. Zavřít brány a bránit hradby *(jen někdy)*
+2. Vyjet proti nim *(riskantní volba)*
+3. Vyplatit je *(jen někdy)*
+
+### 7. Obyvatelé chtějí víc  `t_mestska_prava`
+
+> Konšelé [ve městě] přinesli prosbu: sídlo vyrostlo, lidí přibylo a chtějí práva, jaká mají větší místa — vlastní trh, soud a pečeť. Jsou ochotni za ně leccos nabídnout.
+
+1. Udělit práva jako dar
+2. Práva prodat za zlato
+3. Odmítnout
+
+### 8. Poutníci  `t_pout`
+
+> Ke kostelu [ve městě] se sjíždějí poutníci. Prý tam slepá stařena po mši prohlédla. Cesty jsou plné lidí s holemi a mušlemi na kloboucích — a všichni mají hlad i měšec.
+
+1. Vybírat od poutníků mýto
+2. Pohostit poutníky
+
+### 9. Mlynář šidí  `t_mlynar`
+
+> Sedláci, kteří melou [ve městě], si stěžují: mlynář prý bere víc, než mu patří, a mouku vrací lehčí, než přivezli obilí. Mlynář přísahá na svou mlýnskou váhu.
+
+1. Potrestat mlynáře
+2. Nechat ho, mele dobře
+3. Postavit obecní váhu *(jen někdy)*
+
+### 10. Nejlepší žák  `t_skola_zak`
+
+> Opat z klášterní školy [ve městě] přivádí chlapce v obnošené kutně. Syn uhlíře, ale čte latinsky, počítá rychleji než písaři a pamatuje si každé slovo. Opat se ptá, co s ním.
+
+1. Vzít ho do kanceláře
+2. Poslat ho studovat do ciziny *(jen někdy)*
+3. Ať zůstane u mnichů
+
+### 11. Svěcení katedrály  `t_sveceni`
+
+> Poslední kámen je osazen. Katedrála [ve městě] se tyčí nad krajinou a biskup čeká, jak velkolepé má být svěcení. Přijedou hosté z ciziny i z nejzapadlejších vsí.
+
+1. Velkolepé svěcení *(jen někdy)*
+2. Skromná mše
+
+### 12. Podzimní jarmark  `t_jarmark`
+
+> Nové tržiště [ve městě] je plné. Kupci z celé země rozkládají zboží, kejklíři polykají oheň a rychtář se ptá, kolik má letos vybírat tržného.
+
+1. Vybrat plné tržné
+2. Odpustit tržné, ať se sjedou kupci
+
+### 13. Roj na lípě  `t_s_roj` *(Sedlák)*
+
+> Z včelína vyrojily včely a usadily se vysoko v koruně lípy na návsi. Sousedé už mají připravené koše — kdo roj sundá, toho je.
+
+1. Vylézt pro roj *(riskantní volba)*
+2. Nechat ho letět
+
+### 14. Nemoc v chlévě  `t_s_dobytek` *(Sedlák)*
+
+> Kráva v chlévě nežere a stojí se svěšenou hlavou. Jestli je to mor dobytka, do týdne bude chlév prázdný.
+
+1. Zabít nemocný kus
+2. Zavolat kováře, který léčí dobytek *(jen někdy)*
+3. Počkat, ono to přejde *(riskantní volba)*
+
+### 15. Závist sousedů  `t_s_zavist` *(Sedlák)*
+
+> Grunt se rozrůstá a ve vsi se o tom mluví. U studny je slyšet, že si hospodář myslí, že je víc než ostatní. A že by stačila jedna jiskra.
+
+1. Uspořádat hody pro celou ves
+2. Nevšímat si řečí *(riskantní volba)*
+3. Postěžovat si rychtáři
+
+### 16. Pán si všiml  `t_s_pan_podil` *(Sedlák)*
+
+> [Pán] [jméno pána] projížděl kolem gruntu a zastavil koně. Nové stavby si prohlížel dlouho. Druhý den přišel drábův vzkaz: poddaný, který tolik staví, může i víc odvádět.
+
+1. Dát pánovi, co chce *(jen někdy)*
+2. Odmítnout — co jsem postavil, je moje
+3. Tvrdit, že stavby jsou staré *(riskantní volba)*
+
+## Zranění vládce
+
+Přijdou, jen když je vládce zraněný (`js/events_injury.js`). Zranění samotná vznikají v soubojích, při honu, v turnaji, v bitvě v první linii, při atentátu a obecně s pravděpodobností 30 % po každém neúspěšném hodu na sílu.
+
+### 1. Rána, která se nehojí  `z_ranhojic`
+
+> Obvazy se každé ráno mění a každé ráno jsou krvavější. [Zranění] pálí a v noci přichází horečka. U dveří čekají dva: učený lékař s kufříkem nástrojů a stará bylinkářka z lesa.
+
+1. Zaplatit učeného lékaře *(jen někdy)*
+2. Poslat pro ranhojiče z Brodu *(jen někdy)*
+3. Svěřit se bylinkářce *(riskantní volba)*
+4. Modlit se a vydržet *(riskantní volba)*
+
+### 2. Řemeslník s nabídkou  `z_nahrada`
+
+> [Řezbář] se uklonil a rozbalil plátno. Slyšel prý, jak [vládce] přišel o [nohu], a přináší [dřevěnou nohu], změřenou na míru. Nebude to jako dřív, ale bude to lepší než teď.
+
+1. Nechat si ji udělat *(jen někdy)*
+2. Zaplatit, kolik dům dá *(jen někdy)*
+3. Odmítnout a naučit se žít bez ní
+
+### 3. Smích za zády  `z_posmech`
+
+> Na hostině si šašek přivázal ke koleni násadu od koštěte, přes oko pásku a začal se potácet mezi stoly. Hosté se dusí smíchem — a pak jeden po druhém zmlknou a dívají se k čelu stolu, kde sedí [vládce].
+
+1. Dát ho zbičovat
+2. Smát se s nimi *(riskantní volba)*
+3. Přejít to mlčením
+
+## Ambice
+
+### 1. Čeho chceš dosáhnout  `ambice`
+
+> Je čas se zastavit a rozhodnout, kam dál. Dny plynou jeden za druhým a kdo nemá cíl, toho nesou. [vládce] ví, že na všechno síly nestačí — a že lidé si pamatují ty, kdo něco slíbili a dokázali.
+
+Nabídne tři ze 19 cílů podle scénáře (`js/ambitions.js`) a volbu „Žít ze dne na den a nic nesvazovat slibem“. Nezabírá období: po ní hned přijde běžná událost.
+
+## Válečná tažení
+
+Přijdou jen během tažení, které hráč vypraví na mapě (záložka Válka, `js/war.js`): jedna událost za každé období v poli, na konci triumf nebo porážka.
+
+### 1. Bitva v poli  `w_bitva`
+
+> Za úsvitu stojí na protějším návrší [nepřítel]. [velitel] objíždí řady a [počet] mužů čeká na rozkaz. Jedna bitva může rozhodnout celé tažení — nebo ho ukončit.
+
+1. Udeřit čelně *(riskantní volba)*
+2. Obejít je lesem a vpadnout do boku *(riskantní volba)*
+3. Opevnit tábor a čekat, až zaútočí oni
+
+### 2. Pod hradbami  `w_obleh`
+
+> Poslední pevnost [v cíli tažení] stojí. Za hradbami se drží [nepřítel] a podle zběhů jim dochází voda. Tesaři se ptají, jestli mají stavět žebříky, nebo kopat.
+
+1. Vzít hradby útokem *(riskantní volba)*
+2. Vyhladovět je
+3. Podkopat hradby *(riskantní volba)*
+
+### 3. Úplavice v táboře  `w_nemoc`
+
+> V táboře se šíří úplavice. Ráno nevstalo dvacet mužů, večer jich bylo čtyřicet. Kdo ještě stojí, dívá se směrem k domovu.
+
+1. Spálit nakažené stany
+2. Poslat nemocné domů
+3. Nechat ranhojiče pracovat *(riskantní volba)*
+
+### 4. Dezertéři  `w_dezerce`
+
+> Stráže chytily šest mužů, kteří v noci utíkali z tábora. Prý mají doma hladové děti a pole bez rukou. Celé vojsko čeká, co s nimi bude.
+
+1. Pověsit je před nastoupeným vojskem
+2. Přidat vojsku žold *(jen někdy)*
+3. Nechat je jít
+
+### 5. Posel s bílou korouhví  `w_mir`
+
+> Z nepřátelského tábora přijel posel s bílou korouhví. Nepřítel nabízí výkupné a mír dřív, než tažení dojde do konce. Muži by šli rádi domů, ale vítězství je na dosah.
+
+1. Přijmout výkupné a mír
+2. Bojovat dál
+3. Žádat dvojnásobek *(riskantní volba)*
+
+### 6. Hladové vojsko  `w_zasoby`
+
+> Vozy se zásobami nedorazily a vojáci jedí řemení. Kolem tábora jsou vsi s plnými stodolami — a kus cesty za zády domov.
+
+1. Plenit okolní vsi
+2. Poslat vozy ze sýpek *(jen někdy)*
+3. Stáhnout vojsko domů
+
+### 7. Hrdina z řad pěšáků  `w_hrdina`
+
+> Mladý pěšák sám zastavil nepřátelský výpad a vynesl z boje raněného praporečníka. Celé vojsko o něm mluví. Možná je to právě to, co muži potřebují.
+
+1. Pasovat ho na rytíře před celým vojskem
+2. Dát mu měšec zlata *(jen někdy)*
+3. Poslat ho v čele příštího útoku *(riskantní volba)*
+
+### 8. Zvěd s mapou  `w_zved`
+
+> Do tábora přišel muž, který tvrdí, že zná tajnou cestu nepříteli do týlu. Mapu ukáže, ale ne zadarmo. Může to být zlato — nebo past.
+
+1. Zaplatit mu *(jen někdy)*
+2. Vyslechnout ho na mučidlech *(riskantní volba)*
+3. Poslat ho pryč, může to být past
+
+### 9. Vítězné vojsko se vrací  `w_triumf`
+
+> Vojsko se vrací z tažení ([cíl]). Prapory jsou potrhané, ale vlají vysoko, a za vojskem se táhnou vozy s kořistí. Lidé lemují cestu a čekají, co vrchnost udělá.
+
+1. Uspořádat triumfální průvod *(jen někdy)*
+2. Rozdělit kořist mezi vojáky
+3. Poslat muže hned na pole
+
+### 10. Po porážce  `w_porazka`
+
+> Z tažení ([cíl]) se vrací jen zbytek vojska. Vdovy stojí u brány a hledají známé tváře. Někdo musí za porážku odpovídat — nebo ji aspoň unést.
+
+1. Postarat se o vdovy a sirotky *(jen někdy)*
+2. Najít viníka mezi veliteli
+3. Unést to mlčky
+
+## Zbojníci
+
+Volby se ⚔ se bojují po kolech (`js/combat.js`).
+
+### 1. Zbojníci na cestě  `z_zbojnici_cesta`
+
+> Cesta vede úvozem mezi buky. Najednou padne přes cestu strom a z houští vystoupí pět chlapů se sekerami. Ten největší se usměje: „Mýto, pane. Nebo si vezmeme všechno — i boty.“
+
+1. Tasit zbraň a bránit se ⚔ *(souboj: Zbojníci)*
+2. Zaplatit mýto *(jen někdy)*
+3. Pokusit se je umluvit *(riskantní volba)*
+4. Utéct do lesa *(riskantní volba)*
+
+### 2. Zbojnický hejtman  `z_hejtman` *(Panovník, Šlechtic)*
+
+> V kraji [kraj] řádí zbojnický hejtman. Vypaluje dvory, věší výběrčí a lidé o něm zpívají písně. Teď poslal vzkaz: ať si to s ním vrchnost rozdá sama, muž proti muži, na mýtině u starého dubu.
+
+1. Přijmout výzvu ⚔ *(souboj: Zbojnický hejtman)*
+2. Poslat na ně vojsko *(riskantní volba)*
+3. Vypsat odměnu na jeho hlavu *(jen někdy)*
+
+### 3. Noční přepadení  `z_prepadeni_noc`
+
+> Uprostřed noci se rozštěkali psi. Ve dvoře jsou cizí muži s pochodněmi a někdo už páčí vrata od sýpky. Než se kdo vzbudí, bude po všem.
+
+1. Popadnout zbraň a vyběhnout ⚔ *(souboj: Zbojníci)*
+2. Zabarikádovat se a čekat
+3. Vzbudit všechny a bránit se společně *(riskantní volba)*

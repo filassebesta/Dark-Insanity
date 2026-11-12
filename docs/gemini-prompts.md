@@ -69,6 +69,7 @@ letters, watermark or signature.
 
 > ✅ Sekce 14.1–14.3 hotové (portréty sedláka, rodina a ves, konce) a prvních 10 scén ze 14.4 (dávka 4).
 > ❌ Volitelně chybí: zbylých 28 scén sedláka (14.4, dávky 5–7), 5 scén rádců (14.5), 6 scén obchodu (15) a 24 scén krizí a ozvěn (13).
+> 🆕 Stavění (16): 16 budov království, 8 staveb gruntu a 8 obrázků sídel — volitelné, hra zatím kreslí ikony sama.
 
 | Stav | Soubor | Poměr | Cílové rozlišení | Kde se zobrazí | Prompt |
 |---|---|---|---|---|---|
@@ -1344,3 +1345,170 @@ Formát a dávkový prompt jsou stejné jako v sekci 14.0.
 | `o_clo.jpg` | Nové clo | `cizi_vyslanec` | A border toll gate with a barrier pole at the edge of a dark forest, foreign guards collecting coins from a waiting line of merchant wagons. |
 | `o_hlad_na_severu.jpg` | Hlad za horami | `hladomor` | Starving northern villagers in furs waiting at a snowy mountain pass as a caravan of grain wagons comes up the road. |
 | `o_lod.jpg` | Vlastní loď | `kupecka_gilda` | Shipwrights building a high-sided wooden merchant ship on slipways in a small harbour, ropes, scaffolding and gulls. |
+
+---
+
+## 16. Stavění ve městech a vsích (nové, volitelné)
+
+Na mapě jde kliknout na město nebo ves a stavět na parcelách (kostel,
+kasárna, tržiště…). Hra teď budovy kreslí jednoduchými ikonami přímo v kódu,
+takže funguje i bez obrázků. Malované obrázky ji jen zkrášlí:
+
+- **budovy** (`assets/buildings/<klíč>.jpg`, 4:3) se ukážou přímo na parcele
+  v plánu města a velké v bočním panelu u detailu stavby,
+- **sídla** (`assets/towns/<druh>.jpg`, 16:9) se ukážou nahoře v bočním panelu
+  města.
+
+Nahraj je do `assets/_incoming/` (větev `claude/pensive-thompson-1un5ix`),
+já je zpracuju a zapnu (hra je načte až po zapsání do seznamu v `js/town.js`).
+**Priorita:** nejdřív 16.2 (budovy království), pak 16.3 (grunt), nakonec 16.4 (sídla).
+
+### 16.1 Dávkový prompt (pro AI bez přístupu k repozitáři)
+
+Zkopíruj blok, pod něj vlož řádky z tabulek 16.2–16.4 (soubor + popis)
+a pošli najednou, nejlépe 6 až 8 obrázků v jedné dávce.
+
+```
+Generate one separate image for each line below. Each line has a file name
+and a description. Return every image as its own file named exactly as the
+file name. Do not combine images into a grid or sprite sheet.
+
+Format for files in "buildings/": aspect ratio 4:3, 1024 x 768. One single
+building (or one small group that belongs together) seen from a slightly
+raised three-quarter view, standing on a small patch of trodden earth and
+grass, centred, the whole building visible with some empty space around it,
+no other buildings, no people in the foreground, soft daylight. The
+background is a plain, light, warm parchment-coloured haze so the image
+works as a small tile.
+
+Format for files in "towns/": aspect ratio 16:9, 1600 x 900. A wide painted
+view of the whole settlement from a hill at a slight height, daylight or
+early evening, the settlement in the middle third.
+
+Style for every image: painted in the style of a dark-fantasy narrative RPG,
+muted oil painting with visible loose brushwork and subtle canvas texture,
+desaturated earthy palette of ochre, rust, olive green and dusty slate blue,
+soft chiaroscuro lighting, late-medieval Central European (Bohemian)
+architecture of the 14th century, realistic proportions, similar in mood to
+"The Life and Suffering of Sir Brante". Avoid: anime, cartoon, 3D render,
+photography, oversaturated colours, airbrushed digital art, any text,
+letters, watermark or signature.
+
+Images:
+```
+
+### 16.2 Budovy království (Panovník a Šlechtic) — 4:3, cíl 1024 × 768
+
+| Soubor | Budova | Popis pro Gemini |
+|---|---|---|
+| `buildings/kostel.jpg` | Kostel | A small stone Romanesque village church with a single square bell tower, red tiled nave roof and a wooden door. |
+| `buildings/trziste.jpg` | Tržiště | Three wooden market stalls with striped cloth awnings, crates of vegetables, a set of scales and barrels. |
+| `buildings/mlyn.jpg` | Mlýn | A whitewashed tower windmill with a dark wooden cap and four lattice sails, sacks of grain at its foot. |
+| `buildings/krcma.jpg` | Krčma | A cosy half-timbered village tavern with a smoking chimney, a hanging wooden sign with a tankard, a bench by the door. |
+| `buildings/sypka.jpg` | Sýpka | A tall wooden granary on stone pillars with a steep roof, a ladder and sacks being stacked. |
+| `buildings/kovarna.jpg` | Kovárna | A stone smithy with a glowing forge visible through the open front, an anvil outside, smoke from the chimney. |
+| `buildings/kasarna.jpg` | Kasárna | A long fortified barracks of grey stone with a wooden palisade, two banners on poles, spears on a rack. |
+| `buildings/hradby.jpg` | Hradby | A section of crenellated stone town wall with a square gate tower and a wooden portcullis gate. |
+| `buildings/spital.jpg` | Špitál | A long medieval hospice with a small bell turret, herb garden in front and a nun at the door. |
+| `buildings/radnice.jpg` | Radnice | A stone town hall with an arcaded ground floor and a slender clock tower with a pointed slate spire. |
+| `buildings/cech.jpg` | Cechovní dům | A row of three tall narrow guild houses with stepped gables and a hanging golden guild sign. |
+| `buildings/skola.jpg` | Klášterní škola | A stone monastery school building with arched windows and a small tower, books and a lectern visible inside. |
+| `buildings/katedrala.jpg` | Katedrála | A grand Gothic cathedral with two tall spired towers, a rose window and flying buttresses, partly finished scaffolding on one side. |
+| `buildings/lodenice.jpg` | Loděnice | A wooden shipyard on a rocky shore with a half-built ship on a slipway, timber stacks and a boat shed. |
+| `buildings/sachta.jpg` | Nová šachta | A mine entrance in a rocky hillside reinforced with heavy timber beams, a minecart on rails and a pile of iron ore. |
+| `buildings/lovci.jpg` | Lovecká chata | A log hunting lodge at the edge of a pine forest with antlers above the door and furs drying on a frame. |
+
+### 16.3 Stavby na gruntu (Sedlák) — 4:3, cíl 1024 × 768
+
+| Soubor | Budova | Popis pro Gemini |
+|---|---|---|
+| `buildings/stodola.jpg` | Stodola | A large wooden peasant barn with a thatched roof and big double doors, hay spilling out. |
+| `buildings/chlev.jpg` | Chlév | A low whitewashed cowshed with a thatched roof, a wooden fence, a cow and a few chickens. |
+| `buildings/vcelin.jpg` | Včelín | A small wooden bee house with several straw skep beehives on a bench, wildflowers around. |
+| `buildings/sad.jpg` | Ovocný sad | A small orchard of three apple and plum trees heavy with fruit, a basket and a ladder. |
+| `buildings/kaplicka.jpg` | Boží muka | A small stone wayside shrine pillar with a tiny roof and a painted saint, at the edge of a field path. |
+| `buildings/dilna.jpg` | Dílna | A wooden peasant workshop with an open front, a workbench, saws and wood shavings. |
+| `buildings/celednik.jpg` | Čeledník | A simple long timber cottage for farmhands with a thatched roof and a smoking chimney. |
+| `buildings/rybnik.jpg` | Rybník | A small fish pond with a wooden sluice gate, reeds and a rowing boat on the bank. |
+
+### 16.4 Sídla (horní obrázek panelu města) — 16:9, cíl 1600 × 900
+
+| Soubor | Sídlo | Popis pro Gemini |
+|---|---|---|
+| `towns/castle.jpg` | Vlčí Úděl | A royal castle with blue-grey slate towers above a walled town on a fertile plain, a river nearby. |
+| `towns/town.jpg` | Brod | A busy market town by a ford over a wide river, a stone bridge, many red roofs and a market square. |
+| `towns/port.jpg` | Přístav Mark | A small walled harbour town on a rocky grey coast, fishing boats and one merchant cog at the pier. |
+| `towns/abbey.jpg` | Klášter na útesu | An old stone monastery on a cliff above a stormy grey sea, a church tower and a cloister. |
+| `towns/mine.jpg` | Železná Huť | A mining settlement in grey mountains, mine entrances, slag heaps and smoke from smelting huts. |
+| `towns/lodge.jpg` | Sokolov | A few log cabins in a clearing at the edge of a dark endless pine forest, smoke from a charcoal pile. |
+| `towns/village.jpg` | Dubovice, Zářečí, Lipnice | A Bohemian village of thatched cottages around a green with a linden tree, fields all around. |
+| `towns/farm.jpg` | Tvůj grunt | A single peasant farmstead with a cottage, barn and fenced yard, surrounded by strip fields. |
+
+---
+
+## 17. Události o stavbách (volitelné scény, 1:1, cíl 2048 × 2048)
+
+Události fungují s půjčenými obrázky. Vlastní je jen vylepší. Formát a dávkový
+prompt jsou stejné jako v sekci 14.0 (nahrát do `assets/_incoming/`).
+
+| Soubor | Událost | Teď používá | Popis pro Gemini |
+|---|---|---|---|
+| `t_pozar.jpg` | Oheň nad střechami | `pozar_mesta` | Townsfolk and soldiers passing buckets in a chain as fire jumps across thatched roofs of a medieval town at dusk. |
+| `t_nakaza.jpg` | Horečka v ulicích | `mor_v_pristavu` | A narrow medieval street with a marked door, a priest with a hand bell and a cart with covered bodies, pale light. |
+| `t_cech_vysady.jpg` | Cech žádá výsady | `stavka_cechu` | Three guild masters in fine robes presenting a sealed charter in front of a tall guild house with a hanging golden sign. |
+| `t_stavitel.jpg` | Mistr stavitel | `n_kamenny_hrad` | A foreign master builder with a plumb line and compasses inspecting wooden scaffolding on a half-built stone wall, masons watching. |
+| `t_zold.jpg` | Kasárna bez žoldu | `zold` | Idle soldiers sitting in a barracks courtyard playing dice on a drum, weapons leaning on the wall, an officer frowning. |
+| `t_najezd.jpg` | Lupiči před branou | `pohranicni_najezd` | Mounted raiders with torches riding out of a misty forest at dawn toward the gate of a small walled town. |
+| `t_mestska_prava.jpg` | Obyvatelé chtějí víc | `n_trzni_pravo` | Town aldermen kneeling before a ruler, offering a petition scroll and a purse, a growing town visible through the window. |
+| `t_pout.jpg` | Poutníci | `poutnik_zazrak` | A stream of pilgrims with staffs and scallop shells on their hats walking up a road toward a small stone church. |
+| `t_mlynar.jpg` | Mlynář šidí | `n_mlyn` | Angry peasants with sacks of grain arguing with a floury miller beside a balance scale in front of a windmill. |
+| `t_skola_zak.jpg` | Nejlepší žák | `skola_ucencu` | An abbot presenting a thin boy in a worn habit holding an open book, in a stone monastery schoolroom with candles. |
+| `t_sveceni.jpg` | Svěcení katedrály | `katedrala` | A bishop blessing a newly finished Gothic cathedral, a great crowd on the square, banners and incense smoke. |
+| `t_jarmark.jpg` | Podzimní jarmark | `trh_v_brode` | A crowded autumn fair on a town market square, striped stalls, a fire-eater and merchants weighing goods. |
+| `t_s_roj.jpg` | Roj na lípě | `bohata_uroda` | A peasant on a ladder reaching for a dark swarm of bees hanging in a linden tree on a village green, neighbours with baskets below. |
+| `t_s_dobytek.jpg` | Nemoc v chlévě | `s_spatna_uroda` | A worried peasant couple with a lantern beside a sick cow with a lowered head in a dim cowshed. |
+| `t_s_zavist.jpg` | Závist sousedů | `pozar_mesta` | Villagers whispering at a well, glancing sideways at a prosperous farmstead with a new barn across the green. |
+| `t_s_pan_podil.jpg` | Pán si všiml | `s_pan_navsteva` | A lord on horseback stopped at a farm fence, looking over new farm buildings while a peasant holds his cap. |
+
+---
+
+## 18. Zranění vládce (volitelné scény, 1:1, cíl 2048 × 2048)
+
+Formát a dávkový prompt jako v sekci 14.0. Zatím se používají půjčené obrázky.
+
+| Soubor | Událost | Teď používá | Popis pro Gemini |
+|---|---|---|---|
+| `z_ranhojic.jpg` | Rána, která se nehojí | `nemoc_vladce` | A feverish wounded ruler on a bed with bloody bandages, a learned physician with a case of instruments on one side and an old herb woman on the other, candlelight. |
+| `z_nahrada.jpg` | Řemeslník s nabídkou | `nove_kuse` | A craftsman unwrapping a carved wooden leg and an iron hand with hinges on a workbench before a seated nobleman, a workshop full of tools. |
+| `z_posmech.jpg` | Smích za zády | `dvorni_blazen` | A jester at a castle feast hobbling with a broomstick tied to his knee and a patch over one eye, guests laughing and then falling silent toward the head of the table. |
+
+---
+
+## 19. Válečná tažení (volitelné scény, 1:1, cíl 2048 × 2048)
+
+Formát a dávkový prompt jako v sekci 14.0. Zatím se používají půjčené obrázky.
+
+| Soubor | Událost | Teď používá | Popis pro Gemini |
+|---|---|---|---|
+| `w_bitva.jpg` | Bitva v poli | `valka_s_markami` | Two medieval armies facing each other across a misty valley at dawn, banners, a commander riding along the front line. |
+| `w_obleh.jpg` | Pod hradbami | `obleheni` | A siege camp before stone walls, ladders and a battering ram being built, sappers digging a tunnel, smoke over the fortress. |
+| `w_nemoc.jpg` | Úplavice v táboře | `mor_v_pristavu` | A grim army camp with sick soldiers lying in tents, a barber-surgeon with a lantern, graves dug at the edge of the woods. |
+| `w_dezerce.jpg` | Dezertéři | `dezerteri` | Captured deserters kneeling in front of assembled soldiers in a muddy camp, an officer deciding their fate. |
+| `w_mir.jpg` | Posel s bílou korouhví | `cizi_vyslanec` | An enemy envoy on horseback with a white banner approaching a war tent, guards watching warily. |
+| `w_zasoby.jpg` | Hladové vojsko | `hladomor` | Hungry soldiers around a cold campfire chewing on leather, empty supply wagons, a burnt village in the distance. |
+| `w_hrdina.jpg` | Hrdina z řad pěšáků | `potulny_rytir` | A young foot soldier kneeling to be knighted on a battlefield in front of cheering troops. |
+| `w_zved.jpg` | Zvěd s mapou | `zprava_spehmistra` | A hooded scout unrolling a rough map by candlelight in a commander's tent. |
+| `w_triumf.jpg` | Vítězné vojsko se vrací | `vojenska_prehlidka` | A victorious army marching through a town gate with torn banners and carts of plunder, townsfolk throwing flowers. |
+| `w_porazka.jpg` | Po porážce | `stary_rytir_umira` | The remnants of a beaten army limping home through a town gate, widows searching the faces of the returning men. |
+
+---
+
+## 20. Zbojníci (volitelné scény, 1:1, cíl 2048 × 2048)
+
+Formát a dávkový prompt jako v sekci 14.0. Zatím se používají půjčené obrázky.
+
+| Soubor | Událost | Teď používá | Popis pro Gemini |
+|---|---|---|---|
+| `z_zbojnici_cesta.jpg` | Zbojníci na cestě | `lapkove_ve_hvozdu` | A sunken forest road between beech trees blocked by a felled tree, five rough bandits with axes and scythes stepping out of the undergrowth toward a lone rider. |
+| `z_hejtman.jpg` | Zbojnický hejtman | `zastava_lesa` | A charismatic bandit chief with a long-handled hatchet (valaška) waiting in a forest clearing by an ancient oak, his band watching from the trees. |
+| `z_prepadeni_noc.jpg` | Noční přepadení | `pohranicni_najezd` | Night raiders with torches in a farmyard forcing open the granary door, dogs barking, a figure with a sword running out of the house. |
