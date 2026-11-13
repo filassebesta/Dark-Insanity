@@ -86,6 +86,11 @@ export function interpolate(state, text) {
   if (state.lastBirth) Object.assign(dict, { 'child.name': state.lastBirth.name, 'child.word': state.lastBirth.gender === 'female' ? 'dcera' : 'syn' });
   (state.suitors || []).forEach((x, i) => Object.assign(dict, { [`suitor.${i}.name`]: x.name, [`suitor.${i}.kind`]: x.kindLabel }));
   dict['succession.note'] = state.successionNote || '';
+  // the yearly decree card reads a little differently each year
+  const LEADS = ['Na zemský sněm přicházejí prosby, stížnosti a účty.', 'Jaro přineslo hromadu listin: daňové knihy, žaloby a prosby o milost.', 'Kancléř položil na stůl účty z celého roku a vedle nich seznam stížností.', 'Poslové z krajů čekají u dveří síně, každý s vlastním pergamenem a vlastní bídou.'];
+  const FOCI = ['Nejvíc se jich letos sešlo z kraje {province.name}.', 'Nejvíc starostí dělá kraj {province.name}.', 'Kraj {province.name} se ozývá hlasitěji než ostatní.'];
+  dict['decree.lead'] = LEADS[(state.year || 0) % LEADS.length];
+  dict['decree.focus'] = (FOCI[(state.year || 0) % FOCI.length]).replace('{province.name}', (state.eventContext && state.eventContext.province && state.provinces.find((p) => p.id === state.eventContext.province)?.name) || 'v zemi');
   if (state.lastSwap) Object.assign(dict, { 'swap.son': state.lastSwap.son, 'swap.daughter': state.lastSwap.daughter });
   // {bastard.name} {bastard.word} "syn"/"dcera" {bastard.parent} the lover
   if (state.lastBastard) Object.assign(dict, { 'bastard.name': state.lastBastard.name, 'bastard.word': state.lastBastard.gender === 'female' ? 'dcera' : 'syn', 'bastard.parent': state.lastBastard.parent });
@@ -419,7 +424,7 @@ function applyNobleEffects(state, fx, notes) {
 export const NOBLE_ENDINGS = {
   crowned: (s) => `${s.ruler.name} z rodu ${s.dynastyName} usedá na trůn. Rod, který začínal s jedinou tvrzí na pobřeží, teď vládne celé zemi.`,
   golden_age: (s) => `${s.ruler.name} z rodu ${s.dynastyName} ${s.ruler.gender === 'female' ? 'přinesla' : 'přinesl'} zemi dlouhý mír a plné sýpky — zlatý věk, na který budou kronikáři vzpomínat po staletí. Rod, který začínal ${s.origin === 'sedlak' ? 'u pluhu' : 's málem'}, odchází na vrcholu slávy.`,
-  executed: (s) => `${s.flags && s.flags.rebellion ? 'Povstání proti koruně bylo zlomeno' : 'Spiknutí bylo odhaleno'}. ${s.ruler.name} končí na popravišti a jméno rodu ${s.dynastyName} je vymazáno z listin.`,
+  executed: (s) => `${s.flags && s.flags.rebellion ? 'Povstání proti koruně bylo zlomeno' : 'Spiknutí bylo odhaleno'}. ${s.ruler.name} končí na popravišti a jméno rodu ${s.dynastyName} je vymazáno z listin.${s.spouse && s.spouse.alive !== false ? ` ${s.spouse.name} s dětmi hledá útočiště u cizích lidí.` : ''}`,
   ennobled: (s) => `${s.ruler.name} z rodu ${s.dynastyName} {R:povstal|povstala} jako {R:šlechtic|šlechtična}. Rod, který oral cizí pole, bude mít vlastní erb a vlastní tvrz.`,
   expelled: (s) => {
     const lady = lordOf(s)?.gender === 'female';
@@ -814,7 +819,7 @@ export function reignEpithet(state, ruler = state.ruler) {
     eloquent: (t.eloquence - 7) * 16,
     wise: (t.intelligence - 7) * 16,
     patient: (t.patience - 7) * 16,
-    old: ruler.age >= 72 ? 20 + (ruler.age - 72) * 3 : 0,
+    old: ruler.age >= 72 && years >= 3 ? 20 + (ruler.age - 72) * 3 : 0,
     ...injuryEpithetScores(ruler), // Jednooký, Chromá…
   };
   let best = 'quiet';
@@ -973,7 +978,7 @@ const KING_ACTS = new Set(['v_korunni_rada', 'v_zkouska_vernosti', 'v_ozvena_rad
 const kingHelpless = (state) => !!(state.throneArc && state.throneArc.step >= 1 && !state.throneArc.done);
 const marchesAreOurs = (state) => !!(state.realms && state.realms.east && state.realms.east.owner === 'player');
 
-const AT_COURT = new Set(['turnaj', 'hostina_slechty', 'portret_vladce', 'dvorni_blazen', 'vyroci_vlady', 'soud_o_mez', 'prosba_ucitele', 'spor_rybaru', 'hranicni_kamen', 'rvaci_v_krcme', 'touha_po_diteti']);
+const AT_COURT = new Set(['carodejnice', 'relikvie', 'zebravy_prorok', 'poutnik_zazrak', 'kacirska_sekta', 'skola_ucencu', 'katedrala', 'turnaj', 'hostina_slechty', 'portret_vladce', 'dvorni_blazen', 'vyroci_vlady', 'soud_o_mez', 'prosba_ucitele', 'spor_rybaru', 'hranicni_kamen', 'rvaci_v_krcme', 'touha_po_diteti']);
 
 function eventAvailable(state, e) {
   if (MARCHES_ABROAD.has(e.id) && marchesAreOurs(state)) return false;
@@ -1311,6 +1316,7 @@ function handleSuccession(state, cause = 'stářím') {
     state.predecessorRel = cadet && !viaBastard ? (pf ? 'sestra' : 'bratr') : (pf ? 'matka' : 'otec');
     if (cadet) {
       state.cadetBranch = (state.cadetBranch || 0) + 1;
+      state.lastCadet = state.turn;
       state.resources.legitimacy = clamp((state.resources.legitimacy ?? 50) - 10);
       state.resources.prestige = clamp(state.resources.prestige - 5);
       state.successionNote = viaBastard
@@ -1473,6 +1479,7 @@ export function advanceTurn(state) {
   const seasonLabel = SEASONS[state.seasonIndex];
   const [goldWord, foodWord] = isPeasant(state) ? ['grošů', 'zásob'] : ['zlata', 'jídla'];
   const goldText = isPeasant(state) ? grosLabel(goldIncome) : `${goldIncome} ${goldWord}`;
+  if (state.lastCadet !== undefined && state.lastCadet !== state.turn) delete state.lastCadet;
   const turnSummary = `${seasonLabel} roku ${state.year}. Příjem: ${goldIncome >= 0 ? '+' : ''}${goldText}, ${foodIncome >= 0 ? '+' : ''}${foodIncome} ${foodWord}.${deathCheckText}`;
   state.chronicle.push(makeChronicleEntry(state, turnSummary));
 

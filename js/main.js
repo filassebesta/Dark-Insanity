@@ -143,7 +143,7 @@ function runNextTurn() {
   award();
 
   if (result.successionOccurred) {
-    toast(`Nastupuje nová generace: ${currentState.ruler.name} ${currentState.scenario === 'panovnik' ? 'usedá na trůn' : currentState.scenario === 'slechtic' ? 'přebírá panství' : 'přebírá grunt'}.`);
+    toast(`Nastupuje nová generace: ${currentState.ruler.name} ${currentState.scenario === 'panovnik' ? 'usedá na trůn' : currentState.scenario === 'slechtic' ? 'přebírá panství' : 'přebírá grunt'}.${currentState.lastCadet ? ' Hlavní linie rodu vymřela — vedlejší větev ztrácí legitimitu −10 a prestiž −5.' : ''}`);
   }
 
   if (result.gameOver) {

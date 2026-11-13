@@ -330,7 +330,7 @@ const CHAPTER_EVENT = { ennobled: 'kapitola_erb', crowned: 'kapitola_koruna' };
  */
 export function promote(state, type) {
   if (type === 'ennobled' && state.scenario === 'sedlak') ennoblePeasant(state);
-  else if (type === 'crowned' && state.scenario === 'slechtic') crownNoble(state);
+  else if (type === 'crowned' && state.scenario === 'slechtic') { crownNoble(state); delete state.flags.regent; delete state.flags.rebellion; }
   else return null;
   state.milestones = state.milestones || {};
   state.milestones[type] = state.turn;
