@@ -19,8 +19,11 @@ function branchValue(E, state, b) {
   let v = 0;
   // the year's farm work chosen in a story does what the same work from the map does
   const fx = { ...(b.effects || {}) };
-  if (b.decree) for (const [k, d] of Object.entries(E.decreeList(state)[b.decree].effects)) fx[k] = (fx[k] || 0) + d;
+  const decree = b.decree ? E.decreeList(state)[b.decree] : null;
+  if (decree) for (const [k, d] of Object.entries(decree.effects)) fx[k] = (fx[k] || 0) + d;
   for (const [k, d] of Object.entries(fx)) v += d * weight(state, k);
+  // what a decree does to the land it is issued for (unrest counts double: it is what brings a realm down)
+  if (decree && decree.prov) v += ((decree.prov.loyalty || 0) - 2 * (decree.prov.unrest || 0) + (decree.prov.wealth || 0) * 0.5 + (decree.prov.garrison || 0) * 0.3) * 0.6;
   for (const fx of Object.values(b.provinceEffects || {})) v += ((fx.loyalty || 0) - (fx.unrest || 0) + (fx.wealth || 0) * 0.5) * 0.3 - (fx.lost ? 60 : 0);
   if (b.setTier) v += (b.setTier - state.ruler.statusTier) * 60;
   if (b.endGame) v += END_VALUE[b.endGame] ?? -200;

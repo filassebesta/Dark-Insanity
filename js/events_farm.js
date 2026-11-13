@@ -1,8 +1,8 @@
-// The farm's work for the year, told as a story. A peasant plans one extra job a
-// year from the map (FARM_DECREES in engine.js). Whoever has not done so by the
-// autumn gets this scene after the harvest instead, with the same choices — the
-// farm cannot live without that yearly effort, and the story should not depend
-// on finding a map button. Takes no season (free). Branch extra: decree: '<key>'.
+// The year's one big decision, told as a story: a peasant's extra work on the
+// farm after the harvest (s_prace_na_gruntu, every autumn) and a lord's or a
+// king's decree for the most troubled land (vynos_roku, every spring). They are
+// made here and only here; the map shows the lands but decides nothing. Both
+// take no season (free). Branch extra: decree: '<key>' (engine.js issueDecree).
 
 import { canAffordDecree } from './engine.js';
 
@@ -86,6 +86,29 @@ export const FARM_EVENTS = [
         effects: { favor: 10, food: 4, army: -2 },
         chronicle: '{ruler.name} {R:šel|šla} sloužit na panský dvůr. Pán si to poznamenal; ruce na vlastním políčku chybí.',
       },
+    ],
+  },
+
+  // ---------- a lord's or a king's decree for the year (engine.js raises it every spring) ----------
+  {
+    id: 'vynos_roku',
+    scenarios: ['slechtic', 'panovnik'], forced: true, free: true,
+    // the land that needs it most: the most restless and least loyal of the player's own
+    target: (s) => {
+      const own = s.provinces.filter((p) => !p.lost && (!p.owner || p.owner === 'player'));
+      return own.length ? own.slice().sort((a, b) => (b.unrest - b.loyalty) - (a.unrest - a.loyalty))[0].id : null;
+    },
+    image: 'assets/events/biskupuv_desatek.jpg',
+    title: 'Výnos roku',
+    text: 'Jaro otevírá cesty a s nimi přicházejí prosby, stížnosti a účty. Nejvíc se jich letos sešlo z kraje {province.name}. Písař má připravený pergamen a pečeť čeká: jedno velké rozhodnutí pro tuto zem za rok — víc úředníci ani pokladna neunesou.',
+    choices: [
+      { label: 'Posílit tamní posádku', requires: can('garrison'), hintType: 'resource', hintKey: 'army', decree: 'garrison', chronicle: 'Do kraje {province.name} odjeli verbíři a zbrojíři. Na hradbách přibylo stráží.' },
+      { label: 'Na rok odpustit kraji část dávek', requires: can('relief'), hintType: 'resource', hintKey: 'gold', decree: 'relief', chronicle: 'Kraj {province.name} letos platí méně. V krčmách se připíjí na milostivou vrchnost.' },
+      { label: 'Zvelebit kraj cestami a mlýny', requires: can('develop'), hintType: 'trait', hintKey: 'intelligence', decree: 'develop', chronicle: 'V kraji {province.name} se staví mlýny, mosty a tržiště. Užitek přijde až s léty.' },
+      { label: 'Postavit kraji kapli', requires: can('shrine'), hintType: 'resource', hintKey: 'faith', decree: 'shrine', chronicle: 'V kraji {province.name} vysvětili novou kapli. Lidé chodí na mši a odcházejí klidnější.' },
+      { label: 'Vybrat v kraji mimořádnou daň', hintType: 'resource', hintKey: 'gold', decree: 'levy', chronicle: 'Výběrčí prošli krajem {province.name} od chalupy k chalupě. Pokladna se plní, nálada klesá.' },
+      { label: 'Odvést z kraje muže do vojska', hintType: 'resource', hintKey: 'army', decree: 'muster', chronicle: 'Z kraje {province.name} odešli mladí muži pod korouhev. Pole teď obdělávají ženy a starci.' },
+      { label: 'Letos nic neměnit', hintType: 'trait', hintKey: 'patience', chronicle: 'Pergamen zůstal čistý. Kraj {province.name} letos žije, jak žil.' },
     ],
   },
 ];
