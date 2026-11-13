@@ -176,6 +176,7 @@ export function talkBlock(state, role) {
   const c = personOf(state, role);
   if (!c || c.alive === false) return 'Mrtví už nemluví.';
   if (kindOf(role) === 'child') return c.age < 4 ? 'Je to ještě malé dítě.' : 'S dětmi si promluvíš, až budou dědici.';
+  if (kindOf(role) === 'sibling') return 'Se sourozenci si promluvíš, až budou dědici.';
   if (role === 'heir' && c.age < 4) return 'Dědic je ještě malé dítě.';
   if (c.talkTurn === state.turn) return `Tohle období jste spolu už mluvili. Příště v dalším období.`;
   if (state.gameOver) return 'Kronika skončila.';
@@ -253,7 +254,7 @@ export function holdTalk(state, role, key, success) {
     }
     return { text, delta, notes, role };
   }
-  if (res.child) startPregnancy(state);
+  if (res.child) { startPregnancy(state); delete state.flags.no_more_children; }
   if (key === 'dar' && c.quirk === 'chamtivy') delta += 4;
   // a promise to the ambitious is paid in loyalty now and remembered
   if (res.promise) { c.promised = state.turn; }

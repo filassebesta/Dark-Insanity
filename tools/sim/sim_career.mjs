@@ -35,7 +35,7 @@ for (let r = 0; r < runs; r++) {
         for (let i = 0; i < 3 && res.event && res.event.free; i++) { E.resolveChoice(st, res.event, smartPick(E, st, res.event, SMART)); res.event = E.pickNextEvent(st); }
       } else if (res.event) res.event = settleFree(E, st, res.event);
     } catch (err) { errors++; console.log('turn', st.scenario, err.stack.split('\n').slice(0, 4).join(' | ')); end = 'error'; break; }
-    if (res.gameOver) { end = res.gameOver.type; break; }
+    if (res.gameOver) { end = res.gameOver.type + (res.gameOver.reason ? ":" + res.gameOver.reason : ""); break; }
     const e = res.event;
     if (!e) { errors++; console.log('no event', st.scenario); end = 'error'; break; }
     check(st, e.text, e.id);

@@ -2,7 +2,7 @@ import { SEASONS, TERRAIN_DEFS, NOBLE_HOUSES, PEASANT_HOME, clamp, randomName, r
 import { makeChronicleEntry, inheritTraits, promote } from './state.js';
 import { ageRealms, realmIncome, realmRulerLabel, REALMS } from './realms.js';
 import { THRONE_STEPS } from './events_throne.js';
-import { processFamily, nextHeir, marry } from './family.js';
+import { processFamily, nextHeir, marry, canConceive, conceiveChance, startPregnancy } from './family.js';
 import { EVENTS, QUIET_EVENTS } from './events.js';
 import { roleLabel, QUIRK_ROLES, randomQuirk, quirkLabel } from './court.js';
 import { processTrade, resolveIncident, resolveOffer, addTradeMod, ensureTrade, cargoTokens, GOODS, MAX_STOCK } from './trade.js';
@@ -503,6 +503,12 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
     // the dowry shows with the outcome
     for (const [k, v] of Object.entries(dowry)) if (state.resources[k] !== undefined) notes.push({ text: `Věno: ${RESOURCE_DEFS.find((d) => d.key === k) ? resourceLabel(RESOURCE_DEFS.find((d) => d.key === k), state.scenario) : k} +${v}`, tone: 'pos' });
   }
+  if (branch.conceive) {
+    if (canConceive(state) && Math.random() < conceiveChance(state)) {
+      startPregnancy(state);
+      notes.push({ text: 'Čekáte dítě', tone: 'pos' });
+    } else notes.push({ text: 'Dítě zatím nepřišlo', tone: 'neg' });
+  }
   if (branch.adopt && (!state.heir || state.heir.alive === false)) {
     const g = Math.random() < 0.5 ? 'male' : 'female';
     state.heir = { role: 'heir', name: randomName(g), gender: g, age: randInt(5, 10), loyalty: clamp(55 + randInt(0, 15)), alive: true, traits: inheritTraits() };
@@ -959,11 +965,13 @@ export function pickNextEvent(state) {
     return quietAllowed || !available.length ? QUIET_EVENT : available[0];
   }
   // weighted draw: consequence events (weight 3) surface sooner than ordinary ones
-  const total = available.reduce((sum, e) => sum + (e.weight ?? 1), 0);
+  // a weight can depend on the state (e.g. a house without an heir hears about children sooner)
+  const weightOf = (e) => (typeof e.weight === 'function' ? e.weight(state) : e.weight ?? 1);
+  const total = available.reduce((sum, e) => sum + weightOf(e), 0);
   let roll = Math.random() * total;
   let event = available[available.length - 1];
   for (const e of available) {
-    roll -= e.weight ?? 1;
+    roll -= weightOf(e);
     if (roll <= 0) { event = e; break; }
   }
   if (event.onPick) event.onPick(state); // e.g. a buyer asking for whatever fills the warehouse
@@ -1161,16 +1169,17 @@ function checkNaturalDeath(state) {
 }
 
 /**
- * The new ruler's household. A grown ruler was married off in youth (a spouse of the other sex)
- * and may already have a child; a young one starts single and courts (family.js). Without a child
- * of their own, the eldest brother or sister is the heir until one is born.
+ * The new ruler's household. The ruler is married only if the player married the heir off
+ * (flags.heir_married) — then the years of marriage before the crown may have brought children.
+ * Otherwise they start single and court (family.js) and children come when the player wants them;
+ * until then the eldest brother or sister is the heir.
  */
 const f = (c) => c.gender === 'female';
 
 function generateSuccessorHousehold(state, siblings = []) {
   const age = state.ruler.age;
   const spouseGender = state.ruler.gender === 'female' ? 'male' : 'female';
-  const married = age >= 20 || !!state.flags.heir_married;
+  const married = !!state.flags.heir_married;
   // nobody in the household shares a name with the ruler, a sibling or a councillor
   const taken = new Set([state.ruler.name, ...siblings.map((c) => c.name),
     ...['chancellor', 'marshal', 'spymaster'].map((r) => state[r] && state[r].name)].filter(Boolean));
@@ -1179,18 +1188,23 @@ function generateSuccessorHousehold(state, siblings = []) {
     ? { role: 'spouse', name: freshName(spouseGender), gender: spouseGender,
       age: Math.max(16, Math.min(randInt(age - 4, age + 4), 60)), loyalty: clamp(65 + randInt(-10, 10)), alive: true, quirk: randomQuirk() }
     : { role: 'spouse', name: '', gender: spouseGender, age: 0, loyalty: 0, alive: false, none: true };
-  const ownChild = married && age >= 22 && Math.random() < 0.65;
-  const childGender = Math.random() < 0.5 ? 'male' : 'female';
-  if (ownChild) {
-    state.heir = {
-      role: 'heir', name: freshName(childGender), gender: childGender,
-      age: Math.max(0, Math.min(randInt(0, 5), age - 22)), loyalty: clamp(70 + randInt(-10, 10)), alive: true,
-      traits: inheritTraits(state.ruler.traits),
-    };
+  // an heir the player married off had years of family life before the crown: their children come along
+  const kids = married ? Math.max(0, Math.min(3, Math.floor((age - 20) / 6))) : 0;
+  const born = [];
+  for (let i = 0; i < kids; i++) {
+    if (Math.random() > 0.75) continue;
+    const g = Math.random() < 0.5 ? 'male' : 'female';
+    born.push({ role: 'child', name: freshName(g), gender: g, age: Math.max(0, Math.min(age - 20, randInt(0, 4) + (kids - 1 - i) * 5)),
+      loyalty: clamp(70 + randInt(-10, 10)), alive: true, traits: inheritTraits(state.ruler.traits) });
+  }
+  born.sort((a, b) => b.age - a.age);
+  state.successorChildren = born.slice(1);
+  if (born.length) {
+    state.heir = { ...born[0], role: 'heir' };
   } else if (siblings.length) {
     // the eldest brother or sister holds the place until the ruler has a child
     const next = siblings.slice().sort((a, b) => b.age - a.age)[0];
-    state.heir = { ...next, role: 'heir', loyalty: clamp((next.loyalty || 65) - 5) };
+    state.heir = { ...next, role: 'heir', presumptive: true, loyalty: clamp((next.loyalty || 65) - 5) };
   } else {
     state.heir = { role: 'heir', name: '', gender: 'male', age: 0, loyalty: 0, alive: false, none: true, traits: inheritTraits(state.ruler.traits) };
   }
@@ -1235,8 +1249,12 @@ function handleSuccession(state, cause = 'stářím') {
     const siblings = (state.children || []).filter((c) => c.alive !== false);
     generateSuccessorHousehold(state, siblings);
     delete state.flags.heir_married;
+    delete state.flags.no_more_children;
     delete state.flags.harsh_ruler; // a new ruler is not blamed for the old one's cruelty
-    state.children = [];
+    state.children = state.successorChildren || [];
+    delete state.successorChildren;
+    // brothers and sisters stay with the house (the eldest may hold the heir's place)
+    state.siblings = siblings.filter((c) => !(state.heir.presumptive && c.name === state.heir.name)).map((c) => ({ ...c, role: 'sibling' }));
     state.pregnancy = null;
     state.suitors = [];
     if (siblings.length) {

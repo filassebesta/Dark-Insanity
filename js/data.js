@@ -96,6 +96,14 @@ export function randomName(gender) {
   return gender === 'female' ? pickRandom(FEMALE_NAMES) : pickRandom(MALE_NAMES);
 }
 
+/** "1 rok", "3 roky", "5 let"; a newborn is "pár měsíců". */
+export function yearsLabel(n) {
+  if (n <= 0) return 'pár měsíců';
+  if (n === 1) return '1 rok';
+  if (n >= 2 && n <= 4) return `${n} roky`;
+  return `${n} let`;
+}
+
 export function clamp(value, min = 0, max = 100) {
   return Math.max(min, Math.min(max, Math.round(value)));
 }

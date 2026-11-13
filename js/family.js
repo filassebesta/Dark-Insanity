@@ -52,6 +52,7 @@ export function personOf(state, role) {
   const [kind, i] = role.split(':');
   if (kind === 'suitor') return (state.suitors || [])[Number(i)] || null;
   if (kind === 'child') return (state.children || [])[Number(i)] || null;
+  if (kind === 'sibling') return (state.siblings || [])[Number(i)] || null;
   return state[role] || null;
 }
 
@@ -61,7 +62,8 @@ export function suitorLabel(c) {
 
 function usedNames(state) {
   return new Set([state.ruler.name, state.heir && state.heir.name, state.spouse && state.spouse.name,
-    ...(state.suitors || []).map((x) => x.name), ...(state.children || []).map((x) => x.name)]);
+    ...(state.suitors || []).map((x) => x.name), ...(state.children || []).map((x) => x.name),
+    ...(state.siblings || []).map((x) => x.name), ...['chancellor', 'marshal', 'spymaster'].map((r) => state[r] && state[r].name)]);
 }
 
 function freshName(state, gender) {
@@ -148,9 +150,15 @@ export function bearChild(state) {
   if (state.spouse && state.spouse.traits) for (const k of Object.keys(parent)) parent[k] = Math.round((parent[k] + state.spouse.traits[k]) / 2);
   const child = { role: 'heir', name: freshName(state, gender), gender, age: 0, loyalty: clamp(70 + randInt(-5, 10)), alive: true, traits: inheritTraits(parent) };
   state.children = state.children || [];
-  if (!state.heir || state.heir.alive === false) state.heir = child;
+  // the ruler's own child takes the place of a brother or sister who only held it (engine.js)
+  if (state.heir && state.heir.alive !== false && state.heir.presumptive) {
+    const { presumptive, ...sib } = state.heir;
+    (state.siblings = state.siblings || []).push({ ...sib, role: 'sibling' });
+    state.heir = child;
+  } else if (!state.heir || state.heir.alive === false) state.heir = child;
   else state.children.push({ ...child, role: 'child' });
   state.lastBirth = { name: child.name, gender, heir: state.heir === child };
+  state.lastBirthTurn = state.turn;
   return child;
 }
 
@@ -158,7 +166,15 @@ export function bearChild(state) {
 export function nextHeir(state) {
   if (state.heir && state.heir.alive !== false) return false;
   const kids = (state.children || []).filter((c) => c.alive !== false).sort((a, b) => b.age - a.age);
-  if (!kids.length) return false;
+  if (!kids.length) {
+    // no child of their own: the eldest brother or sister holds the place
+    const sibs = (state.siblings || []).filter((c) => c.alive !== false).sort((a, b) => b.age - a.age);
+    if (!sibs.length) return false;
+    state.siblings = state.siblings.filter((c) => c !== sibs[0]);
+    state.heir = { ...sibs[0], role: 'heir', presumptive: true };
+    state.chronicle.push(makeChronicleEntry(state, `${sibs[0].name} je teď ${f(sibs[0]) ? 'dědičkou' : 'dědicem'} rodu ${state.dynastyName}, dokud se nenarodí dítě.`));
+    return true;
+  }
   const next = kids[0];
   state.children = state.children.filter((c) => c !== next);
   state.heir = { ...next, role: 'heir' };
@@ -168,7 +184,7 @@ export function nextHeir(state) {
 
 /**
  * Every season: pregnancies come to term (the birth event), children grow, the heir's place is
- * filled, now and then a married couple has a child without asking. Returns news lines.
+ * filled. A child comes only when the player wants one (talk 'dite', event touha_po_diteti). Returns news lines.
  */
 export function processFamily(state) {
   const news = [];
@@ -182,9 +198,8 @@ export function processFamily(state) {
   }
   if (state.seasonIndex === 0) {
     for (const c of state.children) if (c.alive !== false) c.age += 1;
+    for (const c of state.siblings || []) if (c.alive !== false) c.age += 1;
     for (const s of state.suitors || []) s.age += 1;
-    // nature does not always wait to be asked
-    if (canConceive(state) && Math.random() < conceiveChance(state) * 0.25) startPregnancy(state);
     // a suitor who waits too long marries someone else
     if ((state.suitors || []).length && Math.random() < 0.25) {
       const i = randInt(0, state.suitors.length - 1);
@@ -194,6 +209,9 @@ export function processFamily(state) {
     }
   }
   if (nextHeir(state)) news.push(`Novým dědicem je ${state.heir.name}.`);
+  // "we have enough children" holds only while there is a child of their own
+  const ownLeft = (state.heir && state.heir.alive !== false && !state.heir.presumptive) || state.children.some((c) => c.alive !== false);
+  if (state.flags && state.flags.no_more_children && !ownLeft) delete state.flags.no_more_children;
   refreshSuitors(state);
   return news;
 }

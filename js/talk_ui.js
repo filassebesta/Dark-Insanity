@@ -17,7 +17,7 @@ export function talkSection(state, role) {
   const c = personOf(state, role);
   if (c && c.alive === false) return '';
   const suitor = String(role).startsWith('suitor:');
-  if (String(role).startsWith('child:') && !topicsFor(state, role).length) return '';
+  if (/^(child|sibling):/.test(String(role)) && !topicsFor(state, role).length) return '';
   const head = `<h4 class="ps-section">${suitor ? 'Námluvy' : 'Rozhovor'}</h4>`;
   if (why) {
     const fresh = c.talkTurn === state.turn && c.lastTalk;

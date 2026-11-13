@@ -1,4 +1,4 @@
-import { RESOURCE_DEFS, TRAIT_DEFS, TERRAIN_DEFS, SEASONS, NOBLE_HOUSES, resourceLabel, activeResourceDefs, tierTitle } from './data.js';
+import { RESOURCE_DEFS, TRAIT_DEFS, TERRAIN_DEFS, SEASONS, NOBLE_HOUSES, resourceLabel, activeResourceDefs, tierTitle, yearsLabel } from './data.js';
 import { interpolate, computeSuccessChance, attitudeLabel, ownProvinces, reignEpithet } from './engine.js';
 import { ICONS } from './icons.js';
 import { playMusic, setAllMuted } from './audio.js';
@@ -436,7 +436,7 @@ export function renderCourtPanel(state) {
       ${avatar}
       <div class="role">${m.role}</div>
       <strong>${name}${alive ? '' : ' †'}</strong>
-      <div>${m.data.age} let · ${detail}</div>
+      <div>${yearsLabel(m.data.age)} · ${detail}</div>
       ${m.data.quirk ? `<div class="court-quirk">${esc(quirkLabel(m.data))}</div>` : ''}
       ${m.person === 'heir' && m.data.traits ? `<div class="court-quirk">${TRAIT_DEFS.map((t) => `${t.icon}${m.data.traits[t.key]}`).join(' ')}</div>` : ''}
     `;
