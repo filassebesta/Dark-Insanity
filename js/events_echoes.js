@@ -709,7 +709,7 @@ export const ECHO_EVENTS = [
         chronicle: 'Listina zmizela v truhle s ostatními. Jednou se bude hodit.',
       },
       {
-        label: 'Předat listinu králi jako důkaz věrnosti',
+        label: 'Předat listinu {K:králi|královně} jako důkaz věrnosti',
         hintType: 'resource', hintKey: 'favor',
         effects: { favor: 12 },
         chronicle: '{king.Title} si listinu přečetl{K:|a} dvakrát. Pak poslal{K:|a} pro kata a pro pečetidlo.',
@@ -729,7 +729,7 @@ export const ECHO_EVENTS = [
     scenario: S, forced: true, echo: true,
     image: img('n_spiklenci_zvou'),
     title: 'Krev za krev',
-    text: 'Spiklenci, které rod {dynastyName} kdysi udal koruně, skončili ve věži a ne všichni z ní vyšli živí. Jejich příbuzní ale zůstali na svobodě. {spymaster.Title} {spymaster.name} přináší zprávu: najatý vrah už je na cestě.',
+    text: 'Spiklenci, které rod {dynastyName} kdysi udal koruně, skončili ve věži a ne všichni z ní vyšli živí. Jejich příbuzní ale zůstali na svobodě. {spymaster.Title} {spymaster.name} {Y:přináší|přináší} zprávu: najatý vrah už je na cestě.',
     choices: [
       {
         label: 'Nastražit na něj past',

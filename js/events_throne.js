@@ -18,7 +18,7 @@ export const THRONE_EVENTS = [
     scenario: S, forced: true,
     image: img('n_nemoc_krale'),
     title: '{K:Král|Královna} na smrtelné posteli',
-    text: '{arc.cause} Ranhojiči krčí rameny, kněží se modlí a ve Vlčím Údělu se začíná šeptat jediná otázka: kdo bude vládnout, dokud {K:král|královna} nevstane — a kdo potom?',
+    text: '{arc.cause} Dvorní lékaři krčí rameny, kněží se modlí a ve Vlčím Údělu se začíná šeptat jediná otázka: kdo bude vládnout, dokud {K:král|královna} nevstane — a kdo potom?',
 
     choices: [
       {
@@ -31,7 +31,7 @@ export const THRONE_EVENTS = [
         label: 'Rozeslat posly k ostatním rodům',
         hintType: 'trait', hintKey: 'eloquence',
         effects: { gold: -6 }, houseEffects: { '*': { attitude: 6 } },
-        chronicle: 'Z tvrze vyjeli tři jezdci se třemi dopisy. Žádný z nich nemluvil o králi, všechny mluvily o budoucnosti.',
+        chronicle: 'Z tvrze vyjeli tři jezdci se třemi dopisy. Žádný z nich nemluvil o {K:králi|královně}, všechny mluvily o budoucnosti.',
       },
       {
         label: 'Tiše posílit posádku a sýpky',

@@ -391,7 +391,7 @@ const RACCI = [
         requires: (s) => heirFree(s, 12),
         hintType: 'resource', hintKey: 'legitimacy',
         effects: { prestige: 4, legitimacy: 3, gold: 8 }, realm: { east: { attitude: 12 } }, hiddenEffects: { setFlag: ['racci_mir', 'heir_married'] },
-        chronicle: '{heir.name} byl{D:|a} zasnouben{D:|a} s dítětem markraběte Dětřicha. Racčí ostrov dostanou novomanželé jako svatební dar a spor je u konce.',
+        chronicle: '{heir.name} byl{D:|a} zasnouben{D:|a} s dítětem markraběte Dětřicha. Racčí ostrov dostanou snoubenci jako zásnubní dar a spor je u konce.',
       },
       {
         label: 'Připomenout mu pašování a chtít víc',

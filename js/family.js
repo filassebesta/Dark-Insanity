@@ -25,7 +25,7 @@ const FERTILE_UNTIL = 42; // the mother's age
 const KINDS = {
   sedlak: [
     { kind: ['mlynářova dcera', 'mlynářův syn'], text: ['Smějí se jí oči a umí počítat pytle líp než otec.', 'Silný jako kůň a o něco chytřejší, než se zdá.'], dowry: { gold: 6 } },
-    { kind: ['vdova po uhlíři', 'vdovec po bylinkářce'], text: ['Zná práci a bídu a nebojí se ani jednoho.', 'Tichý muž s chalupou po ženě a s rukama od práce.'], dowry: { army: 3, stability: 3 } },
+    { minAge: 24, kind: ['vdova po uhlíři', 'vdovec po bylinkářce'], text: ['Zná práci a bídu a nebojí se ani jednoho.', 'Tichý muž s chalupou po ženě a s rukama od práce.'], dowry: { army: 3, stability: 3 } },
     { kind: ['rychtářova neteř', 'rychtářův synovec'], text: ['Čte, píše a ví, kdo ve vsi komu dluží.', 'Mluví za dva a ve vsi ho znají všichni.'], dowry: { prestige: 5 } },
     { kind: ['dcera ovčáka z kopců', 'syn ovčáka z kopců'], text: ['Divoká jako kopce, odkud přišla.', 'Zvyklý na samotu, vítr a vlky.'], dowry: { food: 8 } },
     { kind: ['dcera krčmáře', 'syn krčmáře'], text: ['Zná každý drb ve vsi, a dřív než ostatní.', 'Umí naslouchat, když ostatní mluví.'], dowry: { gold: 4, prestige: 2 } },
@@ -38,7 +38,7 @@ const KINDS = {
     { kind: ['dcera bohatého měšťana z Brodu', 'syn bohatého měšťana z Brodu'], text: ['Bez erbu, ale s truhlou, na kterou se dívá i dvůr.', 'Bez erbu, ale s měšcem a s rozumem kupce.'], dowry: { gold: 20 } },
     { kind: ['dvorní dáma královny', 'královský páže'], text: ['Zná dvůr zevnitř a ví, kdo s kým mluví.', 'Vyrostl u dvora a zná každou chodbu hradu.'], dowry: { favor: 8 } },
     { house: true, kind: ['dcera rodu {house}', 'syn rodu {house}'], text: ['Krev starého rodu. Sňatek s ní by byl i spojenectvím.', 'Krev starého rodu. Sňatek s ním by byl i spojenectvím.'], dowry: { gold: 10, legitimacy: 4 } },
-    { kind: ['mladá vdova po zemanovi', 'mladý vdovec po zemance'], text: ['Spravuje statek sama a nikdo jí nic nedaruje.', 'Spravuje statek sám a ví, co stojí každý groš.'], dowry: { gold: 8, food: 4 } },
+    { minAge: 24, kind: ['mladá vdova po zemanovi', 'mladý vdovec po zemance'], text: ['Spravuje statek sama a nikdo jí nic nedaruje.', 'Spravuje statek sám a ví, co stojí každý groš.'], dowry: { gold: 8, food: 4 } },
     { kind: ['dcera purkrabího', 'syn purkrabího'], text: ['Vyrostla na hradbách mezi strážemi a zná řeč vojáků.', 'Vyrostl na hradbách mezi strážemi a umí velet.'], dowry: { army: 4, stability: 3 } },
   ],
   panovnik: [
@@ -97,7 +97,7 @@ function newSuitor(state) {
   const houseGen = house ? NOBLE_HOUSES.find((d) => d.id === house).gen : '';
   return {
     name: freshName(state, gender), gender,
-    age: clamp(state.ruler.age + randInt(-6, 3), 17, 45),
+    age: clamp(state.ruler.age + randInt(-6, 3), k.minAge || 17, 45),
     kindKey: i, kindLabel: k.kind[g].replace('{house}', houseGen), bio: k.text[g],
     affection: randInt(10, 30), loyalty: randInt(35, 55), quirk: randomQuirk(), traits: inheritTraits(),
     dowry: { ...k.dowry }, house, realm: k.realm || null, alive: true,
@@ -110,7 +110,7 @@ const COURT_SIZE = (state) => (isMarried(state) ? 3 : 5);
 
 /** Keeps people to court (and lovers) while the ruler is young enough. */
 export function refreshSuitors(state) {
-  if (state.ruler.age > 60 || state.gameOver) { state.suitors = (state.suitors || []).filter((x) => x.lover); return; }
+  if (state.ruler.age > 60 || state.ruler.age < 16 || state.gameOver) { state.suitors = (state.suitors || []).filter((x) => x.lover); return; }
   state.suitors = (state.suitors || []).filter((x) => x.stage === state.scenario || x.lover);
   for (const x of state.suitors) {
     // suitors from an older save get their face and a loyalty too
@@ -157,7 +157,7 @@ export function marry(state, i, { arranged = false } = {}) {
 
 /** Can the couple have a child now? */
 export function canConceive(state) {
-  if (!isMarried(state) || state.pregnancy) return false;
+  if (!isMarried(state) || state.pregnancy || state.ruler.age < 16) return false;
   const mother = f(state.ruler) ? state.ruler : state.spouse;
   const kids = (state.heir && state.heir.alive !== false ? 1 : 0) + (state.children || []).filter((c) => c.alive !== false).length;
   return mother.age <= FERTILE_UNTIL && kids < MAX_CHILDREN;
@@ -244,7 +244,7 @@ export function processFamily(state) {
       if (Math.random() < 0.004 + Math.max(0, c.age - 45) * 0.02) {
         c.alive = false;
         news.push(`${f(c) ? 'Zemřela sestra' : 'Zemřel bratr'} ${c.name} (${c.age} let).`);
-        state.chronicle.push(makeChronicleEntry(state, `${f(c) ? 'Zemřela' : 'Zemřel'} ${c.name}, ${f(c) ? 'sestra' : 'bratr'} ${f(state.ruler) ? 'vládkyně' : 'vládce'} z rodu ${state.dynastyName}.`));
+        state.chronicle.push(makeChronicleEntry(state, `${f(c) ? 'Zemřela' : 'Zemřel'} ${c.name}, ${f(c) ? 'sestra' : 'bratr'} ${state.scenario === 'sedlak' ? (f(state.ruler) ? 'hospodyně' : 'hospodáře') : state.scenario === 'slechtic' ? (f(state.ruler) ? 'paní' : 'pána') : (f(state.ruler) ? 'vládkyně' : 'vládce')} z rodu ${state.dynastyName}.`));
       }
     }
     if (state.siblings) state.siblings = state.siblings.filter((c) => c.alive !== false);
