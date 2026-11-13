@@ -106,7 +106,7 @@ export const COURT_EVENTS = [
         hintType: 'trait', hintKey: 'strength',
         effects: { prestige: 1 },
         courtEffects: { target: { loyalty: -12 } },
-        chronicle: 'Žádost byla odmítnuta. {target.name} odešel{T:|a} bez pozdravu a ves si toho všimla.',
+        chronicle: 'Žádost byla odmítnuta. {target.name} {T:odešel|odešla} bez pozdravu a ves si toho všimla.',
       },
       {
         label: 'Slíbit odměnu po žních',

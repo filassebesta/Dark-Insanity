@@ -721,7 +721,7 @@ export const STAGE_EVENTS = [
         hintType: 'resource', hintKey: 'legitimacy',
         effects: { favor: -10, legitimacy: 5 },
         houseEffects: { '*': { attitude: 8 } },
-        chronicle: 'Berně padla. {king.Title} {king.name} odešel{K:|a} od stolu bez pozdravu a velmoži si s rodem {dynastyName} poprvé připili jako s rovným.',
+        chronicle: 'Berně padla. {king.Title} {king.name} {K:odešel|odešla} od stolu bez pozdravu a velmoži si s rodem {dynastyName} poprvé připili jako s rovným.',
       },
       {
         label: 'Navrhnout berni jen z královských měst',

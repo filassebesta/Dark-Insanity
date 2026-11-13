@@ -17,7 +17,7 @@ export function talkSection(state, role) {
   const c = personOf(state, role);
   if (c && c.alive === false) return '';
   const suitor = String(role).startsWith('suitor:');
-  if (/^(child|sibling):/.test(String(role)) && !topicsFor(state, role).length) return '';
+  if (/^(child|sibling|bastard):/.test(String(role)) && !topicsFor(state, role).length) return '';
   const head = `<h4 class="ps-section">${suitor ? 'Námluvy' : 'Rozhovor'}</h4>`;
   if (why) {
     const fresh = c.talkTurn === state.turn && c.lastTalk;
@@ -64,7 +64,7 @@ export function wireTalk() {
     box.querySelectorAll('.talk-topic').forEach((b) => { b.disabled = true; });
     if (!roll) { finish(key, true); return; }
     const table = box.querySelector('.talk-table');
-    openRoll(state, { ...roll, label: TOPICS[key].label }, (rolled) => finish(key, rolled.success), table);
+    openRoll(state, roll, (rolled) => finish(key, rolled.success), table);
     table.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   });
 }

@@ -166,7 +166,7 @@ export function renderCharacterPlaque(state, bumpedTrait = null) {
     <div class="plaque-portrait" data-action="open-character" title="Zobrazit postavu">${initial}${portraitImg(rulerPortraitCandidates(r), r.name)}</div>
     <div class="plaque-id">
       <span class="plaque-name">${esc(r.name)}</span>
-      <span class="plaque-sub">${esc(tierLabel(r, state))} · ${r.age} let${state.war && state.war.leader === 'ruler' ? ' · <em class="plaque-hurt">v poli</em>' : ''}${hurt.length ? ` · <em class="plaque-hurt">${esc(hurt.join(', '))}</em>` : ''}</span>
+      <span class="plaque-sub">${esc(tierLabel(r, state))}${state.cadetBranch ? ' · vedlejší větev' : ''} · ${r.age} let${state.war && state.war.leader === 'ruler' ? ' · <em class="plaque-hurt">v poli</em>' : ''}${hurt.length ? ` · <em class="plaque-hurt">${esc(hurt.join(', '))}</em>` : ''}</span>
     </div>
     <div class="plaque-traits">
       ${TRAIT_DEFS.map((t) => {
@@ -353,7 +353,7 @@ function renderSceneEcho(state, event) {
   el.classList.toggle('crisis', !!event.crisis);
   if (origin) {
     const who = origin.ruler && origin.ruler !== state.ruler.name ? `, kdy vládl${origin.gender === 'female' ? 'a' : ''} ${esc(origin.ruler)}` : '';
-    el.innerHTML = `<b>Ozvěna</b>Rok ${origin.year}${who} · ${esc(origin.title)}: „${esc(origin.choice)}“`;
+    el.innerHTML = `<b>Ozvěna</b>Rok ${origin.year}${who} · ${esc(origin.title)}: „${esc(interpolate(state, origin.choice))}“`;
   } else if (event.crisis) {
     el.innerHTML = `<b>Krize</b>${esc(CRISIS_CAUSES[event.id] || '')}`;
   } else {

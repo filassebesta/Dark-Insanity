@@ -9,7 +9,7 @@ const ALL = ['sedlak', 'slechtic', 'panovnik'];
 const img = (id) => `assets/events/${id}.jpg`;
 const single = (s) => !s.spouse || s.spouse.alive === false;
 const noHeir = (s) => (!s.heir || s.heir.alive === false) && !(s.children || []).some((c) => c.alive !== false);
-const kidsAlive = (s) => (s.heir && s.heir.alive !== false ? 1 : 0) + (s.children || []).filter((c) => c.alive !== false).length;
+const kidsAlive = (s) => (s.heir && s.heir.alive !== false && !s.heir.presumptive ? 1 : 0) + (s.children || []).filter((c) => c.alive !== false).length;
 // no child of the ruler's own yet (a brother or sister may hold the heir's place)
 const noOwnHeir = (s) => !s.heir || s.heir.alive === false || !!s.heir.presumptive;
 const suitor = (i) => (s) => !!(s.suitors && s.suitors[i]);
@@ -49,7 +49,7 @@ export const FAMILY_EVENTS = [
     scenarios: ALL, forced: true, free: true,
     image: img('krest_ditete'),
     title: 'Dítě, o kterém se nemluví',
-    text: 'Zpráva přišla potichu, po služce, která se dívala do země: narodil{B:|a} se {bastard.word} jménem {bastard.name}. Matkou je {bastard.parent} — a otcem ty. Kněz se ptá, co zapsat do matriky, a ve vsi už se šeptá.',
+    text: 'Zpráva přišla potichu, po služce, která se dívala do země: narodil{B:|a} se {bastard.word} jménem {bastard.name}. {R:Matkou|Otcem} je {bastard.parent} — a {R:otcem|matkou} ty. Kněz se ptá, co zapsat do matriky, a ve vsi už se šeptá.',
     choices: [
       {
         label: 'Uznat dítě za své před celým krajem',
