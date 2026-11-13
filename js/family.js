@@ -6,7 +6,11 @@
 // the younger ones wait in state.children. If a ruler grows old without an heir,
 // a relative's child can be taken in (event f_schovanec, events_family.js).
 //
-// state.suitors = [{ name, gender, age, kind, affection, quirk, traits, dowry, house?, realm? }]
+// Beyond marriage: a woman (or man) with high affection can become a lover; a child of a
+// lover is a bastard (state.bastards), outside the line unless acknowledged and nobody else is left.
+//
+// state.suitors = [{ name, gender, age, kind, affection, loyalty, lover?, quirk, traits, dowry, house?, realm? }]
+// state.bastards = [{ role: 'bastard', name, gender, age, parent, acknowledged, alive }]
 // state.children = [{ role: 'child', name, gender, age, traits, loyalty, alive }]
 // state.pregnancy = { due }   ·   No DOM here.
 
@@ -25,18 +29,25 @@ const KINDS = {
     { kind: ['rychtářova neteř', 'rychtářův synovec'], text: ['Čte, píše a ví, kdo ve vsi komu dluží.', 'Mluví za dva a ve vsi ho znají všichni.'], dowry: { prestige: 5 } },
     { kind: ['dcera ovčáka z kopců', 'syn ovčáka z kopců'], text: ['Divoká jako kopce, odkud přišla.', 'Zvyklý na samotu, vítr a vlky.'], dowry: { food: 8 } },
     { kind: ['dcera krčmáře', 'syn krčmáře'], text: ['Zná každý drb ve vsi, a dřív než ostatní.', 'Umí naslouchat, když ostatní mluví.'], dowry: { gold: 4, prestige: 2 } },
+    { kind: ['švadlena z Brodu', 'tovaryš z Brodu'], text: ['Šije pro měšťanky a vypráví, co se v městě nosí.', 'Prošel půl země a vrátil se s rukama plnýma řemesla.'], dowry: { gold: 5 } },
+    { kind: ['dcera sedláka od lípy', 'syn sedláka od lípy'], text: ['Pracovitá, tichá a pole zná jako vlastní dlaň.', 'Pracovitý a tichý, pole zná jako vlastní dlaň.'], dowry: { food: 6, stability: 2 } },
+    { kind: ['farářova hospodyně', 'kostelník od fary'], text: ['Umí trochu číst a ještě víc mlčet.', 'Zná všechny ve vsi od křtu po pohřeb.'], dowry: { faith: 5 } },
   ],
   slechtic: [
     { kind: ['dcera rytíře z pobřeží', 'syn rytíře z pobřeží'], text: ['Jezdí na koni lépe než bratři a nedá na sebe sáhnout.', 'Mladý rytíř bez půdy, ale s dobrým mečem.'], dowry: { army: 6, prestige: 3 } },
     { kind: ['dcera bohatého měšťana z Brodu', 'syn bohatého měšťana z Brodu'], text: ['Bez erbu, ale s truhlou, na kterou se dívá i dvůr.', 'Bez erbu, ale s měšcem a s rozumem kupce.'], dowry: { gold: 20 } },
     { kind: ['dvorní dáma královny', 'královský páže'], text: ['Zná dvůr zevnitř a ví, kdo s kým mluví.', 'Vyrostl u dvora a zná každou chodbu hradu.'], dowry: { favor: 8 } },
     { house: true, kind: ['dcera rodu {house}', 'syn rodu {house}'], text: ['Krev starého rodu. Sňatek s ní by byl i spojenectvím.', 'Krev starého rodu. Sňatek s ním by byl i spojenectvím.'], dowry: { gold: 10, legitimacy: 4 } },
+    { kind: ['mladá vdova po zemanovi', 'mladý vdovec po zemance'], text: ['Spravuje statek sama a nikdo jí nic nedaruje.', 'Spravuje statek sám a ví, co stojí každý groš.'], dowry: { gold: 8, food: 4 } },
+    { kind: ['dcera purkrabího', 'syn purkrabího'], text: ['Vyrostla na hradbách mezi strážemi a zná řeč vojáků.', 'Vyrostl na hradbách mezi strážemi a umí velet.'], dowry: { army: 4, stability: 3 } },
   ],
   panovnik: [
     { realm: 'east', kind: ['princezna z Východních marek', 'princ z Východních marek'], text: ['Vyrostla mezi vojáky a nebojí se ničeho.', 'Bojovník, který zná hranici z obou stran.'], dowry: { army: 10 } },
     { realm: 'south', kind: ['princezna z Jižní říše', 'princ z Jižní říše'], text: ['Mluví pěti jazyky a usmívá se jako diplomat.', 'Vzdělaný, bohatý a nikdy nemluví nahlas.'], dowry: { gold: 30 } },
     { realm: 'north', kind: ['dcera velkého náčelníka ze severu', 'syn velkého náčelníka ze severu'], text: ['Nosí kožešiny i na hostinách a směje se nahlas.', 'Mohutný a přímý, jako zimní vítr.'], dowry: { army: 6, prestige: 4 } },
     { house: true, kind: ['dcera rodu {house}', 'syn rodu {house}'], text: ['Sňatek s domácím rodem uklidní šlechtu.', 'Sňatek s domácím rodem uklidní šlechtu.'], dowry: { legitimacy: 8, stability: 4 } },
+    { kind: ['dvorní dáma s ostrým jazykem', 'dvořan s ostrým jazykem'], text: ['Krásná, vtipná a nebezpečná. Dvůr se jí bojí i obdivuje.', 'Vtipný a nebezpečný. Dvůr se ho bojí i obdivuje.'], dowry: { prestige: 6 } },
+    { kind: ['neteř arcibiskupa', 'synovec arcibiskupa'], text: ['Zbožná na pohled, zvědavá v duši.', 'Zbožný na pohled, ctižádostivý v duši.'], dowry: { faith: 6, legitimacy: 4 } },
   ],
 };
 
@@ -53,6 +64,7 @@ export function personOf(state, role) {
   if (kind === 'suitor') return (state.suitors || [])[Number(i)] || null;
   if (kind === 'child') return (state.children || [])[Number(i)] || null;
   if (kind === 'sibling') return (state.siblings || [])[Number(i)] || null;
+  if (kind === 'bastard') return (state.bastards || [])[Number(i)] || null;
   return state[role] || null;
 }
 
@@ -61,7 +73,7 @@ export function suitorLabel(c) {
 }
 
 function usedNames(state) {
-  return new Set([state.ruler.name, state.heir && state.heir.name, state.spouse && state.spouse.name,
+  return new Set([...(state.pastSuitorNames || []), ...(state.bastards || []).map((x) => x.name),state.ruler.name, state.heir && state.heir.name, state.spouse && state.spouse.name,
     ...(state.suitors || []).map((x) => x.name), ...(state.children || []).map((x) => x.name),
     ...(state.siblings || []).map((x) => x.name), ...['chancellor', 'marshal', 'spymaster'].map((r) => state[r] && state[r].name)]);
 }
@@ -69,7 +81,7 @@ function usedNames(state) {
 function freshName(state, gender) {
   const used = usedNames(state);
   let name = randomName(gender);
-  for (let i = 0; i < 20 && used.has(name); i++) name = randomName(gender);
+  for (let i = 0; i < 80 && used.has(name); i++) name = randomName(gender);
   return name;
 }
 
@@ -87,19 +99,36 @@ function newSuitor(state) {
     name: freshName(state, gender), gender,
     age: clamp(state.ruler.age + randInt(-6, 3), 17, 45),
     kindKey: i, kindLabel: k.kind[g].replace('{house}', houseGen), bio: k.text[g],
-    affection: randInt(10, 30), quirk: randomQuirk(), traits: inheritTraits(),
+    affection: randInt(10, 30), loyalty: randInt(35, 55), quirk: randomQuirk(), traits: inheritTraits(),
     dowry: { ...k.dowry }, house, realm: k.realm || null, alive: true,
     portrait: `suitor_${state.scenario}_${i}_${gender}`, // assets/portraits, see docs/obrazky-rodina.md
   };
 }
 
-/** Keeps three people to court while the ruler is unmarried and young enough; none once married. */
+// how many people to court: a choice of five while single, three around the court once married
+const COURT_SIZE = (state) => (isMarried(state) ? 3 : 5);
+
+/** Keeps people to court (and lovers) while the ruler is young enough. */
 export function refreshSuitors(state) {
-  if (isMarried(state) || state.ruler.age > 60 || state.gameOver) { state.suitors = []; return; }
-  state.suitors = (state.suitors || []).filter((x) => x.stage === state.scenario);
-  // suitors from an older save get their face too
-  for (const x of state.suitors) if (!x.portrait && x.kindKey !== undefined) x.portrait = `suitor_${x.stage}_${x.kindKey}_${x.gender}`;
-  while (state.suitors.length < 3) state.suitors.push({ ...newSuitor(state), stage: state.scenario });
+  if (state.ruler.age > 60 || state.gameOver) { state.suitors = (state.suitors || []).filter((x) => x.lover); return; }
+  state.suitors = (state.suitors || []).filter((x) => x.stage === state.scenario || x.lover);
+  for (const x of state.suitors) {
+    // suitors from an older save get their face and a loyalty too
+    if (!x.portrait && x.kindKey !== undefined) x.portrait = `suitor_${x.stage}_${x.kindKey}_${x.gender}`;
+    if (x.loyalty === undefined) x.loyalty = 45;
+  }
+  while (state.suitors.length < COURT_SIZE(state)) state.suitors.push({ ...newSuitor(state), stage: state.scenario });
+  // once married, the circle shrinks — lovers stay
+  while (state.suitors.length > COURT_SIZE(state) && state.suitors.some((x) => !x.lover)) {
+    const i = state.suitors.findIndex((x) => !x.lover);
+    rememberSuitor(state, state.suitors[i]);
+    state.suitors.splice(i, 1);
+  }
+}
+
+function rememberSuitor(state, s) {
+  state.pastSuitorNames = state.pastSuitorNames || [];
+  if (!state.pastSuitorNames.includes(s.name)) state.pastSuitorNames.push(s.name);
 }
 
 /** Marries a suitor: they become the spouse, the dowry comes in. Returns the chronicle text. */
@@ -117,7 +146,9 @@ export function marry(state, i, { arranged = false } = {}) {
     if (h) { h.attitude = clamp(h.attitude + 20); h.married = true; }
   }
   if (s.realm && state.realms && state.realms[s.realm]) state.realms[s.realm].attitude = clamp(state.realms[s.realm].attitude + 20);
-  state.suitors = [];
+  rememberSuitor(state, s);
+  state.suitors.splice(i, 1);
+  refreshSuitors(state);
   if (!arranged) state.flags.married_for_love = true;
   const text = `Svatba: ${state.ruler.name} a ${s.name}, ${s.kindLabel}. Svatba se slavila tři dny.`;
   state.chronicle.push(makeChronicleEntry(state, text));
@@ -169,7 +200,15 @@ export function nextHeir(state) {
   if (!kids.length) {
     // no child of their own: the eldest brother or sister holds the place
     const sibs = (state.siblings || []).filter((c) => c.alive !== false).sort((a, b) => b.age - a.age);
-    if (!sibs.length) return false;
+    if (!sibs.length) {
+      // last of all an acknowledged bastard — better than the house dying out
+      const b = (state.bastards || []).filter((c) => c.alive !== false && c.acknowledged).sort((x, y) => y.age - x.age)[0];
+      if (!b) return false;
+      state.bastards = state.bastards.filter((c) => c !== b);
+      state.heir = { ...b, role: 'heir', presumptive: true, bastard: true };
+      state.chronicle.push(makeChronicleEntry(state, `${b.name}, ${f(b) ? 'uznaná levobočka' : 'uznaný levoboček'}, je teď jedinou nadějí rodu ${state.dynastyName}.`));
+      return true;
+    }
     state.siblings = state.siblings.filter((c) => c !== sibs[0]);
     state.heir = { ...sibs[0], role: 'heir', presumptive: true };
     state.chronicle.push(makeChronicleEntry(state, `${sibs[0].name} je teď ${f(sibs[0]) ? 'dědičkou' : 'dědicem'} rodu ${state.dynastyName}, dokud se nenarodí dítě.`));
@@ -214,20 +253,103 @@ export function processFamily(state) {
     if ((state.suitors || []).length && Math.random() < 0.25) {
       const i = randInt(0, state.suitors.length - 1);
       const gone = state.suitors[i];
-      if (!gone.warned) {
+      if (gone.lover) { /* a lover does not leave with a year's notice — see processLovers */ } else if (!gone.warned) {
         // a year's warning first
         gone.warned = true;
         news.push(`${gone.name} (${gone.kindLabel}) už nebude čekat věčně. ${f(gone) ? 'Ucházejí se o ni' : 'Ucházejí se o něj'} i jiní.`);
       } else {
         news.push(`${gone.name} (${gone.kindLabel}) ${f(gone) ? 'se vdala' : 'se oženil'} jinam.`);
+        rememberSuitor(state, gone);
         state.suitors.splice(i, 1);
       }
     }
   }
+  news.push(...processLovers(state));
   if (nextHeir(state)) news.push(`Novým dědicem je ${state.heir.name}.`);
   // "we have enough children" holds only while there is a child of their own
   const ownLeft = (state.heir && state.heir.alive !== false && !state.heir.presumptive) || state.children.some((c) => c.alive !== false);
   if (state.flags && state.flags.no_more_children && !ownLeft) delete state.flags.no_more_children;
   refreshSuitors(state);
+  return news;
+}
+
+// ---------- lovers and bastards ----------
+
+/** The woman (or man) the ruler courts takes the ruler as a lover. */
+export function takeLover(state, i) {
+  const s = state.suitors[i];
+  if (!s) return;
+  s.lover = true;
+  s.loverSince = state.turn;
+  s.loyalty = clamp(s.loyalty + 10);
+}
+
+/** A lover can bear a child while she is young enough and not already expecting. */
+export function loverCanConceive(state, i) {
+  const s = state.suitors[i];
+  if (!s || !s.lover || state.loverPregnancy) return false;
+  const mother = f(state.ruler) ? state.ruler : s;
+  return mother.age <= FERTILE_UNTIL;
+}
+
+export function loverConceiveChance(state, i) {
+  const s = state.suitors[i];
+  const mother = f(state.ruler) ? state.ruler : s;
+  return Math.max(0.15, Math.min(0.7, 0.7 - Math.max(0, mother.age - 26) * 0.035));
+}
+
+export function startLoverPregnancy(state, i) {
+  state.loverPregnancy = { due: state.turn + 3, parent: state.suitors[i].name };
+}
+
+/** A child of a lover: a bastard of the house. Returns the child. */
+function bearBastard(state) {
+  const gender = Math.random() < 0.5 ? 'male' : 'female';
+  const parent = state.loverPregnancy.parent;
+  const child = { role: 'bastard', name: freshName(state, gender), gender, age: 0, parent, acknowledged: false,
+    loyalty: clamp(55 + randInt(-5, 10)), alive: true, traits: inheritTraits(state.ruler.traits) };
+  (state.bastards = state.bastards || []).push(child);
+  state.lastBastard = { name: child.name, gender, parent };
+  return child;
+}
+
+/** Acknowledges a bastard: the child carries the house's name and may inherit when nobody else is left. */
+export function acknowledgeBastard(state, name) {
+  const b = (state.bastards || []).find((x) => x.name === name);
+  if (b) b.acknowledged = true;
+}
+
+/**
+ * Every season: a lover's child is born; every spring lovers drift — a neglected or disloyal
+ * lover may let the affair out, and the spouse finds out. Returns news lines.
+ */
+function processLovers(state) {
+  const news = [];
+  if (state.loverPregnancy && state.turn >= state.loverPregnancy.due) {
+    const b = bearBastard(state);
+    state.loverPregnancy = null;
+    news.push(f(state.ruler) ? `Narodilo se ti nemanželské dítě, ${f(b) ? 'dcera' : 'syn'} ${b.name}.` : `${b.parent} porodila ${f(b) ? 'dceru' : 'syna'}: ${b.name}.`);
+    if (!state.pendingEvent) state.pendingEvent = 'narozeni_levobocka';
+    else (state.eventQueue = state.eventQueue || []).unshift('narozeni_levobocka');
+  }
+  if (state.seasonIndex !== 0) return news;
+  for (const c of state.bastards || []) if (c.alive !== false) c.age += 1;
+  for (const s of (state.suitors || []).filter((x) => x.lover)) {
+    // a lover left alone for a year cools
+    if (s.talkTurn === undefined || state.turn - s.talkTurn > 4) { s.loyalty = clamp(s.loyalty - 6); s.affection = clamp(s.affection - 4); }
+    if (isMarried(state) && !state.spouse.knowsAffair && Math.random() < (s.loyalty < 30 ? 0.35 : 0.06)) {
+      state.spouse.knowsAffair = true;
+      state.spouse.loyalty = clamp(state.spouse.loyalty - 20);
+      state.resources.prestige = clamp(state.resources.prestige - 3);
+      const t = `${state.spouse.name} se ${f(state.spouse) ? 'dozvěděla' : 'dozvěděl'} o ${f(s) ? 'milence' : 'milenci'} jménem ${s.name}. V domě je od té doby chladno.`;
+      news.push(t);
+      state.chronicle.push(makeChronicleEntry(state, t));
+    }
+    if (s.loyalty <= 5 && s.affection < 30) {
+      s.lover = false;
+      const t = `${s.name} ukončil${f(s) ? 'a' : ''} poměr. Prý už nechce čekat na někoho, kdo nepřichází.`;
+      news.push(t);
+    }
+  }
   return news;
 }

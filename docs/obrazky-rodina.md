@@ -12,6 +12,7 @@ Portréty nápadnic a nápadníků (po svatbě se stanou tváří manžela/ky), 
 | ✅ | R4 | Svobodník | 10 | události svobodného sedláka |
 | ⏳ | R5 | Významný šlechtic | 12 | události velmože |
 | ⏳ | R6 | Nápadnice a nápadníci šlechtice a krále | 16 | námluvy ve vyšších stupních |
+| ⏳ | R7 | Další ženy na výběr (všechny stupně) | 7 | galerie žen v listu postavy |
 
 **Dávka R2 je kompletní:** devět scén z první dodávky (názvy byly poprohazované, roztříděno podle obsahu) a tři z doobjednávky R2b.
 
@@ -275,4 +276,40 @@ suitor_panovnik_2_female.jpg — A daughter of the great northern chieftain, abo
 suitor_panovnik_2_male.jpg — A son of the great northern chieftain, about 24: massive, bearded, bear-skin mantle, straightforward like winter wind.
 suitor_panovnik_3_female.jpg — A daughter of a domestic noble house at the royal court, about 21: rich gown, house colours, poised and proper.
 suitor_panovnik_3_male.jpg — A son of a domestic noble house at the royal court, about 25: rich doublet in house colours, polite and ambitious.
+```
+
+---
+
+## Dávka R7 — Další ženy na výběr (4:5, 7 ks)
+
+Galerie žen v listu postavy (Rodina) teď nabízí pět žen místo tří a přibyly nové
+druhy. Dokud tyto portréty nejsou, nové ženy mají obecný portrét manželky.
+
+```
+Generate one separate image for each line below. Each line has a file name
+and a description. Return every image as its own file named exactly as the
+file name. Do not combine images into a grid or sprite sheet.
+
+Format: aspect ratio 4:5, 1024 x 1280. A waist-up portrait, the face in the
+upper third, looking slightly past the viewer, plain dark background with a
+soft warm glow behind the head. Every woman must look clearly different
+from the others (face, hair, build, clothing). Modest, fully clothed,
+historically accurate dress.
+
+Style for every image: painted in the style of a dark-fantasy narrative RPG,
+muted oil painting with visible loose brushwork and subtle canvas texture,
+desaturated earthy palette of ochre, rust, olive green and dusty slate blue,
+soft chiaroscuro lighting, late-medieval Central European (Bohemian)
+setting of the 14th century, realistic proportions. Avoid: anime, cartoon,
+3D render, photography, oversaturated colours, airbrushed digital art, any
+text, letters, watermark or signature.
+
+Images:
+suitor_sedlak_5_female.jpg — A town seamstress, about 22: neat linen dress with a simple embroidered collar, a needle cushion on her wrist, lively curious eyes, brown hair under a small cap.
+suitor_sedlak_6_female.jpg — A quiet farmer's daughter, about 19: rough wool dress, sleeves rolled up, sun-tanned face, a blond braid, calm steady look.
+suitor_sedlak_7_female.jpg — A parish priest's housekeeper, about 27: dark plain dress and white apron, a ring of keys at her belt, a small prayer book in hand, reserved knowing smile.
+suitor_slechtic_4_female.jpg — A young widow of a minor knight, about 26: dark mourning-blue gown of good cloth, a simple silver brooch, auburn hair under a veil, self-assured.
+suitor_slechtic_5_female.jpg — A castle burgrave's daughter, about 20: practical riding cloak over a green gown, dark hair tied back, a sharp confident gaze.
+suitor_panovnik_4_female.jpg — A witty lady of the royal court, about 24: rich wine-red gown with fur trim, elaborate braided hair with pearls, an amused, slightly dangerous smile.
+suitor_panovnik_5_female.jpg — An archbishop's niece, about 21: modest grey-blue silk gown, a delicate gold cross, light hair under a fine veil, demure look with a curious spark.
 ```

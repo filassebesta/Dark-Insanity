@@ -192,7 +192,7 @@ function createPeasantGame(rulerName, dynastyName, gender) {
   for (let i = randInt(1, 3); i > 0; i--) {
     const g = Math.random() < 0.5 ? 'male' : 'female';
     let name = randomName(g);
-    for (let k = 0; k < 20 && used.has(name); k++) name = randomName(g);
+    for (let k = 0; k < 80 && used.has(name); k++) name = randomName(g);
     used.add(name);
     state.siblings.push({ role: 'sibling', name, gender: g, age: randInt(12, 18), loyalty: randInt(60, 80), alive: true, traits: inheritTraits() });
   }

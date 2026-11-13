@@ -6,7 +6,7 @@
 
 import { clamp, bumpStat, TRAIT_DEFS } from './data.js';
 import { roleLabel, COURT_ROLES } from './court.js';
-import { personOf, marry, canConceive, conceiveChance, startPregnancy } from './family.js';
+import { personOf, marry, canConceive, conceiveChance, startPregnancy, isMarried, takeLover, loverCanConceive, loverConceiveChance, startLoverPregnancy } from './family.js';
 
 // 'suitor:2' → 'suitor', 'spouse' → 'spouse'
 const kindOf = (role) => String(role).split(':')[0];
@@ -97,7 +97,7 @@ export const TOPICS = {
   rizika: {
     label: 'Probrat, co může selhat', roles: ADVISERS, quirk: 'opatrny',
     win: { loyalty: 4, effects: { stability: 1 } },
-    text: [(c) => `${c.name} vytáhl${g(c, '', 'a')} seznam všeho, co se může pokazit. Byl dlouhý, ale po rozhovoru spíš klidněji.`],
+    text: [(c) => `${c.name} vytáhl${g(c, '', 'a')} seznam všeho, co se může pokazit. Byl dlouhý, ale po rozhovoru je ${g(c, 'mu', 'jí')} klidněji.`],
   },
   sverit: {
     label: 'Svěřit se se starostmi', roles: ['spouse', ...ADVISERS], quirk: 'oddany',
@@ -124,43 +124,72 @@ export const TOPICS = {
     available: (c, s) => canConceive(s),
     roll: { trait: 'patience', base: (s) => conceiveChance(s), scale: 0 },
     win: { loyalty: 4, child: true }, lose: { loyalty: 2 },
-    text: [(c) => `Noc patřila jen vám dvěma. Za pár týdnů ${g(c, 'ti ' + c.name + ' s úsměvem oznámil, že čekáš dítě', c.name + ' ti s úsměvem oznámila, že čeká dítě')}.`,
+    text: [(c) => `Noc patřila jen vám dvěma. Za pár týdnů ${g(c, 'jsi poznala, že čekáš dítě, a ' + c.name + ' tě nadšeně zvedl do náruče', c.name + ' ti s úsměvem oznámila, že čeká dítě')}.`,
       (c) => `Noc patřila jen vám dvěma. Dítě zatím nepřišlo — ale ${c.name} se usmívá a říká, že máte čas.`],
   },
   nam_rec: {
     label: 'Dát se do řeči', roles: ['suitor'],
     roll: { trait: 'eloquence', base: 0.55, scale: 0.04 },
-    win: { affection: 8 }, lose: { affection: 2 },
+    win: { affection: 8, heart: 2 }, lose: { affection: 2 },
     text: [(c) => `Slovo dalo slovo a ${c.name} se ${g(c, 'rozesmál', 'rozesmála')}. Když jste se loučili, ${g(c, 'ohlédl', 'ohlédla')} se.`,
       (c) => `Rozhovor drhnul. ${c.name} odpovídal${g(c, '', 'a')} zdvořile, ale myšlenkami byl${g(c, '', 'a')} jinde.`],
   },
   nam_dar: {
     label: 'Přinést dárek', roles: ['suitor'], cost: (s) => ({ gold: GIFT[s.scenario] || 2 }),
-    win: { affection: 10 },
+    win: { affection: 10, heart: 4 },
     text: [(c, s) => { const gift = { sedlak: ['Pentle z jarmarku', 'a'], slechtic: ['Stříbrná spona', 'a'] }[s.scenario] || ['Prsten se smaragdem', '']; return `${gift[0]} ${g(c, 'ho', 'ji')} potěšil${gift[1]} víc, než ${g(c, 'chtěl', 'chtěla')} dát najevo.`; }],
   },
   nam_tanec: {
     label: 'Pozvat na tanec', roles: ['suitor'], yearly: true,
     roll: { trait: 'strength', base: 0.5, scale: 0.04 },
-    win: { affection: 15, effects: { prestige: 1 } }, lose: { affection: -3 },
+    win: { affection: 15, heart: 2, effects: { prestige: 1 } }, lose: { affection: -3 },
     text: [(c) => `Tančili jste spolu, dokud muzikanti nepadli únavou. Celé okolí si toho všimlo — a ${c.name} taky.`,
       (c, st) => `Při tanci jsi ${g(c, 'mu', 'jí')} ${R(st, 'šlápl', 'šlápla')} na nohu dvakrát. ${c.name} se smál${g(c, '', 'a')}, ale spíš tobě než s tebou.`],
   },
   nam_svest: {
     label: 'Svést', roles: ['suitor'],
-    available: (c) => c.affection >= 35,
+    available: (c) => c.affection >= 35 && !c.lover,
     roll: { trait: 'eloquence', base: 0.35, scale: 0.05 },
-    win: { affection: 25 }, lose: { affection: -15, effects: { prestige: -2 } },
+    win: { affection: 25, heart: 5 }, lose: { affection: -15, effects: { prestige: -2 } },
     text: [(c) => `Když jste konečně osaměli, ${c.name} přestal${g(c, '', 'a')} odolávat. Od té noci se na tebe dívá jinak.`,
       (c) => `${c.name} ${g(c, 'tě odstrčil', 'tě odstrčila')} a odešel${g(c, '', 'a')}. A do večera to věděli všichni, kdo to vědět neměli.`],
   },
   nam_ruka: {
     label: 'Požádat o ruku', roles: ['suitor'],
-    available: (c) => c.affection >= 55,
-    roll: { trait: 'eloquence', base: 0.35, scale: 0.04, bonus: (c) => (c.affection - 55) / 120 },
-    win: { marry: true }, lose: { affection: -10 },
+    available: (c, s) => c.affection >= 55 && !isMarried(s),
+    // the warmer the heart, the surer the answer: from affection 75 on it is yes
+    roll: { trait: 'eloquence', base: 0.4, scale: 0.04, bonus: (c) => (c.affection >= 75 ? 1 : (c.affection - 55) / 50) },
+    win: { marry: true }, lose: { affection: -5 },
     text: [(c, s) => `${c.name} řekl${g(c, '', 'a')} ano. ${R(s, 'Ženich', 'Nevěsta')} i ${g(c, 'ženich', 'nevěsta')} se těší na svatbu.`,
       (c) => `${c.name} sklopil${g(c, '', 'a')} oči: „Ještě ne. Dej mi čas.“`],
+  },
+  nam_milenka: {
+    label: (c) => (c.gender === 'female' ? 'Nabídnout jí, aby byla tvou milenkou' : 'Nabídnout mu, aby byl tvým milencem'), roles: ['suitor'],
+    available: (c) => c.affection >= 50 && !c.lover,
+    roll: { trait: 'eloquence', base: 0.4, scale: 0.05, bonus: (c) => (c.affection - 50) / 80 + (c.loyalty - 50) / 150 },
+    win: { lover: true, affection: 5 }, lose: { affection: -12, heart: -5 },
+    text: [(c) => `${c.name} dlouho mlčel${g(c, '', 'a')}. Pak ${g(c, 'tě vzal', 'tě vzala')} za ruku: „Ať si říkají, co chtějí.“`,
+      (c, st) => `${c.name} zbledl${g(c, '', 'a')}: „Za koho mě máš?“ A odešel${g(c, '', 'a')} dřív, než jsi ${R(st, 'stačil', 'stačila')} cokoli vysvětlit.`],
+  },
+  mil_noc: {
+    label: 'Strávit spolu noc', roles: ['suitor'],
+    available: (c) => !!c.lover,
+    win: { affection: 6, heart: 4 },
+    text: [(c) => `Noc byla krátká a ráno přišlo moc brzy. ${c.name} se ve dveřích ještě jednou ohlédl${g(c, '', 'a')}.`],
+  },
+  mil_dite: {
+    label: 'Chtít spolu dítě', roles: ['suitor'],
+    available: (c, s) => !!c.lover && loverCanConceive(s, s.suitors.indexOf(c)),
+    roll: { trait: 'patience', base: (s, c) => loverConceiveChance(s, s.suitors.indexOf(c)), scale: 0 },
+    win: { bastard: true, affection: 5, heart: 6 }, lose: { affection: 2 },
+    text: [(c, s) => (s.ruler.gender === 'female' ? `Za pár týdnů jsi poznala, že čekáš dítě. Otcem je ${c.name} — a to se v kronice nenapíše.` : `Za pár týdnů ti ${c.name} pošeptala, že čeká dítě. Tvoje dítě — a ne manželské.`),
+      (c) => `Dítě zatím nepřišlo. ${c.name} se usmívá a říká, že na to je času dost.`],
+  },
+  mil_konec: {
+    label: 'Ukončit poměr', roles: ['suitor'],
+    available: (c) => !!c.lover,
+    win: { endLover: true, affection: -25, heart: -20 },
+    text: [(c) => `${c.name} to přijal${g(c, '', 'a')} bez slova. Jen se ve dveřích neohlédl${g(c, '', 'a')}.`],
   },
   drby: {
     label: 'Vyptat se na drby', roles: ['spymaster'],
@@ -170,6 +199,11 @@ export const TOPICS = {
       (c) => `${c.name} se tvářil${g(c, '', 'a')}, že nic neví. Možná opravdu neví — nebo neřekne.`],
   },
 };
+
+/** A topic's label; some depend on the person ("tvou milenkou" / "tvým milencem"). */
+export function topicLabel(t, c) {
+  return typeof t.label === 'function' ? t.label(c) : t.label;
+}
 
 /** Why the ruler cannot talk to this person now (null = can). */
 export function talkBlock(state, role) {
@@ -206,7 +240,7 @@ export function topicRollChoice(state, role, key) {
   const heart = suitor ? c.affection : c.loyalty;
   const cold = (heart < 40 ? -0.1 : heart >= 70 ? 0.05 : 0) + (t.roll.bonus ? t.roll.bonus(c) : 0);
   return {
-    label: t.label, isRoll: true, baseChance: typeof t.roll.base === 'function' ? t.roll.base(state) : t.roll.base,
+    label: topicLabel(t, c), isRoll: true, baseChance: typeof t.roll.base === 'function' ? t.roll.base(state, c) : t.roll.base,
     traitKey: t.roll.trait, traitScale: t.roll.scale,
     chanceBonus: cold ? () => cold : null, bonusLabel: suitor ? 'Náklonnost' : cold < 0 ? 'Chladný vztah' : 'Důvěra',
   };
@@ -241,6 +275,11 @@ export function holdTalk(state, role, key, success) {
   let delta = res.loyalty || res.affection || 0;
   if (kindOf(role) === 'suitor') {
     c.affection = clamp(c.affection + (res.affection || 0));
+    c.loyalty = clamp((c.loyalty ?? 45) + (res.heart || 0)); // věrnost
+    const idx = Number(String(role).split(':')[1]);
+    if (res.lover) takeLover(state, idx);
+    if (res.bastard) startLoverPregnancy(state, idx);
+    if (res.endLover) c.lover = false;
     for (const [k, v] of Object.entries(res.effects || {})) if (state.resources[k] !== undefined) state.resources[k] = clamp(state.resources[k] + v);
     const text = (success ? t.text[0] : t.text[1] || t.text[0])(c, state, role);
     c.talkTurn = state.turn;
@@ -283,7 +322,7 @@ export function holdTalk(state, role, key, success) {
   c.talkTurn = state.turn;
   if (t.yearly) { c.topicYear = c.topicYear || {}; c.topicYear[key] = state.year; }
   c.history = c.history || [];
-  c.history.push({ year: state.year, season: state.seasonIndex, title: `Rozhovor: ${t.label.toLowerCase()}`, choice: null, outcome: t.roll ? (success ? 'success' : 'failure') : null, delta: delta || null });
+  c.history.push({ year: state.year, season: state.seasonIndex, title: `Rozhovor: ${topicLabel(t, c).toLowerCase()}`, choice: null, outcome: t.roll ? (success ? 'success' : 'failure') : null, delta: delta || null });
   if (c.history.length > 40) c.history.shift();
   bumpStat(state, 'talks');
   return { text, delta, notes, role };

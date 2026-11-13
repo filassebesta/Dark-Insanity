@@ -45,6 +45,34 @@ export const FAMILY_EVENTS = [
     ],
   },
   {
+    id: 'narozeni_levobocka',
+    scenarios: ALL, forced: true, free: true,
+    image: img('krest_ditete'),
+    title: 'Dítě, o kterém se nemluví',
+    text: 'Zpráva přišla potichu, po služce, která se dívala do země: narodil{B:|a} se {bastard.word} jménem {bastard.name}. Matkou je {bastard.parent} — a otcem ty. Kněz se ptá, co zapsat do matriky, a ve vsi už se šeptá.',
+    choices: [
+      {
+        label: 'Uznat dítě za své před celým krajem',
+        hintType: 'resource', hintKey: 'prestige',
+        acknowledge: true, effects: { prestige: -2 }, courtEffects: { spouse: { loyalty: -10 } },
+        chronicle: '{ruler.name} {R:uznal|uznala} nemanželské dítě za své. {bastard.name} ponese jméno rodu {dynastyName}. Kdo se smál, ztichl — kdo ne, ten si to zapamatoval.',
+      },
+      {
+        label: 'Postarat se o ně potají',
+        requires: (s) => s.resources.gold >= 4,
+        hintType: 'resource', hintKey: 'gold',
+        effects: { gold: -4 },
+        chronicle: 'Na vychování dítěte jménem {bastard.name} chodí každé čtvrtletí měšec. Do matriky se zapsalo „otec neznámý“.',
+      },
+      {
+        label: 'Dát dítě na vychování do kláštera',
+        hintType: 'resource', hintKey: 'faith',
+        bastardAway: true, effects: { faith: 2 },
+        chronicle: 'Dítě odvezli do kláštera. Vyroste mezi mnichy a o svém otci se možná nikdy nedozví.',
+      },
+    ],
+  },
+  {
     id: 'touha_po_diteti',
     scenarios: ALL, cooldown: 6, minTurn: 2, weight: (s) => (noOwnHeir(s) ? 14 : 3),
     requires: (s) => canConceive(s) && !s.flags.no_more_children && (kidsAlive(s) === 0 || s.turn - (s.lastBirthTurn || 0) >= 6),

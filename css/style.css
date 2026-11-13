@@ -1752,3 +1752,27 @@ kbd {
 /* a drop cap only when the first word is longer than one letter ("V táboře", not "Vtáboře") */
 .event-text.no-dropcap::first-letter { float: none; font-size: inherit; line-height: inherit; margin: 0; padding: 0; color: inherit; font-family: inherit; }
 .field-hint { font-family: var(--font-body); font-size: .8rem; font-style: italic; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--ink-soft); }
+
+/* ---------- the people to court: a gallery with faces (character sheet) ---------- */
+.cs-suitors { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .8rem; }
+.cs-suitor { display: flex; flex-direction: column; border: 1px solid var(--hairline); background: rgba(255,255,255,.02); cursor: pointer; transition: border-color .2s ease, background .2s ease, transform .2s ease; }
+.cs-suitor:hover, .cs-suitor:focus-visible { border-color: var(--gold-dim); background: rgba(255,255,255,.05); transform: translateY(-2px); outline: none; }
+.cs-suitor.lover { border-color: rgba(176,74,60,.7); box-shadow: inset 0 0 0 1px rgba(176,74,60,.25); }
+.cs-suitor-img { position: relative; aspect-ratio: 4 / 5; overflow: hidden; background: var(--bg-2); }
+.cs-suitor-img .cs-mini { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 2rem; color: var(--gold); }
+.cs-suitor-face { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+.cs-suitor-body { display: flex; flex-direction: column; gap: .2rem; padding: .55rem .6rem .7rem; line-height: 1.25; }
+.cs-suitor-body span { font-family: var(--font-caps); font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.cs-suitor.lover .cs-suitor-body span { color: #d0806f; }
+.cs-suitor-body strong { font-family: var(--font-display); font-weight: 400; font-size: 1.1rem; }
+.cs-suitor-body small { color: rgba(235,227,209,.55); font-size: .78rem; }
+.cs-bar { position: relative; display: block; height: 14px; margin-top: .25rem; background: rgba(90,70,45,.2); }
+.cs-bar i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, var(--rust), var(--olive)); opacity: .7; }
+.cs-bar b { position: relative; z-index: 1; padding-left: .4rem; font-family: var(--font-caps); font-weight: 400; font-size: .58rem; letter-spacing: .12em; text-transform: uppercase; line-height: 14px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+.ps-bar-loyal span { background: linear-gradient(90deg, #5a4a7a, #7d8f9e); }
+
+/* the conversation on the parchment person sheet: dark ink, readable buttons */
+#person-sheet .talk-greet, #person-sheet .talk-reply, #person-sheet .talk-note { color: #3b2c1c; }
+#person-sheet .talk-topic { background: rgba(255,250,238,.55); border-color: rgba(120,90,50,.45); color: #2b2016; }
+#person-sheet .talk-topic span { color: #8a5a2b; }
+#person-sheet .talk-topic:hover:not([disabled]) { background: rgba(255,250,238,.9); border-color: #8a5a2b; }

@@ -81,8 +81,12 @@ export const PROVINCE_TEMPLATES = [
   { id: 'pobrezni-mark', name: 'Pobřežní Mark' },
 ];
 
-export const MALE_NAMES = ['Bořivoj', 'Vratislav', 'Jaromír', 'Přemysl', 'Zbyněk', 'Ctibor', 'Slavomír', 'Miloš', 'Oldřich', 'Jindřich', 'Kunrát', 'Smil'];
-export const FEMALE_NAMES = ['Ludmila', 'Božena', 'Vlasta', 'Drahomíra', 'Milada', 'Kazimíra', 'Radka', 'Anežka'];
+export const MALE_NAMES = ['Bořivoj', 'Vratislav', 'Jaromír', 'Přemysl', 'Zbyněk', 'Ctibor', 'Slavomír', 'Miloš', 'Oldřich', 'Jindřich', 'Kunrát', 'Smil',
+  'Václav', 'Boleslav', 'Soběslav', 'Spytihněv', 'Břetislav', 'Vladislav', 'Ota', 'Hynek', 'Hroznata', 'Bohuslav', 'Diviš', 'Mstiš',
+  'Kojata', 'Bušek', 'Ojíř', 'Zdislav', 'Beneš', 'Vok', 'Jan', 'Petr', 'Mikuláš', 'Jakub', 'Matěj', 'Ondřej', 'Prokop', 'Vítek', 'Lukáš', 'Štěpán'];
+export const FEMALE_NAMES = ['Ludmila', 'Božena', 'Vlasta', 'Drahomíra', 'Milada', 'Kazimíra', 'Radka', 'Anežka',
+  'Dobroslava', 'Zdislava', 'Jitka', 'Kunhuta', 'Eliška', 'Markéta', 'Dorota', 'Kateřina', 'Mlada', 'Bohuslava', 'Ratibora', 'Svatava',
+  'Přibyslava', 'Dobromila', 'Hedvika', 'Johana', 'Alžběta', 'Marta', 'Barbora', 'Dorotka', 'Libuše', 'Juta', 'Ofka', 'Žofie', 'Bláža', 'Neža', 'Machna', 'Ludka'];
 
 export function randInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -94,6 +98,12 @@ export function pickRandom(arr) {
 
 export function randomName(gender) {
   return gender === 'female' ? pickRandom(FEMALE_NAMES) : pickRandom(MALE_NAMES);
+}
+
+/** "1 groš", "3 groše", "5 grošů". */
+export function grosLabel(n) {
+  const a = Math.abs(n);
+  return `${n} ${a === 1 ? 'groš' : a >= 2 && a <= 4 ? 'groše' : 'grošů'}`;
 }
 
 /** "1 rok", "3 roky", "5 let"; a newborn is "pár měsíců". */
