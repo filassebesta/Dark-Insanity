@@ -81,6 +81,7 @@ export function interpolate(state, text) {
   if (pred) dict['predecessor.name'] = pred.name;
   // {domain} what the house holds: the farm, the estate, the crown (4th case)
   dict.domain = isPeasant(state) ? 'grunt' : isNoble(state) ? 'panství' : 'korunu';
+  dict['domain.nom'] = isPeasant(state) ? 'grunt' : isNoble(state) ? 'panství' : 'koruna';
   // {child.name} {child.word} the newborn · {suitor.0.name} {suitor.0.kind} the people to court
   if (state.lastBirth) Object.assign(dict, { 'child.name': state.lastBirth.name, 'child.word': state.lastBirth.gender === 'female' ? 'dcera' : 'syn' });
   (state.suitors || []).forEach((x, i) => Object.assign(dict, { [`suitor.${i}.name`]: x.name, [`suitor.${i}.kind`]: x.kindLabel }));
@@ -130,12 +131,13 @@ export function interpolate(state, text) {
     K: king ? king.gender : 'male', F: state.formerKing ? state.formerKing.gender : 'male',
     C: state.lastBirth ? state.lastBirth.gender : 'male',
     B: state.lastBastard ? state.lastBastard.gender : 'male',
+    Q: state.chancellor ? state.chancellor.gender : 'male', V: state.marshal ? state.marshal.gender : 'male', Y: state.spymaster ? state.spymaster.gender : 'male',
     P: (state.pastRulers || []).length ? state.pastRulers.at(-1).gender : 'male',
     // the foreign rulers: {E:…|…} Eastern Marches, {N:…|…} Northern Wastes, {S:…|…} Southern Empire
     E: state.realms?.east?.ruler.gender, N: state.realms?.north?.ruler.gender, S: state.realms?.south?.ruler.gender,
   };
   return text
-    .replace(/\{([RHTDLMKFCPBENS]):([^|{}]*)\|([^|{}]*)\}/g, (m, who, male, female) => (genderOf[who] === 'female' ? female : male))
+    .replace(/\{([RHTDLMKFCPBENSQVY]):([^|{}]*)\|([^|{}]*)\}/g, (m, who, male, female) => (genderOf[who] === 'female' ? female : male))
     .replace(/\{([\w.]+)\}/g, (m, key) => (key in dict ? dict[key] : m));
 }
 
@@ -475,6 +477,10 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
     if (!r) continue;
     if (fx.attitude) r.attitude = clamp(r.attitude + fx.attitude);
     if (fx.power) r.power = clamp(r.power + fx.power);
+    // the consequence abroad shows with the outcome
+    const rn = REALMS[key] && REALMS[key].name;
+    if (rn && fx.attitude) notes.push({ text: `${rn}: vztah ${fx.attitude > 0 ? '+' : ''}${fx.attitude}`, tone: fx.attitude > 0 ? 'pos' : 'neg' });
+    if (rn && fx.power) notes.push({ text: `${rn}: síla ${fx.power > 0 ? '+' : ''}${fx.power}`, tone: fx.power > 0 ? 'pos' : 'neg' });
   }
   if (branch.setTier && branch.setTier !== state.ruler.statusTier) {
     const rising = branch.setTier > state.ruler.statusTier;
@@ -690,7 +696,7 @@ export function issueDecree(state, key, provinceId) {
 
 const RULERS = ['panovnik', 'slechtic'];
 const CRISES = [
-  { key: 'stability', max: 15, event: 'krize_rozvrat', scenarios: RULERS }, // the last warning before the realm falls apart
+  { key: 'stability', max: 20, event: 'krize_rozvrat', scenarios: RULERS }, // the last warning before the realm falls apart
   { key: 'food', max: 3, event: 'krize_hlad', scenarios: RULERS },
   { key: 'gold', max: 2, event: 'krize_pokladna', scenarios: RULERS },
   { key: 'favor', max: 10, event: 'krize_nemilost', scenarios: ['slechtic'] },
@@ -733,7 +739,7 @@ function reignOf(state) {
 }
 
 // routine scenes (the year's work, chapter cards, a funeral, a birth) are not deeds a reign is remembered by
-const ROUTINE_SCENES = /^(quiet_season|n_klidne_obdobi|s_klidne_obdobi|vynos_roku|s_prace_na_gruntu|nastupnictvi|narozeni|touha_po_diteti|kapitola_.*|p_.*)$/;
+const ROUTINE_SCENES = /^(quiet_season|n_klidne_obdobi|s_klidne_obdobi|vynos_roku|s_prace_na_gruntu|nastupnictvi|narozeni|narozeni_levobocka|touha_po_diteti|kapitola_.*|p_.*|ambice.*|cil_.*)$/;
 
 function tallyReign(state, branch, meta, outcome) {
   if (!meta || !meta.event || /^(quiet_season|n_klidne_obdobi|s_klidne_obdobi)$/.test(meta.event.id)) return;
@@ -1203,6 +1209,12 @@ function retireOldAdvisers(state) {
   }
 }
 
+/** "Hospodář" / "Pán" / "Vládce" (or the feminine) by the stage the chronicle is in. */
+function deathWord(state, gender) {
+  const f = gender === 'female';
+  return isPeasant(state) ? (f ? 'Hospodyně' : 'Hospodář') : isNoble(state) ? (f ? 'Paní' : 'Pán') : (f ? 'Vládkyně' : 'Vládce');
+}
+
 function checkNaturalDeath(state) {
   const age = state.ruler.age;
   // old wounds shorten life at any age
@@ -1221,7 +1233,7 @@ const f = (c) => c.gender === 'female';
 function generateSuccessorHousehold(state, siblings = []) {
   const age = state.ruler.age;
   const spouseGender = state.ruler.gender === 'female' ? 'male' : 'female';
-  const married = !!state.flags.heir_married;
+  const married = !!state.flags.heir_married && age >= 16; // a child ruler is not married
   // nobody in the household shares a name with the ruler, a sibling or a councillor
   const taken = new Set([state.ruler.name, ...siblings.map((c) => c.name),
     ...['chancellor', 'marshal', 'spymaster'].map((r) => state[r] && state[r].name)].filter(Boolean));
@@ -1259,6 +1271,7 @@ function handleSuccession(state, cause = 'stářím') {
   if (state.heir.alive) {
     // a brother or sister taking over: the main line has died out, a cadet branch carries the house on
     const cadet = !!state.heir.presumptive;
+    const viaBastard = !!state.heir.bastard; // the ruler's own (acknowledged) child, not a sibling
     const oldName = state.ruler.name;
     const newRulerName = state.heir.name;
     state.pastRulers = state.pastRulers || [];
@@ -1290,15 +1303,17 @@ function handleSuccession(state, cause = 'stářím') {
     };
     state.generation += 1;
     // the old ruler's younger children are the new ruler's brothers and sisters (for a cadet branch: the old ruler's other siblings)
-    const siblings = (cadet ? state.siblings || [] : state.children || []).filter((c) => c.alive !== false);
+    const siblings = (viaBastard ? state.bastards || [] : cadet ? state.siblings || [] : state.children || []).filter((c) => c.alive !== false);
     state.successionNote = '';
     const pf = state.pastRulers.at(-1).gender === 'female';
-    state.predecessorRel = cadet ? (pf ? 'sestra' : 'bratr') : (pf ? 'matka' : 'otec');
+    state.predecessorRel = cadet && !viaBastard ? (pf ? 'sestra' : 'bratr') : (pf ? 'matka' : 'otec');
     if (cadet) {
       state.cadetBranch = (state.cadetBranch || 0) + 1;
       state.resources.legitimacy = clamp((state.resources.legitimacy ?? 50) - 10);
       state.resources.prestige = clamp(state.resources.prestige - 5);
-      state.successionNote = ` Hlavní linie rodu vymřela — ${state.ruler.gender === 'female' ? 'sestra' : 'bratr'} ${state.pastRulers.at(-1).gender === 'female' ? 'zesnulé' : 'zesnulého'} vede rod jako vedlejší větev a ne každý to bere jako samozřejmost.`;
+      state.successionNote = viaBastard
+        ? ` Hlavní linie rodu vymřela — ${state.ruler.gender === 'female' ? 'nemanželská dcera' : 'nemanželský syn'} ${pf ? 'zesnulé' : 'zesnulého'} vede rod jako vedlejší větev a ne každý to bere jako samozřejmost.`
+        : ` Hlavní linie rodu vymřela — ${state.ruler.gender === 'female' ? 'sestra' : 'bratr'} ${pf ? 'zesnulé' : 'zesnulého'} vede rod jako vedlejší větev a ne každý to bere jako samozřejmost.`;
       state.chronicle.push(makeChronicleEntry(state, `${oldName} ${state.pastRulers.at(-1).gender === 'female' ? 'zemřela' : 'zemřel'} bez manželských dětí. Hlavní linie rodu ${state.dynastyName} vymřela; rod pokračuje vedlejší větví.`));
     }
     generateSuccessorHousehold(state, siblings);
@@ -1314,7 +1329,7 @@ function handleSuccession(state, cause = 'stářím') {
     if (siblings.length) {
       const names = siblings.map((c) => c.name).join(', ');
       const presumptive = state.heir.alive && siblings.some((x) => x.name === state.heir.name);
-      state.chronicle.push(makeChronicleEntry(state, `Sourozenci ${f(state.ruler) ? 'nové vládkyně' : 'nového vládce'} (${names}) zůstávají při rodu${presumptive ? `; ${state.heir.name} je ${f(state.heir) ? 'dědičkou' : 'dědicem'}, dokud se nenarodí dítě` : ''}.`));
+      state.chronicle.push(makeChronicleEntry(state, `Sourozenci ${isPeasant(state) ? (f(state.ruler) ? 'nové hospodyně' : 'nového hospodáře') : isNoble(state) ? (f(state.ruler) ? 'nové paní' : 'nového pána') : (f(state.ruler) ? 'nové vládkyně' : 'nového vládce')} (${names}) zůstávají při rodu${presumptive ? `; ${state.heir.name} je ${f(state.heir) ? 'dědičkou' : 'dědicem'}, dokud se nenarodí dítě` : ''}.`));
     }
     // the new ruler's first scene (events_family.js)
     if (state.pendingEvent) (state.eventQueue = state.eventQueue || []).unshift(state.pendingEvent);
@@ -1431,14 +1446,14 @@ export function advanceTurn(state) {
   const wounds = processInjuries(state);
   if (wounds.died) {
     successionOccurred = handleSuccession(state, 'na následky zranění');
-    deathCheckText = (state.pastRulers || []).at(-1)?.gender === 'female' ? ' Vládkyně podlehla zranění.' : ' Vládce podlehl zranění.';
+    deathCheckText = ` ${deathWord(state, (state.pastRulers || []).at(-1)?.gender)} podle${(state.pastRulers || []).at(-1)?.gender === 'female' ? 'hla' : 'hl'} zranění.`;
   }
 
   if (state.seasonIndex === 0 && !wounds.died) {
     ageCharacters(state);
     if (checkNaturalDeath(state)) {
       successionOccurred = handleSuccession(state);
-      deathCheckText = (state.pastRulers || []).at(-1)?.gender === 'female' ? ' Vládkyně zemřela přirozenou smrtí.' : ' Vládce zemřel přirozenou smrtí.';
+      deathCheckText = ` ${deathWord(state, (state.pastRulers || []).at(-1)?.gender)} zemřel${(state.pastRulers || []).at(-1)?.gender === 'female' ? 'a' : ''} přirozenou smrtí.`;
     }
   }
 
@@ -1447,6 +1462,8 @@ export function advanceTurn(state) {
   if (!isPeasant(state) && state.resources.food < 20) worldNews.unshift(state.resources.food < 8
     ? 'Sýpky jsou prázdné. Hlad bouří kraje a stabilita se drolí — je třeba sehnat obilí nebo poslat část vojska domů.'
     : 'Zásoby jídla docházejí. V krajích roste nevole.');
+  // the realm slides toward revolt: warn well before the crisis card
+  if (!isPeasant(state) && state.resources.stability < 28 && state.resources.stability >= 20) worldNews.push('V zemi se bouří nevole. Bez pevné ruky se kraje začnou vymykat z moci.');
   const ambitionNews = processAmbition(state);
   updateGoldenAgeStreak(state);
   const tradeNews = [...familyNews, ...wounds.news, ...worldNews, ...ambitionNews, ...built.news, ...farm.news, ...processTrade(state)];

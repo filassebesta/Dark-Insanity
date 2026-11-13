@@ -520,7 +520,7 @@ export const NOBLE_EVENTS = [
       return h && s.heir.alive && s.heir.age >= 12 && !s.flags.royal_match && !s.flags.heir_married ? h.id : null;
     },
     title: 'Sňatek mezi rody',
-    text: 'Rod {house.gen} nabízí sňatek: tvůj dědic {heir.name} a jejich nejmladší potomek. Věno by bylo štědré a pouto mezi rody pevné.',
+    text: 'Rod {house.gen} nabízí sňatek: tvůj {D:dědic|dědička} {heir.name} a jejich nejmladší potomek. Věno by bylo štědré a pouto mezi rody pevné.',
     choices: [
       {
         label: 'Přijmout sňatek',
@@ -646,7 +646,7 @@ export const NOBLE_EVENTS = [
     target: hostileHouse,
     requires: (s) => s.heir.alive,
     title: 'Pomluvy',
-    text: 'Po dvoře se šíří pomluvy, že rod {dynastyName} přišel k erbu podvodem a že dědic {heir.name} není vlastní krve. Stopa vede k rodu {house.gen}.',
+    text: 'Po dvoře se šíří pomluvy, že rod {dynastyName} přišel k erbu podvodem a že {D:dědic|dědička} {heir.name} není vlastní krve. Stopa vede k rodu {house.gen}.',
     choices: [
       {
         label: 'Odpovědět stejnou mincí',
@@ -682,7 +682,7 @@ export const NOBLE_EVENTS = [
     cooldown: 10,
     target: anyHouse,
     title: 'Dopis, který neměl být nalezen',
-    text: '{chancellor.Title} {chancellor.name} přinesl zachycený dopis rodu {house.gen}. Je v něm dost na to, aby někdo přišel o hlavu.',
+    text: '{chancellor.Title} {chancellor.name} {Q:přinesl|přinesla} zachycený dopis rodu {house.gen}. Je v něm dost na to, aby někdo přišel o hlavu.',
     choices: [
       {
         label: 'Dopis si nechat pro pozdější chvíli',
@@ -715,7 +715,7 @@ export const NOBLE_EVENTS = [
     requires: (s) => s.noble.secrets >= 1,
     target: anyHouse,
     title: 'Tajemství v truhle',
-    text: 'V železné truhle rodu leží listina, která by mohla zničit rod {house.name}. {spymaster.Title} {spymaster.name} se ptá, zda nenastal čas ji použít.',
+    text: 'V železné truhle rodu leží listina, která by mohla zničit rod {house.gen}. {spymaster.Title} {spymaster.name} se ptá, zda nenastal čas ji použít.',
     choices: [
       {
         label: 'Vydírat je o zlato',

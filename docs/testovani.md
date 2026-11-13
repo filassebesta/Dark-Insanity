@@ -71,3 +71,18 @@ méně opakování (Mez, Zvon jen jednou, Věrné srdce, Večer u ohně), vesnic
 „Kronika rodu“, „Vlastnosti hospodáře“, nováček v radě nemluví o letech služby, žádost o ruku sedí
 s textem, rozhovor o dítěti u ženy, groše ve správném tvaru, „Přízeň vrchnosti“, plaketa „Rychtář“.
 Zbývá: „Pobřežní Mark“ se v textech jmenuje různě; Brod × Brodná × Brodnice na mapě.
+
+## Test šlechtice a krále (3. kolo, ~900 karet)
+
+Jedna chyba JavaScriptu: rozhovor „Nabídnout poměr“ padal (popisek tématu byl funkce), takže milenky, levobočci
+a žárlivost byly nedosažitelné — opraveno a ověřeno v prohlížeči.
+Opraveno: „odešela“ → „odešla“ (všechna slovesa na -šel), syrový token v ozvěně, levoboček pro vládkyni
+(matka/otec) a jako dědic (syn/dcera, ne bratr/sestra), „vedlejší větev“ na plaketě, „dětí máme dost“
+bezdětnému páru, ~35 míst s napevno „vládce/vládcův/vládci“ u královny, dědička v textech o dědici
+(`{D:…}`), dítě na trůnu (bez manžela/manželky a bez námluv do 16 let), korunu se rozpadne (`{domain.nom}`),
+rádce s ženským rodem (`{Q:}`, `{V:}`, `{Y:}`), šlechtic je „Pán/Paní“ v souhrnech a na Dvoře, žebříček
+postavení podle pohlaví, Síň předků bez nabídky ambice a s „rok N“, vdovy od 24 let, varování před
+nepokoji (stabilita < 28) a dřívější krize, důsledky u cizích zemí se ukazují (vztah / síla), obrázek hejtmana,
+„snoubenci“, „Dvorní lékaři“, popisek náklonnosti a věrnosti, nápadnice bez „povahy rádce“.
+Zbývá: císařství nemá vlastní obsah (jen dvě karty), výnos roku se opakuje ročně (~17 % karet), nápadnice
+panovníka a muži pro vládkyni mají záložní portrét (dávka R6), vládkyně v poli řeší dvorské karty.

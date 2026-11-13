@@ -119,7 +119,7 @@ export const FARM_EVENTS = [
     scenarios: ['slechtic', 'panovnik'], forced: true, crisis: true,
     image: 'assets/events/vzpoura_v_provincii.jpg',
     title: 'Země se rozpadá',
-    text: 'Výběrčí se vracejí s prázdnými rukama, rychtáři neposlouchají a po cestách táhnou hladoví lidé. Rádci mluví jedním hlasem: ještě jedna zlá zima a {domain} se rozpadne. Teď je čas jednat — ne až zítra.',
+    text: 'Výběrčí se vracejí s prázdnými rukama, rychtáři neposlouchají a po cestách táhnou hladoví lidé. Rádci mluví jedním hlasem: ještě jedna zlá zima a {domain.nom} se rozpadne. Teď je čas jednat — ne až zítra.',
     choices: [
       {
         label: 'Nakoupit obilí v cizině a rozdat ho lidem',

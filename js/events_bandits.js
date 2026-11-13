@@ -55,7 +55,7 @@ export const BANDIT_EVENTS = [
   {
     id: 'z_hejtman',
     scenarios: REALM, cooldown: 24, minTurn: 8,
-    image: img('zastava_lesa'),
+    image: img('lapkove_ve_hvozdu'),
     target: ownProvince,
     title: 'Zbojnický hejtman',
     text: 'V kraji {province.name} řádí zbojnický hejtman. Vypaluje dvory, věší výběrčí a lidé o něm zpívají písně. Teď poslal vzkaz: ať si to s ním vrchnost rozdá sama, muž proti muži, na mýtině u starého dubu.',

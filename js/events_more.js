@@ -266,7 +266,7 @@ export const MORE_EVENTS = [
         label: 'Uspořádat hostinu, na jakou se nezapomíná',
         hintType: 'resource', hintKey: 'prestige',
         effects: { gold: -15, food: -6, prestige: 7, stability: 2 },
-        chronicle: 'Hostina trvala do rána. Pečení jeleni, víno z jihu a tanečnice — šlechta bude mluvit o vládcově štědrosti celý rok.',
+        chronicle: 'Hostina trvala do rána. Pečení jeleni, víno z jihu a tanečnice — šlechta bude mluvit o {R:vládcově|vládkynině} štědrosti celý rok.',
       },
       {
         label: 'Skromná večeře v úzkém kruhu',
@@ -308,7 +308,7 @@ export const MORE_EVENTS = [
         label: 'Napsat mu dopis, jaký si zaslouží',
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.45, traitKey: 'eloquence', traitScale: 0.05,
-        onSuccess: { effects: { army: 4, legitimacy: 2 }, traitGain: 'eloquence', chronicle: 'Vládcův dopis byl tak ostrý a zároveň tak zdvořilý, že vazal poslal jezdce i s omluvou.' },
+        onSuccess: { effects: { army: 4, legitimacy: 2 }, traitGain: 'eloquence', chronicle: '{R:Vládcův|Vládkynin} dopis byl tak ostrý a zároveň tak zdvořilý, že vazal poslal jezdce i s omluvou.' },
         onFailure: { effects: { prestige: -2 }, chronicle: 'Vazal dopis ani neotevřel.' },
       },
     ],
@@ -441,7 +441,7 @@ export const MORE_EVENTS = [
         hintType: 'trait', hintKey: 'strength',
         effects: { legitimacy: 3, stability: -2 },
         provinceEffects: { brodna: { loyalty: 12, unrest: -10 } },
-        chronicle: 'Hrabě přišel o polovinu panství. Sedláci z Brodné žehnají vládci, šlechta si šeptá o nebezpečném precedentu.',
+        chronicle: 'Hrabě přišel o polovinu panství. Sedláci z Brodné žehnají {R:vládci|vládkyni}, šlechta si šeptá o nebezpečném precedentu.',
       },
       {
         label: 'Věc vyšetřit',
@@ -594,7 +594,7 @@ export const MORE_EVENTS = [
         hintType: 'resource', hintKey: 'legitimacy',
         effects: { faith: -5, legitimacy: 2 },
         provinceEffects: { brodna: { unrest: 6 } },
-        chronicle: 'Bylinkářka byla propuštěna. Kněz kázal o vládci, který chrání ďáblovy služebníky.',
+        chronicle: 'Bylinkářka byla propuštěna. Kněz kázal o {R:vládci, který|vládkyni, která} chrání ďáblovy služebníky.',
       },
       {
         label: 'Vyšetřit, co se dobytku doopravdy stalo',
@@ -624,7 +624,7 @@ export const MORE_EVENTS = [
         hintType: 'trait', hintKey: 'intelligence',
         isRoll: true, baseChance: 0.5, traitKey: 'intelligence', traitScale: 0.04,
         onSuccess: { effects: { legitimacy: 3, faith: -2 }, traitGain: 'intelligence', chronicle: 'Socha „plakala“ díky prasklině ve střeše. Opat zrudl, rozumnější lid se zasmál.' },
-        onFailure: { effects: { faith: -5 }, chronicle: 'Prověřování urazilo opata i poutníky. O vládci se říká, že nevěří ani zázrakům.' },
+        onFailure: { effects: { faith: -5 }, chronicle: 'Prověřování urazilo opata i poutníky. O {R:vládci|vládkyni} se říká, že nevěří ani zázrakům.' },
       },
       {
         label: 'Pouť zakázat',
@@ -658,8 +658,8 @@ export const MORE_EVENTS = [
         label: 'Pozvat ho ke dvoru a promluvit si s ním',
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.45, traitKey: 'eloquence', traitScale: 0.05,
-        onSuccess: { effects: { legitimacy: 5, faith: 3 }, traitGain: 'eloquence', chronicle: 'Po rozhovoru s vládcem prorok své proroctví „přehodnotil“. Teď káže o rodu, který přežije věky.' },
-        onFailure: { effects: { legitimacy: -5 }, chronicle: 'Prorok vládci řekl do očí, co si myslí. Celý dvůr to slyšel.' },
+        onSuccess: { effects: { legitimacy: 5, faith: 3 }, traitGain: 'eloquence', chronicle: 'Po rozhovoru s {R:vládcem|vládkyní} prorok své proroctví „přehodnotil“. Teď káže o rodu, který přežije věky.' },
+        onFailure: { effects: { legitimacy: -5 }, chronicle: 'Prorok {R:vládci|vládkyni} řekl do očí, co si myslí. Celý dvůr to slyšel.' },
       },
     ],
   },
@@ -705,7 +705,7 @@ export const MORE_EVENTS = [
         hintType: 'resource', hintKey: 'gold',
         effects: { gold: -25, prestige: 5 },
         provinceEffects: { brodna: { wealth: 10 }, capital: { wealth: 5 } },
-        chronicle: 'Kamenný most nese vládcovo jméno. Vozy s obilím teď jezdí i za povodní.',
+        chronicle: 'Kamenný most nese {R:vládcovo|vládkynino} jméno. Vozy s obilím teď jezdí i za povodní.',
       },
       {
         label: 'Postavit levnější dřevěný most',
@@ -815,7 +815,7 @@ export const MORE_EVENTS = [
     id: 'katedrala',
     cooldown: 40,
     title: 'Katedrála',
-    text: 'Biskup předkládá plány katedrály, jaká v celé zemi nemá obdoby. Stavba by trvala desítky let — a nesla by vládcovo jméno navěky.',
+    text: 'Biskup předkládá plány katedrály, jaká v celé zemi nemá obdoby. Stavba by trvala desítky let — a nesla by {R:vládcovo|vládkynino} jméno navěky.',
     choices: [
       {
         label: 'Financovat stavbu',
@@ -931,7 +931,7 @@ export const MORE_EVENTS = [
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.5, traitKey: 'eloquence', traitScale: 0.05,
         onSuccess: { effects: { legitimacy: 6, prestige: 4 }, traitGain: 'eloquence', chronicle: 'Když {R:vládce|vládkyně} {R:domluvil|domluvila}, slunce se vrátilo. Lid to bude vyprávět jako zázrak.' },
-        onFailure: { effects: { legitimacy: -4 }, chronicle: 'Vládcova slova zanikla v křiku davu. Slunce se vrátilo samo.' },
+        onFailure: { effects: { legitimacy: -4 }, chronicle: '{R:Vládcova|Vládkynina} slova zanikla v křiku davu. Slunce se vrátilo samo.' },
       },
       {
         label: 'Nařídit mše ve všech kostelech',
@@ -971,7 +971,7 @@ export const MORE_EVENTS = [
         effects: { legitimacy: 4, prestige: 3 },
         provinceEffects: { 'sokoli-hvozd': { unrest: -10 } },
         hiddenEffects: { setFlag: 'march_alliance' },
-        chronicle: 'Markrabího syn odjel domů s darem. V Marcích se o vládci mluví s úctou.',
+        chronicle: 'Markrabího syn odjel domů s darem. V Marcích se o {R:vládci|vládkyni} mluví s úctou.',
       },
       {
         label: 'Držet ho jako rukojmí',
@@ -1123,7 +1123,7 @@ export const MORE_EVENTS = [
         label: 'Slíbit žold po sklizni',
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.5, traitKey: 'eloquence', traitScale: 0.05,
-        onSuccess: { effects: { stability: 1 }, traitGain: 'eloquence', chronicle: 'Vládcovo slovo vojákům stačilo. Zatím.' },
+        onSuccess: { effects: { stability: 1 }, traitGain: 'eloquence', chronicle: '{R:Vládcovo|Vládkynino} slovo vojákům stačilo. Zatím.' },
         onFailure: { effects: { army: -8, stability: -4 }, chronicle: 'Vojáci slibům nevěřili. Třetina jich odešla sloužit jiným pánům.' },
       },
       {
@@ -1392,7 +1392,7 @@ export const MORE_EVENTS = [
         hintType: 'trait', hintKey: 'strength',
         effects: { gold: 4 },
         courtEffects: { chancellor: { loyalty: -15 } },
-        chronicle: 'Kancléřství muselo ztrátu nahradit ze svého. Kancléř to vládci nezapomene.',
+        chronicle: 'Kancléřství muselo ztrátu nahradit ze svého. Kancléř to {R:vládci|vládkyni} nezapomene.',
       },
       {
         label: 'Najmout nového pokladníka',
@@ -1428,7 +1428,7 @@ export const MORE_EVENTS = [
         hintType: 'resource', hintKey: 'stability',
         effects: { gold: -8, stability: 5, legitimacy: 3 },
         provinceEffects: { '*': { unrest: -6 } },
-        chronicle: 'Na výročí vlády se otevřely brány vězení a dlužníci si oddechli. Lid žehná vládci.',
+        chronicle: 'Na výročí vlády se otevřely brány vězení a dlužníci si oddechli. Lid žehná {R:vládci|vládkyni}.',
       },
       {
         label: 'Tichá mše za předky',
@@ -1462,7 +1462,7 @@ export const MORE_EVENTS = [
         label: 'Zakázat',
         hintType: 'resource', hintKey: 'faith',
         effects: { faith: 4, prestige: -2 },
-        chronicle: 'Učenci odjeli k sousedům. Kněží děkují vládci za ochranu pravé víry.',
+        chronicle: 'Učenci odjeli k sousedům. Kněží děkují {R:vládci|vládkyni} za ochranu pravé víry.',
       },
     ],
   },
@@ -1487,7 +1487,7 @@ export const MORE_EVENTS = [
         hintType: 'trait', hintKey: 'patience',
         effects: { stability: 1 },
         courtEffects: { heir: { loyalty: 10 } },
-        chronicle: 'Dědic nabídku odmítl a byl za to vládci vděčný. Poslové odjeli bez odpovědi, jakou chtěli.',
+        chronicle: 'Dědic nabídku odmítl a byl za to {R:vládci|vládkyni} vděčný. Poslové odjeli bez odpovědi, jakou chtěli.',
       },
       {
         label: 'Odmítnout, rod potřebuje spojence blíž',
@@ -1582,7 +1582,7 @@ export const MORE_EVENTS = [
         label: 'Říct mu pravdu do očí',
         hintType: 'trait', hintKey: 'strength',
         effects: { prestige: 2, faith: -2 },
-        chronicle: 'Rytíř zemřel zklamaný, ale s respektem k vládci, který mu nelhal.',
+        chronicle: 'Rytíř zemřel zklamaný, ale s respektem k {R:vládci, který|vládkyni, která} mu nelhal{R:|a}.',
       },
     ],
   },
