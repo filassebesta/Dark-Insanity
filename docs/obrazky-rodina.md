@@ -10,7 +10,7 @@ Portréty nápadnic a nápadníků (po svatbě se stanou tváří manžela/ky), 
 | ✅ | R2 | Prolog a rodina | 12 | první karty hry, narození, dohazovač, schovanec, podzimní práce |
 | ✅ | R3 | Boj o trůn, kapitoly a zlatý věk | 9 | velké zlomy kariéry |
 | ✅ | R4 | Svobodník | 10 | události svobodného sedláka |
-| ◐ | R5 | Významný šlechtic | 11 z 12 (chybí `v_ozvena_vyslanec`) | události velmože |
+| ✅ | R5 | Významný šlechtic | 12 | události velmože |
 | ⏳ | R6 | Nápadnice a nápadníci šlechtice a krále | 16 | námluvy ve vyšších stupních |
 | ✅ | R7 | Další ženy na výběr (všechny stupně) | 7 | galerie žen v listu postavy |
 
@@ -312,13 +312,4 @@ suitor_slechtic_4_female.jpg — A young widow of a minor knight, about 26: dark
 suitor_slechtic_5_female.jpg — A castle burgrave's daughter, about 20: practical riding cloak over a green gown, dark hair tied back, a sharp confident gaze.
 suitor_panovnik_4_female.jpg — A witty lady of the royal court, about 24: rich wine-red gown with fur trim, elaborate braided hair with pearls, an amused, slightly dangerous smile.
 suitor_panovnik_5_female.jpg — An archbishop's niece, about 21: modest grey-blue silk gown, a delicate gold cross, light hair under a fine veil, demure look with a curious spark.
-```
-
-### R5 — zbývá jeden obrázek
-
-Dodáno 11 z 12 (Gemini zase poprehazoval názvy, přejmenováno podle obsahu; `v_snatkovy_trh` přišel
-jako kopie jednání rady, použit je správný obrázek se zásnubními portréty). Chybí:
-
-```
-v_ozvena_vyslanec.jpg — Grey sea rocks at dusk, three damaged ships drifting in the waves, foreign galleys with purple sails sailing away on the horizon, seen from a cliff. Square 1:1, muted historical oil painting with visible loose brushwork, earthy palette of ochre, rust, olive green and dusty slate blue, 14th-century Central European setting, calm serious mood. The painted scene continues to the bottom edge. No text, letters, watermark or signature.
 ```
