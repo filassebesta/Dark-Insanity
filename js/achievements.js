@@ -29,6 +29,8 @@ export const ACHIEVEMENTS = [
   { key: 'korunovace', group: 'Cíle', name: 'Z tvrze na trůn', text: 'Ze šlechtického stavu se dostat na královský trůn.', test: (s) => reached(s, 'crowned') },
   { key: 'erb', group: 'Cíle', name: 'Erb a tvrz', text: 'Ze sedláka se vypracovat ke šlechtickému erbu.', test: (s) => reached(s, 'ennobled') },
   { key: 'od_pluhu', group: 'Cíle', name: 'Od pluhu ke koruně', text: 'V jedné kronice dojít od sedláka až na královský trůn.', test: (s) => s.origin === 'sedlak' && s.scenario === 'panovnik' },
+  { key: 'cizi_koruna', group: 'Cíle', name: 'Cizí koruna', text: 'Dobýt korunu sousední země.', test: (s) => stat(s, 'crownsTaken') >= 1 },
+  { key: 'tri_koruny', group: 'Cíle', name: 'Tři koruny', text: 'Stát se císařem nebo císařovnou.', test: (s) => (s.ruler && s.ruler.statusTier >= 6) || !!(s.milestones && s.milestones.empire !== undefined) },
   // building
   { key: 'stavitel', group: 'Stavby', name: 'Stavitel', text: 'Dokončit v jedné kronice deset staveb.', test: (s) => stat(s, 'built') >= 10 },
   { key: 'kralovske_mesto', group: 'Stavby', name: 'Královské město', text: 'Rozšířit sídlo na královské město.', test: (s) => towns(s).some(([id, t]) => id !== 'grunt' && t.level >= 5) },

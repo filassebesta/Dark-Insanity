@@ -167,7 +167,7 @@ export const PEASANT_EVENTS = [
     scenario: S, cooldown: 30, minTurn: 12,
     image: img('vzpoura_v_provincii'),
     title: 'Sedláci se bouří',
-    text: 'V okolních vsích se sedláci bouří proti robotě. Vůdce povstání čeká v krčmě u {spymaster.name} a hledá muže, kteří se nebojí. Kdo se přidá, může vsím vybojovat konec roboty. Nebo provaz.',
+    text: 'V okolních vsích se sedláci bouří proti robotě. Vůdce povstání čeká v krčmě a {spymaster.title} {spymaster.name} ho kryje. Hledá muže, kteří se nebojí. Kdo se přidá, může vsím vybojovat konec roboty. Nebo provaz.',
     choices: [
       {
         label: 'Přidat se k povstání',
@@ -1174,7 +1174,7 @@ export const PEASANT_QUIET_EVENT = {
   scenario: S,
   image: img('n_klidne_obdobi'),
   title: 'Všední dny',
-  text: 'Nic zvláštního se neděje. Dráb nechodí, nebe je klidné a práce na gruntu je pořád dost. Čemu se {ruler.name} letos věnuje?',
+  text: 'Nic zvláštního se neděje. Dráb nechodí, nebe je klidné a práce na gruntu je pořád dost. Čemu se letos bude {ruler.name} věnovat?',
   choices: [
     {
       label: 'Pracovat na poli od tmy do tmy',

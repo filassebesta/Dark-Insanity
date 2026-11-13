@@ -468,7 +468,7 @@ export const STAGE_EVENTS = [
 
   {
     id: 'v_rytiri_u_brany',
-    scenario: SLE, cooldown: 16, minTurn: 2,
+    scenario: SLE, oneTime: true, minTurn: 2,
     requires: (s) => greatLord(s) && !!(s.king && s.king.alive),
     image: img('potulny_rytir'),
     title: 'Rytíři u brány',
@@ -590,7 +590,7 @@ export const STAGE_EVENTS = [
 
   {
     id: 'v_zkouska_vernosti',
-    scenario: SLE, cooldown: 24, minTurn: 4,
+    scenario: SLE, oneTime: true, minTurn: 4,
     requires: (s) => greatLord(s) && kingAtHand(s),
     target: closestHouse,
     image: img('n_obvineni_u_dvora'),

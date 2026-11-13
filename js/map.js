@@ -906,10 +906,10 @@ function showWarOverview() {
       <div class="trade-goods">${Object.entries(SIZES).map(([k, n]) => `<button class="trade-chip${k === warForm.size ? ' on' : ''}" data-war-size="${k}">${SIZE_LABEL[k]} <small>${n}</small></button>`).join('')}</div>
       <h4 class="map-sub">Kdo povede</h4>
       <div class="trade-goods">
-        <button class="trade-chip${warForm.leader === 'marshal' ? ' on' : ''}" data-war-leader="marshal">${esc(state.marshal.name)} <small>maršál</small></button>
+        <button class="trade-chip${warForm.leader === 'marshal' ? ' on' : ''}" data-war-leader="marshal">${esc(state.marshal.name)} <small>${esc(leaderLabel('marshal', state))}</small></button>
         <button class="trade-chip${warForm.leader === 'ruler' ? ' on' : ''}" data-war-leader="ruler">${esc(state.ruler.name)} <small>osobně</small></button>
       </div>
-      <p class="map-desc war-note">${warForm.leader === 'ruler' ? 'Vládce v čele zvedá morálku i šance, ale může být zraněn a doma bude chybět.' : 'Maršál vede bez rizika pro vládce, muži ale bojují s menším zápalem.'}</p>
+      <p class="map-desc war-note">${warForm.leader === 'ruler' ? (state.ruler.gender === 'female' ? 'Vládkyně v čele zvedá morálku i šance, ale může být zraněna a doma bude chybět.' : 'Vládce v čele zvedá morálku i šance, ale může být zraněn a doma bude chybět.') : `${state.marshal.name} vede bez rizika pro ${state.ruler.gender === 'female' ? 'vládkyni' : 'vládce'}, muži ale bojují s menším zápalem.`}</p>
       <div class="trade-estimate">
         <span>Síly: <b class="${tone}">${odds}</b> · doma zůstane ${Math.max(0, state.resources.army - men)} vojska</span>
         <span>Zásoby: ${Math.ceil(men / 8)} jídla za období · v sýpkách ${state.resources.food}</span>
@@ -930,7 +930,7 @@ function showWarStatus() {
     <span class="panel-overline">Vojsko v poli</span>
     <h3 class="panel-title">${esc(t.name)}</h3>
     <span class="map-verdict ${marching ? 'warn' : 'good'}">${marching ? `Na pochodu · na místě ${etaText(w.arrive)}` : `V poli ${w.seasons} ${w.seasons === 1 ? 'období' : 'období'}`}</span>
-    <p class="map-desc">Velí ${esc(leader)} (${leaderLabel(w.leader)}). ${esc(t.text)}</p>
+    <p class="map-desc">Velí ${esc(leader)} (${leaderLabel(w.leader, state)}). ${esc(t.text)}</p>
     ${statRow('Postup', w.progress, 'wealth')}
     ${statRow('Morálka', w.morale, 'loyalty')}
     <div class="trade-estimate">

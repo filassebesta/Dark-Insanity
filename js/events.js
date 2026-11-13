@@ -52,20 +52,20 @@ const BASE_EVENTS = [
         hintType: 'trait', hintKey: 'intelligence',
         effects: { legitimacy: 3, stability: 2 },
         traitGain: 'intelligence',
-        chronicle: 'Vládce rozsoudil spor podle starých pozemkových zápisů. Oba sedláci odešli spokojeni se spravedlností, i když ne s výsledkem.',
+        chronicle: '{R:Vládce|Vládkyně} {R:rozsoudil|rozsoudila} spor podle starých pozemkových zápisů. Oba sedláci odešli spokojeni se spravedlností, i když ne s výsledkem.',
       },
       {
         label: 'Rozhodnout losem, ať se nehádají',
         hintType: 'resource', hintKey: 'stability',
         effects: { stability: -2, legitimacy: -1 },
-        chronicle: 'Vládce nechal rozhodnout los. Spravedlnosti bylo učiněno zadost jen náhodou a dvůr si o tom leccos pošeptal.',
+        chronicle: '{R:Vládce|Vládkyně} {R:nechal|nechala} rozhodnout los. Spravedlnosti bylo učiněno zadost jen náhodou a dvůr si o tom leccos pošeptal.',
       },
       {
         label: 'Potrestat oba za obtěžování dvora',
         hintType: 'trait', hintKey: 'strength',
         effects: { stability: 1, legitimacy: -3 },
         hiddenEffects: { setFlag: 'harsh_ruler' },
-        chronicle: 'Vládce dal oba sedláky zbičovat za to, že otravují dvůr maličkostmi. Spor je u konce, ale šeptem se o tom mluví ještě dlouho.',
+        chronicle: '{R:Vládce|Vládkyně} {R:dal|dala} oba sedláky zbičovat za to, že otravují dvůr maličkostmi. Spor je u konce, ale šeptem se o tom mluví ještě dlouho.',
       },
     ],
   },
@@ -105,8 +105,8 @@ const BASE_EVENTS = [
         combat: 'rvaci', // fought out in rounds (combat.js)
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.45, traitKey: 'strength', traitScale: 0.05,
-        onSuccess: { effects: { prestige: 8, army: 2 }, traitGain: 'strength', chronicle: 'Vládce sám srazil rváče k zemi. Zpráva o tom se šíří městem a vojáci si ho začínají víc vážit.' },
-        onFailure: { effects: { prestige: -6, stability: -2 }, injury: 'pohmozdeni', chronicle: 'Rváči kladli tvrdší odpor, než se čekalo. Vládce odchází pohmožděný a ne zrovna důstojně.' },
+        onSuccess: { effects: { prestige: 8, army: 2 }, traitGain: 'strength', chronicle: '{R:Vládce|Vládkyně} {R:sám srazil|sama srazila} rváče k zemi. Zpráva o tom se šíří městem a vojáci si {R:ho|ji} začínají víc vážit.' },
+        onFailure: { effects: { prestige: -6, stability: -2 }, injury: 'pohmozdeni', chronicle: 'Rváči kladli tvrdší odpor, než se čekalo. {R:Vládce|Vládkyně} odchází {R:pohmožděný|pohmožděná} a ne zrovna důstojně.' },
       },
       {
         label: 'Nechat to na stráže',
@@ -130,14 +130,14 @@ const BASE_EVENTS = [
     weight: 3,
     title: 'Šeptání o tvrdé ruce',
     requires: (state) => state.flags.harsh_ruler && !state.flags.harsh_ruler_resolved,
-    text: 'Mezi poddanými se šíří pověsti o tom, jak nemilosrdně jsi potrestal oba sedláky ze sporu o mez. Někteří tě za to chválí jako spravedlivého, jiní se bojí přijít se stížností.',
+    text: 'Mezi poddanými se šíří pověsti o tom, jak nemilosrdně umíš trestat. Někteří tě za to chválí jako {R:spravedlivého vládce|spravedlivou vládkyni}, jiní se bojí přijít se stížností.',
     choices: [
       {
         label: 'Nechat pověsti být',
         hintType: 'resource', hintKey: 'legitimacy',
         effects: { legitimacy: 1 },
         hiddenEffects: { setFlag: 'harsh_ruler_resolved' },
-        chronicle: 'Vládce pověsti nechal být. Strach z tvrdé ruky bude ještě dlouho držet klid na dvoře.',
+        chronicle: '{R:Vládce|Vládkyně} {R:nechal|nechala} pověsti být. Strach z tvrdé ruky bude ještě dlouho držet klid na dvoře.',
       },
       {
         label: 'Veřejně to vysvětlit lidu',
@@ -198,7 +198,7 @@ const BASE_EVENTS = [
         hintType: 'resource', hintKey: 'food',
         effects: {},
         hiddenEffects: { setFlag: 'ignored_famine_warning' },
-        chronicle: 'Vládce kancléřovo varování odbyl mávnutím ruky. Uvidí se, zda mělo být bráno vážněji.',
+        chronicle: '{R:Vládce|Vládkyně} {R:odbyl|odbyla} varování mávnutím ruky. Uvidí se, zda mělo být bráno vážněji.',
       },
     ],
   },
@@ -226,7 +226,7 @@ const BASE_EVENTS = [
         hintType: 'resource', hintKey: 'stability',
         effects: {},
         hiddenEffects: { setFlag: 'ignored_plot_warning' },
-        chronicle: 'Vládce zprávu odbyl jako klevety dvořanů. Špehmistr odchází s pochybnostmi.',
+        chronicle: '{R:Vládce|Vládkyně} {R:odbyl|odbyla} zprávu jako klevety dvořanů. Špehmistr odchází s pochybnostmi.',
       },
     ],
   },
@@ -252,7 +252,7 @@ const BASE_EVENTS = [
         label: 'Odmítnout, šetřit na horší časy',
         hintType: 'resource', hintKey: 'gold',
         effects: { gold: 5, prestige: -3 },
-        chronicle: 'Vládce přehlídku odmítl. Pokladna je bohatší, maršál zklamaný.',
+        chronicle: '{R:Vládce|Vládkyně} {R:odmítl|odmítla} přehlídku. Pokladna je bohatší, maršál zklamaný.',
       },
     ],
   },
@@ -267,14 +267,14 @@ const BASE_EVENTS = [
         label: 'Vyslechnout a zvážit radu',
         hintType: 'trait', hintKey: 'patience',
         isRoll: true, baseChance: 0.55, traitKey: 'patience', traitScale: 0.03,
-        onSuccess: { effects: { stability: 3, legitimacy: 2 }, traitGain: 'patience', chronicle: 'Rada se ukázala moudřejší, než vládce čekal. Rozhodnutí podle ní přineslo klid na dvoře.' },
+        onSuccess: { effects: { stability: 3, legitimacy: 2 }, traitGain: 'patience', chronicle: 'Rada se ukázala moudřejší, než {R:vládce|vládkyně} {R:čekal|čekala}. Rozhodnutí podle ní přineslo klid na dvoře.' },
         onFailure: { effects: {}, chronicle: 'Rada zněla dobře, ale k ničemu konkrétnímu nevedla.' },
       },
       {
         label: 'Zdvořile odmítnout',
         hintType: 'resource', hintKey: 'legitimacy',
         effects: { legitimacy: 1 },
-        chronicle: 'Vládce poděkoval a rozhodl se spolehnout na vlastní úsudek.',
+        chronicle: '{R:Vládce|Vládkyně} {R:poděkoval|poděkovala} a {R:rozhodl|rozhodla} se spolehnout na vlastní úsudek.',
       },
     ],
   },
@@ -292,7 +292,7 @@ const BASE_EVENTS = [
         label: 'Vytáhnout s vojskem a pronásledovat je',
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.4, traitKey: 'strength', traitScale: 0.04, resourceKey: 'army', resourceScale: 0.4,
-        onSuccess: { effects: { army: -4, prestige: 8 }, provinceEffects: { 'sokoli-hvozd': { unrest: -10, loyalty: 8 } }, traitGain: 'strength', chronicle: 'Královské vojsko dostihlo nájezdníky u brodu a rozprášilo je. Hvozd vítá vládce jako ochránce.' },
+        onSuccess: { effects: { army: -4, prestige: 8 }, provinceEffects: { 'sokoli-hvozd': { unrest: -10, loyalty: 8 } }, traitGain: 'strength', chronicle: 'Královské vojsko dostihlo nájezdníky u brodu a rozprášilo je. Hvozd vítá {R:vládce jako ochránce|vládkyni jako ochránkyni}.' },
         onFailure: { effects: { army: -10, prestige: -5 }, provinceEffects: { 'sokoli-hvozd': { unrest: 12, loyalty: -8 } }, chronicle: 'Nájezdníci vlákali vojsko do lesní zálohy. Mnoho mužů se nevrátilo a hvozd hoří dál.' },
       },
       {
@@ -306,7 +306,7 @@ const BASE_EVENTS = [
         label: 'Zaplatit markrabímu, ať své lidi zkrotí',
         hintType: 'resource', hintKey: 'prestige',
         effects: { gold: -20, prestige: -6 },
-        chronicle: 'Vládce poslal markrabímu měšec stříbra. Nájezdy ustaly — a v Marcích se smějí, jak snadno se koruna dá koupit.',
+        chronicle: '{R:Vládce|Vládkyně} {R:poslal|poslala} do Marek měšec stříbra. Nájezdy ustaly — a v Marcích se smějí, jak snadno se koruna dá koupit.',
       },
     ],
   },
@@ -331,7 +331,7 @@ const BASE_EVENTS = [
         label: 'Vyjednat mír dřív, než teče krev',
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.4, traitKey: 'eloquence', traitScale: 0.05,
-        onSuccess: { effects: { gold: -15, legitimacy: 3 }, traitGain: 'eloquence', chronicle: 'Vládce přesvědčil markrabího, že válka by stála víc, než přinese. Mír byl zpečetěn za mírné odškodné.' },
+        onSuccess: { effects: { gold: -15, legitimacy: 3 }, traitGain: 'eloquence', chronicle: '{R:Vládce|Vládkyně} {R:přesvědčil|přesvědčila} markrabata, že válka by stála víc, než přinese. Mír byl zpečetěn za mírné odškodné.' },
         onFailure: { effects: { gold: -30, prestige: -10 }, provinceEffects: { 'sokoli-hvozd': { loyalty: -15, unrest: 15 } }, chronicle: 'Markrabí přijal výkupné a přesto vyplenil půl hvozdu. Lid tam proklíná slabou korunu.' },
       },
       {
@@ -354,7 +354,7 @@ const BASE_EVENTS = [
       return rebels.length ? rebels[0].id : null;
     },
     title: 'Vzpoura',
-    text: 'Provincie {province.name} povstala. Lid vyhnal královské výběrčí, na návsích hoří ohně a vůdci povstání žádají, aby k nim vládce přijel osobně.',
+    text: 'Provincie {province.name} povstala. Lid vyhnal královské výběrčí, na návsích hoří ohně a vůdci povstání žádají, aby k nim {R:vládce|vládkyně} přijel osobně.',
     choices: [
       {
         label: 'Potlačit vzpouru vojskem',
@@ -367,8 +367,8 @@ const BASE_EVENTS = [
         label: 'Vyjet za povstalci a vyjednávat',
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.45, traitKey: 'eloquence', traitScale: 0.05,
-        onSuccess: { effects: { gold: -10, legitimacy: 4 }, provinceEffects: { target: { unrest: -30, loyalty: 10 } }, traitGain: 'eloquence', chronicle: 'Vládce předstoupil před povstalce bez brnění. Vyslechl je a slíbil nápravu. Ohně na návsích zhasly.' },
-        onFailure: { effects: { prestige: -8, legitimacy: -4 }, provinceEffects: { target: { unrest: 10 } }, chronicle: 'Vyjednávání se zvrtlo v potupu. Vládce musel z provincie {province.name} ujet pod ochranou stráží.' },
+        onSuccess: { effects: { gold: -10, legitimacy: 4 }, provinceEffects: { target: { unrest: -30, loyalty: 10 } }, traitGain: 'eloquence', chronicle: '{R:Vládce|Vládkyně} {R:předstoupil|předstoupila} před povstalce bez brnění. {R:Vyslechl|Vyslechla} je a {R:slíbil|slíbila} nápravu. Ohně na návsích zhasly.' },
+        onFailure: { effects: { prestige: -8, legitimacy: -4 }, provinceEffects: { target: { unrest: 10 } }, chronicle: 'Vyjednávání se zvrtlo v potupu. {R:Vládce|Vládkyně} {R:musel|musela} z provincie {province.name} ujet pod ochranou stráží.' },
       },
       {
         label: 'Ustoupit: snížit daně a dát amnestii',
@@ -428,7 +428,7 @@ const BASE_EVENTS = [
         effects: { food: -15, stability: 4, legitimacy: 4 },
         hiddenEffects: { clearFlag: 'ignored_famine_warning' },
         provinceEffects: { brodna: { loyalty: 10, unrest: -10 } },
-        chronicle: 'Vládce otevřel královské sýpky. Dvůr bude jíst skromněji, ale lid to nezapomene.',
+        chronicle: '{R:Vládce|Vládkyně} {R:otevřel|otevřela} královské sýpky. Dvůr bude jíst skromněji, ale lid to nezapomene.',
       },
       {
         label: 'Nakoupit obilí za každou cenu',
@@ -463,8 +463,8 @@ const BASE_EVENTS = [
         combat: 'vrah', // fought out in rounds (combat.js)
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.45, traitKey: 'strength', traitScale: 0.05,
-        onSuccess: { effects: { prestige: 10, stability: 3 }, hiddenEffects: { clearFlag: 'ignored_plot_warning', setFlag: 'plot_uncovered' }, traitGain: 'strength', chronicle: 'Vládce vraha přemohl a ten před smrtí vyzradil jména svých pánů. Spiknutí je odhaleno.' },
-        onFailure: { effects: { stability: -8, legitimacy: -6, prestige: -4 }, hiddenEffects: { clearFlag: 'ignored_plot_warning' }, injury: 'rana', chronicle: 'Vládce přežil jen díky stráži, která přiběhla na poslední chvíli. Rána se hojí pomalu a spiklenci unikli.' },
+        onSuccess: { effects: { prestige: 10, stability: 3 }, hiddenEffects: { clearFlag: 'ignored_plot_warning', setFlag: 'plot_uncovered' }, traitGain: 'strength', chronicle: '{R:Vládce|Vládkyně} {R:vraha přemohl|vraha přemohla} a ten před smrtí vyzradil jména svých pánů. Spiknutí je odhaleno.' },
+        onFailure: { effects: { stability: -8, legitimacy: -6, prestige: -4 }, hiddenEffects: { clearFlag: 'ignored_plot_warning' }, injury: 'rana', chronicle: '{R:Vládce|Vládkyně} {R:přežil|přežila} jen díky stráži, která přiběhla na poslední chvíli. Rána se hojí pomalu a spiklenci unikli.' },
       },
       {
         label: 'Křičet o pomoc a utéct chodbou',
@@ -472,7 +472,7 @@ const BASE_EVENTS = [
         effects: { prestige: -5, stability: -3 },
         hiddenEffects: { clearFlag: 'ignored_plot_warning' },
         courtEffects: { spymaster: { loyalty: -10 } },
-        chronicle: 'Vládce unikl tajnou chodbou. Vrah zmizel a dvůr si šeptá, že koruna utíká před vlastním stínem.',
+        chronicle: '{R:Vládce|Vládkyně} {R:unikl|unikla} tajnou chodbou. Vrah zmizel a dvůr si šeptá, že koruna utíká před vlastním stínem.',
       },
     ],
   },
@@ -483,7 +483,7 @@ const BASE_EVENTS = [
     oneTime: true,
     requires: (state) => state.flags.plot_uncovered,
     title: 'Soud se spiklenci',
-    text: 'Spiklenci stojí v okovech před trůnem. Jsou mezi nimi i dva páni z mocných rodů. Šlechta napjatě čeká, jak vládce rozhodne.',
+    text: 'Spiklenci stojí v okovech před trůnem. Jsou mezi nimi i dva páni z mocných rodů. Šlechta napjatě čeká, jak {R:vládce|vládkyně} rozhodne.',
     choices: [
       {
         label: 'Popravit všechny na náměstí',
@@ -566,7 +566,7 @@ const BASE_EVENTS = [
         label: 'Nechat přístav otevřený, obchod musí běžet',
         hintType: 'resource', hintKey: 'gold',
         isRoll: true, baseChance: 0.4,
-        onSuccess: { effects: { gold: 10 }, chronicle: 'Horečka sama odezněla a lodě kotvily dál. Vládce měl štěstí.' },
+        onSuccess: { effects: { gold: 10 }, chronicle: 'Horečka sama odezněla a lodě kotvily dál. {R:Vládce|Vládkyně} {R:měl|měla} štěstí.' },
         onFailure: { effects: { gold: -5, food: -10, stability: -8 }, provinceEffects: { 'pobrezni-mark': { unrest: 20, loyalty: -10 }, capital: { unrest: 8 } }, chronicle: 'Mor se rozlezl po celém pobřeží a dorazil až do hlavního města. Zvony umíráčku nezmlkly celý měsíc.' },
       },
     ],
@@ -589,7 +589,7 @@ const BASE_EVENTS = [
         label: 'Smlouvat o lepší podmínky',
         hintType: 'trait', hintKey: 'intelligence',
         isRoll: true, baseChance: 0.45, traitKey: 'intelligence', traitScale: 0.05,
-        onSuccess: { effects: { gold: 25 }, provinceEffects: { 'pobrezni-mark': { wealth: 8 } }, traitGain: 'intelligence', chronicle: 'Vládce vyjednal poloviční clo a k tomu dar pro pokladnu. Kupci odcházejí s úsměvem i tak.' },
+        onSuccess: { effects: { gold: 25 }, provinceEffects: { 'pobrezni-mark': { wealth: 8 } }, traitGain: 'intelligence', chronicle: '{R:Vládce|Vládkyně} {R:vyjednal|vyjednala} poloviční clo a k tomu dar pro pokladnu. Kupci odcházejí s úsměvem i tak.' },
         onFailure: { effects: { prestige: -3 }, chronicle: 'Kupci se urazili a odpluli do sousední země. Přístav přišel o dobrý obchod.' },
       },
       {
@@ -597,7 +597,7 @@ const BASE_EVENTS = [
         hintType: 'resource', hintKey: 'prestige',
         effects: { prestige: 2, faith: 2 },
         provinceEffects: { 'pobrezni-mark': { loyalty: -5 } },
-        chronicle: 'Vládce kupce odmítl. Kněží chválí, přístavní měšťané počítají ušlé zisky.',
+        chronicle: '{R:Vládce|Vládkyně} {R:kupce odmítl|kupce odmítla}. Kněží chválí, přístavní měšťané počítají ušlé zisky.',
       },
     ],
   },
@@ -752,7 +752,7 @@ const BASE_EVENTS = [
         hintType: 'resource', hintKey: 'prestige',
         effects: { prestige: -3 },
         replaceCourt: { loyalty: 78, minAge: 26, maxAge: 36 },
-        chronicle: 'Vládce povýšil mladého muže z nižšího rodu. Šlechta se mračí, ale nový rádce by za korunu dal život.',
+        chronicle: '{R:Vládce|Vládkyně} {R:povýšil|povýšila} mladého muže z nižšího rodu. Šlechta se mračí, ale nový rádce by za korunu dal život.',
       },
     ],
   },
@@ -776,7 +776,7 @@ const BASE_EVENTS = [
         label: 'Promluvit s ním mezi čtyřma očima',
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.45, traitKey: 'eloquence', traitScale: 0.05,
-        onSuccess: { effects: { stability: 2 }, courtEffects: { target: { loyalty: 30 } }, traitGain: 'eloquence', chronicle: 'Rozhovor trval do noci. Rádce odcházel s pocitem, že ho vládce konečně slyší.' },
+        onSuccess: { effects: { stability: 2 }, courtEffects: { target: { loyalty: 30 } }, traitGain: 'eloquence', chronicle: 'Rozhovor trval do noci. Rádce odcházel s pocitem, že ho {R:vládce|vládkyně} konečně slyší.' },
         onFailure: { effects: { stability: -3 }, courtEffects: { target: { loyalty: -10 } }, hiddenEffects: { setFlag: 'ignored_plot_warning' }, chronicle: 'Rozhovor skončil hádkou. Rádce odešel bledý vzteky a jeho přátelé začali být podezřele tiší.' },
       },
       {
@@ -807,7 +807,7 @@ const BASE_EVENTS = [
         label: 'Odmítnout — koruna nepodléhá biskupovi',
         hintType: 'resource', hintKey: 'prestige',
         effects: { faith: -8, prestige: 4, legitimacy: -3 },
-        chronicle: 'Vládce biskupa odbyl. Kazatelny zahřměly, ale zlato zůstalo v pokladně.',
+        chronicle: '{R:Vládce|Vládkyně} {R:biskupa odbyl|biskupa odbyla}. Kazatelny zahřměly, ale zlato zůstalo v pokladně.',
       },
       {
         label: 'Vyjednat polovinu',
@@ -827,12 +827,12 @@ const BASE_EVENTS = [
     text: 'Šlechtici žádají o velký turnaj pod hradem. Rytíři z celé země i ze ciziny by se utkali o čest a přízeň dvora.',
     choices: [
       {
-        label: 'Uspořádat turnaj a sám vjet do klání',
+        label: 'Uspořádat turnaj a {R:sám|sama} vjet do klání',
         combat: 'rytir', // fought out in rounds (combat.js)
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.35, traitKey: 'strength', traitScale: 0.06,
-        onSuccess: { effects: { gold: -15, prestige: 14, legitimacy: 3 }, traitGain: 'strength', chronicle: 'Vládce shodil z koně tři soupeře a turnaj vyhrál. O jeho síle se zpívá v každé krčmě.' },
-        onFailure: { effects: { gold: -15, prestige: -6, stability: -2 }, injury: { pool: ['pohmozdeni', 'zlomenina', 'oko', 'jizva', 'kulhani'], chance: 0.75 }, chronicle: 'Vládce byl hned v prvním klání shozen do prachu a zvedli ho až zbrojnoši. Šlechta se smála do rukávů.' },
+        onSuccess: { effects: { gold: -15, prestige: 14, legitimacy: 3 }, traitGain: 'strength', chronicle: '{R:Vládce|Vládkyně} {R:shodil|shodila} z koně tři soupeře a turnaj {R:vyhrál|vyhrála}. O {R:jeho|její} síle se zpívá v každé krčmě.' },
+        onFailure: { effects: { gold: -15, prestige: -6, stability: -2 }, injury: { pool: ['pohmozdeni', 'zlomenina', 'oko', 'jizva', 'kulhani'], chance: 0.75 }, chronicle: '{R:Vládce|Vládkyně} {R:byl|byla} hned v prvním klání {R:shozen|shozena} do prachu a {R:zvedli ho|zvedli ji} až zbrojnoši. Šlechta se smála do rukávů.' },
       },
       {
         label: 'Uspořádat turnaj jen jako hostitel',
@@ -857,14 +857,14 @@ export const EVENTS = attachEchoHooks([...BASE_EVENTS, ...MORE_EVENTS, ...NOBLE_
 export const QUIET_EVENT = {
   id: 'quiet_season',
   title: 'Klidné období',
-  text: 'Království si tuto sezónu oddechlo od velkých rozhodnutí. Pole dozrávají, kupci přicházejí a odcházejí. Jak vládce využije klidný čas?',
+  text: 'Království si tuto sezónu oddechlo od velkých rozhodnutí. Pole dozrávají, kupci přicházejí a odcházejí. Jak {R:vládce|vládkyně} využije klidný čas?',
   choices: [
     {
       label: 'Zvelebit pole a cesty',
       hintType: 'resource', hintKey: 'food',
       effects: { gold: -8, food: 6 },
       provinceEffects: { '*': { wealth: 3 } },
-      chronicle: 'Klidné období vládce využil ke stavbě cest a mostů a k vysoušení bažin.',
+      chronicle: 'Klidné období {R:vládce|vládkyně} {R:využil|využila} ke stavbě cest a mostů a k vysoušení bažin.',
     },
     {
       label: 'Cvičit vojsko',
@@ -877,7 +877,7 @@ export const QUIET_EVENT = {
       hintType: 'trait', hintKey: 'intelligence',
       effects: { legitimacy: 1 },
       traitGain: 'intelligence',
-      chronicle: 'Vládce trávil večery nad starými listinami a kronikami předků.',
+      chronicle: '{R:Vládce|Vládkyně} {R:trávil|trávila} večery nad starými listinami a kronikami předků.',
     },
     {
       label: 'Objíždět provincie a naslouchat lidu',
@@ -885,7 +885,7 @@ export const QUIET_EVENT = {
       effects: { gold: -4, stability: 2 },
       provinceEffects: { '*': { unrest: -4 } },
       traitGain: 'patience',
-      chronicle: 'Vládce objel provincie a vyslechl stížnosti prostých lidí.',
+      chronicle: '{R:Vládce|Vládkyně} {R:objel|objela} kraje a {R:vyslechl|vyslechla} stížnosti prostých lidí.',
     },
   ],
 };

@@ -16,7 +16,7 @@ export const REALMS = {
   east: {
     name: 'Východní marky', gen: 'Východních marek', kind: 'Markské království', title: ['král', 'královna'],
     conquerable: true, income: 3,
-    text: 'Bojovné království za Sokolím hvozdem. Markrabata, která ho drží pohromadě, poslouchají svého krále jen v boji — a v boji jsou nejlepší.',
+    text: 'Bojovné království za Sokolím hvozdem. Markrabata, která ho drží pohromadě, poslouchají svého panovníka jen v boji — a v boji jsou nejlepší.',
   },
   north: {
     name: 'Severní pustiny', gen: 'Severních pustin', kind: 'Kmenový svaz', title: ['velký náčelník', 'velká náčelnice'],
@@ -88,7 +88,7 @@ export function beatRealm(state, key) {
     r.attitude = 30;
     const old = realmRulerLabel(state, key);
     const conquered = ownedRealms(state).length;
-    let text = `Koruna ${def.gen} padla! ${old[0].toUpperCase()}${old.slice(1)} se poddal${r.ruler.gender === 'female' ? 'a' : ''} a ${state.ruler.name} je teď ${state.ruler.gender === 'female' ? 'královnou' : 'králem'} i v ${def.name === 'Severní pustiny' ? 'Severních pustinách' : 'Východních markách'}.`;
+    let text = `Koruna ${def.gen} padla! ${old[0].toUpperCase()}${old.slice(1)} se poddal${r.ruler.gender === 'female' ? 'a' : ''} a ${state.ruler.name} teď nosí i korunu ${def.gen}.`;
     // two foreign crowns over one head make an empire
     if (conquered >= 2 && state.ruler.statusTier < 6) {
       state.ruler.statusTier = 6;
@@ -127,7 +127,8 @@ export function ageRealms(state) {
       continue;
     }
     r.ruler.age += 1;
-    r.power = clamp(r.power + (r.power < 60 ? 2 : randInt(-1, 1)));
+    // a realm at war with the player cannot rebuild its strength: the campaign decides what it is left with
+    if (!(state.war && state.war.target === key)) r.power = clamp(r.power + (r.power < 60 ? 2 : randInt(-1, 1)));
     r.attitude = clamp(r.attitude + (r.attitude > 50 ? -1 : r.attitude < 40 ? 1 : 0));
     const death = r.ruler.age < 55 ? 0.01 : Math.min(0.4, (r.ruler.age - 52) * 0.03);
     if (Math.random() < death) {

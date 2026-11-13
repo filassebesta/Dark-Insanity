@@ -1744,3 +1744,11 @@ kbd {
 .mc-owner b { color: #2a1f15; }
 .mc-owner span { font-size: .85rem; color: #5a4430; }
 .map-legend.compact { margin-top: .6rem; font-size: .8rem; opacity: .85; }
+
+/* notices sit over the picture, not over the story text (the story panel is the right half) */
+@media (min-width: 901px) {
+  #screen-game.active ~ .toast-container, .toast-container { left: 27%; }
+}
+/* a drop cap only when the first word is longer than one letter ("V táboře", not "Vtáboře") */
+.event-text.no-dropcap::first-letter { float: none; font-size: inherit; line-height: inherit; margin: 0; padding: 0; color: inherit; font-family: inherit; }
+.field-hint { font-family: var(--font-body); font-size: .8rem; font-style: italic; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--ink-soft); }

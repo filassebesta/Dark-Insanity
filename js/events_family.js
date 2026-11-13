@@ -21,7 +21,7 @@ export const FAMILY_EVENTS = [
         requires: (s) => s.resources.gold >= 5,
         hintType: 'resource', hintKey: 'prestige',
         effects: { gold: -5, prestige: 4 },
-        chronicle: 'Na křtinách {child.name} se jedlo, pilo a zpívalo do rána.',
+        chronicle: 'Na křtinách se jedlo, pilo a zpívalo do rána. Dítě dostalo jméno {child.name}.',
       },
       {
         label: 'Tichý křest v kruhu rodiny',
@@ -44,11 +44,11 @@ export const FAMILY_EVENTS = [
     requires: (s) => single(s) && s.ruler.age >= 26 && s.ruler.age <= 55 && (s.suitors || []).length > 0,
     image: img('rada_manzela'),
     title: 'Je čas',
-    text: 'Za {ruler.name} přišel někdo, kdo to s rodem myslí dobře — stará teta, kněz nebo přítel z mládí. „Roky běží,“ říká, „a rod bez dědice je jako strom bez kořenů. Vím o někom, kdo by neřekl ne.“ Na stole leží jména a na nich budoucnost rodu {dynastyName}.',
+    text: 'Jednoho večera přišel na návštěvu někdo, kdo to s rodem myslí dobře — stará teta, kněz nebo přítel z mládí. „Roky běží,“ říká, „a rod bez dědice je jako strom bez kořenů. Vím o někom, kdo by neřekl ne.“ Na stole leží jména a na nich budoucnost rodu {dynastyName}.',
     choices: [
-      { label: 'Vzít si {suitor.0.name} ({suitor.0.kind})', requires: suitor(0), hintType: 'resource', hintKey: 'prestige', marrySuitor: 0, chronicle: 'Svatba byla domluvená, ale nikdo na ní neplakal smutkem.' },
-      { label: 'Vzít si {suitor.1.name} ({suitor.1.kind})', requires: suitor(1), hintType: 'resource', hintKey: 'prestige', marrySuitor: 1, chronicle: 'Svatba byla domluvená, ale nikdo na ní neplakal smutkem.' },
-      { label: 'Vzít si {suitor.2.name} ({suitor.2.kind})', requires: suitor(2), hintType: 'resource', hintKey: 'prestige', marrySuitor: 2, chronicle: 'Svatba byla domluvená, ale nikdo na ní neplakal smutkem.' },
+      { label: 'Sňatek: {suitor.0.name}, {suitor.0.kind}', requires: suitor(0), hintType: 'resource', hintKey: 'prestige', marrySuitor: 0, chronicle: 'Svatba byla domluvená, ale nikdo na ní neplakal smutkem.' },
+      { label: 'Sňatek: {suitor.1.name}, {suitor.1.kind}', requires: suitor(1), hintType: 'resource', hintKey: 'prestige', marrySuitor: 1, chronicle: 'Svatba byla domluvená, ale nikdo na ní neplakal smutkem.' },
+      { label: 'Sňatek: {suitor.2.name}, {suitor.2.kind}', requires: suitor(2), hintType: 'resource', hintKey: 'prestige', marrySuitor: 2, chronicle: 'Svatba byla domluvená, ale nikdo na ní neplakal smutkem.' },
       {
         label: 'Odmítnout — srdce si vybere samo',
         hintType: 'trait', hintKey: 'patience',
@@ -76,6 +76,35 @@ export const FAMILY_EVENTS = [
         hintType: 'trait', hintKey: 'strength',
         effects: {},
         chronicle: 'Dítě odešlo s příbuznou. {ruler.name} ještě doufá ve vlastního dědice.',
+      },
+    ],
+  },
+
+  {
+    id: 'nastupnictvi',
+    scenarios: ALL, forced: true, free: true,
+    image: img('smrt_radce'),
+    title: '{P:Odešel|Odešla} {predecessor.name}',
+    text: '{predecessor.name} {P:zemřel|zemřela} a rod {dynastyName} se sešel u hrobu. Kněz domluvil, hlína dopadla na rakev a všichni se teď dívají na tebe: {ruler.name} přebírá {domain}. Lidé si šeptají, jestli {R:bude takový|bude taková} jako {P:otec|matka}, nebo {R:jiný|jiná} — a co se teď změní.',
+    choices: [
+      {
+        label: 'Vystrojit pohřeb, na který se bude vzpomínat',
+        requires: (s) => s.resources.gold >= 6,
+        hintType: 'resource', hintKey: 'prestige',
+        effects: { gold: -6, prestige: 4, faith: 2 },
+        chronicle: 'Pohřeb se konal se vší úctou. Celý kraj viděl, že rod {dynastyName} ctí své mrtvé.',
+      },
+      {
+        label: 'Slíbit, že se nic nezmění',
+        hintType: 'trait', hintKey: 'patience',
+        effects: { stability: 4 },
+        chronicle: '{ruler.name} slíbil{R:|a} u hrobu, že rod půjde dál po cestě, kterou vyšlapali předkové.',
+      },
+      {
+        label: 'Dát najevo, že teď vládne někdo nový',
+        hintType: 'trait', hintKey: 'strength',
+        effects: { prestige: 3, stability: -2 }, courtEffects: { chancellor: { loyalty: -4 } },
+        chronicle: 'Hned po pohřbu {R:svolal|svolala} {ruler.name} všechny, kdo rodu slouží, a dal{R:|a} jasně najevo, kdo teď rozhoduje.',
       },
     ],
   },

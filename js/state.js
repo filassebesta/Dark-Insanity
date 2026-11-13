@@ -101,7 +101,7 @@ function buildKingGame(rulerName, dynastyName, gender) {
   return {
     version: 1,
     scenario: 'panovnik',
-    dynastyName: dynastyName || 'bezejmenného rodu',
+    dynastyName: dynastyName || 'Bezejmenných', // the 2nd case: "z rodu Bezejmenných"
     slotId: null,
     turn: 0,
     year: 1,

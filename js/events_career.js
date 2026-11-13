@@ -37,7 +37,7 @@ export const CAREER_EVENTS = [
     scenario: 'panovnik', forced: true, free: true,
     image: 'assets/endings/ending_crowned.jpg',
     title: 'Koruna',
-    text: 'Zvony Vlčího Údělu zvoní celý den. {ruler.name} z rodu {dynastyName} usedá na trůn, na který se ještě nedávno {R:díval|dívala} zdola. Kraje, které patřily soupeřícím rodům, teď odvádějí daně koruně — ale páni z Bílé Brány, Rudí i Sokolové nezapomněli, že {R:nový král|nová královna} byl{R:|a} ještě včera jedním z nich. Za hranicemi si změny všímají i cizí panovníci: markrabě Východních marek, náčelníci Severních pustin a císař Jižní říše. Jedni posílají dary, druzí zvědy.',
+    text: 'Zvony Vlčího Údělu zvoní celý den. {ruler.name} z rodu {dynastyName} usedá na trůn, na který se ještě nedávno {R:díval|dívala} zdola. Kraje, které patřily soupeřícím rodům, teď odvádějí daně koruně — ale páni z Bílé Brány, Rudí i Sokolové nezapomněli, že {R:nový král|nová královna} byl{R:|a} ještě včera jedním z nich. Za hranicemi si změny všímají i cizí panovníci: {realm.east} z Východních marek, {realm.north} ze Severních pustin a {realm.south} z Jižní říše. Jedni posílají dary, druzí zvědy.',
     choices: [
       {
         label: 'Vystrojit korunovační hostinu pro celou šlechtu',
@@ -73,7 +73,7 @@ export const CAREER_EVENTS = [
         hintType: 'trait', hintKey: 'patience',
         effects: { faith: 4 }, houseEffects: { '*': { attitude: 4 } },
         endGame: 'crowned',
-        chronicle: 'Sesazen{K:ý král|á královna} {king.name} odešl{K:|a} v kutně do kláštera na útesu. Na trůn usedá rod {dynastyName}.',
+        chronicle: 'Sesazen{K:ý král|á královna} {king.name} {K:odešel|odešla} v kutně do kláštera na útesu. Na trůn usedá rod {dynastyName}.',
       },
       {
         label: 'Nechat sesazeného panovníka popravit, aby se nikdy nevrátil',
@@ -105,7 +105,7 @@ export const CAREER_EVENTS = [
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.35, traitKey: 'eloquence', traitScale: 0.05, resourceKey: 'legitimacy', resourceScale: 0.002,
         onSuccess: { effects: { favor: 12, gold: -15, prestige: -10, legitimacy: -10 }, hiddenEffects: { clearFlag: 'rebellion' }, provinceEffects: { own: { garrison: -20 } }, chronicle: 'Milost byla udělena — za cenu pokladny, nároku na trůn a ponížení před celým dvorem. Rod {dynastyName} přežil.' },
-        onFailure: { endGame: 'executed', chronicle: 'Prosby byly vyslyšeny — a pak dostal slovo kat.' },
+        onFailure: { endGame: 'executed', chronicle: 'Prosby byly vyslechnuty — a pak dostal slovo kat.' },
       },
       {
         label: 'Bránit tvrz do posledního muže',
@@ -128,28 +128,28 @@ export const CAREER_EVENTS = [
     scenario: 'panovnik', forced: true, echo: true,
     requires: (s) => !!(s.formerKing && s.formerKing.alive),
     image: 'assets/events/pretendent.jpg',
-    title: 'Král za hranicemi',
-    text: 'Sesazen{F:ý král|á královna} {formerKing.name}, {F:kterého|kterou} jsi kdysi nechal{R:|a} odejít se ctí, se ozval z ciziny. Píše, že se vrací — a s ním cizí žoldnéři a pár starých pánů, kteří nikdy nepřestali počítat dny do jeho návratu.',
+    title: '{F:Král|Královna} za hranicemi',
+    text: 'Sesazen{F:ý král|á královna} {formerKing.name}, {F:kterého|kterou} jsi kdysi nechal{R:|a} odejít se ctí, se ozval{F:|a} z ciziny. Píše, že se vrací — a s {F:ním|ní} cizí žoldnéři a pár starých pánů, kteří nikdy nepřestali počítat dny do {F:jeho|jejího} návratu.',
     choices: [
       {
         label: 'Vyslat vojsko k hranici dřív, než ji překročí',
         hintType: 'resource', hintKey: 'army',
         isRoll: true, baseChance: 0.45, traitKey: 'strength', traitScale: 0.04, resourceKey: 'army', resourceScale: 0.004,
-        onSuccess: { effects: { prestige: 8, legitimacy: 6, army: -4 }, music: 'battle', chronicle: 'Žoldnéři sesazeného panovníka se rozutekli u první brody. {formerKing.name} už se nevrátí.' },
+        onSuccess: { effects: { prestige: 8, legitimacy: 6, army: -4 }, music: 'battle', chronicle: 'Žoldnéři sesazeného panovníka se rozutekli u prvního brodu. {formerKing.name} už se nevrátí.' },
         onFailure: { effects: { army: -10, legitimacy: -8, stability: -6 }, provinceEffects: { 'pobrezni-mark': { unrest: 15, loyalty: -10 } }, music: 'battle', chronicle: 'Žoldnéři prorazili hranici a pobřeží jim otevřelo brány. Válka o trůn se vrátila.' },
       },
       {
-        label: 'Zaplatit jeho žoldnéřům, aby se obrátili',
+        label: 'Zaplatit {F:jeho|jejím} žoldnéřům, aby se obrátili',
         requires: (s) => s.resources.gold >= 25,
         hintType: 'resource', hintKey: 'gold',
         effects: { gold: -25, legitimacy: 3 },
         chronicle: 'Žoldnéři vzali zlato od toho, kdo platil víc. Sesazen{F:ý král zůstal|á královna zůstala} v cizině s{F:ám|ama}.',
       },
       {
-        label: 'Nabídnout mu panství a smír',
+        label: 'Nabídnout {F:mu|jí} panství a smír',
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.4, traitKey: 'eloquence', traitScale: 0.05,
-        onSuccess: { effects: { legitimacy: 10, stability: 4, gold: -8 }, chronicle: '{formerKing.name} přijal{F:|a} panství a před shromážděnou šlechtou se zřekl koruny. Žádný meč nebyl tasen.' },
+        onSuccess: { effects: { legitimacy: 10, stability: 4, gold: -8 }, chronicle: '{formerKing.name} přijal{F:|a} panství a před shromážděnou šlechtou se zřekl{F:|a} koruny. Žádný meč nebyl tasen.' },
         onFailure: { effects: { legitimacy: -6, prestige: -4 }, chronicle: 'Sesazen{F:ý král|á královna} se nabídce vysmál{F:|a}. Slabost cítí každý, kdo ji nabízí.' },
       },
     ],
@@ -189,7 +189,7 @@ export const CAREER_EVENTS = [
     scenario: 'panovnik', forced: true, echo: true,
     image: 'assets/events/cizi_vyslanec.jpg',
     title: 'Účet z Marek',
-    text: 'Posel z Východních marek přijel znovu, tentokrát s praporem a v doprovodu dvaceti jezdců. {realm.east} připomíná, kdo poslal muže přes hvozd, když se rod {dynastyName} natahoval po koruně. Za pomoc chce Sokolí Hvozd — celý kraj i s Mýtnicí.',
+    text: 'Posel z Východních marek přijel znovu, tentokrát s praporem a v doprovodu dvaceti jezdců. Vzkazuje, že {realm.east} nezapomíná, kdo poslal muže přes hvozd, když se rod {dynastyName} natahoval po koruně. Za pomoc chce Sokolí Hvozd — celý kraj i s Mýtnicí.',
     choices: [
       {
         label: 'Dostát slovu a postoupit Sokolí Hvozd',
@@ -202,11 +202,11 @@ export const CAREER_EVENTS = [
         requires: (s) => s.resources.gold >= 30,
         hintType: 'resource', hintKey: 'gold',
         isRoll: true, baseChance: 0.5, traitKey: 'eloquence', traitScale: 0.05,
-        onSuccess: { effects: { gold: -30 }, realm: { east: { attitude: 5 } }, traitGain: 'eloquence', chronicle: 'Markrabě vzal zlato místo země. Dluh je splacen a hranice zůstala, kde byla.' },
-        onFailure: { effects: { gold: -30, prestige: -3 }, realm: { east: { attitude: -10 } }, provinceEffects: { 'sokoli-hvozd': { unrest: 15 } }, chronicle: 'Zlato si vzal, ale spokojený není. Na hranici se znovu objevují ozbrojenci z Marek.' },
+        onSuccess: { effects: { gold: -30 }, realm: { east: { attitude: 5 } }, traitGain: 'eloquence', chronicle: 'Marky vzaly zlato místo země. Dluh je splacen a hranice zůstala, kde byla.' },
+        onFailure: { effects: { gold: -30, prestige: -3 }, realm: { east: { attitude: -10 } }, provinceEffects: { 'sokoli-hvozd': { unrest: 15 } }, chronicle: 'Zlato si v Markách vzali, ale spokojení nejsou. Na hranici se znovu objevují ozbrojenci z Marek.' },
       },
       {
-        label: 'Odmítnout — král nikomu nic nedluží',
+        label: 'Odmítnout — {R:král|královna} nikomu nic nedluží',
         hintType: 'trait', hintKey: 'strength',
         effects: { prestige: 4 }, realm: { east: { attitude: -30, power: 5 } },
         provinceEffects: { 'sokoli-hvozd': { unrest: 20, garrison: -15 } },

@@ -137,7 +137,7 @@ export const TOPICS = {
   nam_dar: {
     label: 'Přinést dárek', roles: ['suitor'], cost: (s) => ({ gold: GIFT[s.scenario] || 2 }),
     win: { affection: 10 },
-    text: [(c, s) => `${s.scenario === 'sedlak' ? 'Pentle z jarmarku' : s.scenario === 'slechtic' ? 'Stříbrná spona' : 'Prsten se smaragdem'} ${g(c, 'ho', 'ji')} potěšil${s.scenario === 'sedlak' ? 'a' : ''} víc, než ${g(c, 'chtěl', 'chtěla')} dát najevo.`],
+    text: [(c, s) => { const gift = { sedlak: ['Pentle z jarmarku', 'a'], slechtic: ['Stříbrná spona', 'a'] }[s.scenario] || ['Prsten se smaragdem', '']; return `${gift[0]} ${g(c, 'ho', 'ji')} potěšil${gift[1]} víc, než ${g(c, 'chtěl', 'chtěla')} dát najevo.`; }],
   },
   nam_tanec: {
     label: 'Pozvat na tanec', roles: ['suitor'], yearly: true,
