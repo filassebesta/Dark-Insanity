@@ -86,3 +86,12 @@ nepokoji (stabilita < 28) a dřívější krize, důsledky u cizích zemí se uk
 „snoubenci“, „Dvorní lékaři“, popisek náklonnosti a věrnosti, nápadnice bez „povahy rádce“.
 Zbývá: císařství nemá vlastní obsah (jen dvě karty), výnos roku se opakuje ročně (~17 % karet), nápadnice
 panovníka a muži pro vládkyni mají záložní portrét (dávka R6), vládkyně v poli řeší dvorské karty.
+
+### Doplnění po 3. kole
+
+Dále opraveno: kraj se jmenuje všude „Pobřežní marka“, konec „Rod vymřel“ (ne „Kolaps“), konec popravou zmiňuje rodinu
+a text neúspěšného povstání nesedí s koncem, mimořádná daň se nenabízí při stabilitě ≤ 15, vlajky `regent` a
+`rebellion` mizí po korunovaci, vedlejší větev ohlásí cenu v oznámení při nástupu, text výnosu roku se mění
+každý rok, vládce v poli nepořádá další dvorské karty (čarodějnice, relikvie, prorok…), epiteton „Starý“ až po
+3 letech vlády, tribut severu a „druhý rok“ ve vězení opraveny.
+Zbývá: císařství bez obsahu, portréty R6, regentství při dítěti na trůnu, obrázky u narození levobočka a nástupnictví.

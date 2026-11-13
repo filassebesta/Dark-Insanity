@@ -562,7 +562,8 @@ export function renderEndingScreen(state, gameOver) {
     // absolute URL: a url() inside a custom property resolves against the stylesheet, not the page
     if (src) screen.style.setProperty('--backdrop', `url("${new URL(src, document.baseURI).href}")`);
   });
-  document.getElementById('ending-title').textContent = ENDING_TITLES[gameOver.type] || 'Konec';
+  // a house that simply died out is not a collapse of the realm
+  document.getElementById('ending-title').textContent = gameOver.reason === 'dynasty-extinct' ? 'Rod vymřel' : ENDING_TITLES[gameOver.type] || 'Konec';
   document.getElementById('ending-text').textContent = gameOver.text;
   const epithet = reignEpithet(state);
   const epithetEl = document.getElementById('ending-epithet');

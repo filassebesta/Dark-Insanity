@@ -389,7 +389,7 @@ export const NOBLE_EVENTS = [
         isRoll: true, baseChance: -0.1, traitKey: 'strength', traitScale: 0.03, resourceKey: 'army', resourceScale: 0.7,
         chanceBonus: (s) => allies(s) * 0.07 + s.noble.plot * 0.04,
         onSuccess: { endGame: 'crowned', chronicle: 'Spiklenci otevřeli brány a vojsko rodu {dynastyName} vtáhlo do Vlčího Údělu. Koruna má nového nositele.' },
-        onFailure: { endGame: 'executed', chronicle: 'Povstání bylo potlačeno dřív, než začalo.' },
+        onFailure: { endGame: 'executed', chronicle: 'Povstání bylo potlačeno dřív, než se stačili sejít všichni spiklenci. Králova stráž přišla v noci a nikdo nečekal, že bude tak rychlá.' },
       },
       {
         label: 'Podpořit královského nástupce',
