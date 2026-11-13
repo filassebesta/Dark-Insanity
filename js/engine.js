@@ -1,6 +1,6 @@
 import { SEASONS, TERRAIN_DEFS, NOBLE_HOUSES, PEASANT_HOME, clamp, randomName, randInt, tierTitle, bumpStat, TRAIT_DEFS, RESOURCE_DEFS, resourceLabel } from './data.js';
 import { makeChronicleEntry, inheritTraits, promote } from './state.js';
-import { ageRealms, realmIncome, realmRulerLabel, REALMS } from './realms.js';
+import { ageRealms, realmIncome, realmRulerLabel, realmTitle, REALMS } from './realms.js';
 import { THRONE_STEPS } from './events_throne.js';
 import { processFamily, nextHeir, marry } from './family.js';
 import { EVENTS, QUIET_EVENTS } from './events.js';
@@ -87,8 +87,17 @@ export function interpolate(state, text) {
   if (state.realms) {
     for (const key of Object.keys(REALMS)) {
       if (!state.realms[key]) continue;
-      dict[`realm.${key}`] = realmRulerLabel(state, key);
-      dict[`realm.${key}.name`] = state.realms[key].ruler.name;
+      const r = state.realms[key];
+      const label = realmRulerLabel(state, key);
+      dict[`realm.${key}`] = label;
+      dict[`realm.${key}.Ruler`] = label[0].toUpperCase() + label.slice(1); // at the start of a sentence
+      dict[`realm.${key}.name`] = r.ruler.name;
+      // {realm.east.title} "král" / "královna", {realm.east.Title} at the start of a sentence,
+      // {realm.north.claimant} who fights for that crown (events_foreign.js)
+      const title = realmTitle(key, r.ruler.gender);
+      dict[`realm.${key}.title`] = title;
+      dict[`realm.${key}.Title`] = title[0].toUpperCase() + title.slice(1);
+      if (r.claimant) dict[`realm.${key}.claimant`] = r.claimant.name;
     }
   }
   if (king) {
@@ -114,9 +123,11 @@ export function interpolate(state, text) {
     K: king ? king.gender : 'male', F: state.formerKing ? state.formerKing.gender : 'male',
     C: state.lastBirth ? state.lastBirth.gender : 'male',
     P: (state.pastRulers || []).length ? state.pastRulers.at(-1).gender : 'male',
+    // the foreign rulers: {E:…|…} Eastern Marches, {N:…|…} Northern Wastes, {S:…|…} Southern Empire
+    E: state.realms?.east?.ruler.gender, N: state.realms?.north?.ruler.gender, S: state.realms?.south?.ruler.gender,
   };
   return text
-    .replace(/\{([RHTDLMKFCP]):([^|{}]*)\|([^|{}]*)\}/g, (m, who, male, female) => (genderOf[who] === 'female' ? female : male))
+    .replace(/\{([RHTDLMKFCPENS]):([^|{}]*)\|([^|{}]*)\}/g, (m, who, male, female) => (genderOf[who] === 'female' ? female : male))
     .replace(/\{([\w.]+)\}/g, (m, key) => (key in dict ? dict[key] : m));
 }
 

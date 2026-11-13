@@ -4,7 +4,7 @@
 // beat a neighbour into paying tribute and, once it is weak enough, take its
 // crown as well (personal union); two foreign crowns make an emperor.
 //
-// state.realms = { <key>: { ruler: {name, gender, age}, power, attitude, owner: null | 'player', since } }
+// state.realms = { <key>: { ruler: {name, gender, age}, power, attitude, owner: null | 'player', since, changed?, claimant? } }
 // No DOM here — world.js draws the world map, war.js fights the wars.
 
 import { clamp, randInt, randomName } from './data.js';
@@ -136,6 +136,7 @@ export function ageRealms(state) {
       const she = r.ruler.gender === 'female';
       const g = Math.random() < 0.75 ? 'male' : 'female';
       r.ruler = { name: randomName(g), gender: g, age: randInt(20, 45) };
+      r.changed = state.turn; // a new ruler sits uneasily for a while (events_foreign.js: a claimant comes to the king)
       r.attitude = clamp(Math.round((r.attitude + 48) / 2));
       if (key === 'north') r.power = clamp(r.power - 10); // the tribes fall apart without the old chief
       const t = `Zpráva z ciziny: ${def.name} — zemřel${she ? 'a' : ''} ${old}. Vládne ${realmRulerLabel(state, key)}.`;
