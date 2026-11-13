@@ -8,7 +8,7 @@ import { esc } from './ui.js';
 import { effectiveTraits, injuriesOf, injuryFx, INJURIES } from './injuries.js';
 import { ambitionSection } from './fame.js';
 import { talkSection } from './talk_ui.js';
-import { personOf } from './family.js';
+import { personOf, maleFirst } from './family.js';
 import { ensureGear, shopFor, ITEMS, SLOTS } from './gear.js';
 import { fighterOf } from './combat.js';
 
@@ -135,7 +135,7 @@ export function renderCharacterSheet(state) {
   const ladder = STATUS_TIERS.slice(1).map((label, i) => {
     const tier = i + 1;
     const cls = tier < r.statusTier ? 'done' : tier === r.statusTier ? 'current' : '';
-    const shown = tier === 5 || tier === r.statusTier ? tierTitle(tier, r.gender) : label;
+    const shown = tierTitle(tier, r.gender);
     return `<div class="cs-step ${cls}"><i></i>${esc(shown)}</div>`;
   }).join('');
 
@@ -206,7 +206,7 @@ export function renderCharacterSheet(state) {
   const OUTCOME_WORD = { success: ' (úspěch)', failure: ' (nezdar)', danger: ' (nebezpečí)' };
   const ancestors = (state.pastRulers || []).slice().reverse().map((a) => {
     const f = a.gender === 'female' ? 'a' : '';
-    const deeds = (a.deeds || []).map((d) => `<li>${d.year} · ${esc(d.title)}: ${esc(d.choice)}${OUTCOME_WORD[d.outcome] || ''}</li>`).join('');
+    const deeds = (a.deeds || []).map((d) => `<li>rok ${d.year} · ${esc(d.title)}: ${esc(d.choice)}${OUTCOME_WORD[d.outcome] || ''}</li>`).join('');
     return `
       <li><strong>${esc(a.name)}${a.epithet ? ` <em>${esc(a.epithet)}</em>` : ''}</strong>
         ${a.epithetReason ? `<span class="cs-reason">${esc(a.epithetReason)}</span>` : ''}
@@ -249,7 +249,7 @@ export function renderCharacterSheet(state) {
       <ul class="cs-influence">${influence}</ul>
       <h4 class="cs-section">Rodina</h4>
       ${single}${family ? `<div class="cs-family">${family}</div>` : ''}${expecting}${loverExpecting}${presumptiveNote}
-      ${suitors ? `<h4 class="cs-section cs-sub">${sp && sp.alive !== false ? (r.gender === 'female' ? 'Muži v tvém okolí' : 'Ženy v tvém okolí') : (r.gender === 'female' ? 'Nápadníci' : 'Nápadnice')} <small>· klikni a dej se do řeči</small></h4><div class="cs-suitors">${suitors}</div>` : ''}
+      ${suitors ? `<h4 class="cs-section cs-sub">${sp && sp.alive !== false ? (r.gender === 'female' ? 'Muži v tvém okolí' : 'Ženy v tvém okolí') : (r.gender === 'female' ? 'Nápadníci' : 'Nápadnice')} <small>· klikni a dej se do řeči</small></h4><p class="cs-family-note">Náklonnost: jak blízko si k sobě máte. Věrnost: jak spolehlivě ti zůstane — hlídej ji, když chceš poměr udržet v tajnosti.</p><div class="cs-suitors">${suitors}</div>` : ''}
       ${ancestors ? `<h4 class="cs-section cs-gap">Síň předků</h4><ul class="cs-ancestors">${ancestors}</ul>` : ''}
     </div>
   `;
@@ -325,10 +325,11 @@ export function renderPersonSheet(state, role) {
       <div class="ps-bar"><span style="width:${heart[1]}%"></span><b>${heart[0]} ${heart[1]}</b></div>
       ${kind === 'suitor' ? `<div class="ps-bar ps-bar-loyal"><span style="width:${c.loyalty ?? 45}%"></span><b>věrnost ${c.loyalty ?? 45}</b></div>` : ''}
       <p class="ps-bio">${esc(kind === 'suitor' ? `${c.bio}${c.affection >= 75 && !(state.spouse && state.spouse.alive !== false) ? ' Z očí je znát, že by žádost o ruku neodmítl' + (c.gender === 'female' ? 'a.' : '.') : ''}` : kind === 'child' ? `${c.gender === 'female' ? 'Dcera' : 'Syn'} rodu ${state.dynastyName}. Kdyby dědic zemřel, ${c.gender === 'female' ? 'nastoupí ona' : 'nastoupí on'} — nejstarší z mladších dětí.` : kind === 'bastard' ? `${c.gender === 'female' ? 'Nemanželská dcera' : 'Nemanželský syn'} (${c.parent || 'matka neznámá'}). ${c.acknowledged ? 'Uznan' + (c.gender === 'female' ? 'á' : 'ý') + ' — kdyby rodu nezbyl nikdo jiný, ' + (c.gender === 'female' ? 'nastoupí ona.' : 'nastoupí on.') : 'Rod ' + (c.gender === 'female' ? 'ji' : 'ho') + ' neuznal.'}` : kind === 'sibling' ? `${c.gender === 'female' ? 'Sestra' : 'Bratr'} ${state.ruler.gender === 'female' ? 'vládkyně' : 'vládce'} z rodu ${state.dynastyName}. Kdyby rod zůstal bez dětí, ${c.gender === 'female' ? 'nastoupí ona' : 'nastoupí on'}.` : biography(c, role, state.dynastyName, state.scenario, state.flags))}</p>
-      ${c.quirk ? `<div class="ps-quirk"><b>Povaha: ${esc(quirkLabel(c))}</b><span>${esc(quirkText(c, role))}</span></div>` : ''}
+      ${c.quirk && !(kind === 'suitor' && !c.lover) ? `<div class="ps-quirk"><b>Povaha: ${esc(quirkLabel(c))}</b><span>${esc(quirkText(c, role))}</span></div>` : ''}
       ${(role === 'heir' || kind === 'child') && c.traits ? `<h4 class="ps-section">Vlastnosti ${c.gender === 'female' ? 'dědičky' : 'dědice'}</h4>
         <p class="ps-note">S těmito vlastnostmi jednou převezme vládu. Utváří je výchova a léta dospívání.</p>
         <div class="ps-traits">${TRAIT_DEFS.map((t) => `<div>${t.icon}<span>${t.label}</span><b>${c.traits[t.key]}</b></div>`).join('')}</div>` : ''}
+      ${kind === 'child' && alive && state.heir && state.heir.alive !== false && !state.heir.presumptive ? `<button class="dialog-button make-heir" data-action="make-heir" data-i="${String(role).split(':')[1]}">Určit ${him} za ${c.gender === 'female' ? 'dědičku' : 'dědice'}</button><p class="ps-note">Dnes ${maleFirst(state) ? 'dědí nejstarší syn, dcera až po něm' : 'dědí nejstarší dítě bez ohledu na pohlaví'}.</p>` : ''}
       ${talkSection(state, role)}
       <h4 class="ps-section">Co ${him} ovlivnilo</h4>
       ${rows ? `<ul class="ps-history">${rows}</ul>` : `<p class="ps-empty">Zatím žádné tvé rozhodnutí ${him} nezasáhlo. Až se ${c.gender === 'female' ? 'jí' : 'ho'} nějaké bude týkat, uvidíš ho tady.</p>`}

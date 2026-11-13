@@ -101,13 +101,13 @@ export const FARM_EVENTS = [
     },
     image: 'assets/events/biskupuv_desatek.jpg',
     title: 'Výnos roku',
-    text: 'Na zemský sněm přicházejí prosby, stížnosti a účty. Nejvíc se jich letos sešlo z kraje {province.name}. Písař má připravený pergamen a pečeť čeká: jedno velké rozhodnutí pro tuto zem za rok — víc úředníci ani pokladna neunesou.',
+    text: '{decree.lead} {decree.focus} Písař má připravený pergamen a pečeť čeká: jedno velké rozhodnutí pro tuto zem za rok — víc úředníci ani pokladna neunesou.',
     choices: [
       { label: 'Posílit tamní posádku', requires: can('garrison'), hintType: 'resource', hintKey: 'army', decree: 'garrison', chronicle: 'Do kraje {province.name} odjeli verbíři a zbrojíři. Na hradbách přibylo stráží.' },
       { label: 'Na rok odpustit kraji část dávek', requires: can('relief'), hintType: 'resource', hintKey: 'gold', decree: 'relief', chronicle: 'Kraj {province.name} letos platí méně. V krčmách se připíjí na milostivou vrchnost.' },
       { label: 'Zvelebit kraj cestami a mlýny', requires: can('develop'), hintType: 'trait', hintKey: 'intelligence', decree: 'develop', chronicle: 'V kraji {province.name} se staví mlýny, mosty a tržiště. Užitek přijde až s léty.' },
       { label: 'Postavit kraji kapli', requires: can('shrine'), hintType: 'resource', hintKey: 'faith', decree: 'shrine', chronicle: 'V kraji {province.name} vysvětili novou kapli. Lidé chodí na mši a odcházejí klidnější.' },
-      { label: 'Vybrat v kraji mimořádnou daň', hintType: 'resource', hintKey: 'gold', decree: 'levy', chronicle: 'Výběrčí prošli krajem {province.name} od chalupy k chalupě. Pokladna se plní, nálada klesá.' },
+      { label: 'Vybrat v kraji mimořádnou daň', requires: (s) => s.resources.stability > 15, hintType: 'resource', hintKey: 'gold', decree: 'levy', chronicle: 'Výběrčí prošli krajem {province.name} od chalupy k chalupě. Pokladna se plní, nálada klesá.' },
       { label: 'Odvést z kraje muže do vojska', hintType: 'resource', hintKey: 'army', decree: 'muster', chronicle: 'Z kraje {province.name} odešli mladí muži pod korouhev. Pole teď obdělávají ženy a starci.' },
       { label: 'Letos nic neměnit', hintType: 'trait', hintKey: 'patience', decreeSkip: true, chronicle: 'Pergamen zůstal čistý. Kraj {province.name} letos žije, jak žil.' },
     ],
@@ -119,7 +119,7 @@ export const FARM_EVENTS = [
     scenarios: ['slechtic', 'panovnik'], forced: true, crisis: true,
     image: 'assets/events/vzpoura_v_provincii.jpg',
     title: 'Země se rozpadá',
-    text: 'Výběrčí se vracejí s prázdnými rukama, rychtáři neposlouchají a po cestách táhnou hladoví lidé. Rádci mluví jedním hlasem: ještě jedna zlá zima a {domain} se rozpadne. Teď je čas jednat — ne až zítra.',
+    text: 'Výběrčí se vracejí s prázdnými rukama, rychtáři neposlouchají a po cestách táhnou hladoví lidé. Rádci mluví jedním hlasem: ještě jedna zlá zima a {domain.nom} se rozpadne. Teď je čas jednat — ne až zítra.',
     choices: [
       {
         label: 'Nakoupit obilí v cizině a rozdat ho lidem',

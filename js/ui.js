@@ -419,7 +419,7 @@ export function renderCourtPanel(state) {
   grid.innerHTML = '';
   const f = (c, male, female) => (c.gender === 'female' ? female : male);
   const members = [
-    { data: state.ruler, role: state.scenario === 'sedlak' ? f(state.ruler, 'Hospodář', 'Hospodyně') : f(state.ruler, 'Vládce', 'Vládkyně'), extra: tierLabel(state.ruler, state), portraits: rulerPortraitCandidates(state.ruler) },
+    { data: state.ruler, role: state.scenario === 'sedlak' ? f(state.ruler, 'Hospodář', 'Hospodyně') : state.scenario === 'slechtic' ? f(state.ruler, 'Pán', 'Paní') : f(state.ruler, 'Vládce', 'Vládkyně'), extra: tierLabel(state.ruler, state), portraits: rulerPortraitCandidates(state.ruler) },
     // a spouse not yet married and an heir not yet born have no card
     ...['heir', 'spouse', 'chancellor', 'marshal', 'spymaster'].filter((r) => !state[r].none).map((r) => (
       { data: state[r], role: roleLabel(r, state[r].gender, state.scenario, state.flags), portraits: memberPortraitCandidates(state[r], r, state.scenario), person: r })),
@@ -562,7 +562,8 @@ export function renderEndingScreen(state, gameOver) {
     // absolute URL: a url() inside a custom property resolves against the stylesheet, not the page
     if (src) screen.style.setProperty('--backdrop', `url("${new URL(src, document.baseURI).href}")`);
   });
-  document.getElementById('ending-title').textContent = ENDING_TITLES[gameOver.type] || 'Konec';
+  // a house that simply died out is not a collapse of the realm
+  document.getElementById('ending-title').textContent = gameOver.reason === 'dynasty-extinct' ? 'Rod vymřel' : ENDING_TITLES[gameOver.type] || 'Konec';
   document.getElementById('ending-text').textContent = gameOver.text;
   const epithet = reignEpithet(state);
   const epithetEl = document.getElementById('ending-epithet');

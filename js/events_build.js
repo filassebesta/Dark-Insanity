@@ -48,7 +48,7 @@ export const BUILD_EVENTS = [
         hintType: 'trait', hintKey: 'strength',
         traitGain: 'strength',
         provinceEffects: { target: { wealth: -4, unrest: 4 } },
-        chronicle: 'Na rozkaz vládce strhli háky celou řadu chalup, aby oheň neměl kudy jít. Velké stavby {town.loc} zůstaly stát, ale chudí přišli o střechu nad hlavou.',
+        chronicle: 'Na rozkaz {R:vládce|vládkyně} strhli háky celou řadu chalup, aby oheň neměl kudy jít. Velké stavby {town.loc} zůstaly stát, ale chudí přišli o střechu nad hlavou.',
       },
       {
         label: 'Svolat lid k modlitbě o déšť',
@@ -100,7 +100,7 @@ export const BUILD_EVENTS = [
     image: img('stavka_cechu'),
     target: (s) => townTarget(s, (id) => hasBuilding(s, id, 'cech', true)),
     title: 'Cech žádá výsady',
-    text: 'Cechmistři {town.loc} přišli v nejlepších šatech a s pečetí na listině. Chtějí, aby nikdo mimo cech nesměl ve městě prodávat sukno — a aby jim to vládce potvrdil navždy.',
+    text: 'Cechmistři {town.loc} přišli v nejlepších šatech a s pečetí na listině. Chtějí, aby nikdo mimo cech nesměl ve městě prodávat sukno — a aby jim to {R:vládce|vládkyně} potvrdil navždy.',
     choices: [
       {
         label: 'Udělit cechu výsady',
@@ -121,7 +121,7 @@ export const BUILD_EVENTS = [
         hintType: 'resource', hintKey: 'gold',
         effects: { gold: 10 },
         provinceEffects: { target: { unrest: 5 } },
-        chronicle: 'Cech {town.loc} si výsady koupil. Pokladna se plní, ale v ulicích se šeptá, že vládce prodá cokoli.',
+        chronicle: 'Cech {town.loc} si výsady koupil. Pokladna se plní, ale v ulicích se šeptá, že {R:vládce|vládkyně} prodá cokoli.',
       },
     ],
   },
@@ -171,13 +171,13 @@ export const BUILD_EVENTS = [
         requires: gold(8),
         hintType: 'resource', hintKey: 'gold',
         effects: { gold: -8, army: 1 },
-        chronicle: 'Posádka {town.loc} dostala žold v zapečetěných truhlách. Vojáci znovu cvičí a o vládci se v kasárnách mluví dobře.',
+        chronicle: 'Posádka {town.loc} dostala žold v zapečetěných truhlách. Vojáci znovu cvičí a o {R:vládci|vládkyni} se v kasárnách mluví dobře.',
       },
       {
         label: 'Slíbit žold po žních',
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.45, traitKey: 'eloquence', traitScale: 0.04,
-        onSuccess: { effects: { stability: 1 }, chronicle: 'Vládcovo slovo vojákům {town.loc} stačilo. Vydrželi až do žní.' },
+        onSuccess: { effects: { stability: 1 }, chronicle: '{R:Vládcovo|Vládkynino} slovo vojákům {town.loc} stačilo. Vydrželi až do žní.' },
         onFailure: { effects: { army: -4 }, provinceEffects: { target: { unrest: 6 } }, chronicle: 'Slibům nikdo nevěřil. Polovina posádky {town.loc} se jedné noci vytratila i se zbraněmi.' },
       },
       {
@@ -327,14 +327,14 @@ export const BUILD_EVENTS = [
         hintType: 'trait', hintKey: 'intelligence',
         effects: { prestige: 2 },
         traitGain: 'intelligence',
-        chronicle: 'Uhlířův syn ze školy {town.loc} psal vládci listiny. Brzy je i sám opravoval.',
+        chronicle: 'Uhlířův syn ze školy {town.loc} psal {R:vládci|vládkyni} listiny. Brzy je i sám opravoval.',
       },
       {
         label: 'Poslat ho studovat do ciziny',
         requires: gold(8),
         hintType: 'resource', hintKey: 'gold',
         effects: { gold: -8, prestige: 5 },
-        chronicle: 'Žák ze školy {town.loc} odjel studovat do ciziny na vládcovy náklady. Píše, že o jeho zemi tam už slyšeli.',
+        chronicle: 'Žák ze školy {town.loc} odjel studovat do ciziny na {R:vládcovy|vládkyniny} náklady. Píše, že o jeho zemi tam už slyšeli.',
       },
       {
         label: 'Ať zůstane u mnichů',
@@ -358,7 +358,7 @@ export const BUILD_EVENTS = [
         requires: gold(10),
         hintType: 'resource', hintKey: 'prestige',
         effects: { gold: -10, prestige: 4, faith: 3 },
-        chronicle: 'Svěcení katedrály {town.loc} trvalo tři dny. Zvony bylo slyšet až za hranicí a jméno vládce se zapsalo nad hlavní portál.',
+        chronicle: 'Svěcení katedrály {town.loc} trvalo tři dny. Zvony bylo slyšet až za hranicí a jméno {R:vládce|vládkyně} se zapsalo nad hlavní portál.',
       },
       {
         label: 'Skromná mše',

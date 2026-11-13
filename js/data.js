@@ -78,7 +78,7 @@ export const PROVINCE_TEMPLATES = [
   { id: 'brodna', name: 'Brodná' },
   { id: 'sokoli-hvozd', name: 'Sokolí Hvozd' },
   { id: 'zelezny-hreben', name: 'Železný Hřeben' },
-  { id: 'pobrezni-mark', name: 'Pobřežní Mark' },
+  { id: 'pobrezni-mark', name: 'Pobřežní marka' },
 ];
 
 export const MALE_NAMES = ['Bořivoj', 'Vratislav', 'Jaromír', 'Přemysl', 'Zbyněk', 'Ctibor', 'Slavomír', 'Miloš', 'Oldřich', 'Jindřich', 'Kunrát', 'Smil',

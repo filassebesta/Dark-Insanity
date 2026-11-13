@@ -391,7 +391,7 @@ const RACCI = [
         requires: (s) => heirFree(s, 12),
         hintType: 'resource', hintKey: 'legitimacy',
         effects: { prestige: 4, legitimacy: 3, gold: 8 }, realm: { east: { attitude: 12 } }, hiddenEffects: { setFlag: ['racci_mir', 'heir_married'] },
-        chronicle: '{heir.name} byl{D:|a} zasnouben{D:|a} s dítětem markraběte Dětřicha. Racčí ostrov dostanou novomanželé jako svatební dar a spor je u konce.',
+        chronicle: '{heir.name} byl{D:|a} zasnouben{D:|a} s dítětem markraběte Dětřicha. Racčí ostrov dostanou snoubenci jako zásnubní dar a spor je u konce.',
       },
       {
         label: 'Připomenout mu pašování a chtít víc',
@@ -858,7 +858,7 @@ const THRONES = {
     thanks: 'Z Marek přijelo poselstvo se zeleným praporem a za ním vozy. {realm.east.Ruler} — kdysi vyhnanec ve tvé síni, dnes král — vzkazuje, že na pomoc v nejhorší hodině nezapomene. Ať rod {dynastyName} řekne, co si přeje.',
     third: { label: 'Chtít, aby markský král přijal Marky z tvé ruky jako léno', ok: '{realm.east.Ruler} poklekl v trůnní síni Vlčího Údělu a přijal Marky z tvé ruky jako léno. Markrabata skřípou zuby — a jejich země slábne.', no: '{realm.east.Ruler} zbledl a odjel bez rozloučení. Vděk má své meze a tohle byla jedna z nich.' },
     revenge: '{realm.east.Ruler} nezapomněl{E:|a}, kdo stál za vzbouřenými markrabaty. Na hranici Sokolího hvozdu se objevily markské hlídky, mýtnice hoří a posel z Marek žádá náhradu za válku, kterou koruna Vlčího Údělu pomáhala rozdmýchat.',
-    hostage: 'Markrabě {realm.east.claimant} žije ve tvé věži už druhý rok. {realm.east.Ruler} posílá vyslance s nabídkou: za jeho vydání zaplatí zlatem a uzavře s korunou smír. {realm.east.claimant} o tom ví — a večer co večer prosí, abys ho nevydal{R:|a}.',
+    hostage: 'Markrabě {realm.east.claimant} žije ve tvé věži už dlouho. {realm.east.Ruler} posílá vyslance s nabídkou: za jeho vydání zaplatí zlatem a uzavře s korunou smír. {realm.east.claimant} o tom ví — a večer co večer prosí, abys ho nevydal{R:|a}.',
   },
   north: {
     border: 'zelezny-hreben',
@@ -873,9 +873,9 @@ const THRONES = {
     won: 'U sněmovní skály se lámala kopí až do soumraku. {realm.north.Ruler} padl{N:|a} na kolena a novým velkým náčelníkem se stal {realm.north.claimant}. Jako první mu poslal dar dvůr ve Vlčím Údělu.',
     lost: '{realm.north.Ruler} rozdrtil{N:|a} vzbouřené kmeny u sněmovní skály. Náčelník {realm.north.claimant} zmizel ve sněhu a na severu se vypráví, čí zlato a čí muži mu pomáhali.',
     thanks: 'Ze severu přijelo poselstvo v kožešinách a za ním sáně plné darů. {realm.north.Ruler} — kdysi vyhnanec ve tvé síni, dnes pán kmenů — vzkazuje, že sever dluhy splácí. Ať rod {dynastyName} řekne, co si přeje.',
-    third: { label: 'Chtít, aby kmeny platily tribut', ok: '{realm.north.Ruler} souhlasil. Kmeny posílají na jih kožešiny a stříbro a jejich síla se tenčí s každým vozem.', no: '{realm.north.Ruler} se zasmál tak, že se třásla síň. Tribut prý sever platí jen mečem — a odjel bez rozloučení.' },
+    third: { label: 'Chtít, aby kmeny platily tribut', ok: '{realm.north.Ruler} souhlasil. Kmeny poslaly na jih první vozy s kožešinami a stříbrem a jejich síla se tenčí.', no: '{realm.north.Ruler} se zasmál tak, že se třásla síň. Tribut prý sever platí jen mečem — a odjel bez rozloučení.' },
     revenge: '{realm.north.Ruler} nezapomněl{N:|a}, kdo stál za vzbouřenými kmeny. Na Železném hřebeni hoří osady, severské tlupy přepadají povozy se solí a posel ze severu žádá náhradu za válku, kterou jih pomáhal rozdmýchat.',
-    hostage: 'Náčelník {realm.north.claimant} žije ve tvé věži už druhý rok. {realm.north.Ruler} posílá vyslance s nabídkou: za jeho vydání zaplatí stříbrem a kožešinami a uzavře s korunou mír. {realm.north.claimant} o tom ví — a večer co večer prosí, abys ho nevydal{R:|a}.',
+    hostage: 'Náčelník {realm.north.claimant} žije ve tvé věži už dlouho. {realm.north.Ruler} posílá vyslance s nabídkou: za jeho vydání zaplatí stříbrem a kožešinami a uzavře s korunou mír. {realm.north.claimant} o tom ví — a večer co večer prosí, abys ho nevydal{R:|a}.',
   },
   south: {
     border: 'pobrezni-mark',
@@ -892,7 +892,7 @@ const THRONES = {
     thanks: 'Do přístavu připlula galéra s purpurovými plachtami a s ní dary, jaké Vlčí Úděl neviděl. {realm.south.Ruler} — kdysi uprchlík ve tvé síni, dnes císař — vzkazuje, že na pomoc v nejhorší hodině nezapomene. Ať rod {dynastyName} řekne, co si přeje.',
     third: { label: 'Chtít výsady pro své kupce v celé říši', ok: 'Kupci z Vlčího Údělu smějí obchodovat v každém přístavu říše bez cla. Přístav Mark zbohatl za jediný rok víc než za celé desetiletí.', no: '{realm.south.Ruler} odmítl s úsměvem. Výsady v říši prý nedostane ani vlastní bratr — a vděk se tím vyčerpal.' },
     revenge: '{realm.south.Ruler} nezapomněl{S:|a}, kdo přivezl vzbouřeného vojevůdce k hradbám. Před Přístavem Mark křižují jižní galéry, kupecké lodě nevyplouvají a posel z jihu žádá náhradu za válku, kterou koruna Vlčího Údělu pomáhala rozdmýchat.',
-    hostage: 'Vojevůdce {realm.south.claimant} žije ve tvé věži už druhý rok. {realm.south.Ruler} posílá vyslance s nabídkou: za jeho vydání zaplatí zlatem a uzavře s korunou věčný mír. {realm.south.claimant} o tom ví — a večer co večer prosí, abys ho nevydal{R:|a}.',
+    hostage: 'Vojevůdce {realm.south.claimant} žije ve tvé věži už dlouho. {realm.south.Ruler} posílá vyslance s nabídkou: za jeho vydání zaplatí zlatem a uzavře s korunou věčný mír. {realm.south.claimant} o tom ví — a večer co večer prosí, abys ho nevydal{R:|a}.',
   },
 };
 
