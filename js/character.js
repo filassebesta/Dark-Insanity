@@ -8,7 +8,7 @@ import { esc } from './ui.js';
 import { effectiveTraits, injuriesOf, injuryFx, INJURIES } from './injuries.js';
 import { ambitionSection } from './fame.js';
 import { talkSection } from './talk_ui.js';
-import { personOf } from './family.js';
+import { personOf, maleFirst } from './family.js';
 import { ensureGear, shopFor, ITEMS, SLOTS } from './gear.js';
 import { fighterOf } from './combat.js';
 
@@ -329,6 +329,7 @@ export function renderPersonSheet(state, role) {
       ${(role === 'heir' || kind === 'child') && c.traits ? `<h4 class="ps-section">Vlastnosti ${c.gender === 'female' ? 'dědičky' : 'dědice'}</h4>
         <p class="ps-note">S těmito vlastnostmi jednou převezme vládu. Utváří je výchova a léta dospívání.</p>
         <div class="ps-traits">${TRAIT_DEFS.map((t) => `<div>${t.icon}<span>${t.label}</span><b>${c.traits[t.key]}</b></div>`).join('')}</div>` : ''}
+      ${kind === 'child' && alive && state.heir && state.heir.alive !== false && !state.heir.presumptive ? `<button class="dialog-button make-heir" data-action="make-heir" data-i="${String(role).split(':')[1]}">Určit ${him} za ${c.gender === 'female' ? 'dědičku' : 'dědice'}</button><p class="ps-note">Dnes ${maleFirst(state) ? 'dědí nejstarší syn, dcera až po něm' : 'dědí nejstarší dítě bez ohledu na pohlaví'}.</p>` : ''}
       ${talkSection(state, role)}
       <h4 class="ps-section">Co ${him} ovlivnilo</h4>
       ${rows ? `<ul class="ps-history">${rows}</ul>` : `<p class="ps-empty">Zatím žádné tvé rozhodnutí ${him} nezasáhlo. Až se ${c.gender === 'female' ? 'jí' : 'ho'} nějaké bude týkat, uvidíš ho tady.</p>`}

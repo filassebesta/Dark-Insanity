@@ -45,6 +45,27 @@ export const FAMILY_EVENTS = [
     ],
   },
   {
+    id: 'dedicke_pravo',
+    scenarios: ALL, forced: true, free: true,
+    image: img('rada_manzela'),
+    title: 'Kdo zdědí rod?',
+    text: 'Narodil se syn {swap.son}. Podle starého zvyku dědí rod nejstarší syn, a tak {swap.daughter}, prvorozená dcera, přestává být dědičkou. Zvyk ale není zákon: jestli to tak zůstane, rozhodneš ty — a kdykoli později to můžeš změnit v listu postavy, u dítěte v Rodině.',
+    choices: [
+      {
+        label: 'Dědicem bude syn, jak je zvykem',
+        hintType: 'resource', hintKey: 'stability',
+        effects: { stability: 1 },
+        chronicle: 'Dědicem rodu {dynastyName} se stal syn {swap.son}. Prvorozená {swap.daughter} zůstává v rodině.',
+      },
+      {
+        label: 'Prvorozená dcera zůstane dědičkou',
+        hintType: 'resource', hintKey: 'legitimacy',
+        keepDaughter: true, effects: { legitimacy: -3 },
+        chronicle: '{ruler.name} {R:rozhodl|rozhodla}, že rod {dynastyName} povede prvorozená {swap.daughter}. Kdo čekal syna, kroutil hlavou.',
+      },
+    ],
+  },
+  {
     id: 'narozeni_levobocka',
     scenarios: ALL, forced: true, free: true,
     image: img('krest_ditete'),
