@@ -35,6 +35,22 @@ const SAY = {
   },
 };
 
+// in the village the same seats are held by the reeve, the smith and the innkeeper
+const SAY_VILLAGE = {
+  chancellor: {
+    sure: ['Ve vsi to chodí jen jedním způsobem.', 'Obecní kniha mluví jasně.', 'Počítal{|a} jsem to dvakrát.'],
+    unsure: ['Není to snadné, ale přikláněl{|a} bych se k jednomu.', 'Žádná cesta není levná. Tahle je nejlevnější.'],
+  },
+  marshal: {
+    sure: ['Tohle se řeší rázně.', 'Pevná ruka a hotovo.', 'Kdo váhá, ten na to doplatí.'],
+    unsure: ['Ani jedno se mi nelíbí, ale volil{|a} bych tohle.', 'Kdybych měl{|a} vsadit vlastní krk, vsadil{|a} bych ho sem.'],
+  },
+  spymaster: {
+    sure: ['U džbánu se o ničem jiném nemluví. Tohle je správně.', 'Vím, co si lidi šeptají.', 'Věř mi. Nebo aspoň mým uším.'],
+    unsure: ['Hosté nevědí všechno. Ale tohle se zdá nejbezpečnější.', 'Potichu a opatrně. Já bych volil{|a} tuhle cestu.'],
+  },
+};
+
 function hash(str) {
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
@@ -123,7 +139,7 @@ export function councilAdvice(state, event) {
       if ((seed % 1000) / 1000 < mislead) pick = scores[scores.length - 1].i;
     }
     const sure = scores[0].v - (scores[1] ? scores[1].v : 0) > 6;
-    const pool = SAY[role][sure ? 'sure' : 'unsure'];
+    const pool = ((state.scenario === 'sedlak' && SAY_VILLAGE[role]) || SAY[role])[sure ? 'sure' : 'unsure'];
     const line = pool[(seed >>> 10) % pool.length].replace(/\{([^|{}]*)\|([^|{}]*)\}/g, (m, a, b) => (c.gender === 'female' ? b : a));
     opinions.push({ role, person: c, index: pick, sure, line, weight: spread });
   }

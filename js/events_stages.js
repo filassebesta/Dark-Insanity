@@ -161,7 +161,7 @@ export const STAGE_EVENTS = [
         hintType: 'trait', hintKey: 'intelligence',
         isRoll: true, baseChance: 0.45, traitKey: 'intelligence', traitScale: 0.05,
         onSuccess: { effects: { prestige: 6, favor: -4 }, traitGain: 'intelligence', chronicle: 'Sudí listinu přečetl a rozhodl: svobodný člověk platí mýto jako ostatní, ne víc. Pacholek z mostu zmizel a {lord.title} {lord.name} zuří.' },
-        onFailure: { effects: { gold: -8, favor: -6 }, chronicle: 'Sudí je {L:pánův|paninin} švagr. Rozhodl, že mýto se vybírá po právu, a k tomu vyměřil poplatek za soud.' },
+        onFailure: { effects: { gold: -8, favor: -6 }, chronicle: 'Sudí je {L:pánův|panin} švagr. Rozhodl, že mýto se vybírá po právu, a k tomu vyměřil poplatek za soud.' },
       },
       {
         label: 'Zanést na panský dvůr dar a připomenout staré služby',

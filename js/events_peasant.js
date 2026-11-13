@@ -23,7 +23,7 @@ export const PEASANT_EVENTS = [
         label: 'Jít a odvést poctivou práci',
         hintType: 'resource', hintKey: 'favor',
         effects: { food: -4, favor: 6 },
-        chronicle: 'Tři dny na panském poli od tmy do tmy. Dráb si tě poznamenal jako spolehlivého.',
+        chronicle: 'Tři dny na panském poli od tmy do tmy. Dráb si tě poznamenal jako {R:spolehlivého|spolehlivou}.',
       },
       {
         label: 'Poslat místo sebe čeleď',
@@ -36,7 +36,7 @@ export const PEASANT_EVENTS = [
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.45, traitKey: 'eloquence', traitScale: 0.04,
         onSuccess: { effects: { food: 3 }, traitGain: 'eloquence', chronicle: 'Dráb uvěřil a ty jsi {R:sklidil|sklidila} vlastní pole včas.' },
-        onFailure: { effects: { favor: -10, prestige: -2 }, chronicle: 'Dráb tě viděl na poli zdravého jako řepa. {L:Pán|Paní} se to dozví.' },
+        onFailure: { effects: { favor: -10, prestige: -2 }, chronicle: 'Dráb tě viděl na poli {R:zdravého|zdravou} jako řepa. {L:Pán|Paní} se to dozví.' },
       },
     ],
   },
@@ -46,7 +46,7 @@ export const PEASANT_EVENTS = [
     scenario: S, cooldown: 10, minTurn: 3,
     image: img('n_kraluv_vybirci'),
     title: 'Dráb si přišel',
-    text: 'Panský dráb stojí na zápraží a tvrdí, že dávky jsou letos vyšší. Na listině nic takového není, ale on číst umí a ty ne. Aspoň si to myslí.',
+    text: 'Panský dráb stojí na zápraží a tvrdí, že dávky jsou letos vyšší. Na listině nic takového není, a myslí si, že listinu nikdo z vás nepřečte.',
     choices: [
       {
         label: 'Zaplatit, ať je pokoj',
@@ -83,7 +83,7 @@ export const PEASANT_EVENTS = [
         label: 'Pohostit družinu tím nejlepším',
         hintType: 'resource', hintKey: 'favor',
         effects: { food: -6, gold: -2, favor: 9 },
-        chronicle: '{lord.Title} {lord.name} odjížděl{L:|a} sytý a spokojený. Zapamatuje si, kde se dobře jí.',
+        chronicle: '{lord.Title} {lord.name} odjížděl{L:|a} {L:sytý a spokojený|sytá a spokojená}. Zapamatuje si, kde se dobře jí.',
       },
       {
         label: 'Schovat dobrou úrodu a ukázat bídu',
@@ -175,7 +175,7 @@ export const PEASANT_EVENTS = [
         isRoll: true, baseChance: 0.35, resourceKey: 'army', resourceScale: 0.4,
         chanceBonus: (s) => (s.resources.prestige - 40) / 200,
         onSuccess: { effects: { prestige: 14, favor: -10, stability: 4 }, music: 'battle', chronicle: 'Povstalci donutili {L:pána|paní} ustoupit: robota se zkrátila a jméno rodu {dynastyName} se zpívá po vsích.' },
-        onFailure: { effects: { favor: -25, army: -8, prestige: 4 }, music: 'battle', chronicle: 'Povstání bylo rozprášeno. Vůdce visí na lípě u cesty a ty sotva {R:unikl|unikla}.' },
+        onFailure: { effects: { favor: -25, army: -8, prestige: 4 }, music: 'battle', chronicle: 'Povstání bylo rozprášeno. Vůdce visí na lípě u cesty a ty jsi sotva {R:unikl|unikla}.' },
       },
       {
         label: 'Zůstat stranou',
@@ -318,7 +318,7 @@ export const PEASANT_EVENTS = [
     scenario: S, cooldown: 11, minTurn: 3,
     image: img('pozar_mesta'),
     title: 'Hoří stodola',
-    text: 'V noci chytila stodola. Jestli od lucerny, od blesku, nebo od souseda Hrubého, se kterým se léta přeš o mez, nikdo neví.',
+    text: 'V noci chytila stodola. Jestli od lucerny, od blesku, nebo od souseda Hrubého, se kterým se přeš o mez, nikdo neví.',
     choices: [
       {
         label: 'Postavit ji znovu se sousedy',
@@ -344,7 +344,7 @@ export const PEASANT_EVENTS = [
 
   {
     id: 's_vlci',
-    scenario: S, cooldown: 9, seasons: [3, 0],
+    scenario: S, cooldown: 9, seasons: [3],
     image: img('vlci'),
     title: 'Vlci u ovčína',
     text: 'Za mrazivých nocí chodí vlci až k ovčínu. Dvě ovce už chybí a psi se bojí vyjít ven.',
@@ -596,7 +596,7 @@ export const PEASANT_EVENTS = [
         hintType: 'trait', hintKey: 'intelligence',
         effects: { gold: -6, faith: 3 },
         heirTraits: { intelligence: 2 },
-        chronicle: '{heir.name} se učí číst a psát. V rodu {dynastyName} je to poprvé.',
+        chronicle: '{heir.name} se učí číst a psát. Na selský rod to není málo.',
       },
       {
         label: 'Nechat doma na gruntu',
@@ -638,7 +638,7 @@ export const PEASANT_EVENTS = [
 
   {
     id: 's_spor_o_mez',
-    scenario: S, cooldown: 9,
+    scenario: S, cooldown: 28,
     image: img('soud_o_mez'),
     title: 'Mez se posunula',
     text: 'Soused Hrubý přeoral mez o dobré tři brázdy. Tvrdí, že tam vždycky byla. Kámen, který ji značil, se nějak ztratil.',
@@ -741,7 +741,7 @@ export const PEASANT_EVENTS = [
 
   {
     id: 's_zvon',
-    scenario: S, cooldown: 20,
+    scenario: S, oneTime: true,
     image: img('katedrala'),
     title: 'Nový zvon',
     text: 'Starý zvon na kostelíku praskl. Farář obchází ves a vybírá na nový. Kdo přispěje nejvíc, toho jméno bude vyryto na okraji zvonu.',
@@ -812,7 +812,7 @@ export const PEASANT_EVENTS = [
         hintType: 'trait', hintKey: 'strength',
         effects: { stability: -4, favor: 5 },
         hiddenEffects: { setFlag: 's_v_poli' },
-        chronicle: '{ruler.name} {R:odešel|odešla} s kopím na rameni. Grunt teď vede rodina.',
+        chronicle: '{ruler.name} {R:odešel|odešla} s kopím na rameni. Grunt teď vedou ti, kdo zůstali doma.',
       },
       {
         label: 'Poslat čeledína',
@@ -877,7 +877,7 @@ export const PEASANT_EVENTS = [
     requires: (s) => s.ruler.statusTier === 1 && s.resources.gold >= 50 && s.resources.favor >= 35,
     image: img('n_koupe_titulu'),
     title: 'Výkup z poddanství',
-    text: 'V truhle pod postelí leží víc grošů, než kdy rod {dynastyName} měl. Za ně se dá koupit to nejcennější: svoboda. {lord.Title} {lord.name} je ochoten{L:|a} jednat.',
+    text: 'V truhle pod postelí leží víc grošů, než kdy rod {dynastyName} měl. Za ně se dá koupit to nejcennější: svoboda. {lord.Title} {lord.name} je {L:ochoten|ochotna} jednat.',
     choices: [
       {
         label: 'Zaplatit plnou cenu',
@@ -940,7 +940,7 @@ export const PEASANT_EVENTS = [
         isRoll: true, baseChance: 0.05, traitKey: 'eloquence', traitScale: 0.025,
         chanceBonus: (s) => (s.resources.prestige - 55) / 150 + (s.resources.favor - 50) / 200,
         onSuccess: { effects: { gold: -90 }, setTier: 3, endGame: 'ennobled', chronicle: 'Král přitiskl pečeť na listinu. Rod {dynastyName} má erb a tvrz u moře.' },
-        onFailure: { effects: { gold: -35, prestige: -8 }, chronicle: 'Královská kancelář žádost zamítla: sedlák zůstane sedlákem, i když má zlato. Písaři si ale nechali poplatek.' },
+        onFailure: { effects: { gold: -35, prestige: -8 }, chronicle: 'Královská kancelář žádost zamítla: sedlák zůstane sedlákem, i když má plnou truhlu. Písaři si ale nechali poplatek.' },
       },
       {
         label: 'Ještě ne',
@@ -957,7 +957,7 @@ export const PEASANT_EVENTS = [
     requires: (s) => s.ruler.statusTier === 2 && s.flags.s_hrdina && s.resources.prestige >= 65,
     image: img('n_povyseni'),
     title: 'Rytířský pás',
-    text: 'Královský maršál si pamatuje svobodného sedláka z bitvy. Na králův pokyn tě zve ke dvoru: kdo bojuje jako rytíř, může jím být. Za pás se ale platí věrnou službou koruně.',
+    text: 'Královský maršál si pamatuje {R:svobodného sedláka|svobodnou selku}, {R:který|která} v bitvě nestál{R:|a} vzadu. Na králův pokyn tě zve ke dvoru: kdo bojuje jako rytíř, může jím být. Za pás se ale platí věrnou službou koruně.',
     choices: [
       {
         label: 'Pokleknout a přijmout pás',
@@ -1174,7 +1174,7 @@ export const PEASANT_QUIET_EVENT = {
   scenario: S,
   image: img('n_klidne_obdobi'),
   title: 'Všední dny',
-  text: 'Nic zvláštního se neděje. Dráb nechodí, nebe je klidné a práce na gruntu je pořád dost. Čemu se letos bude {ruler.name} věnovat?',
+  text: 'Nic zvláštního se neděje. Dráb nechodí, nebe je klidné a práce na gruntu je pořád dost. Čemu se teď bude {ruler.name} věnovat?',
   choices: [
     {
       label: 'Pracovat na poli od tmy do tmy',

@@ -236,7 +236,7 @@ const PROV_LABEL = { wealth: 'bohatství kraje', garrison: 'posádka kraje', loy
 function resName(state, key) {
   const def = RESOURCE_DEFS.find((d) => d.key === key);
   const label = def ? resourceLabel(def, state.scenario) : key;
-  if (key === 'favor') return state.scenario === 'sedlak' ? 'přízeň pána' : 'přízeň krále';
+  if (key === 'favor') return state.scenario === 'sedlak' ? 'přízeň vrchnosti' : 'přízeň krále';
   return label.toLowerCase();
 }
 

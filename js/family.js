@@ -25,7 +25,7 @@ const FERTILE_UNTIL = 42; // the mother's age
 const KINDS = {
   sedlak: [
     { kind: ['mlynářova dcera', 'mlynářův syn'], text: ['Smějí se jí oči a umí počítat pytle líp než otec.', 'Silný jako kůň a o něco chytřejší, než se zdá.'], dowry: { gold: 6 } },
-    { kind: ['vdova po kovářovi', 'vdovec po kovářce'], text: ['Zná práci a bídu a nebojí se ani jednoho.', 'Tichý muž s rukama od sazí a s chalupou po ženě.'], dowry: { army: 3, stability: 3 } },
+    { kind: ['vdova po uhlíři', 'vdovec po bylinkářce'], text: ['Zná práci a bídu a nebojí se ani jednoho.', 'Tichý muž s chalupou po ženě a s rukama od práce.'], dowry: { army: 3, stability: 3 } },
     { kind: ['rychtářova neteř', 'rychtářův synovec'], text: ['Čte, píše a ví, kdo ve vsi komu dluží.', 'Mluví za dva a ve vsi ho znají všichni.'], dowry: { prestige: 5 } },
     { kind: ['dcera ovčáka z kopců', 'syn ovčáka z kopců'], text: ['Divoká jako kopce, odkud přišla.', 'Zvyklý na samotu, vítr a vlky.'], dowry: { food: 8 } },
     { kind: ['dcera krčmáře', 'syn krčmáře'], text: ['Zná každý drb ve vsi, a dřív než ostatní.', 'Umí naslouchat, když ostatní mluví.'], dowry: { gold: 4, prestige: 2 } },

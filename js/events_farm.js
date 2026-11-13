@@ -14,7 +14,7 @@ export const FARM_EVENTS = [
     scenario: 'sedlak', forced: true, free: true,
     image: 'assets/events/bohata_uroda.jpg',
     title: 'Po žních',
-    text: 'Obilí je ve stodole a dny se krátí. Do zimy zbývá pár týdnů, kdy se dá udělat ještě jedna velká práce navíc. {ruler.name} stojí na mezi a přemýšlí, kam dát ruce a groše letos — protože grunt, do kterého se nic nevloží, pomalu chátrá.',
+    text: 'Obilí je ve stodole a dny se krátí. Do jara zbývá dost času na jednu velkou práci navíc. {ruler.name} stojí na mezi a přemýšlí, kam dát ruce a groše letos — protože grunt, do kterého se nic nevloží, pomalu chátrá.',
     choices: [
       {
         label: 'Vyklučit kus lesa na nové pole',

@@ -60,3 +60,14 @@ neaktuální šance u volby po vyslání vojska; po korunovaci změna příjmu b
 nového vládce mají vždy jiné jméno než sourozenci a rádci), svatební zápis v kronice (dříve „provdala za Zbyněk“),
 věk dětí „1 rok / 3 roky“ místo „1 let“, „Pokračovat“ vrátí rozehranou událost (hra se ukládá i s otevřenou
 kartou), nápadník/nápadnice rok předem varuje, než se ožení/vdá jinam.
+
+## Test sedláka (2. kolo, 7 kronik)
+
+Žádná chyba JavaScriptu. Opraveno: rod paní/hráčky v textech (ochotna, sytá a spokojená, spolehlivou,
+panin švagr, utekla jí…), nápadnice, která se „vdala jinam“, se už nevrací (jména se pamatují a jmen je
+víc), povinné zakázky jen na zboží, které se dá sehnat, příčina smrti na konci hry, přídomek u sedláka
+„za život“ a až po 5 letech, prolog bez rozporu s ročním obdobím, „Po žních“ i v zimě, vlci jen v zimě,
+méně opakování (Mez, Zvon jen jednou, Věrné srdce, Večer u ohně), vesnické texty v radě a rozhovorech,
+„Kronika rodu“, „Vlastnosti hospodáře“, nováček v radě nemluví o letech služby, žádost o ruku sedí
+s textem, rozhovor o dítěti u ženy, groše ve správném tvaru, „Přízeň vrchnosti“, plaketa „Rychtář“.
+Zbývá: „Pobřežní Mark“ se v textech jmenuje různě; Brod × Brodná × Brodnice na mapě.

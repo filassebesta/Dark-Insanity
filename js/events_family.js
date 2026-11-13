@@ -74,11 +74,11 @@ export const FAMILY_EVENTS = [
   },
   {
     id: 'touha_po_diteti',
-    scenarios: ALL, cooldown: 6, minTurn: 2, weight: (s) => (noOwnHeir(s) ? 14 : 3),
+    scenarios: ALL, cooldown: 10, minTurn: 2, weight: (s) => (noOwnHeir(s) ? 10 : 2),
     requires: (s) => canConceive(s) && !s.flags.no_more_children && (kidsAlive(s) === 0 || s.turn - (s.lastBirthTurn || 0) >= 6),
     image: img('rada_manzela'),
     title: 'Večer u ohně',
-    text: 'Den skončil, služebnictvo odešlo spát a v krbu dohořívá oheň. {spouse.name} ti položil{M:|a} ruku na rameno a dlouho mlčel{M:|a}. „Myslíš někdy na to, co po nás zůstane?“ {M:zeptal se|zeptala se} nakonec tiše. „Chtěl{M:|a} bych, aby v tomhle domě bylo víc dětského smíchu.“',
+    text: 'Den skončil, v domě už všichni spí a oheň pomalu dohořívá. {spouse.name} ti položil{M:|a} ruku na rameno a dlouho mlčel{M:|a}. „Myslíš někdy na to, co po nás zůstane?“ {M:zeptal se|zeptala se} nakonec tiše. „Chtěl{M:|a} bych, aby v tomhle domě bylo víc dětského smíchu.“',
     choices: [
       {
         label: 'Ano. Chci s tebou dítě',
@@ -109,9 +109,9 @@ export const FAMILY_EVENTS = [
     title: 'Je čas',
     text: 'Jednoho večera přišel na návštěvu někdo, kdo to s rodem myslí dobře — stará teta, kněz nebo přítel z mládí. „Roky běží,“ říká, „a rod bez dědice je jako strom bez kořenů. Vím o někom, kdo by neřekl ne.“ Na stole leží jména a na nich budoucnost rodu {dynastyName}.',
     choices: [
-      { label: 'Sňatek: {suitor.0.name}, {suitor.0.kind}', requires: suitor(0), hintType: 'resource', hintKey: 'prestige', marrySuitor: 0, chronicle: 'Svatba byla domluvená, ale nikdo na ní neplakal smutkem.' },
-      { label: 'Sňatek: {suitor.1.name}, {suitor.1.kind}', requires: suitor(1), hintType: 'resource', hintKey: 'prestige', marrySuitor: 1, chronicle: 'Svatba byla domluvená, ale nikdo na ní neplakal smutkem.' },
-      { label: 'Sňatek: {suitor.2.name}, {suitor.2.kind}', requires: suitor(2), hintType: 'resource', hintKey: 'prestige', marrySuitor: 2, chronicle: 'Svatba byla domluvená, ale nikdo na ní neplakal smutkem.' },
+      { label: 'Sňatek: {suitor.0.name}, {suitor.0.kind}', requires: suitor(0), hintType: 'resource', hintKey: 'prestige', marrySuitor: 0, chronicle: 'Svatba byla domluvená, ale veselá. Láska přijde — nebo nepřijde.' },
+      { label: 'Sňatek: {suitor.1.name}, {suitor.1.kind}', requires: suitor(1), hintType: 'resource', hintKey: 'prestige', marrySuitor: 1, chronicle: 'Svatba byla domluvená, ale veselá. Láska přijde — nebo nepřijde.' },
+      { label: 'Sňatek: {suitor.2.name}, {suitor.2.kind}', requires: suitor(2), hintType: 'resource', hintKey: 'prestige', marrySuitor: 2, chronicle: 'Svatba byla domluvená, ale veselá. Láska přijde — nebo nepřijde.' },
       {
         label: 'Odmítnout — srdce si vybere samo',
         hintType: 'trait', hintKey: 'patience',

@@ -8,7 +8,7 @@
 // a given load by a deadline; the king's and the lord's are obligations.
 // No DOM here — map.js draws it, engine.js runs it every season.
 
-import { clamp, randInt, bumpStat } from './data.js';
+import { clamp, randInt, bumpStat, grosLabel } from './data.js';
 import { makeChronicleEntry } from './state.js';
 
 export const GOODS = {
@@ -172,7 +172,7 @@ export function sellAtHome(state, good, qty) {
   const gold = qty * price(state, 'brod', good);
   t.stock[good] -= qty;
   state.resources.gold = clamp(state.resources.gold + gold);
-  return `Prodáno ${loadText(qty, good)} za ${gold} ${state.scenario === 'sedlak' ? 'grošů' : 'zlata'}.`;
+  return `Prodáno ${loadText(qty, good)} za ${state.scenario === 'sedlak' ? grosLabel(gold) : `${gold} zlata`}.`;
 }
 
 export function buyAtHome(state, good, qty, dest = 'brod') {
@@ -315,7 +315,7 @@ export function resolveOffer(state, mult, notes) {
   const gold = Math.round(ctx.offer * mult * (qty / ctx.qty));
   t.stock[ctx.good] -= qty;
   state.resources.gold = clamp(state.resources.gold + gold);
-  notes.push({ text: `Prodáno ${loadText(qty, ctx.good)} za ${gold}`, tone: 'pos' });
+  notes.push({ text: `Prodáno ${loadText(qty, ctx.good)} za ${state.scenario === 'sedlak' ? grosLabel(gold) : `${gold} zlata`}`, tone: 'pos' });
   state.tradeCtx = null;
 }
 
@@ -368,7 +368,10 @@ function offerContract(state) {
   const t = state.trade;
   const dest = contractMarkets(state)[randInt(0, contractMarkets(state).length - 1)];
   const m = MARKETS[dest];
-  const goods = Object.keys(m.sell).filter((g) => g !== 'wine' || dest !== 'south');
+  // only goods the player can actually get: bought at home in Brod, or wine from the south once trade reaches it
+  const canReachSouth = state.scenario !== 'sedlak' || state.ruler.statusTier >= 2;
+  const obtainable = new Set([...Object.keys(MARKETS.brod.buy), ...(canReachSouth ? ['wine'] : [])]);
+  const goods = Object.keys(m.sell).filter((g) => (g !== 'wine' || dest !== 'south') && obtainable.has(g));
   const good = goods[randInt(0, goods.length - 1)];
   const qty = state.scenario === 'sedlak' ? randInt(2, 4) : randInt(3, 7);
   const obligation = dest === 'court' || dest === 'manor';

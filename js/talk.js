@@ -43,7 +43,7 @@ export const TOPICS = {
     label: 'Zeptat se, jak se má', roles: ALL,
     roll: { trait: 'eloquence', base: 0.55, scale: 0.04 },
     win: { loyalty: 4 }, lose: { loyalty: 1 },
-    text: [(c) => `${c.name} se rozhovořil${g(c, '', 'a')} o věcech, o kterých na dvoře nikdo nemluví. Odcházíte jako lidé, ne jako pán a služebník.`,
+    text: [(c) => `${c.name} se rozhovořil${g(c, '', 'a')} o věcech, o kterých se nahlas nemluví. Rozcházíte se s lehčím srdcem.`,
       (c) => `${c.name} odpovídal${g(c, '', 'a')} zdvořile a krátce. Snad jindy.`],
   },
   rada: {
@@ -256,7 +256,7 @@ export function greeting(state, role) {
   }
   const title = roleLabel(role, c.gender, state.scenario, state.flags);
   if (c.loyalty >= 70) return `${title} ${c.name} se usměje a odloží práci. „Pro tebe mám vždycky čas.“`;
-  if (c.loyalty >= 40) return `${title} ${c.name} se ukloní. „Čím mohu posloužit?“`;
+  if (c.loyalty >= 40) return state.scenario === 'sedlak' || ['spouse', 'heir'].includes(role) ? `${title} ${c.name} zvedne hlavu od práce. „Co potřebuješ?“` : `${title} ${c.name} se ukloní. „Čím mohu posloužit?“`;
   return `${title} ${c.name} se zvedne jen napůl a dívá se kamsi za tebe. „Ano?“`;
 }
 

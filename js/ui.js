@@ -151,7 +151,9 @@ export function updateBookTabFlags(state) {
 
 // ---------- character plaque (bottom of the scene) ----------
 
-function tierLabel(r) {
+function tierLabel(r, state) {
+  // a farmer elected reeve carries the office in the village
+  if (state && state.scenario === 'sedlak' && state.flags && state.flags.s_rychtar) return r.gender === 'female' ? 'Rychtářka' : 'Rychtář';
   return tierTitle(r.statusTier, r.gender);
 }
 
@@ -164,7 +166,7 @@ export function renderCharacterPlaque(state, bumpedTrait = null) {
     <div class="plaque-portrait" data-action="open-character" title="Zobrazit postavu">${initial}${portraitImg(rulerPortraitCandidates(r), r.name)}</div>
     <div class="plaque-id">
       <span class="plaque-name">${esc(r.name)}</span>
-      <span class="plaque-sub">${esc(tierLabel(r))} · ${r.age} let${state.war && state.war.leader === 'ruler' ? ' · <em class="plaque-hurt">v poli</em>' : ''}${hurt.length ? ` · <em class="plaque-hurt">${esc(hurt.join(', '))}</em>` : ''}</span>
+      <span class="plaque-sub">${esc(tierLabel(r, state))} · ${r.age} let${state.war && state.war.leader === 'ruler' ? ' · <em class="plaque-hurt">v poli</em>' : ''}${hurt.length ? ` · <em class="plaque-hurt">${esc(hurt.join(', '))}</em>` : ''}</span>
     </div>
     <div class="plaque-traits">
       ${TRAIT_DEFS.map((t) => {
@@ -417,7 +419,7 @@ export function renderCourtPanel(state) {
   grid.innerHTML = '';
   const f = (c, male, female) => (c.gender === 'female' ? female : male);
   const members = [
-    { data: state.ruler, role: state.scenario === 'sedlak' ? f(state.ruler, 'Hospodář', 'Hospodyně') : f(state.ruler, 'Vládce', 'Vládkyně'), extra: tierLabel(state.ruler), portraits: rulerPortraitCandidates(state.ruler) },
+    { data: state.ruler, role: state.scenario === 'sedlak' ? f(state.ruler, 'Hospodář', 'Hospodyně') : f(state.ruler, 'Vládce', 'Vládkyně'), extra: tierLabel(state.ruler, state), portraits: rulerPortraitCandidates(state.ruler) },
     // a spouse not yet married and an heir not yet born have no card
     ...['heir', 'spouse', 'chancellor', 'marshal', 'spymaster'].filter((r) => !state[r].none).map((r) => (
       { data: state[r], role: roleLabel(r, state[r].gender, state.scenario, state.flags), portraits: memberPortraitCandidates(state[r], r, state.scenario), person: r })),
@@ -446,7 +448,8 @@ export function renderCourtPanel(state) {
   grid.parentElement.querySelector('.ruler-status')?.remove();
   const traitsHost = document.createElement('div');
   traitsHost.className = 'ruler-status';
-  traitsHost.innerHTML = '<h4>Vlastnosti vládce</h4>' + TRAIT_DEFS.map((t) =>
+  const who = state.scenario === 'sedlak' ? ['hospodáře', 'hospodyně'] : state.scenario === 'slechtic' ? ['pána', 'paní'] : ['vládce', 'vládkyně'];
+  traitsHost.innerHTML = `<h4>Vlastnosti ${who[state.ruler.gender === 'female' ? 1 : 0]}</h4>` + TRAIT_DEFS.map((t) =>
     `<div class="trait-row"><span>${t.icon}${t.label}</span><span>${effectiveTraits(state.ruler)[t.key]}</span></div>`
   ).join('');
   grid.after(traitsHost);

@@ -13,7 +13,7 @@ export const RESOURCE_DEFS = [
   { key: 'faith', label: 'Víra', icon: ICONS.faith, critical: 10 },
   { key: 'prestige', label: 'Prestiž', icon: ICONS.prestige, critical: 5, labels: { sedlak: 'Pověst' } },
   // Šlechtic: the king's goodwill, Sedlák: the lord's; at zero the land is taken away
-  { key: 'favor', label: 'Přízeň krále', icon: ICONS.favor, critical: 15, labels: { sedlak: 'Přízeň pána', slechtic: 'Přízeň koruny' } },
+  { key: 'favor', label: 'Přízeň krále', icon: ICONS.favor, critical: 15, labels: { sedlak: 'Přízeň vrchnosti', slechtic: 'Přízeň koruny' } },
 ];
 
 /** Resource label as the current scenario calls it (legitimacy = claim to the throne for a noble). */

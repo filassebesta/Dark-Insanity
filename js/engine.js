@@ -1,4 +1,4 @@
-import { SEASONS, TERRAIN_DEFS, NOBLE_HOUSES, PEASANT_HOME, clamp, randomName, randInt, tierTitle, bumpStat, TRAIT_DEFS, RESOURCE_DEFS, resourceLabel } from './data.js';
+import { SEASONS, TERRAIN_DEFS, NOBLE_HOUSES, PEASANT_HOME, clamp, randomName, randInt, tierTitle, bumpStat, TRAIT_DEFS, RESOURCE_DEFS, resourceLabel, grosLabel } from './data.js';
 import { makeChronicleEntry, inheritTraits, promote } from './state.js';
 import { ageRealms, realmIncome, realmRulerLabel, REALMS } from './realms.js';
 import { THRONE_STEPS } from './events_throne.js';
@@ -285,8 +285,7 @@ function applyCourtReplacement(state, spec, notes, meta) {
     age: randInt(spec.minAge ?? 30, spec.maxAge ?? 50),
     loyalty: clamp((spec.loyalty ?? 60) + randInt(-5, 5)), alive: true,
     ...(QUIRK_ROLES.includes(role) ? { quirk: randomQuirk() } : {}),
-    history: [{ year: state.year, season: state.seasonIndex, title: 'Jmenování do úřadu', choice: meta?.label || '', outcome: 'normal', delta: null }],
-  };
+    history: [{ year: state.year, season: state.seasonIndex, title: 'Jmenování do úřadu', choice: meta?.label || '', outcome: 'normal', delta: null }], since: state.turn };
   if (meta) meta.replaced = true;
   const fem = state[role].gender === 'female';
   const quirk = quirkLabel(state[role]);
@@ -801,13 +800,14 @@ export function reignEpithet(state, ruler = state.ruler) {
   for (const [key, score] of Object.entries(scores)) {
     if (score > bestScore) { best = key; bestScore = score; }
   }
-  if (best === 'quiet' && years < 2) return null; // too early to tell
+  if (best === 'quiet' && years < 5) return null; // too early to tell
   const [male, female, reason] = EPITHETS[best] || INJURY_EPITHETS[best.replace('injury_', '')];
   const f = ruler.gender === 'female';
   return {
     key: best,
     word: f ? female : male,
-    reason: reason.replace(/\{([^|{}]*)\|([^|{}]*)\}/g, (m, a, b) => (f ? b : a)),
+    // a farmer has no reign: "za vládu bez bouří" becomes "za život bez bouří"
+    reason: reason.replace(/\{([^|{}]*)\|([^|{}]*)\}/g, (m, a, b) => (f ? b : a)).replace('za vládu', isPeasant(state) ? 'za život' : 'za vládu'),
   };
 }
 
@@ -1185,7 +1185,7 @@ function retireOldAdvisers(state) {
     for (let i = 0; i < 20 && [state.ruler.name, state.heir.name, state.spouse.name, state.chancellor.name, state.marshal.name, state.spymaster.name].includes(name); i++) name = randomName(g);
     const title = roleLabel(role, c.gender, state.scenario, state.flags);
     state.chronicle.push(makeChronicleEntry(state, `${title} ${c.name} ${c.gender === 'female' ? 'zemřela' : 'zemřel'} ve věku ${c.age} let. Na ${c.gender === 'female' ? 'její' : 'jeho'} místo nastupuje ${name}.`));
-    state[role] = { role, name, gender: g, age: randInt(28, 45), loyalty: clamp(55 + randInt(-8, 8)), alive: true, quirk: randomQuirk() };
+    state[role] = { role, name, gender: g, age: randInt(28, 45), loyalty: clamp(55 + randInt(-8, 8)), alive: true, quirk: randomQuirk(), since: state.turn };
   }
 }
 
@@ -1307,14 +1307,15 @@ function handleSuccession(state, cause = 'stářím') {
     state.pendingEvent = 'nastupnictvi';
     return true;
   }
+  const how = cause === 'stářím' ? 'stářím' : cause;
   state.gameOver = {
     type: isPeasant(state) ? 'ruined' : 'collapse',
     reason: 'dynasty-extinct',
     text: isPeasant(state)
-      ? `${state.ruler.name} umírá bez žijícího dědice. Rod ${state.dynastyName} vymírá a grunt dostane pán někomu jinému.`
+      ? `${state.ruler.name} umírá ${how} bez žijícího dědice. Rod ${state.dynastyName} vymírá a grunt dostane pán někomu jinému.`
       : isNoble(state)
-      ? `${state.ruler.name} umírá bez žijícího dědice. Rod ${state.dynastyName} vymírá a jeho panství připadá koruně.`
-      : `${state.ruler.name} umírá bez žijícího dědice. Dynastie ${state.dynastyName} vymírá a království se hroutí do chaosu.`,
+      ? `${state.ruler.name} umírá ${how} bez žijícího dědice. Rod ${state.dynastyName} vymírá a jeho panství připadá koruně.`
+      : `${state.ruler.name} umírá ${how} bez žijícího dědice. Dynastie ${state.dynastyName} vymírá a království se hroutí do chaosu.`,
   };
   return false;
 }
@@ -1436,7 +1437,8 @@ export function advanceTurn(state) {
 
   const seasonLabel = SEASONS[state.seasonIndex];
   const [goldWord, foodWord] = isPeasant(state) ? ['grošů', 'zásob'] : ['zlata', 'jídla'];
-  const turnSummary = `${seasonLabel} roku ${state.year}. Příjem: ${goldIncome >= 0 ? '+' : ''}${goldIncome} ${goldWord}, ${foodIncome >= 0 ? '+' : ''}${foodIncome} ${foodWord}.${deathCheckText}`;
+  const goldText = isPeasant(state) ? grosLabel(goldIncome) : `${goldIncome} ${goldWord}`;
+  const turnSummary = `${seasonLabel} roku ${state.year}. Příjem: ${goldIncome >= 0 ? '+' : ''}${goldText}, ${foodIncome >= 0 ? '+' : ''}${foodIncome} ${foodWord}.${deathCheckText}`;
   state.chronicle.push(makeChronicleEntry(state, turnSummary));
 
   const gameOver = checkEndConditions(state);
