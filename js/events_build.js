@@ -421,14 +421,14 @@ export const BUILD_EVENTS = [
     id: 't_s_dobytek',
     scenario: 'sedlak', cooldown: 14,
     image: img('s_spatna_uroda'),
-    requires: (s) => hasBuilding(s, 'grunt', 'chlev', true),
+    requires: (s) => hasBuilding(s, 'grunt', 'chlev', true) && (!s.farm || s.farm.cows > 0),
     title: 'Nemoc v chlévě',
     text: 'Kráva v chlévě nežere a stojí se svěšenou hlavou. Jestli je to mor dobytka, do týdne bude chlév prázdný.',
     choices: [
       {
         label: 'Zabít nemocný kus',
         hintType: 'resource', hintKey: 'food',
-        effects: { food: -3, stability: 1 },
+        effects: { food: -3, stability: 1 }, farm: { cows: -1 },
         chronicle: 'Nemocná kráva skončila v jámě za humny. Ostatní dobytek zůstal zdravý.',
       },
       {
@@ -443,7 +443,7 @@ export const BUILD_EVENTS = [
         hintType: 'trait', hintKey: 'patience',
         isRoll: true, baseChance: 0.5,
         onSuccess: { chronicle: 'Kráva se z toho vylízala sama. Štěstí přeje trpělivým.' },
-        onFailure: { effects: { food: -8, stability: -3 }, chronicle: 'Nemoc prošla celým chlévem. Zůstal jen prázdný žlab.' },
+        onFailure: { effects: { food: -8, stability: -3 }, farm: { cows: -99 }, chronicle: 'Nemoc prošla celým chlévem. Zůstal jen prázdný žlab.' },
       },
     ],
   },

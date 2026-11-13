@@ -1434,6 +1434,29 @@ kbd {
 .build-demolish.confirm { border-color: #8a2c26; color: #8a2c26; background: rgba(138,44,38,.08); }
 .build-art, .town-art { display: block; width: 100%; border-radius: 4px; margin: .4rem 0 .8rem; box-shadow: 0 2px 10px rgba(43,33,24,.3); }
 
+/* the farm stock: grain and animals (js/farm.js) */
+.town-svg .tp-pen { fill: rgba(159,165,101,.32); stroke: #8a6440; stroke-width: 3; stroke-dasharray: 3 7; stroke-linecap: round; }
+.farm-stock { display: grid; gap: .45rem; margin: .2rem 0 1rem; }
+.farm-item { display: flex; gap: .7rem; align-items: flex-start; padding: .55rem .7rem; border: 1px solid rgba(120,80,30,.22); border-left: 3px solid #9fa565; background: rgba(255,250,235,.38); border-radius: 3px; }
+.farm-item.missing { opacity: .62; border-left-color: rgba(120,80,30,.25); background: transparent; }
+.farm-ico { flex: none; width: 54px; height: 42px; border-radius: 4px; background: rgba(169,163,108,.35); border: 1px solid rgba(120,80,30,.2); display: grid; place-items: center; }
+.farm-ico svg { width: 100%; height: 100%; }
+.farm-item.missing .farm-ico { filter: grayscale(.85); }
+.farm-main { display: flex; flex-direction: column; gap: .28rem; min-width: 0; flex: 1; }
+.farm-main > b { font-family: var(--font-caps); font-size: .86rem; font-weight: 700; letter-spacing: .08em; color: var(--ink); display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; }
+.farm-main > b small { font-family: var(--font-body, inherit); letter-spacing: 0; font-weight: 400; font-size: .85rem; color: var(--ink-soft); text-align: right; }
+.farm-main > b small b { color: #7a2418; font-size: .95rem; }
+.farm-main em { font-style: normal; font-size: .84rem; line-height: 1.45; color: var(--ink-soft); }
+.farm-main em.farm-warn { font-style: italic; color: #a8452f; }
+.farm-bar { display: block; height: 7px; border-radius: 4px; background: rgba(43,33,24,.14); overflow: hidden; }
+.farm-bar i { display: block; height: 100%; background: linear-gradient(90deg, #c9a24f, #d8b866); border-radius: 4px; }
+.farm-pips { display: flex; gap: 5px; }
+.farm-pips i { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid rgba(58,42,26,.4); background: rgba(255,250,235,.5); }
+.farm-pips i.on { background: #6f8a4a; border-color: #4d6440; }
+.farm-pips i.over { border-style: dashed; border-color: #a8452f; }
+.farm-trade { display: flex; flex-wrap: wrap; gap: .25rem; }
+.farm-trade .trade-mini { margin: 0; }
+
 @media (max-width: 900px) {
   .map-view.town-open .map-layer-toggles { display: none; }
   .town-bar { flex-wrap: wrap; gap: .5rem; }
@@ -1653,6 +1676,9 @@ kbd {
 .gear-buy span { font-size: .85rem; color: rgba(235,227,209,.65); }
 .gear-buy em { font-style: normal; font-size: .8rem; color: var(--gold); }
 .gear-buy i { position: absolute; top: .6rem; right: .75rem; font-style: normal; font-size: .85rem; color: var(--gold-bright); }
+.gear-buy small { font-size: .78rem; font-style: italic; }
+.gear-buy small.gear-why { color: #e09a7f; }
+.gear-buy small.gear-note { color: rgba(156,188,108,.9); }
 .cb-ally { grid-column: 1 / -1; font-size: .78rem; color: #3f6b2a; }
 @media (max-width: 560px) { .cs-gear li { grid-template-columns: 4rem 1fr; } .cs-gear em { grid-column: 2; } }
 

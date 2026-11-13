@@ -48,3 +48,27 @@ export function smartPick(E, state, event, randomness = 0.15) {
   }
   return best;
 }
+
+// The farm (farm.js) for a sensible peasant: build a cowshed, a stable, a mill
+// and a pigsty when there is money to spare, keep the pens full and sell grain
+// the barn cannot hold. Turned on in the sims with FARM=1.
+//   import { farmRule } from './smart.mjs';  farmRule(B, F, state);   (B = build.js, F = farm.js)
+const FARM_PLAN = ['chlev', 'staj', 'mlynek', 'chlivek'];
+const FARM_BUY = ['cows', 'pigs', 'horses'];
+
+export function farmRule(B, F, state) {
+  if (state.scenario !== 'sedlak' || !F.ensureFarm(state)) return;
+  const id = B.FARM_ID;
+  const town = B.townOf(state, id);
+  const keep = state.ruler.statusTier < 2 ? 25 : 8; // a serf saves for the buyout (50 groše)
+  if (!B.currentProject(town)) {
+    for (const key of FARM_PLAN) {
+      if (B.buildBlock(state, id, key) || state.resources.gold < B.buildingDef(key).cost.gold + keep) continue;
+      const slot = [...Array(B.slotCount(id, town.level)).keys()].find((i) => B.freeSlot(state, id, i));
+      if (slot !== undefined) B.startBuilding(state, id, key, slot);
+      break;
+    }
+  }
+  for (const key of FARM_BUY) if (!F.buyBlock(state, key) && state.resources.gold >= F.STOCK[key].buy + keep) F.buyStock(state, key);
+  while (state.farm.grain > 8) F.sellStock(state, 'grain');
+}

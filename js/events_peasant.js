@@ -323,21 +323,21 @@ export const PEASANT_EVENTS = [
       {
         label: 'Postavit ji znovu se sousedy',
         hintType: 'resource', hintKey: 'prestige',
-        effects: { gold: -4, stability: -3, prestige: 3 },
+        effects: { gold: -4, stability: -3, prestige: 3 }, farm: { grain: -99 }, // the sacks inside burnt with it
         chronicle: 'Půl vsi přišlo s trámy a sekerami. Stodola stojí a sousedství drží.',
       },
       {
         label: 'Postavit ji sám bez cizí pomoci',
         hintType: 'resource', hintKey: 'gold',
-        effects: { gold: -10 },
+        effects: { gold: -10 }, farm: { grain: -99 },
         chronicle: 'Nová stodola stála peníze, ale nikomu nic nedlužíš.',
       },
       {
         label: 'Obvinit souseda Hrubého',
         hintType: 'trait', hintKey: 'intelligence',
         isRoll: true, baseChance: 0.4, traitKey: 'intelligence', traitScale: 0.04,
-        onSuccess: { effects: { gold: 6, stability: -3, prestige: 4 }, chronicle: 'U Hrubého se našla tvoje lucerna. Zaplatí škodu do posledního groše.' },
-        onFailure: { effects: { stability: -6, prestige: -6 }, courtEffects: { chancellor: { loyalty: -6 } }, chronicle: 'Důkazy nebyly. Hrubý se směje a ves si šeptá o tvé zlé krvi.' },
+        onSuccess: { effects: { gold: 6, stability: -3, prestige: 4 }, farm: { grain: -99 }, chronicle: 'U Hrubého se našla tvoje lucerna. Zaplatí škodu do posledního groše.' },
+        onFailure: { effects: { stability: -6, prestige: -6 }, farm: { grain: -99 }, courtEffects: { chancellor: { loyalty: -6 } }, chronicle: 'Důkazy nebyly. Hrubý se směje a ves si šeptá o tvé zlé krvi.' },
       },
     ],
   },

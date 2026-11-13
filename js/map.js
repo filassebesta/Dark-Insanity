@@ -13,6 +13,7 @@ import {
   PEASANT_VILLAGE, townIdFor, townOf, levelName, currentProject, ownsTown, startBuilding, startUpgrade, cancelProject, demolish,
 } from './build.js';
 import { renderTownPlan, townSidebar } from './town.js';
+import { buyStock, sellStock, grindGrain } from './farm.js';
 import { worldSvg, worldSidebar, WORLD_IMAGE } from './world.js';
 import {
   warTargets, warBlock, startWar, recallWar, warTarget, marchShare, warOrigin, oddsLabel, leaderLabel, SIZES,
@@ -1282,6 +1283,14 @@ function handleTownClick(t) {
     return true;
   }
   if (t.closest('[data-cancel-project]')) { townAction(cancelProject(state, town.id)); return true; }
+  // the farm stock: animals and grain (farm.js)
+  const farmBtn = t.closest('[data-farm-buy], [data-farm-sell], [data-farm-grind]');
+  if (farmBtn) {
+    if (farmBtn.disabled) return true;
+    const d = farmBtn.dataset;
+    townAction(d.farmBuy ? buyStock(state, d.farmBuy) : d.farmSell ? sellStock(state, d.farmSell) : grindGrain(state));
+    return true;
+  }
   const demo = t.closest('[data-demolish]');
   if (demo) {
     if (demo.dataset.confirm) townAction(demolish(state, town.id, Number(demo.dataset.demolish)));

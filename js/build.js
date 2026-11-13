@@ -15,6 +15,7 @@
 import { clamp, bumpStat } from './data.js';
 import { makeChronicleEntry } from './state.js';
 import { ensureTrade, MAX_STOCK } from './trade.js';
+import { farmBuildingDone } from './farm.js';
 
 // ---------- settlements ----------
 
@@ -186,16 +187,29 @@ export const BUILDINGS = {
 // a monastery has no market or barracks
 const ABBEY_ALLOWED = ['kostel', 'spital', 'skola', 'sypka', 'mlyn', 'katedrala', 'hradby'];
 
+// the farm's stock (grain, cows, horses, pigs) and what these buildings do for it: farm.js FARM_WORKS
 export const FARM_BUILDINGS = {
   stodola: {
     name: 'Stodola', cost: { gold: 5 }, turns: 2, minLevel: 1,
     income: { food: 2 }, seasons: [2], onBuild: { stability: 2 },
-    text: 'Místo pro úrodu. Co se nevejde pod střechu, to sežerou myši a déšť.',
+    text: 'Místo pro úrodu a obilí v pytlích. Co se nevejde pod střechu, to sežerou myši a déšť.',
+  },
+  mlynek: {
+    name: 'Mlýn', cost: { gold: 12 }, turns: 3, minLevel: 2,
+    text: 'Vodní mlýnek na potoce za humny. Mele obilí celé vsi a z každého pytle si nechá mírku.',
   },
   chlev: {
     name: 'Chlév', cost: { gold: 6 }, turns: 2, minLevel: 1,
-    yearly: { food: 3 }, onBuild: { stability: 3 },
-    text: 'Kráva, prase a pár slepic. Mléko, sádlo a vejce, i když se pole nevydaří.',
+    onBuild: { stability: 3 },
+    text: 'Stání pro krávy. Mléko a sýr i v roce, kdy se pole nevydaří, a na jaře občas tele.',
+  },
+  staj: {
+    name: 'Stáj', cost: { gold: 8 }, turns: 2, minLevel: 1,
+    text: 'Stáj pro koně. Kůň zorá víc pole než kráva a sveze úrodu dřív, než přijde déšť.',
+  },
+  chlivek: {
+    name: 'Chlívek', cost: { gold: 4 }, turns: 1, minLevel: 1,
+    text: 'Chlívek pro prasata. Prasnice na jaře vrhne selata a v zimě je zabijačka.',
   },
   vcelin: {
     name: 'Včelín', cost: { gold: 4 }, turns: 1, minLevel: 1,
@@ -450,6 +464,7 @@ function finishBuilding(state, id, b, news) {
   for (const [k, v] of Object.entries(def.onBuild || {})) addRes(state, k, v);
   const prov = provinceOf(state, id);
   if (def.onProv && prov && !isFarm(id)) for (const [k, v] of Object.entries(def.onProv)) prov[k] = clamp((prov[k] || 0) + v);
+  if (isFarm(id)) farmBuildingDone(state, b.key); // a new cowshed comes with its first cow
   bumpStat(state, 'built');
   const text = `Dostavěno ${settlementDef(id).loc}: ${def.name.toLowerCase()}.`;
   news.push(text);

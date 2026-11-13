@@ -7,6 +7,7 @@ import { EVENTS, QUIET_EVENTS } from './events.js';
 import { roleLabel, QUIRK_ROLES, randomQuirk, quirkLabel } from './court.js';
 import { processTrade, resolveIncident, resolveOffer, addTradeMod, ensureTrade, cargoTokens, GOODS, MAX_STOCK } from './trade.js';
 import { processBuilding, buildingDrift, applyTownEffects, settlementDef } from './build.js';
+import { processFarm, applyFarmEffects, loseFarmStock } from './farm.js';
 import {
   effectiveTraits, injuryMods, injure, applyInjuryEffects, processInjuries, injuryTokens,
   injuryEpithetScores, INJURY_EPITHETS, lastingInjuryNames, STRENGTH_FAIL_INJURY,
@@ -486,6 +487,7 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
   applyHeirTraits(state, branch.heirTraits, notes);
   applyTradeEffects(state, branch, notes);
   applyTownEffects(state, state.eventContext?.town, branch.town, notes);
+  applyFarmEffects(state, branch.farm, notes); // grain and animals of the peasant's farm
   applyInjuryEffects(state, branch, notes); // wounds, cures and wooden legs
   if (branch.ambition) {
     const a = startAmbition(state, branch.ambition);
@@ -616,7 +618,7 @@ export const FARM_DECREES = {
   clear: { label: 'Vyklučit kus lesa', text: 'Nové pole za cenu potu a jedné zimy.', effects: { stability: 6, food: 3, army: -1 } },
   hire: { label: 'Najmout čeledíny', text: 'Dva tři páry rukou navíc za mzdu a stravu.', effects: { gold: -8, army: 6 } },
   market: { label: 'Prodat přebytky na trhu', text: 'Obilí a sýry na trh do Brodné.', effects: { food: -10, gold: 6 } },
-  cattle: { label: 'Přikoupit dobytek', text: 'Kráva navíc znamená mléko i tah.', effects: { gold: -10, food: 4, stability: 5 } },
+  cattle: { label: 'Přikoupit dobytek', text: 'Kráva navíc znamená mléko i tah.', effects: { gold: -10, food: 4, stability: 5 }, farm: { cows: 1 } }, // a real cow when the cowshed has room
   neighbours: { label: 'Pomoci sousedům', text: 'Půjčit ruce a sdílet zásoby.', effects: { food: -5, prestige: 6 } },
   lord: { label: 'Přilepšit vrchnosti', text: 'Dar navíc pro panský dvůr.', effects: { gold: -6, favor: 8 } },
 };
@@ -647,6 +649,7 @@ export function issueDecree(state, key, provinceId) {
     applyProvinceEffects(state, { [prov.id]: d.prov }, notes);
   }
   applyEffects(state, d.effects);
+  applyFarmEffects(state, d.farm, notes);
   state.decreeYear = state.year;
   const where = d.prov ? ` (${state.provinces.find((p) => p.id === provinceId).name.replace(/ \(.*\)$/, '')})` : '';
   state.chronicle.push(makeChronicleEntry(state, `${isPeasant(state) ? 'Práce na gruntu' : 'Výnos'} roku ${state.year}: ${d.label}${where}.`));
@@ -1278,6 +1281,7 @@ export function checkEndConditions(state) {
     if (state.resources.stability <= 0 && !state.flags.chalupa) {
       // the first ruin is not the end: the lord gives the family a cottage at the edge of the village
       state.flags.chalupa = true;
+      loseFarmStock(state); // the cattle are gone with the farm
       const r = state.resources;
       Object.assign(r, { stability: 30, gold: 0, food: Math.max(r.food, 15), army: Math.max(r.army, 12), prestige: clamp(r.prestige - 10) });
       state.chronicle.push(makeChronicleEntry(state, `Grunt rodu ${state.dynastyName} zpustl. Rodina dostala chalupu na kraji vsi a začíná znovu.`));
@@ -1343,10 +1347,11 @@ export function advanceTurn(state) {
 
   const economy = processTurnEconomy(state);
   const built = processBuilding(state); // finished work and what the towns' buildings yield
+  const farm = processFarm(state); // the peasant's grain and animals (farm.js)
   const crowns = state.scenario === 'panovnik' ? realmIncome(state) : 0; // foreign crowns held by the king pay their dues
   if (crowns) state.resources.gold = clamp(state.resources.gold + crowns);
-  const goldIncome = economy.goldIncome + built.gold + crowns;
-  const foodIncome = economy.foodIncome + built.food;
+  const goldIncome = economy.goldIncome + built.gold + crowns + farm.gold;
+  const foodIncome = economy.foodIncome + built.food + farm.food;
   let successionOccurred = false;
   let deathCheckText = '';
 
@@ -1374,7 +1379,7 @@ export function advanceTurn(state) {
     : 'Zásoby jídla docházejí. V krajích roste nevole.');
   const ambitionNews = processAmbition(state);
   updateGoldenAgeStreak(state);
-  const tradeNews = [...familyNews, ...wounds.news, ...worldNews, ...ambitionNews, ...built.news, ...processTrade(state)];
+  const tradeNews = [...familyNews, ...wounds.news, ...worldNews, ...ambitionNews, ...built.news, ...farm.news, ...processTrade(state)];
 
   const seasonLabel = SEASONS[state.seasonIndex];
   const [goldWord, foodWord] = isPeasant(state) ? ['grošů', 'zásob'] : ['zlata', 'jídla'];

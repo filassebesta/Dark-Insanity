@@ -9,6 +9,9 @@ import {
 import { GOODS } from './trade.js';
 import { RESOURCE_DEFS, resourceLabel, NOBLE_HOUSES } from './data.js';
 import { esc } from './ui.js';
+import {
+  ensureFarm, roomFor, STOCK, ANIMALS, FLOUR, buyBlock, sellBlock, farmOutlook, worksChips, plural,
+} from './farm.js';
 
 // Painted art that has arrived (see docs/gemini-prompts.md, section 16).
 // Add a key here once assets/buildings/<key>.jpg or assets/towns/<kind>.jpg exists.
@@ -98,7 +101,58 @@ const ICONS = {
   celednik: () => `${house(-46, 14, 92, 34, 24, '#a08550')}${[-36, -20, 14, 30].map((x) => win(x, -12)).join('')}${rect(24, -52, 9, 16, C.stone2)}${smoke(28, -58)}`,
   rybnik: () => `<ellipse cx="0" cy="0" rx="54" ry="22" fill="${C.water}" stroke="${C.wood2}" stroke-width="2"/><path d="M-30 -2q8 -4 16 0M8 6q8 -4 16 0" stroke="#c9d6da" stroke-width="2" fill="none"/>
     ${[-50, -44, 46, 52].map((x) => `<path d="M${x} 6v-18" stroke="${C.green}" stroke-width="2"/>`).join('')}<path class="b-fish" d="M-6 -6q6 -5 12 0q-6 5 -12 0l-4 -3v6z" fill="${C.gold}"/>`,
+  // a water mill on the brook: a cottage and a turning wheel
+  mlynek: () => `<path d="M-58 14q20 -6 40 0t40 0" stroke="${C.water}" stroke-width="8" fill="none"/>${house(-46, 10, 60, 40, 26, C.roof2)}${win(-36, -16)}${win(-4, -16)}${rect(-10, -64, 9, 16, C.stone2)}
+    <g><animateTransform attributeName="transform" type="rotate" from="0 34 -12" to="360 34 -12" dur="9s" repeatCount="indefinite"/><circle cx="34" cy="-12" r="22" fill="none" stroke="${C.wood2}" stroke-width="3"/>
+    ${[0, 45, 90, 135].map((a) => `<path d="M34 -34v44" stroke="${C.wood}" stroke-width="2.5" transform="rotate(${a} 34 -12)"/>`).join('')}</g><circle cx="34" cy="-12" r="4" fill="${C.ink}"/>`,
+  staj: () => `${rect(-52, -22, 104, 36, C.wood)}${hip(-52, -22, 104, 18, C.roof2)}${[-40, -12, 16].map((x) => `${rect(x, -14, 22, 28, C.wood2)}<path d="M${x} 0h22" stroke="${C.wood}" stroke-width="2"/>`).join('')}
+    <path d="M-34 -10q2 -10 9 -12l3 4q-3 2 -4 8z" fill="#7a5232" stroke="${C.ink}" stroke-width="1"/><path d="M42 14v-22h10" stroke="${C.wood2}" stroke-width="2.5" fill="none"/>`,
+  chlivek: () => `${rect(-44, -14, 50, 28, C.stone)}${gable(-44, -14, 50, 16, '#a08550')}${door(-19, 14, 10, 14)}<path d="M10 14v-14M24 14v-14M38 14v-14M10 2h28M10 9h28" stroke="${C.wood2}" stroke-width="2.2"/>
+    <g transform="translate(25 20) scale(.8)">${beast('pigs')}</g>`,
 };
+
+// ---------- farm animals and grain (farm.js), drawn about 60 × 36 around 0,0 ----------
+
+function beast(key) {
+  if (key === 'cows') {
+    return `${[-11, -5, 8, 13].map((x) => `<path d="M${x} 6v10" stroke="${C.ink}" stroke-width="2.6"/>`).join('')}
+      <path d="M-17 -2q-6 4 -4 11" stroke="${C.ink}" stroke-width="1.5" fill="none"/><ellipse cx="0" cy="0" rx="17" ry="9" fill="#f1ead8" stroke="${C.ink}" stroke-width="1.2"/>
+      <path d="M-7 -8q5 3 1 9q-6 -2 -1 -9zM5 -3q6 1 4 7q-6 0 -4 -7z" fill="${C.ink}"/>
+      <path d="M15 -5q9 -4 12 2q1 7 -6 7q-5 -1 -6 -5z" fill="#f1ead8" stroke="${C.ink}" stroke-width="1.2"/><ellipse cx="25" cy="3" rx="3.2" ry="2.4" fill="#d9a59a"/><path d="M18 -6l-3 -5M24 -6l3 -5" stroke="${C.ink}" stroke-width="1.5"/>`;
+  }
+  if (key === 'horses') {
+    return `${[-11, -5, 8, 13].map((x) => `<path d="M${x} 5v12" stroke="#4d3220" stroke-width="2.6"/>`).join('')}
+      <path d="M-16 -3q-9 2 -8 14" stroke="#3a2416" stroke-width="3" fill="none"/><ellipse cx="0" cy="0" rx="16" ry="8" fill="#7a5232" stroke="${C.ink}" stroke-width="1.2"/>
+      <path d="M10 -4l6 -14q4 -4 10 -1l3 6q-1 3 -5 2l-4 -1l-3 10z" fill="#7a5232" stroke="${C.ink}" stroke-width="1.2"/><path d="M11 -6l5 -13" stroke="#3a2416" stroke-width="3"/><circle cx="23" cy="-15" r="1.2" fill="${C.ink}"/>`;
+  }
+  if (key === 'pigs') {
+    return `${[-8, -3, 5, 9].map((x) => `<path d="M${x} 5v6" stroke="${C.ink}" stroke-width="2.4"/>`).join('')}
+      <path d="M-13 -2q-6 -3 -4 -6q3 -1 2 3" stroke="${C.ink}" stroke-width="1.3" fill="none"/><ellipse cx="0" cy="0" rx="13" ry="8.5" fill="#e7a99a" stroke="${C.ink}" stroke-width="1.2"/>
+      <ellipse cx="14" cy="1" rx="3.4" ry="4" fill="#d98c7c" stroke="${C.ink}" stroke-width="1.1"/><path d="M6 -7l3 -6l3 5z" fill="#d98c7c" stroke="${C.ink}" stroke-width="1"/><circle cx="9" cy="-2" r="1.1" fill="${C.ink}"/>`;
+  }
+  // a sack of grain
+  return `<path d="M-10 14q-6 -4 -5 -14q1 -10 8 -14l-2 -4h18l-2 4q7 4 8 14q1 10 -5 14z" fill="#d8c08a" stroke="${C.ink}" stroke-width="1.2"/><path d="M-8 -14h16" stroke="${C.wood2}" stroke-width="2.5"/>
+    <path d="M-4 0l4 4l4 -4M0 -4v10" stroke="#a08550" stroke-width="1.4" fill="none"/>`;
+}
+
+/** The animals in their pens on the farm plan: a paddock for cows and horses, a sty for pigs. */
+function farmYard(state) {
+  const f = ensureFarm(state);
+  if (!f) return '';
+  const parts = [];
+  const big = [...Array(Math.min(f.cows, 4)).fill('cows'), ...Array(Math.min(f.horses, 4)).fill('horses')];
+  if (big.length || roomFor(state, 'cows') || roomFor(state, 'horses')) {
+    parts.push('<rect class="tp-pen" x="640" y="358" width="270" height="50" rx="6"/>');
+    big.forEach((k, i) => parts.push(`<g class="tp-beast" transform="translate(${670 + i * 34} ${380 + (i % 2) * 8}) scale(${i % 2 ? -0.62 : 0.62} .62)">${beast(k)}</g>`));
+  }
+  if (f.pigs || roomFor(state, 'pigs')) {
+    parts.push('<rect class="tp-pen" x="236" y="358" width="170" height="50" rx="6"/>');
+    for (let i = 0; i < Math.min(f.pigs, 5); i++) parts.push(`<g class="tp-beast" transform="translate(${260 + i * 30} ${382 + (i % 2) * 6}) scale(${i % 2 ? -0.6 : 0.6} .6)">${beast('pigs')}</g>`);
+  }
+  // a few sacks by the house door once there is grain
+  for (let i = 0; i < Math.min(f.grain, 5); i++) parts.push(`<g transform="translate(${556 + (i % 3) * 13} ${392 - Math.floor(i / 3) * 14}) scale(.5)">${beast('grain')}</g>`);
+  return `<g class="tp-yard">${parts.join('')}</g>`;
+}
 
 function scaffold() {
   return `<g class="b-scaffold">${rect(-40, -10, 80, 24, C.stone2)}${crenels(-40, -10, 80, 6, C.stone2)}
@@ -211,6 +265,7 @@ export function renderTownPlan(state, id, selectedSlot) {
       <rect class="tp-ground" width="${PW}" height="${PH}"/>
       ${sceneDecor(def.kind, town.level, town)}
       ${centrepiece(def.kind, town.level)}
+      ${isFarm(id) ? farmYard(state) : ''}
       ${Array.from({ length: total }, (_, i) => plotMarkup(state, id, town, i, selectedSlot)).join('')}
       ${p && p.type === 'upgrade' ? `<g class="tp-upgrade" transform="translate(${PW / 2} 40)"><rect x="-150" y="-20" width="300" height="34" rx="17"/><text y="3">Rozšiřuje se na ${esc(levelName(id, p.to).toLowerCase())} · ${esc(eta(state, p.done))}</text></g>` : ''}
     </svg>
@@ -248,8 +303,8 @@ function usable(state, key) {
   return !(key === 'legitimacy' && state.scenario === 'slechtic');
 }
 
-function effectChips(state, b) {
-  const out = [];
+function effectChips(state, b, key) {
+  const out = worksChips(key).map((t) => chip(t)); // room and grain on the farm (farm.js)
   const season = b.seasons ? ` ${['na jaře', 'v létě', 'na podzim', 'v zimě'][b.seasons[0]]}` : ' / období';
   for (const [k, v] of Object.entries(b.income || {})) if (usable(state, k)) out.push(chip(`${resName(state, k)} ${sign(v)}${season}`, v > 0));
   for (const [k, v] of Object.entries(b.yearly || {})) if (usable(state, k)) out.push(chip(`${resName(state, k)} ${sign(v)} / rok`, v > 0));
@@ -327,7 +382,7 @@ function catalogList(state, id, slot) {
       <button class="decree build-option" data-build="${key}" data-slot="${slot}"${why ? ' disabled' : ''}>
         <span class="build-thumb"><svg viewBox="-64 -100 128 124">${ICONS[key]()}</svg></span>
         <span class="build-body"><b>${esc(b.name)} <small>${esc(costText(state, b.cost))} · ${b.turns} obd.</small></b>
-        <span>${esc(b.text)}</span><em>${effectChips(state, b)}</em>${why ? `<em class="build-why">${esc(why)}</em>` : ''}</span>
+        <span>${esc(b.text)}</span><em>${effectChips(state, b, key)}</em>${why ? `<em class="build-why">${esc(why)}</em>` : ''}</span>
       </button>`).join('')}</div>`;
 }
 
@@ -338,11 +393,58 @@ function buildingDetail(state, id, b) {
       ${BUILDING_ART.has(b.key) ? `<img class="build-art" src="assets/buildings/${b.key}.jpg" alt="">` : `<span class="build-thumb big"><svg viewBox="-64 -100 128 124">${ICONS[b.key]()}</svg></span>`}
       <h4 class="map-sub">${esc(def.name)}${b.ready ? '' : ' <small>· ve stavbě</small>'}</h4>
       <p class="map-desc">${esc(def.text)}</p>
-      ${b.base ? '<p class="map-decree-hint">Stojí tu odjakživa. Co dává, už je dávno započtené v příjmech kraje — přínos navíc mají jen stavby, které postavíš ty.</p>' : `<div class="build-chips">${effectChips(state, def)}</div>`}
+      ${b.base && isFarm(id) ? `<p class="map-decree-hint">Stojí tu odjakživa. Úroda, kterou chrání, je dávno započtená v hospodaření gruntu, ale obilí v pytlích se do ní uloží.</p><div class="build-chips">${worksChips(b.key).map((t) => chip(t)).join('')}</div>` : ''}
+      ${b.base && !isFarm(id) ? '<p class="map-decree-hint">Stojí tu odjakživa. Co dává, už je dávno započtené v příjmech kraje — přínos navíc mají jen stavby, které postavíš ty.</p>' : ''}
+      ${b.base ? '' : `<div class="build-chips">${effectChips(state, def, b.key)}</div>`}
       ${b.ready ? '' : `<p class="map-decree-hint">${esc(eta(state, b.done))}</p>`}
       ${own && b.ready ? `<button class="trade-mini build-demolish" data-demolish="${b.slot}">Strhnout a uvolnit parcelu</button>` : ''}
       ${own && !b.ready ? '<button class="trade-mini" data-cancel-project>Zastavit stavbu (vrátí se polovina)</button>' : ''}
     </div>`;
+}
+
+// ---------- the farm stock (hospodářství, farm.js) ----------
+
+const coinWord = (n) => `${n} ${plural(n, ['groš', 'groše', 'grošů'])}`;
+
+function stockCard(state, key, f, line) {
+  const s = STOCK[key];
+  const n = f[key];
+  const room = roomFor(state, key);
+  const grain = key === 'grain';
+  const missing = !grain && !room && !n; // no building for it yet
+  const gauge = grain
+    ? `<span class="farm-bar"><i style="width:${room ? Math.min(100, Math.round((n / room) * 100)) : 0}%"></i></span>`
+    : `<span class="farm-pips">${Array.from({ length: Math.max(room, n) }, (_, i) => `<i class="${i < n ? 'on' : ''}${i >= room ? ' over' : ''}"></i>`).join('')}</span>`;
+  const count = missing ? `<small>${esc(s.none)}</small>` : `<small><b>${n}</b> / ${room}${grain ? ` ${plural(room, s.forms)}` : ''}</small>`;
+  let buttons;
+  if (grain) {
+    const why = sellBlock(state, key);
+    buttons = `<button class="trade-mini" data-farm-sell="grain"${why ? ` disabled title="${esc(why)}"` : ''}>Prodat pytel (+${coinWord(s.sell)})</button>
+      <button class="trade-mini" data-farm-grind${why ? ` disabled title="${esc(why)}"` : ''}>Semlít do zásob (+${FLOUR})</button>`;
+  } else {
+    const buy = buyBlock(state, key);
+    const sell = sellBlock(state, key);
+    buttons = `<button class="trade-mini" data-farm-buy="${key}"${buy ? ` disabled title="${esc(buy)}"` : ''}>Koupit (${coinWord(s.buy)})</button>
+      <button class="trade-mini" data-farm-sell="${key}"${sell ? ` disabled title="${esc(sell)}"` : ''}>Prodat (${coinWord(s.sell)})</button>`;
+  }
+  const over = !grain && n > room ? `<em class="farm-warn">${key === 'horses' ? 'Kůň zatím stojí v přístřešku u chalupy, dokud nebude stáj.' : 'Víc, než se vejde pod střechu.'}</em>` : '';
+  return `<div class="farm-item${missing ? ' missing' : ''}">
+      <span class="farm-ico"><svg viewBox="-30 -24 62 44">${beast(key)}</svg></span>
+      <div class="farm-main">
+        <b>${esc(s.name)} ${count}</b>
+        ${missing ? '' : gauge}
+        <em>${esc(line)}</em>${over}
+        ${missing ? '' : `<span class="farm-trade">${buttons}</span>`}
+      </div>
+    </div>`;
+}
+
+function farmBlock(state) {
+  const f = ensureFarm(state);
+  if (!f) return '';
+  const look = farmOutlook(state);
+  return `<h4 class="map-sub">Hospodářství</h4>
+    <div class="farm-stock">${['grain', ...ANIMALS].map((k) => stockCard(state, k, f, look[k])).join('')}</div>`;
 }
 
 /** Sidebar of the town view; with a plot selected it shows what can stand there. */
@@ -374,6 +476,7 @@ export function townSidebar(state, id, slot) {
     <p class="map-desc">${esc(def.text)}</p>
     ${own ? '' : `<p class="map-warning">${esc(ownerNote(state, id))}</p>`}
     ${projectBlock(state, id, town, own)}
+    ${own && isFarm(id) ? farmBlock(state) : ''}
     <h4 class="map-sub">Stavby <small>· ${ready.length}</small></h4>
     ${ready.length ? `<div class="map-chip-list">${ready.map((b) => `<button class="map-chip" data-town-slot="${b.slot}"><span>${esc(buildingDef(b.key).name)}</span><em class="${b.base ? '' : 'good'}">${b.base ? 'původní' : 'tvoje'}</em></button>`).join('')}</div>` : '<p class="map-desc">Zatím tu nic nestojí.</p>'}
     ${own ? `<h4 class="map-sub">Co ti dávají tvé stavby</h4>${yieldSummary(state, id)}` : ''}
