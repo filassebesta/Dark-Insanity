@@ -196,40 +196,43 @@ f_ozvena_kmotr.jpg — Morning after a fire: a burnt-out village tavern smoking,
 
 ---
 
-## Dávka R5 — Významný šlechtic (1:1, 12 ks)
+## Dávka R5 — Významný šlechtic (1:1, 12 ks, hromadně)
+
+Původní znění Gemini odmítalo (zabitý muž, zatykač, potápějící se lodě, útok kopím, odkaz na konkrétní hru). Tahle verze má klidnější popisy, obecný popis stylu a výslovně žádá všech 12 obrázků najednou. Když se Gemini zastaví v půlce, napiš mu „continue“.
 
 ```
-Generate one separate image for each line below. Each line has a file name
-and a description. Return every image as its own file named exactly as the
-file name. Do not combine images into a grid or sprite sheet.
+Please paint 12 separate images, one for each line below, all in this one
+response: create them one after another without stopping, without asking
+for confirmation and without waiting for me between them. Each line has a
+file name and a description. Return every image as its own file named
+exactly as the file name, showing the scene described on its line. No grid
+or collage. If you cannot finish all 12 at once, continue with the next
+ones when I write "continue".
 
-Format: aspect ratio 1:1, 2048 x 2048. Main subject in the centre and upper
-part of the image, the lower third darker and calm (text is shown over it).
-Keep the brightness even from top to bottom: no darker band or second
-picture pasted into the lower part.
+Format: square, 1:1, 2048 x 2048. The main figures in the centre and upper
+part of the picture. The painted scene continues all the way to the bottom
+edge (floor, ground or water): no empty or flat area and no darker band at
+the bottom. Even brightness from top to bottom.
 
-Style for every image: painted in the style of a dark-fantasy narrative RPG,
-muted oil painting with visible loose brushwork and subtle canvas texture,
-desaturated earthy palette of ochre, rust, olive green and dusty slate blue,
-soft chiaroscuro lighting, late-medieval Central European (Bohemian)
-setting of the 14th century, realistic proportions, similar in mood to
-"The Life and Suffering of Sir Brante". Avoid: anime, cartoon, 3D render,
-photography, oversaturated colours, airbrushed digital art, any text,
-letters, watermark or signature.
+Style for every image: a muted historical oil painting with visible loose
+brushwork and subtle canvas texture, earthy palette of ochre, rust, olive
+green and dusty slate blue, soft candle or daylight with gentle shadows,
+14th-century Central European setting, realistic proportions, calm and
+serious mood. No text, letters, watermark or signature.
 
 Images:
-v_korunni_rada.jpg — A royal council chamber, old nobles around a table, one new great lord taking his seat for the first time, the king at the head.
-v_snatkovy_trh.jpg — Matchmakers and envoys of noble houses presenting portraits and dowry chests to a great lord in the hall of his keep, a young heir watching.
-v_rytiri_u_brany.jpg — Five landless knights kneeling in the courtyard of a keep, one in rusty old armour, offering their swords to the lord on the steps.
-v_opovedny_list.jpg — A herald nailing a letter of feud to the wooden gate of a keep, guards on the walls watching, an enemy house's banner behind him.
-v_turnaj.jpg — A tournament below a keep: lists, colourful tents, banners of many houses, two knights charging with lances, a crowded stand.
-v_zkouska_vernosti.jpg — A royal messenger handing a sealed order to a troubled great lord in his hall, an arrest warrant against a friend.
-v_jizni_vyslanec.jpg — A galley with purple sails in a small harbour below a keep, an exotic southern envoy stepping ashore with gifts of silk and spices.
-v_biskupova_prizen.jpg — A bishop showing a great lord the scaffolding of a new cathedral choir under construction, masons at work.
-v_ozvena_rada.jpg — A heated night vote in the royal council, lords standing and shouting, the king demanding a war tax, candles burnt low.
-v_ozvena_rytir.jpg — A knight standing accused in the hall of a keep, the family of a slain man demanding justice, the lord deciding.
-v_ozvena_svar.jpg — A tense peace feast in an enemy house's hall, two lords facing each other across the table, armed retinues along the walls.
-v_ozvena_vyslanec.jpg — Royal warships sinking near grey sea rocks at dusk while southern galleys sail away, seen from a cliff.
+v_korunni_rada.jpg — A royal council chamber with a long oak table, older noblemen seated around it, a younger nobleman taking his seat for the first time, the king at the head of the table.
+v_snatkovy_trh.jpg — Envoys of noble families in the hall of a small castle presenting painted portraits and small wooden chests to the lord of the house, a teenage heir watching curiously.
+v_rytiri_u_brany.jpg — Five young knights without a lord standing in a castle courtyard with helmets under their arms, one in old patched armour, asking the lord on the steps to take them into his service.
+v_opovedny_list.jpg — A herald in bright livery pinning a sealed parchment to the wooden gate of a castle, guards on the walls looking down, a banner of another noble family behind him.
+v_turnaj.jpg — A festive tournament below a castle: colourful tents, banners of many families, two knights in bright surcoats riding in the lists, spectators in a wooden stand.
+v_zkouska_vernosti.jpg — A royal messenger handing a sealed letter to a worried nobleman in the hall of his castle, the nobleman reading it by the fire with a troubled face.
+v_jizni_vyslanec.jpg — A galley with purple sails in a small harbour below a castle, a richly dressed foreign envoy stepping ashore with servants carrying silk and spices.
+v_biskupova_prizen.jpg — A bishop in robes showing a nobleman the wooden scaffolding of a new cathedral choir under construction, stonemasons at work around them.
+v_ozvena_rada.jpg — An evening debate in the royal council: noblemen standing and arguing around the table by candlelight, the king listening with a stern face.
+v_ozvena_rytir.jpg — A family in dark mourning clothes making a plea before a lord in the hall of his castle, a young knight standing aside with his head bowed.
+v_ozvena_svar.jpg — A formal reconciliation feast in a castle hall: two noblemen facing each other across a long table, attendants and guards standing along the walls.
+v_ozvena_vyslanec.jpg — Grey sea rocks at dusk, three damaged ships drifting in the waves, foreign galleys with purple sails sailing away on the horizon, seen from a cliff.
 ```
 
 ---
