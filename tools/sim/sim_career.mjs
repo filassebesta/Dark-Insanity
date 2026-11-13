@@ -1,6 +1,7 @@
 // The whole chronicle from the plough: a new game starts as a peasant and is
 // promoted in the same save (sedlák → svobodník → šlechtic → významný šlechtic → král).
 // node tools/sim/sim_career.mjs [runs=400] [ambition 0–1 = 0.6] [maxYears=150]
+// FARM=1 … the peasant also builds the farm and buys animals (farm.js, smart.mjs farmRule).
 // SMART=0.4 node tools/sim/sim_career.mjs … plays like a sensible player (smart.mjs) who errs
 // in 40 % of choices, instead of picking at random; the yearly farm work then comes from the story only.
 // Prints how far the houses got, when, how the chronicles ended, errors and
@@ -10,7 +11,11 @@ const { settleFree } = await import(new URL('./free.mjs', import.meta.url).href)
 const { createNewGame } = await import(root + 'state.js');
 const E = await import(root + 'engine.js');
 const W = await import(root + 'war.js');
-const { smartPick } = await import(new URL('./smart.mjs', import.meta.url).href);
+const { smartPick, farmRule } = await import(new URL('./smart.mjs', import.meta.url).href);
+// FARM=1: the peasant also builds the farm and keeps animals (smart.mjs farmRule)
+const FARM = process.env.FARM === '1';
+const B = await import(root + 'build.js');
+const F = await import(root + 'farm.js');
 const SMART = process.env.SMART !== undefined ? Number(process.env.SMART) : null;
 const runs = Number(process.argv[2] || 400);
 const AMB = Number(process.argv[3] ?? 0.6);
@@ -35,7 +40,7 @@ for (let r = 0; r < runs; r++) {
         for (let i = 0; i < 3 && res.event && res.event.free; i++) { E.resolveChoice(st, res.event, smartPick(E, st, res.event, SMART)); res.event = E.pickNextEvent(st); }
       } else if (res.event) res.event = settleFree(E, st, res.event);
     } catch (err) { errors++; console.log('turn', st.scenario, err.stack.split('\n').slice(0, 4).join(' | ')); end = 'error'; break; }
-    if (res.gameOver) { end = res.gameOver.type; break; }
+    if (res.gameOver) { end = res.gameOver.type + (res.gameOver.reason ? ":" + res.gameOver.reason : ""); break; }
     const e = res.event;
     if (!e) { errors++; console.log('no event', st.scenario); end = 'error'; break; }
     check(st, e.text, e.id);
@@ -52,6 +57,7 @@ for (let r = 0; r < runs; r++) {
       if (amb && Math.random() < AMB) pick = amb[1];
       const out = E.resolveChoice(st, e, pick);
       check(st, out.text, e.id + '/out');
+      if (FARM) farmRule(B, F, st);
       if (SMART === null && E.decreeAvailable(st) && st.scenario === 'sedlak') E.issueDecree(st, st.resources.food > 45 ? 'market' : st.resources.favor < 35 ? 'lord' : 'clear');
       // a great lord with men to spare rises against the king
       if (st.scenario === 'slechtic' && !st.war && Math.random() < AMB * 0.3) {

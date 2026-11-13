@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Libre+Caslon+Display&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=2026-11-12b">
+<link rel="stylesheet" href="css/style.css?v=2026-11-14f">
 </head>
 <body>
 <div id="app">
@@ -42,16 +42,9 @@
         <span id="ruler-name-label">Jméno hospodáře</span>
         <input id="input-ruler-name" type="text" maxlength="24" placeholder="např. Vojtěch">
       </label>
-      <div class="field">
-        <span>Postava</span>
-        <div class="gender-toggle" role="radiogroup">
-          <label><input type="radio" name="ruler-gender" value="male" checked><span>Muž</span></label>
-          <label><input type="radio" name="ruler-gender" value="female"><span>Žena</span></label>
-        </div>
-      </div>
       <label class="field">
-        <span>Jméno rodu</span>
-        <input id="input-dynasty-name" type="text" maxlength="24" placeholder="např. Dvořákovi">
+        <span>Jméno rodu <small class="field-hint">— rod koho?</small></span>
+        <input id="input-dynasty-name" type="text" maxlength="24" placeholder="např. Dvořáků">
       </label>
       <div class="dialog-actions">
         <button class="seal-button ghost" data-action="back-to-menu">Zpět</button>
@@ -164,7 +157,7 @@
       <div id="panel-chronicle" class="side-panel">
         <button class="panel-close" data-action="close-panel" aria-label="Zavřít">✕</button>
         <span class="panel-overline">Zapsáno pro budoucí věky</span>
-        <h3 class="panel-title">Kronika království</h3>
+        <h3 class="panel-title">Kronika rodu</h3>
         <div id="chronicle-log" class="chronicle-log"></div>
       </div>
     </div>
@@ -232,6 +225,6 @@
 
 <div id="toast-container" class="toast-container"></div>
 
-<script type="module" src="js/main.js?v=2026-11-12b"></script>
+<script type="module" src="js/main.js?v=2026-11-14f"></script>
 </body>
 </html>

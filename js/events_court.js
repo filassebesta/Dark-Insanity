@@ -4,8 +4,9 @@
 const ALL = ['panovnik', 'slechtic', 'sedlak'];
 const img = (id) => `assets/events/${id}.jpg`;
 const ADVISERS = ['chancellor', 'marshal', 'spymaster'];
+// a newcomer (since: the turn they took the seat) has no years of service to speak of yet
 const withQuirk = (quirk, extra = () => true) => (s) =>
-  ADVISERS.find((r) => s[r] && s[r].alive !== false && s[r].quirk === quirk && extra(s[r])) || null;
+  ADVISERS.find((r) => s[r] && s[r].alive !== false && s[r].quirk === quirk && !(s[r].since !== undefined && s.turn - s[r].since < 8) && extra(s[r])) || null;
 
 export const COURT_EVENTS = [
   {
@@ -105,7 +106,7 @@ export const COURT_EVENTS = [
         hintType: 'trait', hintKey: 'strength',
         effects: { prestige: 1 },
         courtEffects: { target: { loyalty: -12 } },
-        chronicle: 'Žádost byla odmítnuta. {target.name} odešel{T:|a} bez pozdravu a ves si toho všimla.',
+        chronicle: 'Žádost byla odmítnuta. {target.name} {T:odešel|odešla} bez pozdravu a ves si toho všimla.',
       },
       {
         label: 'Slíbit odměnu po žních',
@@ -147,7 +148,7 @@ export const COURT_EVENTS = [
     id: 'q_oddanost',
     image: img('zprava_spehmistra'),
     scenarios: ALL,
-    cooldown: 24, minTurn: 8,
+    cooldown: 40, minTurn: 8,
     target: withQuirk('oddany', (c) => c.loyalty >= 75),
     title: 'Věrné srdce',
     text: '{target.Role} {target.name} {T:přišel|přišla} v noci s lucernou. {T:Zaslechl|Zaslechla} rozhovor, který {T:neměl|neměla} slyšet: někdo z vlastních lidí donáší cizím. Jméno prozradí, ale prosí o milost pro jeho rodinu.',
@@ -157,7 +158,7 @@ export const COURT_EVENTS = [
         hintType: 'resource', hintKey: 'stability',
         effects: { stability: 5, faith: 2 },
         courtEffects: { target: { loyalty: 5 } },
-        chronicle: 'Donašeč byl potrestán, jeho rodina ušetřena. {target.name} {T:měl|měla} pravdu, jako vždy.',
+        chronicle: 'Donašeč byl potrestán, jeho rodina ušetřena. {target.name} {T:měl|měla} pravdu.',
       },
       {
         label: 'Potrestat celou rodinu',

@@ -37,28 +37,28 @@ export const MORE_EVENTS = [
     id: 'nemoc_vladce',
     cooldown: 20,
     title: 'Horečka',
-    text: 'Vládce {ruler.name} ulehl s horečkou. Dvorní lékař krouží nad lůžkem s pijavicemi, opat posílá mnichy a kupec z jihu nabízí lék z dalekých zemí.',
+    text: '{ruler.name} {R:ulehl|ulehla} s horečkou. Dvorní lékař krouží nad lůžkem s pijavicemi, opat posílá mnichy a kupec z jihu nabízí lék z dalekých zemí.',
     choices: [
       {
         label: 'Zkusit lék kupce z jihu',
         hintType: 'resource', hintKey: 'gold',
         isRoll: true, baseChance: 0.6,
-        onSuccess: { effects: { gold: -12, stability: 2 }, chronicle: 'Hořký lék z jihu zabral. Za tři dny vládce opět seděl na trůně.' },
-        onFailure: { effects: { gold: -12, stability: -5, legitimacy: -3 }, chronicle: 'Lék byl jen obarvená voda. Vládce se z horečky dostával celý měsíc a dvůr už šeptal o nástupci.' },
+        onSuccess: { effects: { gold: -12, stability: 2 }, chronicle: 'Hořký lék z jihu zabral. Za tři dny {R:vládce|vládkyně} opět {R:seděl|seděla} na trůně.' },
+        onFailure: { effects: { gold: -12, stability: -5, legitimacy: -3 }, chronicle: 'Lék byl jen obarvená voda. {R:Vládce|Vládkyně} se z horečky {R:dostával|dostávala} celý měsíc a dvůr už šeptal o nástupci.' },
       },
       {
         label: 'Svěřit se modlitbám mnichů',
         hintType: 'resource', hintKey: 'faith',
         isRoll: true, baseChance: 0.4, resourceKey: 'faith', resourceScale: 0.6,
         onSuccess: { effects: { faith: 6, legitimacy: 3 }, chronicle: 'Po třech nocích modliteb horečka ustoupila. Lid mluví o Boží přízni.' },
-        onFailure: { effects: { stability: -6, faith: -3 }, chronicle: 'Modlitby nepomohly a vládce se léčil dlouho. Leckdo se začal ptát, zda nad rodem ještě drží Bůh ruku.' },
+        onFailure: { effects: { stability: -6, faith: -3 }, chronicle: 'Modlitby nepomohly a {R:vládce|vládkyně} se {R:léčil|léčila} dlouho. Leckdo se začal ptát, zda nad rodem ještě drží Bůh ruku.' },
       },
       {
         label: 'Odpočívat a nic neuspěchat',
         hintType: 'trait', hintKey: 'patience',
         effects: { stability: -3, gold: -3 },
         traitGain: 'patience',
-        chronicle: 'Vládce proležel dva týdny v tichu a v temnu. Země se zatím točila bez něj — a to se nelíbilo nikomu.',
+        chronicle: '{R:Vládce|Vládkyně} {R:proležel|proležela} dva týdny v tichu a v temnu. Země se zatím točila bez {R:něj|ní} — a to se nelíbilo nikomu.',
       },
     ],
   },
@@ -115,7 +115,7 @@ export const MORE_EVENTS = [
         label: 'Najít kompromis a usmířit je',
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.45, traitKey: 'eloquence', traitScale: 0.05,
-        onSuccess: { effects: { gold: -4, army: 3, stability: 2 }, courtEffects: { chancellor: { loyalty: 5 }, marshal: { loyalty: 5 } }, traitGain: 'eloquence', chronicle: 'Vládce našel řešení, se kterým mohli odejít oba se vztyčenou hlavou.' },
+        onSuccess: { effects: { gold: -4, army: 3, stability: 2 }, courtEffects: { chancellor: { loyalty: 5 }, marshal: { loyalty: 5 } }, traitGain: 'eloquence', chronicle: '{R:Vládce|Vládkyně} {R:našel|našla} řešení, se kterým mohli odejít oba se vztyčenou hlavou.' },
         onFailure: { effects: { stability: -3 }, courtEffects: { chancellor: { loyalty: -6 }, marshal: { loyalty: -6 } }, chronicle: 'Kompromis nepotěšil nikoho. Oba rádci teď spolu nemluví.' },
       },
     ],
@@ -126,7 +126,7 @@ export const MORE_EVENTS = [
     cooldown: 24,
     requires: (state) => state.heir.alive && state.heir.age >= 15,
     title: 'Dluhy dědice',
-    text: 'Dědic {heir.name} prohrál v kostkách s kupci z přístavu víc, než by měl. Věřitelé stojí u brány a dvůr čeká, jak vládce zachrání čest rodu.',
+    text: 'Dědic {heir.name} prohrál v kostkách s kupci z přístavu víc, než by měl. Věřitelé stojí u brány a dvůr čeká, jak {R:vládce|vládkyně} zachrání čest rodu.',
     choices: [
       {
         label: 'Dluh tiše zaplatit',
@@ -155,7 +155,8 @@ export const MORE_EVENTS = [
   {
     id: 'krest_ditete',
     cooldown: 24,
-    requires: (state) => state.spouse.alive && state.ruler.age < 50,
+    // a birth is now a real child (family.js, event 'narozeni'); this old scene no longer comes on its own
+    requires: () => false,
     title: 'Narození dítěte',
     text: 'V hradní komnatě se narodilo zdravé dítě. Celý hrad je vzhůru, kněží chystají křest a šlechta posílá dary. Jak oslavit nový přírůstek rodu {dynastyName}?',
     choices: [
@@ -179,20 +180,20 @@ export const MORE_EVENTS = [
     id: 'portret_vladce',
     cooldown: 30,
     title: 'Malíř u dvora',
-    text: 'Do hradu přijel slavný malíř z ciziny. Nabízí, že vládce zvěční na portrétu, který bude viset v síni ještě sto let po jeho smrti.',
+    text: 'Do hradu přijel slavný malíř z ciziny. Nabízí, že {R:vládce|vládkyni} zvěční na portrétu, který bude viset v síni ještě sto let po {R:jeho|její} smrti.',
     choices: [
       {
         label: 'Okázalý portrét v hermelínu a zlatě',
         hintType: 'resource', hintKey: 'prestige',
         effects: { gold: -12, prestige: 6 },
-        chronicle: 'Portrét je okázalý a vládce na něm vypadá o hlavu vyšší. Hosté u něj stojí s úctou.',
+        chronicle: 'Portrét je okázalý a {R:vládce|vládkyně} na něm vypadá o hlavu vyšší. Hosté u něj stojí s úctou.',
       },
       {
-        label: 'Prostý portrét, jak vládce opravdu vypadá',
+        label: 'Prostý portrét, jak {R:vládce|vládkyně} opravdu vypadá',
         hintType: 'trait', hintKey: 'patience',
         effects: { gold: -5, legitimacy: 2 },
         traitGain: 'patience',
-        chronicle: 'Malíř namaloval vládce bez příkras. Kdo se na obraz dívá, vidí unaveného člověka, který nese těžkou korunu.',
+        chronicle: 'Malíř namaloval {R:vládce|vládkyni} bez příkras. Kdo se na obraz dívá, vidí unaveného člověka, který nese těžkou korunu.',
       },
       {
         label: 'Poslat malíře pryč',
@@ -231,13 +232,13 @@ export const MORE_EVENTS = [
   {
     id: 'prosba_ucitele',
     title: 'Prosba starého učitele',
-    text: 'Starý učitel, který vládce kdysi učil číst, klečí v síni. Jeho syn byl chycen při krádeži v královské zbrojnici a čeká ho šibenice.',
+    text: 'Starý učitel, který {R:vládce|vládkyni} kdysi učil číst, klečí v síni. Jeho syn byl chycen při krádeži v královské zbrojnici a čeká ho šibenice.',
     choices: [
       {
         label: 'Udělit milost',
         hintType: 'trait', hintKey: 'patience',
         effects: { legitimacy: -3, faith: 3 },
-        chronicle: 'Vládce syna omilostnil. Starý učitel plakal a šlechta si šeptala o slabosti.',
+        chronicle: '{R:Vládce|Vládkyně} {R:syna omilostnil|syna omilostnila}. Starý učitel plakal a šlechta si šeptala o slabosti.',
       },
       {
         label: 'Zákon platí pro všechny',
@@ -277,7 +278,7 @@ export const MORE_EVENTS = [
         label: 'Připomenout šlechtě, že doba je vážná',
         hintType: 'trait', hintKey: 'strength',
         effects: { prestige: -3, legitimacy: 1 },
-        chronicle: 'Vládce šlechtu odbyl. Doba je vážná, a šlechta teď taky.',
+        chronicle: '{R:Vládce|Vládkyně} {R:šlechtu odbyl|šlechtu odbyla}. Doba je vážná, a šlechta teď taky.',
       },
     ],
   },
@@ -405,7 +406,7 @@ export const MORE_EVENTS = [
     music: 'battle',
     cooldown: 12,
     title: 'Souboj na život a na smrt',
-    text: 'Dva mladí šlechtici se pohádali kvůli dívce a žádají o souboj na život a na smrt. Podle starého práva jim ho vládce může povolit.',
+    text: 'Dva mladí šlechtici se pohádali kvůli dívce a žádají o souboj na život a na smrt. Podle starého práva jim ho {R:vládce|vládkyně} může povolit.',
     choices: [
       {
         label: 'Povolit souboj',
@@ -423,7 +424,7 @@ export const MORE_EVENTS = [
         label: 'Rozsoudit spor osobně',
         hintType: 'trait', hintKey: 'patience',
         isRoll: true, baseChance: 0.5, traitKey: 'patience', traitScale: 0.04,
-        onSuccess: { effects: { legitimacy: 3, stability: 2 }, traitGain: 'patience', chronicle: 'Vládce oba vyslechl a spor rozsoudil tak, že si nakonec podali ruce.' },
+        onSuccess: { effects: { legitimacy: 3, stability: 2 }, traitGain: 'patience', chronicle: '{R:Vládce|Vládkyně} {R:oba vyslechl|oba vyslechla} a spor {R:rozsoudil|rozsoudila} tak, že si nakonec podali ruce.' },
         onFailure: { effects: { stability: -3 }, chronicle: 'Rozsudek se nelíbil ani jednomu. Souboj se konal stejně — potají.' },
       },
     ],
@@ -476,7 +477,7 @@ export const MORE_EVENTS = [
         label: 'Odmítnout',
         hintType: 'resource', hintKey: 'faith',
         effects: { faith: -2 },
-        chronicle: 'Vládce opatovi poděkoval a les si ponechal. Opat se usmívá dál, ale chladněji.',
+        chronicle: '{R:Vládce|Vládkyně} {R:opatovi poděkoval|opatovi poděkovala} a les si {R:ponechal|ponechala}. Opat se usmívá dál, ale chladněji.',
       },
     ],
   },
@@ -494,7 +495,7 @@ export const MORE_EVENTS = [
         label: 'Veřejně ho usvědčit ze lži',
         hintType: 'resource', hintKey: 'legitimacy',
         isRoll: true, baseChance: 0.35, traitKey: 'eloquence', traitScale: 0.03, resourceKey: 'legitimacy', resourceScale: 0.6,
-        onSuccess: { effects: { legitimacy: 6, prestige: 4 }, chronicle: 'Vládce předvedl svědky a listiny. Pretendent byl vysmán a jeho přívrženci se rozprchli.' },
+        onSuccess: { effects: { legitimacy: 6, prestige: 4 }, chronicle: '{R:Vládce|Vládkyně} {R:předvedl|předvedla} svědky a listiny. Pretendent byl vysmán a jeho přívrženci se rozprchli.' },
         onFailure: { effects: { legitimacy: -10, stability: -5 }, provinceEffects: { 'pobrezni-mark': { unrest: 20, loyalty: -12 } }, chronicle: 'Lid uvěřil spíš pretendentovi než listinám. Pobřeží se bouří.' },
       },
       {
@@ -769,7 +770,7 @@ export const MORE_EVENTS = [
         label: 'Odmítnout',
         hintType: 'resource', hintKey: 'gold',
         effects: {},
-        chronicle: 'Vládce lichvářovo zlato odmítl. Co se nepůjčí, nemusí se splácet.',
+        chronicle: '{R:Vládce|Vládkyně} {R:odmítl|odmítla} lichvářovo zlato. Co se nepůjčí, nemusí se splácet.',
       },
     ],
   },
@@ -884,7 +885,7 @@ export const MORE_EVENTS = [
         label: 'Nechat pravost prověřit',
         hintType: 'trait', hintKey: 'intelligence',
         isRoll: true, baseChance: 0.5, traitKey: 'intelligence', traitScale: 0.05,
-        onSuccess: { effects: { prestige: 3, legitimacy: 2 }, traitGain: 'intelligence', chronicle: 'Kost se ukázala být kozí. Kupec skončil v pranýři a vládce u lidu jako ten, koho nikdo neoklame.' },
+        onSuccess: { effects: { prestige: 3, legitimacy: 2 }, traitGain: 'intelligence', chronicle: 'Kost se ukázala být kozí. Kupec skončil v pranýři a {R:vládce|vládkyně} u lidu jako {R:ten|ta}, koho nikdo neoklame.' },
         onFailure: { effects: { gold: -18, faith: 4 }, chronicle: 'Učenci pravost potvrdili. Kupec si za ověření řekl ještě něco navíc.' },
       },
       {
@@ -914,7 +915,7 @@ export const MORE_EVENTS = [
         hintType: 'resource', hintKey: 'faith',
         effects: { faith: -4 },
         courtEffects: { chancellor: { loyalty: 6 } },
-        chronicle: 'Vládce opatovi poděkoval za nabídku. Kancléřství si oddychlo.',
+        chronicle: '{R:Vládce|Vládkyně} {R:poděkoval|poděkovala} opatovi za nabídku. Kancléřství si oddychlo.',
       },
     ],
   },
@@ -929,7 +930,7 @@ export const MORE_EVENTS = [
         label: 'Vyjít mezi lid a promluvit',
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.5, traitKey: 'eloquence', traitScale: 0.05,
-        onSuccess: { effects: { legitimacy: 6, prestige: 4 }, traitGain: 'eloquence', chronicle: 'Když vládce domluvil, slunce se vrátilo. Lid to bude vyprávět jako zázrak.' },
+        onSuccess: { effects: { legitimacy: 6, prestige: 4 }, traitGain: 'eloquence', chronicle: 'Když {R:vládce|vládkyně} {R:domluvil|domluvila}, slunce se vrátilo. Lid to bude vyprávět jako zázrak.' },
         onFailure: { effects: { legitimacy: -4 }, chronicle: 'Vládcova slova zanikla v křiku davu. Slunce se vrátilo samo.' },
       },
       {
@@ -1269,8 +1270,8 @@ export const MORE_EVENTS = [
         combat: 'vlci', // fought out in rounds (combat.js)
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.45, traitKey: 'strength', traitScale: 0.05,
-        onSuccess: { effects: { prestige: 6 }, provinceEffects: { 'sokoli-hvozd': { loyalty: 10 } }, traitGain: 'strength', chronicle: 'Vládce sám skolil vůdce smečky. Kožešina visí v síni a v Sokolově se o lovu zpívá.' },
-        onFailure: { effects: { prestige: -4, stability: -2 }, injury: { pool: ['rana', 'kulhani', 'noha', 'zlomenina'] }, chronicle: 'Smečka strhla koně i s jezdcem. Vládce se domů vrátil na nosítkách a vlci odešli, až když se oteplilo.' },
+        onSuccess: { effects: { prestige: 6 }, provinceEffects: { 'sokoli-hvozd': { loyalty: 10 } }, traitGain: 'strength', chronicle: '{R:Vládce|Vládkyně} {R:sám skolil|sama skolila} vůdce smečky. Kožešina visí v síni a v Sokolově se o lovu zpívá.' },
+        onFailure: { effects: { prestige: -4, stability: -2 }, injury: { pool: ['rana', 'kulhani', 'noha', 'zlomenina'] }, chronicle: 'Smečka strhla koně i s jezdcem. {R:Vládce|Vládkyně} se {R:vrátil|vrátila} domů na nosítkách a vlci odešli, až když se oteplilo.' },
       },
       {
         label: 'Vypsat odměnu za každou vlčí hlavu',
@@ -1414,7 +1415,7 @@ export const MORE_EVENTS = [
       state.flags[`jubilee_${state.ruler.name}_${years}`] = true;
     },
     title: 'Výročí vlády',
-    text: 'Od nástupu vládce {ruler.name} na trůn uplynulo dalších pět let. Dvůr navrhuje oslavu, aby si lid připomněl, kdo mu vládne.',
+    text: 'Od chvíle, kdy {ruler.name} {R:usedl|usedla} na trůn, uplynulo dalších pět let. Dvůr navrhuje oslavu, aby si lid připomněl, kdo mu vládne.',
     choices: [
       {
         label: 'Velkolepá oslava',
@@ -1433,7 +1434,7 @@ export const MORE_EVENTS = [
         label: 'Tichá mše za předky',
         hintType: 'resource', hintKey: 'faith',
         effects: { faith: 4 },
-        chronicle: 'Vládce strávil výročí v modlitbách za předky. Lid si ani nevšiml, že nějaké výročí bylo.',
+        chronicle: '{R:Vládce|Vládkyně} {R:strávil|strávila} výročí v modlitbách za předky. Lid si ani nevšiml, že nějaké výročí bylo.',
       },
     ],
   },
@@ -1471,7 +1472,7 @@ export const MORE_EVENTS = [
     cooldown: 30,
     requires: (state) => state.heir.alive && state.heir.age >= 14 && !state.flags.heir_married,
     title: 'Nabídka sňatku',
-    text: 'Vzdálený král posílá posly s nabídkou: jeho dítě by se mohlo stát chotí dědice {heir.name}. Věno je štědré, ale ta země je daleko a její spory taky.',
+    text: 'Vzdálený král posílá posly s nabídkou: jeho dítě by se mohlo stát chotí tvého {D:dědice|dědičky} — a {heir.name} by tak měl{D:|a} {D:nevěstu|ženicha} z daleké země. Věno je štědré, ale ta země je daleko a její spory taky.',
     choices: [
       {
         label: 'Přijmout nabídku',
@@ -1597,7 +1598,7 @@ export const MORE_EVENTS = [
         hintType: 'trait', hintKey: 'strength',
         effects: { legitimacy: -2 },
         hiddenEffects: { setFlag: 'burned_charter' },
-        chronicle: 'Listina shořela v krbu. O jejím obsahu ví jen vládce a archivář.',
+        chronicle: 'Listina shořela v krbu. O jejím obsahu ví jen {R:vládce|vládkyně} a archivář.',
       },
       {
         label: 'Nechat ji prověřit učenci',

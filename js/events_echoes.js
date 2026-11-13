@@ -53,7 +53,7 @@ export const CRISIS_EVENTS = [
         requires: (s) => s.scenario === S,
         hintType: 'resource', hintKey: 'favor',
         effects: { gold: 10, favor: -8 },
-        chronicle: 'Král odklad povolil. Na dvoře se ale ví, že rod {dynastyName} nemá ani na vlastní stráž.',
+        chronicle: '{king.Title} odklad povolil{K:|a}. Na dvoře se ale ví, že rod {dynastyName} nemá ani na vlastní stráž.',
       },
     ],
   },
@@ -231,7 +231,7 @@ export const CRISIS_EVENTS = [
         label: 'Odjet ke dvoru a pokořit se',
         hintType: 'resource', hintKey: 'favor',
         effects: { favor: 12, prestige: -8, gold: -4 },
-        chronicle: '{ruler.name} {R:klečel|klečela} před trůnem celé dopoledne. Král nakonec pokynul rukou.',
+        chronicle: '{ruler.name} {R:klečel|klečela} před trůnem celé dopoledne. {king.Title} nakonec pokynul{K:|a} rukou.',
       },
       {
         label: 'Poslat králi bohatý dar',
@@ -252,8 +252,8 @@ export const CRISIS_EVENTS = [
         label: 'Odpovědět hrdě',
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.35, traitKey: 'eloquence', traitScale: 0.05,
-        onSuccess: { effects: { favor: 12, prestige: 6 }, traitGain: 'eloquence', chronicle: 'Odpověď byla tak hrdá a přitom tak věrná, že ji král nechal přečíst nahlas celému dvoru.' },
-        onFailure: { effects: { favor: -4, prestige: -2 }, chronicle: 'Král list zmuchlal a hodil do ohně. Herold už je na cestě s dalším.' },
+        onSuccess: { effects: { favor: 12, prestige: 6 }, traitGain: 'eloquence', chronicle: 'Odpověď byla tak hrdá a přitom tak věrná, že ji {king.title} {K:nechal|nechala} přečíst nahlas celému dvoru.' },
+        onFailure: { effects: { favor: -4, prestige: -2 }, chronicle: '{king.Title} list zmuchlal{K:|a} a hodil{K:|a} do ohně. Herold už je na cestě s dalším.' },
       },
     ],
   },
@@ -712,7 +712,7 @@ export const ECHO_EVENTS = [
         label: 'Předat listinu králi jako důkaz věrnosti',
         hintType: 'resource', hintKey: 'favor',
         effects: { favor: 12 },
-        chronicle: 'Král si listinu přečetl dvakrát. Pak poslal pro kata a pro pečetidlo.',
+        chronicle: '{king.Title} si listinu přečetl{K:|a} dvakrát. Pak poslal{K:|a} pro kata a pro pečetidlo.',
       },
       {
         label: 'Spálit ji, dluh je splacen',
@@ -803,7 +803,7 @@ export const ECHO_HOOKS = [
   { event: 'n_pytlaci', choice: 'Propustit je a dát jim jelena', echo: 'ozvena_n_pytlaci', after: [6, 12] },
   { event: 'n_pujcka_rodu', choice: 'Půjčit bez úroku', echo: 'ozvena_n_vdecny_rod', after: [6, 12] },
   { event: 'n_nalezeny_dopis', choice: 'Vrátit dopis tiše pisateli', echo: 'ozvena_n_pisatel', after: [6, 12] },
-  { event: 'n_spiklenci_zvou', choice: 'Udat spiklence králi', echo: 'ozvena_n_pomsta', after: [8, 14] },
+  { event: 'n_spiklenci_zvou', choice: 'Udat spiklence {K:králi|královně}', echo: 'ozvena_n_pomsta', after: [8, 14] },
   { event: 'n_robota', choice: 'Trvat na robotě', echo: 'ozvena_n_rychtar', after: [8, 14] },
 ];
 

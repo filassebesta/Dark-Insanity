@@ -2,6 +2,7 @@ import { RESOURCE_DEFS, PROVINCE_TEMPLATES, NOBLE_HOUSES, NOBLE_HOME, PEASANT_HO
 import { QUIRK_ROLES, randomQuirk, biography } from './court.js';
 import { ensureRealms } from './realms.js';
 import { dropAmbition } from './ambitions.js';
+import { farmWorth } from './farm.js';
 
 const SAVE_PREFIX = 'insanityKingdom.save.';
 const SAVE_INDEX_KEY = 'insanityKingdom.saveIndex';
@@ -101,7 +102,7 @@ function buildKingGame(rulerName, dynastyName, gender) {
   return {
     version: 1,
     scenario: 'panovnik',
-    dynastyName: dynastyName || 'bezejmenného rodu',
+    dynastyName: dynastyName || 'Bezejmenných', // the 2nd case: "z rodu Bezejmenných"
     slotId: null,
     turn: 0,
     year: 1,
@@ -181,9 +182,21 @@ function createPeasantGame(rulerName, dynastyName, gender) {
   const state = createKingGame(rulerName, dynastyName, gender);
   state.scenario = 'sedlak';
   state.ruler.statusTier = 1;
-  state.ruler.age = 22;
-  state.heir.age = randInt(1, 4);
-  state.spouse.age = randInt(19, 25);
+  state.ruler.age = 20;
+  // a young farmer starts single and childless: the spouse is courted, the heir born (family.js)
+  state.spouse = { role: 'spouse', name: '', gender: gender === 'female' ? 'male' : 'female', age: 0, loyalty: 0, alive: false, none: true };
+  state.heir = { role: 'heir', name: '', gender: 'male', age: 0, loyalty: 0, alive: false, none: true, traits: inheritTraits() };
+  state.children = [];
+  // one to three younger brothers and sisters: if the farmer dies childless, one of them carries the house on
+  const used = new Set([state.ruler.name, state.chancellor.name, state.marshal.name, state.spymaster.name]);
+  state.siblings = [];
+  for (let i = randInt(1, 3); i > 0; i--) {
+    const g = Math.random() < 0.5 ? 'male' : 'female';
+    let name = randomName(g);
+    for (let k = 0; k < 80 && used.has(name); k++) name = randomName(g);
+    used.add(name);
+    state.siblings.push({ role: 'sibling', name, gender: g, age: randInt(12, 18), loyalty: randInt(60, 80), alive: true, traits: inheritTraits() });
+  }
   state.chancellor.age = randInt(45, 60);
   state.marshal.age = randInt(30, 50);
   state.spymaster.age = randInt(30, 50);
@@ -221,11 +234,13 @@ export function ennoblePeasant(state) {
   // the farm in Lipnice goes to a neighbour for what its buildings are worth
   const farm = state.towns && state.towns.grunt;
   if (farm) {
-    const worth = 5 + 3 * farm.buildings.filter((b) => b.ready && !b.base).length + 4 * Math.max(0, farm.level - 1);
+    const stock = farmWorth(state); // grain and animals go with it; the riding horse stays with its rider
+    const worth = 5 + 3 * farm.buildings.filter((b) => b.ready && !b.base).length + 4 * Math.max(0, farm.level - 1) + stock;
     state.resources.gold = clamp(state.resources.gold + worth);
     delete state.towns.grunt;
-    farewell.push(`Grunt v Lipnici koupil soused za ${worth} zlatých.`);
+    farewell.push(`Grunt v Lipnici${stock ? ' i s dobytkem a obilím' : ''} koupil soused za ${worth} zlatých.`);
   }
+  delete state.farm;
   // the usurer in Brodná does not forget a debtor just because he now has a coat of arms
   if (state.flags.s_dluh) {
     delete state.flags.s_dluh;

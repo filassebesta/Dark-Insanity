@@ -277,7 +277,7 @@ export const QUIRKS = {
   },
   chamtivy: {
     label: ['Chamtivý', 'Chamtivá'],
-    text: 'Lepí se {mu|jí} ruce. Každý rok zmizí z pokladny trocha zlata a v radě doporučuje to, co vynáší.',
+    text: 'Lepí se {mu|jí} ruce. Každý rok se ztratí trocha peněz a radí hlavně to, co vynáší {jemu|jí}.',
   },
   schopny: {
     label: ['Schopný', 'Schopná'],

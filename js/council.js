@@ -27,11 +27,27 @@ const SAY = {
   },
   spymaster: {
     sure: ['Vím, co se šeptá. A šeptá se jen o jednom řešení.', 'Mám své lidi všude. Tohle je správná cesta.', 'Věř mi. Nebo aspoň mým uším.'],
-    unsure: ['Moji lidé nevědí všechno. Ale tohle se zdá nejbezpečnější.', 'Ve tmě se chodí opatrně. Já bych šel{|šla} tudy.'],
+    unsure: ['Moji lidé nevědí všechno. Ale tohle se zdá nejbezpečnější.', 'Ve tmě se chodí opatrně. Já bych volil{|a} tuhle cestu.'],
   },
   spouse: {
     sure: ['Znám tě. A vím, co by bylo správné.', 'Jde o jméno rodu. Rozhodni se takhle.', 'Poslechni srdce i rozum. Oba říkají totéž.'],
     unsure: ['Nevím, jestli je tu dobrá cesta. Ale tahle je nejméně špatná.', 'Je to těžké. Já bych volil{|a} tohle.'],
+  },
+};
+
+// in the village the same seats are held by the reeve, the smith and the innkeeper
+const SAY_VILLAGE = {
+  chancellor: {
+    sure: ['Ve vsi to chodí jen jedním způsobem.', 'Obecní kniha mluví jasně.', 'Počítal{|a} jsem to dvakrát.'],
+    unsure: ['Není to snadné, ale přikláněl{|a} bych se k jednomu.', 'Žádná cesta není levná. Tahle je nejlevnější.'],
+  },
+  marshal: {
+    sure: ['Tohle se řeší rázně.', 'Pevná ruka a hotovo.', 'Kdo váhá, ten na to doplatí.'],
+    unsure: ['Ani jedno se mi nelíbí, ale volil{|a} bych tohle.', 'Kdybych měl{|a} vsadit vlastní krk, vsadil{|a} bych ho sem.'],
+  },
+  spymaster: {
+    sure: ['U džbánu se o ničem jiném nemluví. Tohle je správně.', 'Vím, co si lidi šeptají.', 'Věř mi. Nebo aspoň mým uším.'],
+    unsure: ['Hosté nevědí všechno. Ale tohle se zdá nejbezpečnější.', 'Potichu a opatrně. Já bych volil{|a} tuhle cestu.'],
   },
 };
 
@@ -42,12 +58,24 @@ function hash(str) {
 }
 
 // how good a branch looks to an adviser (role) with a personality (quirk)
+// what is scarce matters more, what overflows matters less — and more soldiers are more mouths
+function need(state, k) {
+  const r = state.resources || {};
+  const have = r[k];
+  let m = have === undefined ? 1 : have < 20 ? 2 : have < 35 ? 1.4 : have > 80 ? 0.4 : 1;
+  if (k === 'army' && (r.food ?? 50) < 25) m = -0.5; // an army that is already starving should not grow
+  if (k === 'army' && (r.gold ?? 50) < 10) m = Math.min(m, 0.3);
+  return m;
+}
+
 function branchValue(state, branch, role, quirk) {
   if (!branch) return 0;
   const focus = FOCUS[role];
   let v = 0;
   for (const [k, val] of Object.entries(branch.effects || {})) {
-    let w = focus[k] ?? 0.6;
+    const n = need(state, k);
+    // a gain counts by how much it is needed; a loss always hurts in full — except soldiers nobody can feed
+    let w = (focus[k] ?? 0.6) * (val > 0 || n < 0 ? n : Math.max(1, n));
     if (quirk === 'chamtivy' && k === 'gold') w += 1.5;
     if (quirk === 'zbozny' && k === 'faith') w += 1.2;
     if (quirk === 'ctizadostivy' && k === 'prestige') w += 1;
@@ -111,7 +139,7 @@ export function councilAdvice(state, event) {
       if ((seed % 1000) / 1000 < mislead) pick = scores[scores.length - 1].i;
     }
     const sure = scores[0].v - (scores[1] ? scores[1].v : 0) > 6;
-    const pool = SAY[role][sure ? 'sure' : 'unsure'];
+    const pool = ((state.scenario === 'sedlak' && SAY_VILLAGE[role]) || SAY[role])[sure ? 'sure' : 'unsure'];
     const line = pool[(seed >>> 10) % pool.length].replace(/\{([^|{}]*)\|([^|{}]*)\}/g, (m, a, b) => (c.gender === 'female' ? b : a));
     opinions.push({ role, person: c, index: pick, sure, line, weight: spread });
   }

@@ -76,7 +76,7 @@ export const WAR_EVENTS = [
     scenarios: REALM, forced: true,
     image: img('mor_v_pristavu'),
     title: 'Úplavice v táboře',
-    text: 'V táboře se šíří úplavice. Ráno nevstalo dvacet mužů, večer jich bylo čtyřicet. Kdo ještě stojí, dívá se směrem k domovu.',
+    text: 'V táboře se šíří úplavice. Ráno nevstali první nemocní, večer už ležely celé stany. Kdo ještě stojí, dívá se směrem k domovu.',
     choices: [
       {
         label: 'Spálit nakažené stany',
@@ -186,7 +186,7 @@ export const WAR_EVENTS = [
         label: 'Stáhnout vojsko domů',
         hintType: 'trait', hintKey: 'patience',
         war: { end: 'retreat' },
-        chronicle: 'Hlad rozhodl za vládce. Vojsko se stahuje domů.',
+        chronicle: 'Hlad rozhodl za {R:vládce|vládkyni}. Vojsko se stahuje domů.',
       },
     ],
   },
@@ -260,7 +260,7 @@ export const WAR_EVENTS = [
     scenarios: REALM, forced: true,
     image: img('vojenska_prehlidka'),
     title: 'Vítězné vojsko se vrací',
-    text: 'Vojsko se vrací z tažení ({war.target}). Prapory jsou potrhané, ale vlají vysoko, a za vojskem se táhnou vozy s kořistí. Lidé lemují cestu a čekají, co vrchnost udělá.',
+    text: 'Vojsko se vrací z tažení {war.loc}. Prapory jsou potrhané, ale vlají vysoko, a za vojskem se táhnou vozy s kořistí. Lidé lemují cestu a čekají, co vrchnost udělá.',
     choices: [
       {
         label: 'Uspořádat triumfální průvod',
@@ -289,7 +289,7 @@ export const WAR_EVENTS = [
     scenarios: REALM, forced: true,
     image: img('stary_rytir_umira'),
     title: 'Po porážce',
-    text: 'Z tažení ({war.target}) se vrací jen zbytek vojska. Vdovy stojí u brány a hledají známé tváře. Někdo musí za porážku odpovídat — nebo ji aspoň unést.',
+    text: 'Z tažení {war.loc} se vrací jen zbytek vojska. Vdovy stojí u brány a hledají známé tváře. Někdo musí za porážku odpovídat — nebo ji aspoň unést.',
     choices: [
       {
         label: 'Postarat se o vdovy a sirotky',

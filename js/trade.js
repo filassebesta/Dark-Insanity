@@ -8,7 +8,7 @@
 // a given load by a deadline; the king's and the lord's are obligations.
 // No DOM here — map.js draws it, engine.js runs it every season.
 
-import { clamp, randInt, bumpStat } from './data.js';
+import { clamp, randInt, bumpStat, grosLabel } from './data.js';
 import { makeChronicleEntry } from './state.js';
 
 export const GOODS = {
@@ -172,7 +172,7 @@ export function sellAtHome(state, good, qty) {
   const gold = qty * price(state, 'brod', good);
   t.stock[good] -= qty;
   state.resources.gold = clamp(state.resources.gold + gold);
-  return `Prodáno ${loadText(qty, good)} za ${gold} ${state.scenario === 'sedlak' ? 'grošů' : 'zlata'}.`;
+  return `Prodáno ${loadText(qty, good)} za ${state.scenario === 'sedlak' ? grosLabel(gold) : `${gold} zlata`}.`;
 }
 
 export function buyAtHome(state, good, qty, dest = 'brod') {
@@ -315,7 +315,7 @@ export function resolveOffer(state, mult, notes) {
   const gold = Math.round(ctx.offer * mult * (qty / ctx.qty));
   t.stock[ctx.good] -= qty;
   state.resources.gold = clamp(state.resources.gold + gold);
-  notes.push({ text: `Prodáno ${loadText(qty, ctx.good)} za ${gold}`, tone: 'pos' });
+  notes.push({ text: `Prodáno ${loadText(qty, ctx.good)} za ${state.scenario === 'sedlak' ? grosLabel(gold) : `${gold} zlata`}`, tone: 'pos' });
   state.tradeCtx = null;
 }
 
@@ -368,7 +368,10 @@ function offerContract(state) {
   const t = state.trade;
   const dest = contractMarkets(state)[randInt(0, contractMarkets(state).length - 1)];
   const m = MARKETS[dest];
-  const goods = Object.keys(m.sell).filter((g) => g !== 'wine' || dest !== 'south');
+  // only goods the player can actually get: bought at home in Brod, or wine from the south once trade reaches it
+  const canReachSouth = state.scenario !== 'sedlak' || state.ruler.statusTier >= 2;
+  const obtainable = new Set([...Object.keys(MARKETS.brod.buy), ...(canReachSouth ? ['wine'] : [])]);
+  const goods = Object.keys(m.sell).filter((g) => (g !== 'wine' || dest !== 'south') && obtainable.has(g));
   const good = goods[randInt(0, goods.length - 1)];
   const qty = state.scenario === 'sedlak' ? randInt(2, 4) : randInt(3, 7);
   const obligation = dest === 'court' || dest === 'manor';
@@ -381,6 +384,7 @@ function offerContract(state) {
     obligation,
     giver: CONTRACT_GIVER[dest],
   });
+  return t.contracts[t.contracts.length - 1];
 }
 
 /** Runs trade for one season. Returns short news lines for the turn summary. */
@@ -393,15 +397,21 @@ export function processTrade(state) {
   for (const c of [...t.contracts]) {
     if (c.until <= state.turn && !c.taken) {
       t.contracts = t.contracts.filter((x) => x.id !== c.id);
-      if (c.obligation && state.resources.favor !== undefined) {
+      // a lord in open revolt owes the crown no grain
+      if (c.obligation && state.resources.favor !== undefined && !(state.flags && state.flags.rebellion)) {
         state.resources.favor = clamp(state.resources.favor - 3);
-        const text = `Nesplněná zakázka: ${loadText(c.qty, c.good)} ${MARKETS[c.dest].to} nedorazilo. Přízeň −3.`;
+        const verb = c.qty === 1 ? 'nedorazil' : c.qty < 5 ? 'nedorazily' : 'nedorazilo';
+        const text = `Nesplněná zakázka: ${loadText(c.qty, c.good)} ${MARKETS[c.dest].to} ${verb}. Přízeň −3.`;
         log(state, text);
         news.push(text);
       }
     }
   }
-  if (state.seasonIndex === 0 && t.contracts.length < 2 && Math.random() < 0.75) offerContract(state);
+  if (state.seasonIndex === 0 && t.contracts.length < 2 && Math.random() < 0.75) {
+    const c = offerContract(state);
+    // a binding order from the lord or the crown is announced, not found later as a penalty
+    if (c && c.obligation) news.push(`Povinná zakázka ${c.dest === 'court' ? 'koruny' : 'vrchnosti'}: ${loadText(c.qty, c.good)} ${MARKETS[c.dest].to}, nejpozději do ${Math.round((c.until - state.turn) / 4)} let. Pošli je v Obchodě, jinak klesne přízeň.`);
+  }
   // caravans on the road
   for (const caravan of [...t.caravans]) {
     // an ambush left unanswered (the game was closed mid-event) ends with the cargo getting through

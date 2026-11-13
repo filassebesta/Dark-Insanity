@@ -18,7 +18,8 @@ export const THRONE_EVENTS = [
     scenario: S, forced: true,
     image: img('n_nemoc_krale'),
     title: '{K:Král|Královna} na smrtelné posteli',
-    text: 'Na honu v Sokolím hvozdu se splašil kůň a {king.title} {king.name} spadl{K:|a} na kameny. Žije, ale ruka {K:mu|jí} neposlouchá a slova se {K:mu|jí} pletou. Ranhojiči krčí rameny, kněží se modlí a ve Vlčím Údělu se začíná šeptat jediná otázka: kdo bude vládnout, dokud {K:král|královna} nevstane — a kdo potom?',
+    text: '{arc.cause} Ranhojiči krčí rameny, kněží se modlí a ve Vlčím Údělu se začíná šeptat jediná otázka: kdo bude vládnout, dokud {K:král|královna} nevstane — a kdo potom?',
+
     choices: [
       {
         label: 'Spěchat ke dvoru a stát u lože',
@@ -45,7 +46,7 @@ export const THRONE_EVENTS = [
     scenario: S, forced: true,
     image: img('spor_radcu'),
     title: 'Regentská rada',
-    text: '{king.Title} {king.name} nevládne a sněm volí regentskou radu, která bude rozhodovat za {K:něj|ni}. Rody se přou o místa, kancléř chce vládnout sám a královna matka nedůvěřuje nikomu. Místo v radě je blíž trůnu než kterákoli tvrz — kdo v ní sedí, bude u toho, až se bude rozhodovat o koruně.',
+    text: '{king.Title} {king.name} nevládne a sněm volí regentskou radu, která bude rozhodovat za {K:něj|ni}. Rody se přou o místa, kancléř chce vládnout sám a královská rodina nedůvěřuje nikomu. Místo v radě je blíž trůnu než kterákoli tvrz — kdo v ní sedí, bude u toho, až se bude rozhodovat o koruně.',
     choices: [
       {
         label: 'Ucházet se o místo regenta',
@@ -53,7 +54,7 @@ export const THRONE_EVENTS = [
         isRoll: true, baseChance: 0.35, traitKey: 'eloquence', traitScale: 0.05, resourceKey: 'legitimacy', resourceScale: 0.004,
         chanceBonus: (s) => (s.houses || []).filter((h) => h.ally || h.married).length * 0.08 + (s.resources.favor - 50) / 300,
         bonusLabel: 'Spojenci a přízeň',
-        onSuccess: { effects: { legitimacy: 15, prestige: 6 }, hiddenEffects: { setFlag: 'regent' }, traitGain: 'eloquence', chronicle: 'Sněm zvolil {ruler.name} do regentské rady. Rod {dynastyName} teď vládne zemi — zatím jménem někoho jiného.' },
+        onSuccess: { effects: { legitimacy: 15, prestige: 6 }, hiddenEffects: { setFlag: 'regent' }, traitGain: 'eloquence', chronicle: 'Sněm tě zvolil do regentské rady. Rod {dynastyName} teď vládne zemi — zatím jménem někoho jiného.' },
         onFailure: { effects: { prestige: -4, favor: -4 }, houseEffects: { '*': { attitude: -3 } }, chronicle: 'Sněm dal přednost starým rodům. Skokan prý může počkat.' },
       },
       {
