@@ -83,6 +83,8 @@ export function interpolate(state, text) {
   // {child.name} {child.word} the newborn · {suitor.0.name} {suitor.0.kind} the people to court
   if (state.lastBirth) Object.assign(dict, { 'child.name': state.lastBirth.name, 'child.word': state.lastBirth.gender === 'female' ? 'dcera' : 'syn' });
   (state.suitors || []).forEach((x, i) => Object.assign(dict, { [`suitor.${i}.name`]: x.name, [`suitor.${i}.kind`]: x.kindLabel }));
+  dict['succession.note'] = state.successionNote || '';
+  dict['predecessor.rel'] = state.predecessorRel || 'otec';
   // {conquest.name} "Východní marky", {conquest.gen} "Východních marek", {conquest.old} the ruler who yielded
   if (state.lastConquest) Object.assign(dict, { 'conquest.name': state.lastConquest.name, 'conquest.gen': state.lastConquest.gen, 'conquest.loc': state.lastConquest.loc, 'conquest.old': state.lastConquest.old, 'conquest.yield': state.lastConquest.yield });
   // {realm.east} = "král Ctibor", {realm.south.name} = "Ctibor"
@@ -1230,8 +1232,10 @@ function generateSuccessorHousehold(state, siblings = []) {
 function handleSuccession(state, cause = 'stářím') {
   dropAmbition(state); // the new ruler sets their own goals
   if (state.war && state.war.leader === 'ruler') state.war.leader = 'marshal'; // the marshal takes over the campaign
-  nextHeir(state); // a younger child steps up if the heir is gone
+  nextHeir(state); // a younger child steps up if the heir is gone; without children a brother or sister
   if (state.heir.alive) {
+    // a brother or sister taking over: the main line has died out, a cadet branch carries the house on
+    const cadet = !!state.heir.presumptive;
     const oldName = state.ruler.name;
     const newRulerName = state.heir.name;
     state.pastRulers = state.pastRulers || [];
@@ -1262,8 +1266,18 @@ function handleSuccession(state, cause = 'stářím') {
       reignStartTurn: state.turn,
     };
     state.generation += 1;
-    // the old ruler's younger children are the new ruler's brothers and sisters
-    const siblings = (state.children || []).filter((c) => c.alive !== false);
+    // the old ruler's younger children are the new ruler's brothers and sisters (for a cadet branch: the old ruler's other siblings)
+    const siblings = (cadet ? state.siblings || [] : state.children || []).filter((c) => c.alive !== false);
+    state.successionNote = '';
+    const pf = state.pastRulers.at(-1).gender === 'female';
+    state.predecessorRel = cadet ? (pf ? 'sestra' : 'bratr') : (pf ? 'matka' : 'otec');
+    if (cadet) {
+      state.cadetBranch = (state.cadetBranch || 0) + 1;
+      state.resources.legitimacy = clamp((state.resources.legitimacy ?? 50) - 10);
+      state.resources.prestige = clamp(state.resources.prestige - 5);
+      state.successionNote = ` Hlavní linie rodu vymřela — ${state.ruler.gender === 'female' ? 'sestra' : 'bratr'} ${state.pastRulers.at(-1).gender === 'female' ? 'zesnulé' : 'zesnulého'} vede rod jako vedlejší větev a ne každý to bere jako samozřejmost.`;
+      state.chronicle.push(makeChronicleEntry(state, `${oldName} ${state.pastRulers.at(-1).gender === 'female' ? 'zemřela' : 'zemřel'} bez dětí. Hlavní linie rodu ${state.dynastyName} vymřela; rod pokračuje vedlejší větví.`));
+    }
     generateSuccessorHousehold(state, siblings);
     delete state.flags.heir_married;
     delete state.flags.no_more_children;

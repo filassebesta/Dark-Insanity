@@ -198,7 +198,17 @@ export function processFamily(state) {
   }
   if (state.seasonIndex === 0) {
     for (const c of state.children) if (c.alive !== false) c.age += 1;
-    for (const c of state.siblings || []) if (c.alive !== false) c.age += 1;
+    for (const c of state.siblings || []) {
+      if (c.alive === false) continue;
+      c.age += 1;
+      // brothers and sisters do not live forever either
+      if (Math.random() < 0.004 + Math.max(0, c.age - 45) * 0.02) {
+        c.alive = false;
+        news.push(`${f(c) ? 'Zemřela sestra' : 'Zemřel bratr'} ${c.name} (${c.age} let).`);
+        state.chronicle.push(makeChronicleEntry(state, `${f(c) ? 'Zemřela' : 'Zemřel'} ${c.name}, ${f(c) ? 'sestra' : 'bratr'} ${f(state.ruler) ? 'vládkyně' : 'vládce'} z rodu ${state.dynastyName}.`));
+      }
+    }
+    if (state.siblings) state.siblings = state.siblings.filter((c) => c.alive !== false);
     for (const s of state.suitors || []) s.age += 1;
     // a suitor who waits too long marries someone else
     if ((state.suitors || []).length && Math.random() < 0.25) {

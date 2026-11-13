@@ -272,8 +272,8 @@ function wireActions() {
         // no scenario menu: every chronicle starts on the plough and rises in the same save
         const name = document.getElementById('input-ruler-name').value.trim();
         const dynasty = document.getElementById('input-dynasty-name').value.trim();
-        const gender = document.querySelector('input[name="ruler-gender"]:checked')?.value || 'male';
-        startGame(createNewGame(name, dynasty, gender));
+        // the chronicle starts with a man; daughters can still inherit later
+        startGame(createNewGame(name, dynasty, 'male'));
         break;
       }
       case 'close-panel':
@@ -397,13 +397,6 @@ function wireActions() {
   document.getElementById('panel-overlay').addEventListener('click', (e) => {
     if (e.target.id === 'panel-overlay') closePanels();
   });
-
-  // the new game form speaks of a farmer or a farmer's wife, not of a king or a queen
-  document.querySelectorAll('input[name="ruler-gender"]').forEach((radio) => radio.addEventListener('change', () => {
-    const female = radio.value === 'female' && radio.checked;
-    document.getElementById('ruler-name-label').textContent = female ? 'Jméno hospodyně' : 'Jméno hospodáře';
-    document.getElementById('input-ruler-name').placeholder = female ? 'např. Anežka' : 'např. Vojtěch';
-  }));
 
   document.getElementById('input-dynasty-name').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') document.querySelector('[data-action="start-new-game"]').click();

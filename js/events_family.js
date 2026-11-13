@@ -120,7 +120,7 @@ export const FAMILY_EVENTS = [
     scenarios: ALL, forced: true, free: true,
     image: img('smrt_radce'),
     title: '{P:Odešel|Odešla} {predecessor.name}',
-    text: '{predecessor.name} {P:zemřel|zemřela} a rod {dynastyName} se sešel u hrobu. Kněz domluvil, hlína dopadla na rakev a všichni se teď dívají na tebe: {ruler.name} přebírá {domain}. Lidé si šeptají, jestli {R:bude takový|bude taková} jako {P:otec|matka}, nebo {R:jiný|jiná} — a co se teď změní.',
+    text: '{predecessor.name} {P:zemřel|zemřela} a rod {dynastyName} se sešel u hrobu. Kněz domluvil, hlína dopadla na rakev a všichni se teď dívají na tebe: {ruler.name} přebírá {domain}. Lidé si šeptají, jestli {R:bude takový|bude taková} jako {predecessor.rel}, nebo {R:jiný|jiná} — a co se teď změní.{succession.note}',
     choices: [
       {
         label: 'Vystrojit pohřeb, na který se bude vzpomínat',

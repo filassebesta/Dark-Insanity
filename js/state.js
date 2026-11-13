@@ -186,6 +186,16 @@ function createPeasantGame(rulerName, dynastyName, gender) {
   state.spouse = { role: 'spouse', name: '', gender: gender === 'female' ? 'male' : 'female', age: 0, loyalty: 0, alive: false, none: true };
   state.heir = { role: 'heir', name: '', gender: 'male', age: 0, loyalty: 0, alive: false, none: true, traits: inheritTraits() };
   state.children = [];
+  // one to three younger brothers and sisters: if the farmer dies childless, one of them carries the house on
+  const used = new Set([state.ruler.name, state.chancellor.name, state.marshal.name, state.spymaster.name]);
+  state.siblings = [];
+  for (let i = randInt(1, 3); i > 0; i--) {
+    const g = Math.random() < 0.5 ? 'male' : 'female';
+    let name = randomName(g);
+    for (let k = 0; k < 20 && used.has(name); k++) name = randomName(g);
+    used.add(name);
+    state.siblings.push({ role: 'sibling', name, gender: g, age: randInt(12, 18), loyalty: randInt(60, 80), alive: true, traits: inheritTraits() });
+  }
   state.chancellor.age = randInt(45, 60);
   state.marshal.age = randInt(30, 50);
   state.spymaster.age = randInt(30, 50);

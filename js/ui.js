@@ -121,7 +121,7 @@ export function renderResourceBar(state) {
 }
 
 export function renderReignInfo(state) {
-  document.getElementById('reign-name').textContent = `${state.ruler.name} z rodu ${state.dynastyName}`;
+  document.getElementById('reign-name').textContent = `${state.ruler.name} z rodu ${state.dynastyName}${state.cadetBranch ? ' · vedlejší větev' : ''}`;
   const date = `${SEASONS[state.seasonIndex]} · rok ${state.year}`;
   document.getElementById('reign-date').textContent = `${date} · ${state.generation}. generace`;
   document.getElementById('scene-date').textContent = date;
