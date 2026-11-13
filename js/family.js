@@ -204,8 +204,14 @@ export function processFamily(state) {
     if ((state.suitors || []).length && Math.random() < 0.25) {
       const i = randInt(0, state.suitors.length - 1);
       const gone = state.suitors[i];
-      news.push(`${gone.name} (${gone.kindLabel}) ${f(gone) ? 'se vdala' : 'se oženil'} jinam.`);
-      state.suitors.splice(i, 1);
+      if (!gone.warned) {
+        // a year's warning first
+        gone.warned = true;
+        news.push(`${gone.name} (${gone.kindLabel}) už nebude čekat věčně. ${f(gone) ? 'Ucházejí se o ni' : 'Ucházejí se o něj'} i jiní.`);
+      } else {
+        news.push(`${gone.name} (${gone.kindLabel}) ${f(gone) ? 'se vdala' : 'se oženil'} jinam.`);
+        state.suitors.splice(i, 1);
+      }
     }
   }
   if (nextHeir(state)) news.push(`Novým dědicem je ${state.heir.name}.`);

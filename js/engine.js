@@ -875,6 +875,7 @@ function markEventSeen(state, event) {
  * engine rolls by itself (the sims).
  */
 export function resolveChoice(state, event, choiceIndex, decided = null) {
+  state.currentEvent = null; // answered: a loaded save does not show it again
   const choice = event.choices[choiceIndex];
   let outcome = 'normal';
   let branch = choice;
@@ -910,6 +911,7 @@ export function resolveChoice(state, event, choiceIndex, decided = null) {
 }
 
 export function resolveRouteChoice(state, event, terrainKey) {
+  state.currentEvent = null;
   const option = event.routeOptions.find((o) => o.terrainKey === terrainKey);
   const risk = TERRAIN_DEFS[terrainKey] ? TERRAIN_DEFS[terrainKey].baseRisk : 0.3;
   const danger = Math.random() < risk;

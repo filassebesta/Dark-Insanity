@@ -1,5 +1,6 @@
 import { createNewGame, promote, saveGame, listSaves, loadGame, loadMostRecentSave, deleteSave, loadSettings, saveSettings } from './state.js';
 import { advanceTurn, resolveChoice, resolveRouteChoice, checkEndConditions, pickNextEvent } from './engine.js';
+import { EVENTS } from './events.js';
 import {
   showScreen, renderResourceBar, updateBookTabFlags, renderTurnSummary, renderEventCard,
   renderCourtPanel, renderChroniclePanel, openPanel, closePanels, isPanelOpen,
@@ -152,7 +153,24 @@ function runNextTurn() {
   renderTurnSummary(result.turnSummary);
   renderTradeNews(result.tradeNews);
 
+  // the season is saved with its open event, so "Pokračovat" brings back the same card
+  if (result.event && result.event.type !== 'route') {
+    currentState.lastSummary = { text: result.turnSummary, trade: result.tradeNews };
+    saveGame(currentState);
+  }
   presentEvent(result.event); // the engine falls back to the quiet-season event
+}
+
+// a loaded chronicle continues with the event that was waiting for an answer, if any
+function resumeOpenEvent() {
+  // (lastSummary marks saves that record the open event; older saves kept the last answered one)
+  const event = currentState.lastSummary && currentState.currentEvent && EVENTS.find((e) => e.id === currentState.currentEvent);
+  if (!event) return false;
+  const last = currentState.lastSummary || {};
+  renderTurnSummary(last.text || '');
+  renderTradeNews(last.trade || []);
+  presentEvent(event);
+  return true;
 }
 
 // after a 'free' event (the ambition offer) the season's own event comes without a new season
@@ -172,7 +190,7 @@ function startGame(state) {
   resetResourceMemory();
   showScreen('screen-game');
   refreshAllPanels();
-  runNextTurn();
+  if (!resumeOpenEvent()) runNextTurn();
 }
 
 function renderSaveSlotList() {

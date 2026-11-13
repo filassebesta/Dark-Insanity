@@ -16,6 +16,7 @@ roztřídím je podle obsahu a zpracuju).
 | ✅ | K2 | Císař a císařovna | 4 | 4:5 | `assets/portraits/` | plaketa, Postava, Dvůr |
 | ✅ | K3 | Cizí panovníci | 6 | 4:5 | `assets/portraits/` | mapa světa → klik na zemi |
 | ✅ | K4 | Malovaná mapa světa | 1 | 3:2 | `assets/map/` | Mapa → Svět |
+| ⏳ | K5 | Karty kapitol za ženu + dobytí koruny | 6 | 1:1 | `assets/events/` | karty kapitol (vládne-li žena) |
 
 **Všech 18 obrázků je dodaných a zapojených** (originály v `assets/_source/gemini/kariera/`).
 Šest scén mělo vložený tmavý pás mezi ~59 % a ~84 % výšky; opraveno jen v tom rozsahu.
@@ -150,4 +151,37 @@ painting on parchment with visible brushwork, desaturated ochre, olive,
 slate blue and rust colours, soft vignette at the edges. Avoid: text,
 letters, labels, grid lines, 3D render, satellite photo, oversaturated
 colours, watermark or signature.
+```
+
+---
+
+## Dávka K5 — Karty kapitol za ženu a dobytí koruny (1:1, 6 ks)
+
+Karty kapitol teď ukazují muže i tehdy, když hraješ za ženu. Hra si sama vezme
+`<název>_female.jpg`, jakmile existuje (jinak použije současný obrázek).
+
+```
+Generate one separate image for each line below. Each line has a file name
+and a description. Return every image as its own file named exactly as the
+file name. Do not combine images into a grid or sprite sheet.
+
+Format: aspect ratio 1:1, 2048 x 2048. Main subject in the centre and upper
+part of the image, the lower third darker and calm (text is shown over it).
+
+Style for every image: painted in the style of a dark-fantasy narrative RPG,
+muted oil painting with visible loose brushwork and subtle canvas texture,
+desaturated earthy palette of ochre, rust, olive green and dusty slate blue,
+soft chiaroscuro lighting, late-medieval Central European (Bohemian)
+setting of the 14th century, realistic proportions, modest historically
+accurate clothing. Avoid: anime, cartoon, 3D render, photography,
+oversaturated colours, airbrushed digital art, any text, letters,
+watermark or signature.
+
+Images:
+kapitola_svoboda_female.jpg — A young countrywoman in a plain linen dress and headscarf holding a sealed parchment charter in front of a small village church; neighbours look on with admiration and envy, the lord's manor on a hill in the background.
+kapitola_erb_female.jpg — A weathered woman of humble origin in a new but simple noble gown watching servants hang a freshly painted coat of arms above the gate of a small stone keep on a windswept sea cliff; a few soldiers and villagers look on, grey sea and gulls behind.
+kapitola_velmoz_female.jpg — A determined noblewoman in a dark velvet gown taking her seat among older lords at a long council table in a royal hall; the old lords eye the newcomer, a monarch watches from a throne in the background.
+kapitola_koruna_female.jpg — A coronation in a dim Gothic cathedral: a bishop raises a golden crown above the head of a woman ruler with work-worn hands; nobles in fur-trimmed robes watch from the shadows, candles and incense smoke.
+kapitola_cisar_female.jpg — A vast Gothic cathedral: a bishop lifts the third of three crowns from a velvet cushion before a woman ruler in a rich mantle; foreign envoys in exotic clothes watch from the side aisles.
+kapitola_cizi_koruna.jpg — Outside a war camp at dawn: a foreign crown resting on a cloth on the ground in front of a large tent with banners; a defeated foreign ruler in a fur cloak walks away towards a distant line of riders, soldiers of the victor watching in silence.
 ```

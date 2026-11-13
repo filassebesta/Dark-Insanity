@@ -47,7 +47,7 @@ Ani jedna chyba JavaScriptu. Stav: ✅ opraveno · ⏳ čeká.
 | S13 | ✅ | válka | Velké vojsko hladoví, rady přesto doporučují další zbrojení. |
 | S14 | ✅ | Síň předků | Jako „hlavní činy“ se ukazují bezvýznamné volby. |
 | S15 | ✅ | různé | Vládce v poli řeší věci na dvoře; 2 trvalá zranění z jednoho souboje; „Ráno nevstalo dvacet mužů“ při 22 mužích. |
-| S16 | ⏳ | obrázky | Karty kapitol ukazují muže i u královny (chybí ženské varianty). |
+| S16 | ⏳ | obrázky | Karty kapitol ukazují muže i u královny — prompty připraveny (dávka K5 v `docs/obrazky-kariera.md`), hra je zapojí sama. |
 
 ## Nízké
 
@@ -58,4 +58,5 @@ neaktuální šance u volby po vyslání vojska; po korunovaci změna příjmu b
 
 ✅ Opraveno z nízkých: iniciála u jednopísmenné předložky, opakovaná jména v rodině (manžel/ka a dítě
 nového vládce mají vždy jiné jméno než sourozenci a rádci), svatební zápis v kronice (dříve „provdala za Zbyněk“),
-věk dětí „1 rok / 3 roky“ místo „1 let“.
+věk dětí „1 rok / 3 roky“ místo „1 let“, „Pokračovat“ vrátí rozehranou událost (hra se ukládá i s otevřenou
+kartou), nápadník/nápadnice rok předem varuje, než se ožení/vdá jinam.

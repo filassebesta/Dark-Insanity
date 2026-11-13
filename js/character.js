@@ -188,7 +188,7 @@ export function renderCharacterSheet(state) {
   const single = !sp || sp.alive === false
     ? `<p class="cs-family-note">${r.gender === 'female' ? (sp && !sp.none ? 'Vdova.' : 'Svobodná.') : (sp && !sp.none ? 'Vdovec.' : 'Svobodný.')} ${(state.heir && state.heir.alive !== false) ? '' : 'Bez dědice rod vymře.'}</p>`
     : '';
-  const suitors = (state.suitors || []).map((c, i) => card(c, `suitor:${i}`, c.kindLabel, `${c.age} let · náklonnost ${c.affection}`, ' suitor')).join('');
+  const suitors = (state.suitors || []).map((c, i) => card(c, `suitor:${i}`, c.kindLabel, `${c.age} let · náklonnost ${c.affection}${c.warned ? ' · nebude čekat věčně' : ''}`, ' suitor')).join('');
 
   const OUTCOME_WORD = { success: ' (úspěch)', failure: ' (nezdar)', danger: ' (nebezpečí)' };
   const ancestors = (state.pastRulers || []).slice().reverse().map((a) => {
