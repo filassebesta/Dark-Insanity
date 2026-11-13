@@ -293,6 +293,33 @@ export const CAREER_EVENTS = [
     ],
   },
   {
+    id: 'kapitola_cizi_koruna',
+    scenario: 'panovnik', forced: true, free: true,
+    image: 'assets/events/kapitola_koruna.jpg',
+    title: 'Koruna {conquest.gen}',
+    text: '{conquest.old} {conquest.yield}. Rod {dynastyName} teď vládne dvěma zemím. Ve Vlčím Údělu se slaví, ale {conquest.loc} se na {R:nového pána|novou paní} dívají lidé, kteří včera ještě bojovali proti {R:němu|ní}. Jak se k nim zachovat, rozhodne, jestli bude nová koruna pevná, nebo zda se při první slabosti rozpadne.',
+    choices: [
+      {
+        label: 'Potvrdit jim jejich zákony a zvyky',
+        hintType: 'trait', hintKey: 'patience',
+        effects: { gold: -6, legitimacy: 4 }, realm: { conquest: { attitude: 10 } },
+        chronicle: 'Dobytá země si ponechala své zákony. Platí daně nové koruně, ale žije po svém.',
+      },
+      {
+        label: 'Dosadit do hradů vlastní hejtmany',
+        hintType: 'trait', hintKey: 'strength',
+        effects: { prestige: 6, gold: 4 }, realm: { conquest: { attitude: -6 } },
+        chronicle: 'Do hradů v dobyté zemi nastoupili hejtmani z Vlčího Údělu. Poslušnost přišla rychle, láska nepřišla vůbec.',
+      },
+      {
+        label: 'Rozdat vojákům podíl z kořisti',
+        hintType: 'resource', hintKey: 'army',
+        effects: { gold: -8, army: 6, stability: 3 },
+        chronicle: 'Kořist z dobyté země se rozdělila mezi ty, kdo ji dobyli. V kasárnách se pilo na zdraví nového pána.',
+      },
+    ],
+  },
+  {
     id: 'zlaty_vek',
     scenario: 'panovnik', forced: true,
     image: 'assets/endings/ending_golden_age.jpg',

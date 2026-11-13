@@ -5,7 +5,7 @@ Tři testeři hráli hru ve skutečném prohlížeči (Chromium). Stupeň **krá
 ~260 událostí, tři cesty ke koruně) jsou dohrané. Test **sedláka** se přerušil
 (limit využití) a doběhne později.
 
-Ani jedna chyba JavaScriptu. Stav: ✅ opraveno · ◐ částečně (text opraven, vlastní karta dobytí chybí) · ⏳ čeká.
+Ani jedna chyba JavaScriptu. Stav: ✅ opraveno · ⏳ čeká.
 
 ## Kritické a vysoké
 
@@ -36,7 +36,7 @@ Ani jedna chyba JavaScriptu. Stav: ✅ opraveno · ◐ částečně (text oprave
 | S2 | ✅ | Výnos roku | Výsledek neukazuje zisk/ztrátu zlata. |
 | S3 | ✅ | cizí země | Tituly cizích vládců si odporují (markrabě × král/královna, císař × císařovna). |
 | S4 | ✅ | Účet z Marek | Malé písmeno na začátku věty, „král nikomu nic nedluží“ u královny. |
-| S5 | ◐ | dobytí | „králem i v Východních markách“; dobytí koruny nemá vlastní kartu. |
+| S5 | ✅ | dobytí | „králem i v Východních markách“; dobytí koruny nemá vlastní kartu. |
 | S6 | ✅ | Síň slávy, konce | Chybí úspěchy za cizí korunu a císaře; konce vykají a nejsou osobní. |
 | S7 | ✅ | boj o trůn | Náhodná smrt krále předběhne příběh; pád z koně se opakuje u každého krále; regentství nemá účinek. |
 | S8 | ✅ | šlechtic | Opakované události (Zkouška věrnosti 3×, Mlýn 3×, Rytíři u brány 2×); „Pozvání do tmy“ i když už ve spiknutí jsi. |
@@ -44,9 +44,9 @@ Ani jedna chyba JavaScriptu. Stav: ✅ opraveno · ◐ částečně (text oprave
 | S10 | ✅ | rodina | Sňatek od dohazovače zapsán jako „sňatek z lásky“; věno se neukáže. |
 | S11 | ✅ | rozhovory | „Stříbrná spona ho potěšil“, „5 zlato“, „1 mužů“, „2 let“, „Prosby byly vyslyšeny“. |
 | S12 | ✅ | UI | Oznámení Síně slávy překrývají text karty. |
-| S13 | ⏳ | válka | Velké vojsko hladoví, rady přesto doporučují další zbrojení. |
-| S14 | ⏳ | Síň předků | Jako „hlavní činy“ se ukazují bezvýznamné volby. |
-| S15 | ⏳ | různé | Vládce v poli řeší věci na dvoře; 2 trvalá zranění z jednoho souboje; „Ráno nevstalo dvacet mužů“ při 22 mužích. |
+| S13 | ✅ | válka | Velké vojsko hladoví, rady přesto doporučují další zbrojení. |
+| S14 | ✅ | Síň předků | Jako „hlavní činy“ se ukazují bezvýznamné volby. |
+| S15 | ✅ | různé | Vládce v poli řeší věci na dvoře; 2 trvalá zranění z jednoho souboje; „Ráno nevstalo dvacet mužů“ při 22 mužích. |
 | S16 | ⏳ | obrázky | Karty kapitol ukazují muže i u královny (chybí ženské varianty). |
 
 ## Nízké
@@ -57,4 +57,5 @@ s průběhem vlády; „Pokračovat“ neobnoví rozehranou událost; nápadník
 neaktuální šance u volby po vyslání vojska; po korunovaci změna příjmu bez vysvětlení.
 
 ✅ Opraveno z nízkých: iniciála u jednopísmenné předložky, opakovaná jména v rodině (manžel/ka a dítě
-nového vládce mají vždy jiné jméno než sourozenci a rádci), svatební zápis v kronice (dříve „provdala za Zbyněk“).
+nového vládce mají vždy jiné jméno než sourozenci a rádci), svatební zápis v kronice (dříve „provdala za Zbyněk“),
+věk dětí „1 rok / 3 roky“ místo „1 let“.

@@ -76,7 +76,7 @@ export const WAR_EVENTS = [
     scenarios: REALM, forced: true,
     image: img('mor_v_pristavu'),
     title: 'Úplavice v táboře',
-    text: 'V táboře se šíří úplavice. Ráno nevstalo dvacet mužů, večer jich bylo čtyřicet. Kdo ještě stojí, dívá se směrem k domovu.',
+    text: 'V táboře se šíří úplavice. Ráno nevstali první nemocní, večer už ležely celé stany. Kdo ještě stojí, dívá se směrem k domovu.',
     choices: [
       {
         label: 'Spálit nakažené stany',

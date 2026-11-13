@@ -83,6 +83,8 @@ export function interpolate(state, text) {
   // {child.name} {child.word} the newborn · {suitor.0.name} {suitor.0.kind} the people to court
   if (state.lastBirth) Object.assign(dict, { 'child.name': state.lastBirth.name, 'child.word': state.lastBirth.gender === 'female' ? 'dcera' : 'syn' });
   (state.suitors || []).forEach((x, i) => Object.assign(dict, { [`suitor.${i}.name`]: x.name, [`suitor.${i}.kind`]: x.kindLabel }));
+  // {conquest.name} "Východní marky", {conquest.gen} "Východních marek", {conquest.old} the ruler who yielded
+  if (state.lastConquest) Object.assign(dict, { 'conquest.name': state.lastConquest.name, 'conquest.gen': state.lastConquest.gen, 'conquest.loc': state.lastConquest.loc, 'conquest.old': state.lastConquest.old, 'conquest.yield': state.lastConquest.yield });
   // {realm.east} = "král Ctibor", {realm.south.name} = "Ctibor"
   if (state.realms) {
     for (const key of Object.keys(REALMS)) {
@@ -451,7 +453,8 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
   applyHouseEffects(state, branch.houseEffects, notes);
   applyNobleEffects(state, branch.noble, notes);
   // realm: { <key>: { attitude, power } } — how a foreign court takes what was done
-  for (const [key, fx] of Object.entries(branch.realm || {})) {
+  for (const [k, fx] of Object.entries(branch.realm || {})) {
+    const key = k === 'conquest' ? state.lastConquest && state.lastConquest.key : k; // the crown just taken
     const r = state.realms && state.realms[key];
     if (!r) continue;
     if (fx.attitude) r.attitude = clamp(r.attitude + fx.attitude);
@@ -705,9 +708,13 @@ function reignOf(state) {
   return state.reign;
 }
 
+// routine scenes (the year's work, chapter cards, a funeral, a birth) are not deeds a reign is remembered by
+const ROUTINE_SCENES = /^(quiet_season|n_klidne_obdobi|s_klidne_obdobi|vynos_roku|s_prace_na_gruntu|nastupnictvi|narozeni|touha_po_diteti|kapitola_.*|p_.*)$/;
+
 function tallyReign(state, branch, meta, outcome) {
   if (!meta || !meta.event || /^(quiet_season|n_klidne_obdobi|s_klidne_obdobi)$/.test(meta.event.id)) return;
   const reign = reignOf(state);
+  const routine = ROUTINE_SCENES.test(meta.event.id);
   let weight = 0;
   for (const [k, v] of Object.entries(branch.effects || {})) {
     reign.sums[k] = (reign.sums[k] || 0) + v;
@@ -725,7 +732,11 @@ function tallyReign(state, branch, meta, outcome) {
   }
   if (branch.setTier || branch.newKing || branch.endGame) weight += 60;
   if (meta.event.forced) weight += 15;
-  if (/^krize/.test(meta.event.id)) bumpStat(state, 'crises');
+  if (meta.battle) weight += 15;
+  if (branch.marrySuitor !== undefined || branch.adopt) weight += 20;
+  if (branch.war) weight += 5;
+  if (/^krize/.test(meta.event.id)) { bumpStat(state, 'crises'); weight += 15; }
+  if (routine) return; // counted in the sums above, never listed as a deed
   // the three weightiest decisions of a reign are what the chronicle remembers
   reign.deeds.push({ year: state.year, title: interpolate(state, meta.event.title), choice: meta.label, outcome, weight });
   reign.deeds.sort((x, y) => y.weight - x.weight);
@@ -927,10 +938,14 @@ const KING_ACTS = new Set(['v_korunni_rada', 'v_zkouska_vernosti', 'v_ozvena_rad
 const kingHelpless = (state) => !!(state.throneArc && state.throneArc.step >= 1 && !state.throneArc.done);
 const marchesAreOurs = (state) => !!(state.realms && state.realms.east && state.realms.east.owner === 'player');
 
+const AT_COURT = new Set(['turnaj', 'hostina_slechty', 'portret_vladce', 'dvorni_blazen', 'vyroci_vlady', 'soud_o_mez', 'prosba_ucitele', 'spor_rybaru', 'hranicni_kamen', 'rvaci_v_krcme', 'touha_po_diteti']);
+
 function eventAvailable(state, e) {
   if (MARCHES_ABROAD.has(e.id) && marchesAreOurs(state)) return false;
   if (!(e.scenarios || [e.scenario || 'panovnik']).includes(state.scenario)) return false;
   if ((state.flags.rebellion || kingHelpless(state)) && (ROYAL_EVENTS.has(e.id) || KING_ACTS.has(e.id))) return false;
+  // a ruler leading the army in the field does not hold feasts, sit for portraits or judge village quarrels
+  if (state.war && state.war.leader === 'ruler' && AT_COURT.has(e.id)) return false;
   if (e.forced) return false; // only ever raised by the engine (state.pendingEvent)
   if (e.oneTime && (state.usedEvents || []).includes(e.id)) return false;
   const last = (state.eventHistory || {})[e.id];

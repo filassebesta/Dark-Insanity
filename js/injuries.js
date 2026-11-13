@@ -126,7 +126,9 @@ export function injure(state, spec, notes = []) {
   let pool = spec === 'random' ? RANDOM_POOL
     : typeof spec === 'string' ? [[spec, 1]]
       : spec.pool.map((k) => [k, RANDOM_POOL.find(([x]) => x === k)?.[1] || 1]);
-  pool = pool.filter(([k]) => INJURIES[k] && !(PERMANENT(k) && hasInjury(state, k)));
+  // one blow leaves at most one lasting mark: no second permanent injury in the same season
+  const scarredNow = r.lastScarTurn === state.turn;
+  pool = pool.filter(([k]) => INJURIES[k] && !(PERMANENT(k) && (hasInjury(state, k) || scarredNow)));
   if (!pool.length) return null;
   const key = pickWeighted(pool);
   const def = INJURIES[key];
@@ -142,7 +144,7 @@ export function injure(state, spec, notes = []) {
   }
   notes.push({ text: `Zranění: ${def.name.toLowerCase()}${def.heals ? '' : ' (natrvalo)'}`, tone: 'neg' });
   bumpStat(state, 'injuries');
-  if (!def.heals) bumpStat(state, 'scars');
+  if (!def.heals) { bumpStat(state, 'scars'); r.lastScarTurn = state.turn; }
   if (!def.heals) state.chronicle.push(makeChronicleEntry(state, `${r.name} si z toho odnes${r.gender === 'female' ? 'la' : 'l'} trvalé zranění: ${def.name.toLowerCase()}.`));
   return key;
 }

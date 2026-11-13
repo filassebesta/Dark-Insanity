@@ -42,12 +42,24 @@ function hash(str) {
 }
 
 // how good a branch looks to an adviser (role) with a personality (quirk)
+// what is scarce matters more, what overflows matters less — and more soldiers are more mouths
+function need(state, k) {
+  const r = state.resources || {};
+  const have = r[k];
+  let m = have === undefined ? 1 : have < 20 ? 2 : have < 35 ? 1.4 : have > 80 ? 0.4 : 1;
+  if (k === 'army' && (r.food ?? 50) < 25) m = -0.5; // an army that is already starving should not grow
+  if (k === 'army' && (r.gold ?? 50) < 10) m = Math.min(m, 0.3);
+  return m;
+}
+
 function branchValue(state, branch, role, quirk) {
   if (!branch) return 0;
   const focus = FOCUS[role];
   let v = 0;
   for (const [k, val] of Object.entries(branch.effects || {})) {
-    let w = focus[k] ?? 0.6;
+    const n = need(state, k);
+    // a gain counts by how much it is needed; a loss always hurts in full — except soldiers nobody can feed
+    let w = (focus[k] ?? 0.6) * (val > 0 || n < 0 ? n : Math.max(1, n));
     if (quirk === 'chamtivy' && k === 'gold') w += 1.5;
     if (quirk === 'zbozny' && k === 'faith') w += 1.2;
     if (quirk === 'ctizadostivy' && k === 'prestige') w += 1;

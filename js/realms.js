@@ -14,17 +14,17 @@ import { makeChronicleEntry } from './state.js';
 // conquerable: a crown that can be taken; the southern empire is too big to swallow
 export const REALMS = {
   east: {
-    name: 'Východní marky', gen: 'Východních marek', kind: 'Markské království', title: ['král', 'královna'],
+    name: 'Východní marky', gen: 'Východních marek', loc: 've Východních markách', kind: 'Markské království', title: ['král', 'královna'],
     conquerable: true, income: 3,
     text: 'Bojovné království za Sokolím hvozdem. Markrabata, která ho drží pohromadě, poslouchají svého panovníka jen v boji — a v boji jsou nejlepší.',
   },
   north: {
-    name: 'Severní pustiny', gen: 'Severních pustin', kind: 'Kmenový svaz', title: ['velký náčelník', 'velká náčelnice'],
+    name: 'Severní pustiny', gen: 'Severních pustin', loc: 'v Severních pustinách', kind: 'Kmenový svaz', title: ['velký náčelník', 'velká náčelnice'],
     conquerable: true, income: 1,
     text: 'Studené kraje za horami. Kmeny se sjednocují jen pod silným náčelníkem a rozpadají se, jakmile zemře.',
   },
   south: {
-    name: 'Jižní říše', gen: 'Jižní říše', kind: 'Říše za mořem', title: ['císař', 'císařovna'],
+    name: 'Jižní říše', gen: 'Jižní říše', loc: 'v Jižní říši', kind: 'Říše za mořem', title: ['císař', 'císařovna'],
     conquerable: false, income: 0,
     text: 'Bohatá a stará říše za Šedým mořem. Obchoduje se všemi, bojuje rukama žoldnéřů a dobýt se nedá.',
   },
@@ -88,6 +88,8 @@ export function beatRealm(state, key) {
     r.attitude = 30;
     const old = realmRulerLabel(state, key);
     const conquered = ownedRealms(state).length;
+    const a = r.ruler.gender === 'female' ? 'a' : '';
+    state.lastConquest = { key, name: def.name, gen: def.gen, loc: def.loc, old: old[0].toUpperCase() + old.slice(1), yield: `složil${a} korunu na zem před tvým stanem a ${a ? 'odešla' : 'odešel'} bez ohlédnutí` };
     let text = `Koruna ${def.gen} padla! ${old[0].toUpperCase()}${old.slice(1)} se poddal${r.ruler.gender === 'female' ? 'a' : ''} a ${state.ruler.name} teď nosí i korunu ${def.gen}.`;
     // two foreign crowns over one head make an empire
     if (conquered >= 2 && state.ruler.statusTier < 6) {
@@ -98,6 +100,10 @@ export function beatRealm(state, key) {
       if (state.pendingEvent) (state.eventQueue = state.eventQueue || []).unshift(state.pendingEvent);
       state.pendingEvent = 'kapitola_cisar';
       text += ` Tři koruny na jedné hlavě: ${state.ruler.name} ${state.ruler.gender === 'female' ? 'se dává korunovat císařovnou' : 'se dává korunovat císařem'}.`;
+    } else {
+      // the first foreign crown has a scene of its own (events_career.js)
+      if (state.pendingEvent) (state.eventQueue = state.eventQueue || []).unshift(state.pendingEvent);
+      state.pendingEvent = 'kapitola_cizi_koruna';
     }
     return { conquered: true, text };
   }
