@@ -1,6 +1,6 @@
 import { createNewGame, promote, saveGame, listSaves, loadGame, loadMostRecentSave, deleteSave, loadSettings, saveSettings } from './state.js';
 import { advanceTurn, resolveChoice, resolveRouteChoice, checkEndConditions, pickNextEvent } from './engine.js';
-import { EVENTS } from './events.js';
+import { EVENTS, QUIET_EVENTS } from './events.js';
 import {
   showScreen, renderResourceBar, updateBookTabFlags, renderTurnSummary, renderEventCard,
   renderCourtPanel, renderChroniclePanel, openPanel, closePanels, isPanelOpen,
@@ -164,7 +164,8 @@ function runNextTurn() {
 // a loaded chronicle continues with the event that was waiting for an answer, if any
 function resumeOpenEvent() {
   // (lastSummary marks saves that record the open event; older saves kept the last answered one)
-  const event = currentState.lastSummary && currentState.currentEvent && EVENTS.find((e) => e.id === currentState.currentEvent);
+  const id = currentState.lastSummary && currentState.currentEvent;
+  const event = id && (EVENTS.find((e) => e.id === id) || Object.values(QUIET_EVENTS).find((e) => e.id === id));
   if (!event) return false;
   const last = currentState.lastSummary || {};
   renderTurnSummary(last.text || '');
