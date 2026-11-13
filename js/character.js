@@ -91,6 +91,7 @@ function gearBlock(state) {
   const shop = shopFor(state).map(({ key, item, owned, block }) => `
     <button class="gear-buy${owned ? ' owned' : ''}" data-buy="${key}"${block ? ` disabled title="${esc(block)}"` : ''}>
       <b>${esc(item.name)}</b><span>${esc(item.text)}</span><em>${esc(fx(item))}</em><i>${owned ? 'máš' : `${item.cost} ${coin}`}</i>
+      ${block && !owned && block !== 'Na to nemáš.' ? `<small class="gear-why">${esc(block)}</small>` : ''}${owned && item.slot === 'horse' && state.scenario === 'sedlak' ? '<small class="gear-note">Stojí ve stáji na gruntu, počítá se mezi tvé koně.</small>' : ''}
     </button>`).join('');
   return `<h4 class="cs-section">Výzbroj</h4>
     <p class="cs-gear-sum">V souboji: <b>${f.hp}</b> životů · útočné číslo <b>${f.uc}</b> · obranné číslo <b>${f.oc}</b> · zbraň <b>+${f.dmg}</b></p>

@@ -75,7 +75,8 @@ musí být aktivní, jinak je mapa skrytá. Screenshoty ukládat mimo repozitá�
 | `js/trade.js` | obchod: zboží, trhy, karavany, zakázky (bez DOM) |
 | `js/map.js` | interaktivní malovaná mapa (SVG nad obrázkem), vrstvy, výnosy, obchodní vrstva, vstup do měst |
 | `js/build.js` | stavění: sídla, úrovně, parcely, budovy, stavební hutě, výnosy staveb (bez DOM) |
-| `js/town.js` | plán sídla (SVG s parcelami a ikonami budov) a boční panel stavění |
+| `js/town.js` | plán sídla (SVG s parcelami a ikonami budov) a boční panel stavění; na gruntu i výběh se zvířaty a panel Hospodářství |
+| `js/farm.js` | hospodářství gruntu: obilí, krávy, koně, prasata, místo a výnosy podle staveb, nákup a prodej (bez DOM) |
 | `js/ui.js` | vykreslení karty události, výsledků, panelů, konce |
 | `js/character.js` | list postavy, Síň předků, detail člena dvora |
 | `js/audio.js` | hlavní téma a bitevní hudba s prolínáním, hlasitost |
@@ -187,7 +188,7 @@ obchodní `trade`, `tradeOffer`, `tradeMod`, `tradeStock`.
 - Klik na město/ves na mapě otevře **plán sídla** s parcelami; klik na volnou parcelu nabídne stavby, klik na stavbu ukáže detail (strhnout, zastavit stavbu).
 - 9 sídel (`SETTLEMENTS` v `build.js`): Vlčí Úděl, Brod, Přístav Mark, Klášter na útesu, Železná Huť, Sokolov a nové vsi Lipnice, Dubovice, Zářečí. Sedlák místo Lipnice staví na **vlastním gruntu** (`towns.grunt`).
 - Úrovně Osada → Ves → Městys → Město → Královské město (klášter a grunt mají vlastní názvy), každá otevírá víc parcel; povýšení stojí zlato, čas a hotové stavby (Město potřebuje hradby, Královské město katedrálu, Statek svobodný stav).
-- 16 budov království (3 jen pro přístav, důl a myslivce) a 8 staveb gruntu. Účinky: `income` (každé období), `yearly` (na jaře), `drift` (klid a věrnost kraje, strop 8/6), `stock` (zboží do skladu), `onBuild`/`onProv` (jednou).
+- 16 budov království (3 jen pro přístav, důl a myslivce) a 11 staveb gruntu. Účinky: `income` (každé období), `yearly` (na jaře), `drift` (klid a věrnost kraje, strop 8/6), `stock` (zboží do skladu), `onBuild`/`onProv` (jednou).
 - Jen jedna stavba v sídle naráz a omezený počet **stavebních hutí** v celé zemi (Panovník 2, Šlechtic a Sedlák 1).
 - Stavět jde jen ve vlastních krajích (šlechtic jen na svém panství, po korunovaci všude). Cizí sídla jde prohlížet.
 - Stavby, které stojí od začátku (`base: true`), nic navíc nedávají — jsou započtené v původní ekonomice, aby se nezměnilo vyvážení.
@@ -271,6 +272,14 @@ obchodní `trade`, `tradeOffer`, `tradeMod`, `tradeStock`.
 - **Další opravy z testu:** rady zohledňují nedostatek (hladové vojsko nezbrojí, `need()` v `council.js`), Síň předků nevypisuje rutinní scény (`ROUTINE_SCENES`), vládce v poli nepořádá hostiny ani soudy (`AT_COURT`), jedna rána = nejvýš jedno trvalé zranění, karta dobytí cizí koruny `kapitola_cizi_koruna` (tokeny `{conquest.*}`, větev `realm: { conquest: … }`).
 - **Ženy, milenky, levobočci, vedlejší větev** (přání uživatele): nová hra je vždy za muže (formulář bez volby pohlaví; dcery mohou dědit později). Sedlák začíná s 1–3 mladšími sourozenci (`state.siblings`). V listu postavy galerie žen s portréty (`.cs-suitors`): svobodný má na výběr 5, ženatý 3 „ženy v okolí“; každá má náklonnost i věrnost (`loyalty`). Rozhovory (`talk.js`): od náklonnosti 35 svést, od 50 nabídnout poměr (`nam_milenka` → `lover: true`), s milenkou strávit noc / chtít dítě (`mil_dite` → `state.loverPregnancy`) / ukončit poměr; žádost o ruku jen svobodný, od náklonnosti 75 jistá. Dítě milenky = levoboček (`state.bastards`, událost `narozeni_levobocka`: uznat / tajně / do kláštera; větve `acknowledge`, `bastardAway`, token `{B:…}`, `{bastard.*}`). Zanedbaná milenka chladne a může poměr prozradit (manžel/ka −20 věrnosti). Pořadí dědiců: dědic → mladší děti → sourozenci (`presumptive`) → uznaný levoboček. Když nastoupí sourozenec nebo levoboček, rod pokračuje jako **vedlejší větev** (`state.cadetBranch`, legitimita −10, prestiž −5, plaketa „vedlejší větev“, věta v `nastupnictvi` přes `{succession.note}`, `{predecessor.rel}`); bez nikoho rod vymírá. Jména: 40 mužských a 36 ženských, bývalé nápadnice se nevracejí (`pastSuitorNames`).
 - Zbývající drobnosti z auditu: `docs/analyza-logiky.md`. Obrázky kariéry (`docs/obrazky-kariera.md`) jsou všechny dodané: scény kapitol a povstání, císař a císařovna (`ruler_emperor_*`, bez nich nosí portrét krále), cizí panovníci (`realm_<země>_<pohlaví>.jpg`) a mapa světa.
+
+### Hospodářství gruntu (`js/farm.js`)
+- Grunt má konkrétní zásoby `state.farm = { grain, cows, horses, pigs }` (vznikne sám při prvním použití; staré hry dostanou krávu za postavený chlév a koně za koupeného jezdeckého koně). Stavby gruntu dávají **místo** a **výnosy** podle tabulky `FARM_WORKS`: stodola pojme 12 pytlů obilí (bez ní 4 na půdě, co se nevejde, zplesniví), nový **mlýn** (`mlynek`, 12 grošů, od úrovně Grunt) dá 1 pytel každé období, **chlév** 3 krávy (první krávu přivede při dostavbě; místo dřívějších abstraktních +3 zásob za rok), nová **stáj** (`staj`, 8 grošů) 3 koně, nový **chlívek** (`chlivek`, 4 groše) 4 prasata (přivede prasnici).
+- Výnosy (`processFarm`, volá ho `advanceTurn` po stavbách): kráva zásoby +1 každé období kromě zimy a na jaře 50 % na tele, je-li místo; kůň obilí +2 na jaře (orba) a +1 na podzim (svážení); prasnice na jaře 1–2 selata (75 %), v zimě zabijačka od dvou prasat (zásoby +4). Když zásoby klesnou pod 15, domácnost sama semele obilí (pytel = zásoby +2).
+- Na gruntu v panelu **Hospodářství** jde koupit a prodat zvířata jen do volného místa (kráva 5/3 groše, kůň 10/6, prase 3/2) a prodat pytel obilí za 1 groš nebo ho semlít do zásob. Je to správa, ne příběhová volba — u voleb v událostech se nic neukazuje.
+- Jezdecký kůň sedláka je jeden z koní gruntu: u kováře ho koupí jen se stájí a volným místem, prodej posledního koně vezme i jezdeckého. Při povýšení do šlechtického stavu se zásoby prodají se gruntem (jezdecký kůň jde s vládcem), při zpustnutí gruntu (chalupa) zmizí.
+- Příběh: větev `farm: { cows: -1, grain: -99 }` mění zásoby (nemoc v chlévě, požár stodoly), práce „Přikoupit krávu“ přidá krávu, je-li v chlévě místo.
+- Simulace: `FARM=1` zapne v `sim_peasant.mjs` a `sim_career.mjs` jednoduché pravidlo `farmRule` (`smart.mjs`): stavět chlév, stáj, mlýn a chlívek, plnit výběhy a prodávat přebytečné obilí. Bez `FARM=1` boti grunt nestaví a vyvážení je jako dřív.
 
 ## 5. Obrázky — jak to funguje a co chybí
 

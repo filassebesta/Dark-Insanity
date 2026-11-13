@@ -2,6 +2,7 @@ import { RESOURCE_DEFS, PROVINCE_TEMPLATES, NOBLE_HOUSES, NOBLE_HOME, PEASANT_HO
 import { QUIRK_ROLES, randomQuirk, biography } from './court.js';
 import { ensureRealms } from './realms.js';
 import { dropAmbition } from './ambitions.js';
+import { farmWorth } from './farm.js';
 
 const SAVE_PREFIX = 'insanityKingdom.save.';
 const SAVE_INDEX_KEY = 'insanityKingdom.saveIndex';
@@ -233,11 +234,13 @@ export function ennoblePeasant(state) {
   // the farm in Lipnice goes to a neighbour for what its buildings are worth
   const farm = state.towns && state.towns.grunt;
   if (farm) {
-    const worth = 5 + 3 * farm.buildings.filter((b) => b.ready && !b.base).length + 4 * Math.max(0, farm.level - 1);
+    const stock = farmWorth(state); // grain and animals go with it; the riding horse stays with its rider
+    const worth = 5 + 3 * farm.buildings.filter((b) => b.ready && !b.base).length + 4 * Math.max(0, farm.level - 1) + stock;
     state.resources.gold = clamp(state.resources.gold + worth);
     delete state.towns.grunt;
-    farewell.push(`Grunt v Lipnici koupil soused za ${worth} zlatých.`);
+    farewell.push(`Grunt v Lipnici${stock ? ' i s dobytkem a obilím' : ''} koupil soused za ${worth} zlatých.`);
   }
+  delete state.farm;
   // the usurer in Brodná does not forget a debtor just because he now has a coat of arms
   if (state.flags.s_dluh) {
     delete state.flags.s_dluh;

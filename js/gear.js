@@ -3,6 +3,10 @@
 // damage, escape) and a war horse helps every roll that needs the sword arm
 // (engine.js rollParts). A lord starts with a sword and mail, a peasant with
 // a flail and nothing else. No DOM here — character.js shows the shop.
+// A peasant's horse lives in the farm's stable: buying one needs a free stall
+// and it counts as one of the farm's horses (farm.js).
+
+import { ensureFarm, roomFor, freeRoom, buyStock } from './farm.js';
 
 // slot: weapon | armor | shield | horse · who: 'lord' | 'peasant' | 'all'
 // uc / oc: attack and defence numbers · dmg: damage of a hit · flee: escape rolls
@@ -25,6 +29,14 @@ export const ITEMS = {
 export const SLOTS = { weapon: 'Zbraň', armor: 'Zbroj', shield: 'Štít', horse: 'Kůň' };
 
 const isLord = (state) => state.scenario !== 'sedlak';
+
+/** Why a peasant cannot keep a horse now (null = there is a free stall). */
+function stableBlock(state) {
+  if (!ensureFarm(state)) return null;
+  if (!roomFor(state, 'horses')) return 'Kůň potřebuje stáj. Nejdřív ji postav na gruntu.';
+  if (!freeRoom(state, 'horses')) return 'Ve stáji není volné místo.';
+  return null;
+}
 
 /** The ruler's gear, created on first use from the scenario's defaults. */
 export function ensureGear(state) {
@@ -56,6 +68,7 @@ export function shopFor(state) {
       const owned = gear[item.slot] === key;
       let block = null;
       if (owned) block = 'Už máš.';
+      else if (item.slot === 'horse' && !isLord(state) && stableBlock(state)) block = stableBlock(state);
       else if (state.resources.gold < item.cost) block = 'Na to nemáš.';
       return { key, item, owned, block };
     });
@@ -67,6 +80,13 @@ export function buyItem(state, key) {
   const offer = shopFor(state).find((o) => o.key === key);
   if (!offer) return { error: 'Tohle se tu koupit nedá.' };
   if (offer.block) return { error: offer.block };
+  // a peasant buys one of the farm's horses; it then carries its master too
+  if (item.slot === 'horse' && !isLord(state) && ensureFarm(state)) {
+    const res = buyStock(state, 'horses');
+    if (res.error) return res;
+    ensureGear(state).horse = key;
+    return { message: `Koupeno: ${item.name}. Stojí ve stáji na gruntu.` };
+  }
   state.resources.gold = Math.max(0, state.resources.gold - item.cost);
   ensureGear(state)[item.slot] = key;
   return { message: `Koupeno: ${item.name}.` };
