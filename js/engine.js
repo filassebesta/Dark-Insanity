@@ -486,7 +486,8 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
     state.heir = { role: 'heir', name: randomName(g), gender: g, age: randInt(5, 10), loyalty: clamp(55 + randInt(0, 15)), alive: true, traits: inheritTraits() };
     notes.push({ text: `${g === 'female' ? 'Dědička' : 'Dědic'}: ${state.heir.name}`, tone: 'pos' });
   }
-  if (branch.decree) notes.push(...(issueDecree(state, branch.decree) || [])); // the year's work chosen in a story (events_farm.js)
+  // the year's work or decree chosen in the story (events_farm.js); a decree acts on the event's province
+  if (branch.decree) notes.push(...(issueDecree(state, branch.decree, state.eventContext?.province) || []));
   applyWarEffects(state, branch.war, notes); // a war event moves the campaign
   recordCourtHistory(state, meta, touched, outcome);
   scheduleEcho(state, branch.echo, meta);
@@ -908,7 +909,10 @@ export function pickNextEvent(state) {
     const forced = EVENTS.find((e) => e.id === state.pendingEvent);
     state.pendingEvent = null;
     // a forced event left over from the previous stage of life (the king's death after the crown is won) is dropped
-    if (forced && (forced.scenarios || [forced.scenario || 'panovnik']).includes(state.scenario)) return forced;
+    if (forced && (forced.scenarios || [forced.scenario || 'panovnik']).includes(state.scenario)) {
+      if (forced.target) setTargetContext(state, forced.target(state));
+      return forced;
+    }
   }
   const echo = takeDueEcho(state);
   if (echo) return echo;
@@ -927,17 +931,20 @@ export function pickNextEvent(state) {
     if (roll <= 0) { event = e; break; }
   }
   if (event.onPick) event.onPick(state); // e.g. a buyer asking for whatever fills the warehouse
-  if (event.target) {
-    const t = event.target(state);
-    // 'town:<id>' = a settlement; its province counts as the event's province too
-    if (typeof t === 'string' && t.startsWith('town:')) {
-      const id = t.slice(5);
-      state.eventContext = { town: id, province: settlementDef(id).province };
-    } else if (state.provinces.some((p) => p.id === t)) state.eventContext = { province: t };
-    else if ((state.houses || []).some((h) => h.id === t)) state.eventContext = { house: t };
-    else state.eventContext = { role: t };
-  }
+  if (event.target) setTargetContext(state, event.target(state));
   return event;
+}
+
+/** What an event is about: a settlement, a province, a house or a member of the court. */
+function setTargetContext(state, t) {
+  if (!t) return;
+  // 'town:<id>' = a settlement; its province counts as the event's province too
+  if (typeof t === 'string' && t.startsWith('town:')) {
+    const id = t.slice(5);
+    state.eventContext = { town: id, province: settlementDef(id).province };
+  } else if (state.provinces.some((p) => p.id === t)) state.eventContext = { province: t };
+  else if ((state.houses || []).some((h) => h.id === t)) state.eventContext = { house: t };
+  else state.eventContext = { role: t };
 }
 
 // A peasant lives off the farm: the land (Grunt) and the hands that work it (Čeleď).
@@ -1321,6 +1328,8 @@ export function advanceTurn(state) {
     queueEvent(state, 'zlaty_vek');
   }
   // after the harvest a farm that got no extra work this year gets its chance in the story
+  // a lord or a king decides one thing for one land a year, in spring, in the story (not on the map)
+  if (!state.pendingEvent && !isPeasant(state) && state.seasonIndex <= 1 && decreeAvailable(state) && ownProvinces(state).length) state.pendingEvent = 'vynos_roku'; // spring, or summer when spring was busy
   // (autumn, or winter when the autumn was taken by something more pressing)
   if (!state.pendingEvent && isPeasant(state) && state.seasonIndex >= 2 && decreeAvailable(state)) state.pendingEvent = 's_prace_na_gruntu';
   const event = pickNextEvent(state);

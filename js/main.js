@@ -62,8 +62,6 @@ function openRouteMap() {
   openMap(currentState, {
     layer: 'routes',
     focusRoutes: true,
-    allowedRoutes: activeEvent.routeOptions.map((o) => o.terrainKey),
-    onChooseRoute: handleRouteSelected,
   });
 }
 
@@ -522,13 +520,6 @@ document.addEventListener('kingdom:war', (e) => {
   if (e.detail.message) toast(e.detail.message);
 });
 
-// a decree issued on the map: save, refresh the bars and tell the player
-document.addEventListener('kingdom:decree', (e) => {
-  if (!currentState) return;
-  saveGame(currentState);
-  refreshAllPanels();
-  toast(`${currentState.scenario === 'sedlak' ? 'Naplánováno' : 'Výnos vydán'}: ${e.detail.label}`);
-});
 
 // building in a town or on the farm: save, refresh the bars and tell the player
 document.addEventListener('kingdom:build', (e) => {

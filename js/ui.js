@@ -1,5 +1,5 @@
 import { RESOURCE_DEFS, TRAIT_DEFS, TERRAIN_DEFS, SEASONS, NOBLE_HOUSES, resourceLabel, activeResourceDefs, tierTitle } from './data.js';
-import { interpolate, computeSuccessChance, attitudeLabel, ownProvinces, reignEpithet, decreeAvailable } from './engine.js';
+import { interpolate, computeSuccessChance, attitudeLabel, ownProvinces, reignEpithet } from './engine.js';
 import { ICONS } from './icons.js';
 import { playMusic, setAllMuted } from './audio.js';
 import { rulerPortraitCandidates, memberPortraitCandidates, portraitImg } from './character.js';
@@ -135,8 +135,6 @@ export function updateBookTabFlags(state) {
     .some((c) => c.alive && c.loyalty <= 25);
   const mapTab = document.querySelector('.book-tab[data-panel="map"]');
   mapTab.classList.toggle('flagged', anyUnrest);
-  mapTab.classList.toggle('has-decree', decreeAvailable(state));
-  mapTab.title = decreeAvailable(state) ? 'Letos můžeš vydat výnos' : '';
   const courtTab = document.querySelector('.book-tab[data-panel="court"]');
   courtTab.classList.toggle('flagged', anyDisloyal);
   // a peasant has a family and neighbours, not a court
@@ -147,7 +145,6 @@ export function updateBookTabFlags(state) {
   document.getElementById('court-hint').textContent = peasant
     ? 'Klikni na člena rodiny nebo souseda a dozvíš se, kdo to je a co ho ovlivnilo.'
     : 'Klikni na člena dvora a dozvíš se, kdo to je a co ho ovlivnilo.';
-  mapTab.title = decreeAvailable(state) ? (peasant ? 'Letos můžeš naplánovat práci na gruntu' : 'Letos můžeš vydat výnos') : '';
 }
 
 // ---------- character plaque (bottom of the scene) ----------

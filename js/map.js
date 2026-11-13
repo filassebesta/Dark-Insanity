@@ -3,7 +3,7 @@
 // 1264x848 painting; zoom/pan works by animating the SVG viewBox.
 
 import { TERRAIN_DEFS, NOBLE_HOUSES, SEASONS } from './data.js';
-import { attitudeLabel, decreeList, decreeAvailable, canAffordDecree, issueDecree, interpolate } from './engine.js';
+import { attitudeLabel, interpolate } from './engine.js';
 import {
   GOODS, MARKETS, MAX_STOCK, ESCORT_ARMY, ensureTrade, routeFor, originPoint, marketAccess, price, riskOf,
   caravanFee, canSend, sendCaravan, sellAtHome, buyAtHome, convertFood, loadText,
@@ -98,13 +98,13 @@ const ROUTE_TEXT = {
   traderoute: 'Udržovaná obchodní cesta po okraji hvozdu kolem Mýtnice. Nejbezpečnější, ale pomalá — mýto a čekání na karavany.',
 };
 
-const LAYERS = [
-  { key: 'loyalty', label: 'Věrnost' },
-  { key: 'unrest', label: 'Nepokoje' },
-  { key: 'garrison', label: 'Posádky' },
-  { key: 'routes', label: 'Cesty' },
+// four views of the map instead of a row of layer switches: the lands (who holds them, how they
+// stand, where to build), trade, war and the world. Decisions are made in the story, not here.
+const MODES = [
+  { key: 'lands', label: 'Kraje', peasantLabel: 'Ves a kraj' },
   { key: 'trade', label: 'Obchod' },
-  { key: 'war', label: 'Válka' },
+  { key: 'war', label: 'Válka', noPeasant: true },
+  { key: 'world', label: 'Svět' },
 ];
 
 // ---------- helpers ----------
@@ -163,6 +163,7 @@ let view = { x: 0, y: 0, w: W, h: H };
 let animFrame = null;
 let selected = null;
 const layers = { loyalty: false, unrest: true, garrison: false, routes: false, trade: false, war: false };
+const modeOf = () => (world ? 'world' : layers.war ? 'war' : layers.trade ? 'trade' : 'lands');
 let warForm = { target: null, size: 'medium', leader: 'marshal' };
 let tradeForm = { dest: null, good: null, qty: 1, escort: false };
 let drag = null;
@@ -179,9 +180,10 @@ export function openMap(gameState, opts = {}) {
   state = gameState;
   options = opts;
   host = document.getElementById('map-view');
-  if (opts.layer) layers[opts.layer] = true;
-  if (opts.layer === 'war') layers.trade = false;
-  if (opts.layer === 'trade') layers.war = false;
+  // a fresh look each time: the lands, unless trade, war or the world was asked for
+  layers.trade = opts.layer === 'trade';
+  layers.war = opts.layer === 'war';
+  layers.routes = !!opts.focusRoutes;
   world = !!opts.world;
   realmSel = null;
   render();
@@ -220,9 +222,10 @@ export function closeMap() {
 // ---------- rendering ----------
 
 function render() {
-  host.querySelector('.map-layer-toggles').innerHTML = (world ? '' : LAYERS.filter((l) => l.key !== 'war' || state.scenario !== 'sedlak').map((l) =>
-    `<button class="map-toggle${layers[l.key] ? ' on' : ''}" data-layer="${l.key}">${l.label}</button>`).join(''))
-    + `<button class="map-toggle world-toggle${world ? ' on' : ''}" data-world-toggle>${world ? 'Království' : 'Svět'}</button>`;
+  const peasant = state.scenario === 'sedlak';
+  host.querySelector('.map-layer-toggles').innerHTML = `<div class="map-modes" role="tablist">${MODES
+    .filter((m) => !(m.noPeasant && peasant))
+    .map((m) => `<button class="map-mode${modeOf() === m.key ? ' on' : ''}" role="tab" aria-selected="${modeOf() === m.key}" data-mode="${m.key}">${peasant && m.peasantLabel ? m.peasantLabel : m.label}</button>`).join('')}</div>`;
   host.querySelector('.map-title').textContent = world ? 'Mapa světa' : 'Mapa království';
   if (world) return renderWorld();
 
@@ -297,9 +300,26 @@ function setWorld(on) {
   showOverview();
 }
 
+/** Switches the map between the lands, trade, war and the world. */
+function setMode(mode) {
+  if (mode === 'world') return setWorld(true);
+  const wasWorld = world;
+  world = false;
+  layers.trade = mode === 'trade';
+  layers.war = mode === 'war';
+  layers.routes = false;
+  town = null;
+  host.classList.remove('town-open');
+  const keepView = { ...view };
+  render();
+  view = wasWorld ? { x: 0, y: 0, w: W, h: H } : keepView;
+  applyView();
+  selected = null;
+  showOverview();
+}
+
 /** Handles the world map's sidebar and header buttons. Returns true when it did. */
 function handleWorld(t) {
-  if (t.closest('[data-world-toggle]')) { setWorld(!world); return true; }
   if (!world) return false;
   if (t.closest('[data-world-home]')) { setWorld(false); return true; }
   if (t.closest('[data-world-overview]')) { selectRealm(null); return true; }
@@ -415,37 +435,6 @@ function compass(x, y) {
     <path d="M0 -42L6 0H0z" class="c-dark"/>
     <text y="-48">S</text>
   </g>`;
-}
-
-// ---------- decrees (one a year) ----------
-
-const RES_SHORT = { gold: 'zlato', food: 'jídlo', army: 'vojsko', stability: 'stabilita', faith: 'víra', prestige: 'prestiž', favor: 'přízeň', legitimacy: 'legitimita' };
-const PROV_SHORT = { garrison: 'posádka', loyalty: 'věrnost', unrest: 'nepokoje', wealth: 'bohatství' };
-const PEASANT_RES = { gold: 'groše', food: 'zásoby', army: 'čeleď', stability: 'grunt', prestige: 'pověst', favor: 'přízeň pána' };
-
-function decreeChips(d) {
-  const sign = (v) => (v > 0 ? `+${v}` : `${v}`);
-  const names = state.scenario === 'sedlak' ? { ...RES_SHORT, ...PEASANT_RES } : RES_SHORT;
-  const chips = [
-    ...Object.entries(d.effects || {}).map(([k, v]) => [`${names[k] || k} ${sign(v)}`, k === 'unrest' ? v < 0 : v > 0]),
-    ...Object.entries(d.prov || {}).map(([k, v]) => [`${PROV_SHORT[k]} ${sign(v)}`, k === 'unrest' ? v < 0 : v > 0]),
-  ];
-  return chips.map(([t, good]) => `<i class="${good ? 'pos' : 'neg'}">${esc(t)}</i>`).join('');
-}
-
-function decreeBlock(provinceId = '') {
-  if (!decreeAvailable(state)) {
-    return state.scenario === 'sedlak'
-      ? `<h4 class="map-sub">Práce na gruntu</h4><p class="map-desc">Letošní práce už je naplánovaná. Další můžeš naplánovat v roce ${state.year + 1}.</p>`
-      : `<h4 class="map-sub">Výnos</h4><p class="map-desc">Letošní výnos už byl vydán. Další můžeš vydat v roce ${state.year + 1}.</p>`;
-  }
-  const list = decreeList(state);
-  return `<h4 class="map-sub">${state.scenario === 'sedlak' ? 'Práce na gruntu' : 'Výnos'} <small>· jednou za rok</small></h4>
-    <div class="decree-list">${Object.entries(list).map(([k, d]) => `
-      <button class="decree" data-decree="${k}" data-decree-prov="${provinceId}"${canAffordDecree(state, k) ? '' : ' disabled title="Na tohle nemáš."'}>
-        <b>${esc(d.label)}</b><span>${esc(d.text)}</span><em>${decreeChips(d)}</em>
-      </button>`).join('')}
-    </div>`;
 }
 
 // ---------- trade layer (see trade.js) ----------
@@ -681,133 +670,115 @@ function showOverview() {
   if (world) return sidebar(worldSidebar(state, realmSel));
   if (layers.war && state.scenario !== 'sedlak') return showWarOverview();
   if (layers.trade) return showTradeOverview();
-  if (state.scenario === 'slechtic') return showNobleOverview();
   if (state.scenario === 'sedlak') return showPeasantOverview();
-  const provs = state.provinces.filter((p) => PROVINCES[p.id]);
-  const avg = (k) => Math.round(provs.reduce((s, p) => s + p[k], 0) / provs.length);
-  const worst = [...provs].sort((a, b) => b.unrest - a.unrest)[0];
-  sidebar(`
-    <span class="panel-overline">Přehled</span>
-    <h3 class="panel-title">Království</h3>
-    <p class="map-desc">Pět provincií koruny. Klikni na provincii, město nebo cestu a dozvíš se víc.</p>
-    ${statRow('Ø věrnost', avg('loyalty'), 'loyalty')}
-    ${statRow('Ø nepokoje', avg('unrest'), 'unrest')}
-    ${statRow('Ø bohatství', avg('wealth'), 'wealth')}
-    ${statRow('Ø posádky', avg('garrison'), 'garrison')}
-    <h4 class="map-sub">Provincie</h4>
-    <div class="map-chip-list">
-      ${provs.map((p) => {
-        const [v, cls] = verdict(p);
-        return `<button class="map-chip" data-goto-province="${p.id}"><span>${esc(PROVINCES[p.id].label)}</span><em class="${cls}">${v}</em></button>`;
-      }).join('')}
-    </div>
-    ${decreeAvailable(state) ? '<p class="map-decree-hint">Letos můžeš vydat jeden výnos. Klikni na provincii.</p>' : ''}
-    ${worst && worst.unrest >= 45 ? `<p class="map-warning">Nejvíc to vře v provincii <strong>${esc(PROVINCES[worst.id].label)}</strong> (nepokoje ${worst.unrest}).</p>` : ''}
-    <h4 class="map-sub">Legenda</h4>
-    <ul class="map-legend">
-      <li><span class="lg-dot"></span>Zlatý bod = místo, na které jde kliknout</li>
-      <li><span class="lg-town"></span>Číslo = úroveň sídla; klikni a stav</li>
-      <li><span class="lg-smoke"></span>Kouř = nepokoje v provincii</li>
-      <li><span class="lg-shield"></span>Štít = posádka (vrstva Posádky)</li>
-      <li><span class="lg-line route"></span>Čárkované cesty k Orlí Stráži (vrstva Cesty)</li>
-    </ul>
-  `);
+  return showLandsOverview();
 }
 
-function showNobleOverview() {
-  const own = state.provinces.find((p) => p.owner === 'player');
+// ---------- the lands: compact cards instead of long text ----------
+
+const bar = (label, value, cls) => `<div class="mc-bar"><span>${label}</span><i><b class="${cls}" style="width:${value}%"></b></i><em>${value}</em></div>`;
+const shortName = (p) => p.name.replace(/ \(.*\)$/, '');
+const buildingsWord = (n) => `${n} ${n === 1 ? 'stavba' : n >= 2 && n <= 4 ? 'stavby' : 'staveb'}`;
+
+/** Settlements of a province as small cards: level, work in progress, and whether the player can build. */
+function settlementCards(provinceId) {
+  const list = Object.entries(FEATURES).filter(([, f]) => f.province === provinceId);
+  if (!list.length) return '';
+  return `<h4 class="map-sub">Sídla</h4><div class="mc-places">${list.map(([fid, f]) => {
+    const tid = townIdFor(state, fid);
+    const t = tid && townOf(state, tid);
+    const mine = tid && ownsTown(state, tid);
+    const busy = t && currentProject(t);
+    return `<button class="mc-place${mine ? ' own' : ''}" data-goto-feature="${fid}">
+      ${t ? `<span class="mc-level" title="Úroveň sídla">${t.level}</span>` : '<span class="mc-level dot"></span>'}
+      <span class="mc-place-name"><b>${esc(tid === 'grunt' ? 'Tvůj grunt' : f.name)}</b><small>${esc(t ? levelName(tid, t.level) : f.kind)}${busy ? ' · staví se' : ''}</small></span>
+      ${mine ? '<em class="mc-action">Stavět</em>' : t ? '<em class="mc-action ghost">Prohlédnout</em>' : ''}
+    </button>`;
+  }).join('')}</div>`;
+}
+
+/** One land as a card: who holds it, how it stands. */
+function landCard(prov) {
+  const def = PROVINCES[prov.id];
+  const f = foreignOwner(prov.id);
+  let pill;
+  let body = '';
+  if (prov.lost) pill = ['Ztracena', 'bad'];
+  else if (f) {
+    const att = f.house ? f.house.attitude : null;
+    pill = [f.label + (att !== null ? ` · ${attitudeLabel(att).toLowerCase()}` : ''), att === null ? 'neutral' : att >= 55 ? 'good' : att < 40 ? 'bad' : 'warn'];
+  } else {
+    pill = verdict(prov);
+    body = bar('Věrnost', prov.loyalty, 'loyalty') + bar('Nepokoje', prov.unrest, 'unrest');
+  }
+  const own = !f && !prov.lost;
+  return `<button class="mc-land${own ? ' own' : ''}" data-goto-province="${prov.id}" style="--pf:${def.color}">
+    <span class="mc-swatch"></span>
+    <span class="mc-head"><b>${esc(def.label)}</b><em class="mc-pill ${pill[1]}">${esc(pill[0])}</em></span>
+    ${body}
+  </button>`;
+}
+
+const LEGEND = (peasant) => `<ul class="map-legend compact">
+  <li><span class="lg-town"></span>Číslo u sídla = úroveň; ${peasant ? 'na gruntu' : 've vlastních krajích'} stavíš</li>
+  ${peasant ? '' : '<li><span class="lg-own"></span>Zlatý okraj = tvá země</li><li><span class="lg-smoke"></span>Kouř = nepokoje</li>'}
+</ul>`;
+
+function showLandsOverview() {
+  const king = state.scenario === 'panovnik';
+  const own = state.provinces.filter((p) => !p.lost && !foreignOwner(p.id));
+  const others = state.provinces.filter((p) => p.lost || foreignOwner(p.id));
+  const avg = (k) => Math.round(own.reduce((sum, p) => sum + p[k], 0) / (own.length || 1));
+  const worst = own.slice().sort((a, b) => b.unrest - a.unrest)[0];
   sidebar(`
-    <span class="panel-overline">Země koruny</span>
-    <h3 class="panel-title">Kdo drží zemi</h3>
-    <p class="map-desc">${(() => { const n = state.provinces.filter((p) => p.owner === 'player').length; return n > 1 ? `Tvému rodu patří ${n} kraje.` : 'Tvému rodu patří jediné panství.'; })()} Zbytek země drží král a soupeřící rody. Klikni na provincii a uvidíš, kdo v ní vládne.</p>
-    <h4 class="map-sub">Panství</h4>
-    <div class="map-chip-list">
-      ${state.provinces.map((p) => {
-        const f = foreignOwner(p.id);
-        const att = f && f.house ? attitudeLabel(f.house.attitude) : '';
-        const tone = f && f.house ? (f.house.attitude >= 55 ? 'good' : f.house.attitude < 40 ? 'bad' : 'warn') : '';
-        return `<button class="map-chip" data-goto-province="${p.id}"><span>${esc(PROVINCES[p.id].label)}</span><em class="${tone}">${f ? esc(f.label) + (att ? ` · ${att}` : '') : 'tvé panství'}</em></button>`;
-      }).join('')}
-    </div>
-    ${own ? `<h4 class="map-sub">Tvé panství</h4>
-      ${statRow('Věrnost', own.loyalty, 'loyalty')}${statRow('Nepokoje', own.unrest, 'unrest')}
-      ${statRow('Bohatství', own.wealth, 'wealth')}${statRow('Posádka', own.garrison, 'garrison')}
-      ${decreeBlock(own.id)}` : ''}
-    <h4 class="map-sub">Legenda</h4>
-    <ul class="map-legend">
-      <li><span class="lg-dot"></span>Zlatý bod = místo, na které jde kliknout</li>
-      <li><span class="lg-own"></span>Zlatý okraj = tvé panství</li>
-      <li><span class="lg-town"></span>Číslo = úroveň sídla; na tvém panství v něm můžeš stavět</li>
-      <li><span class="lg-smoke"></span>Kouř = nepokoje na tvém panství</li>
-    </ul>
+    <span class="panel-overline">${king ? 'Království' : 'Tvé panství'}</span>
+    <h3 class="panel-title">${king ? 'Vlčí Úděl' : own.length > 1 ? `${own.length} kraje rodu` : esc(own[0] ? shortName(own[0]) : 'Bez půdy')}</h3>
+    ${own.length > 1 ? `<div class="mc-summary">${bar('Ø věrnost', avg('loyalty'), 'loyalty')}${bar('Ø nepokoje', avg('unrest'), 'unrest')}</div>` : ''}
+    ${worst && worst.unrest >= 45 ? `<p class="map-warning">Nejvíc to vře v kraji <strong>${esc(PROVINCES[worst.id].label)}</strong>.</p>` : ''}
+    <h4 class="map-sub">${king ? 'Kraje koruny' : 'Tvá země'}</h4>
+    <div class="mc-lands">${own.map(landCard).join('')}</div>
+    ${others.length ? `<h4 class="map-sub">${king ? 'Ztracené kraje' : 'Kdo drží zbytek země'}</h4><div class="mc-lands">${others.map(landCard).join('')}</div>` : ''}
+    ${LEGEND(false)}
   `);
 }
 
 function showPeasantOverview() {
   const home = state.peasant || { village: 'Lipnice', province: 'brodna' };
   const r = state.resources;
+  const farm = townOf(state, 'grunt');
+  const busy = currentProject(farm);
   sidebar(`
-    <span class="panel-overline">Kraj ${esc(PROVINCES[home.province].label)}</span>
+    <span class="panel-overline">Kraj ${esc(PROVINCES[home.province].label)} · panství pánů z Bílé Brány</span>
     <h3 class="panel-title">Ves ${esc(home.village)}</h3>
-    <p class="map-desc">Tvůj grunt stojí ve vsi ${esc(home.village)} v kraji Brodná, na panství pánů z Bílé Brány. Zbytek země drží král a velké rody. Klikni na kraj a uvidíš, komu patří.</p>
-    <button class="map-chip" data-goto-feature="${PEASANT_VILLAGE}"><span>Tvůj grunt</span><em class="good">${esc(levelName('grunt', townOf(state, 'grunt').level))} · stavět</em></button>
-    ${statRow('Grunt', r.stability, 'wealth')}
-    ${statRow('Přízeň pána', r.favor, 'loyalty')}
-    ${statRow('Pověst ve vsi', r.prestige, 'garrison')}
-    ${decreeBlock()}
-    <h4 class="map-sub">Země</h4>
-    <div class="map-chip-list">
-      ${state.provinces.map((p) => {
-        const f = foreignOwner(p.id);
-        return `<button class="map-chip" data-goto-province="${p.id}"><span>${esc(PROVINCES[p.id].label)}</span><em>${p.id === home.province ? 'tvůj kraj' : f ? esc(f.label) : ''}</em></button>`;
-      }).join('')}
-    </div>
+    <button class="mc-farm" data-goto-feature="${PEASANT_VILLAGE}">
+      <span class="mc-level big">${farm.level}</span>
+      <span class="mc-place-name"><b>Tvůj grunt</b><small>${esc(levelName('grunt', farm.level))} · ${buildingsWord(farm.buildings.filter((b) => b.ready).length)}${busy ? ' · staví se' : ''}</small></span>
+      <em class="mc-action">Stavět</em>
+    </button>
+    <div class="mc-summary">${bar('Grunt', r.stability, 'wealth')}${bar('Přízeň pána', r.favor, 'loyalty')}${bar('Pověst', r.prestige, 'garrison')}</div>
+    <h4 class="map-sub">Kdo drží zemi</h4>
+    <div class="mc-lands">${state.provinces.map(landCard).join('')}</div>
+    ${LEGEND(true)}
   `);
-}
-
-// places in a province; towns and villages show their level and open the town view
-function placeChips(features) {
-  if (!features.length) return '';
-  return `<h4 class="map-sub">Sídla a místa</h4><div class="map-chip-list">
-    ${features.map(([fid, f]) => {
-      const tid = townIdFor(state, fid);
-      const sub = tid ? `${levelName(tid, townOf(state, tid).level)}${currentProject(townOf(state, tid)) ? ' · staví se' : ''}${ownsTown(state, tid) ? ' · stavět' : ''}` : f.kind;
-      return `<button class="map-chip" data-goto-feature="${fid}"><span>${esc(tid === 'grunt' ? 'Tvůj grunt' : f.name)}</span><em class="${tid && ownsTown(state, tid) ? 'good' : ''}">${esc(sub)}</em></button>`;
-    }).join('')}
-  </div>`;
 }
 
 function showForeignProvince(id, f) {
-  if (state.scenario === 'sedlak') return showPeasantProvince(id, f);
   const p = PROVINCES[id];
-  const features = Object.entries(FEATURES).filter(([, x]) => x.province === id);
   const h = f.house;
+  const peasant = state.scenario === 'sedlak';
+  const home = state.peasant;
   sidebar(`
-    <span class="panel-overline">${f.kind === 'crown' ? 'Korunní země' : 'Panství soupeřícího rodu'}</span>
+    <span class="panel-overline">${f.kind === 'crown' ? 'Korunní země' : peasant ? 'Panství velkého rodu' : 'Panství soupeřícího rodu'}</span>
     <h3 class="panel-title">${esc(p.label)}</h3>
-    <span class="map-verdict ${h ? (h.attitude >= 55 ? 'good' : h.attitude < 40 ? 'bad' : 'warn') : 'warn'}">${esc(f.name)}</span>
+    <div class="mc-owner">
+      <b>${esc(f.name)}</b>
+      <span>${h ? `${h.head.gender === 'female' ? 'Paní' : 'Pán'} ${esc(h.head.name)}, ${h.head.age} let${!peasant && h.ally ? ' · spojenec' : ''}${!peasant && h.married ? ' · spřízněni sňatkem' : ''}` : `${state.king ? `${state.king.gender === 'female' ? 'Královna' : 'Král'} ${esc(state.king.name)}` : ''}`}</span>
+    </div>
     <p class="map-desc">${esc(h ? f.def.text : p.text)}</p>
-    ${h ? `<p class="map-desc"><strong>${h.head.gender === 'female' ? 'Paní' : 'Pán'} ${esc(h.head.name)}</strong>, ${h.head.age} let${h.ally ? ' · spojenec tvého rodu' : ''}${h.married ? ' · spřízněni sňatkem' : ''}</p>
-      ${statRow('Vztah k tobě', h.attitude, 'loyalty')}${statRow('Moc rodu', h.power, 'garrison')}`
-      : `${statRow('Přízeň krále', state.resources.favor, 'loyalty')}`}
-    ${placeChips(features)}
-    <button class="map-back" data-overview>← Celá země</button>
-  `);
-}
-
-// a peasant sees who rules a land, not its politics
-function showPeasantProvince(id, f) {
-  const p = PROVINCES[id];
-  const home = state.peasant || { village: 'Lipnice', province: 'brodna' };
-  const h = f.house;
-  sidebar(`
-    <span class="panel-overline">${f.kind === 'crown' ? 'Korunní země' : 'Panství velkého rodu'}</span>
-    <h3 class="panel-title">${esc(p.label)}</h3>
-    <span class="map-verdict ${id === home.province ? 'good' : 'warn'}">${esc(f.name)}</span>
-    <p class="map-desc">${esc(h ? f.def.text : p.text)}</p>
-    ${h ? `<p class="map-desc"><strong>${h.head.gender === 'female' ? 'Paní' : 'Pán'} ${esc(h.head.name)}</strong>, ${h.head.age} let</p>` : `<p class="map-desc">Vládne tu král ${esc(state.king ? state.king.name : '')}.</p>`}
-    ${id === home.province ? `<p class="map-decree-hint">Tady, ve vsi ${esc(home.village)}, stojí tvůj grunt. Klikni na něj a stav.</p>` : ''}
-    ${placeChips(Object.entries(FEATURES).filter(([, x]) => x.province === id))}
+    ${!peasant && h ? `<div class="mc-summary">${bar('Vztah k tobě', h.attitude, 'loyalty')}${bar('Moc rodu', h.power, 'garrison')}</div>` : ''}
+    ${!peasant && !h ? `<div class="mc-summary">${bar('Přízeň krále', state.resources.favor ?? 0, 'loyalty')}</div>` : ''}
+    ${peasant && home && id === home.province ? `<p class="map-note">Tady, ve vsi ${esc(home.village)}, stojí tvůj grunt.</p>` : ''}
+    ${settlementCards(id)}
     <button class="map-back" data-overview>← Celá země</button>
   `);
 }
@@ -818,19 +789,17 @@ function showProvince(id) {
   const p = PROVINCES[id];
   const prov = state.provinces.find((x) => x.id === id);
   const [v, cls] = verdict(prov);
-  const features = Object.entries(FEATURES).filter(([, f]) => f.province === id);
   sidebar(`
-    <span class="panel-overline">${esc(p.subtitle)}</span>
+    <span class="panel-overline">${esc(p.subtitle)}${id === 'capital' ? ' · hlavní město' : ''}</span>
     <h3 class="panel-title">${esc(p.label)}</h3>
-    <span class="map-verdict ${cls}">${v}${id === 'capital' ? ' · hlavní město' : ''}</span>
+    <em class="mc-pill big ${cls}">${v}</em>
     <p class="map-desc">${esc(p.text)}</p>
-    ${statRow('Věrnost', prov.loyalty, 'loyalty')}
-    ${statRow('Nepokoje', prov.unrest, 'unrest')}
-    ${statRow('Bohatství', prov.wealth, 'wealth')}
-    ${statRow('Posádka', prov.garrison, 'garrison')}
-    ${prov.lost ? '' : decreeBlock(id)}
-    ${placeChips(features)}
-    <button class="map-back" data-overview>← Celé království</button>
+    <div class="mc-summary">
+      ${bar('Věrnost', prov.loyalty, 'loyalty')}${bar('Nepokoje', prov.unrest, 'unrest')}
+      ${bar('Bohatství', prov.wealth, 'wealth')}${bar('Posádka', prov.garrison, 'garrison')}
+    </div>
+    ${settlementCards(id)}
+    <button class="map-back" data-overview>← Celá země</button>
   `);
 }
 
@@ -841,19 +810,17 @@ function showFeature(id) {
     <span class="panel-overline">${esc(f.kind)}</span>
     <h3 class="panel-title">${esc(f.name)}</h3>
     <p class="map-desc">${esc(f.text)}</p>
-    ${f.province ? `<button class="map-chip" data-goto-province="${f.province}"><span>Provincie</span><em>${esc(PROVINCES[f.province].label)}</em></button>` : ''}
+    ${f.province ? `<button class="mc-place" data-goto-province="${f.province}"><span class="mc-level dot"></span><span class="mc-place-name"><b>${esc(PROVINCES[f.province].label)}</b><small>kraj</small></span></button>` : ''}
     ${routes.length ? `<h4 class="map-sub">Cesty k Orlí Stráži</h4><div class="map-chip-list">
       ${routes.map((k) => `<button class="map-chip route-chip" data-goto-route="${k}" style="--rc:${ROUTES[k].color}">${TERRAIN_DEFS[k].icon}<span>${TERRAIN_DEFS[k].label}</span><em>${Math.round(TERRAIN_DEFS[k].baseRisk * 100)} % ${TERRAIN_DEFS[k].riskLabel}</em></button>`).join('')}
     </div>` : ''}
-    <button class="map-back" data-overview>← Celé království</button>
+    <button class="map-back" data-overview>← Celá země</button>
   `);
 }
 
 function showRoute(key) {
   const t = TERRAIN_DEFS[key];
   const pct = Math.round(t.baseRisk * 100);
-  const canChoose = typeof options.onChooseRoute === 'function'
-    && (!options.allowedRoutes || options.allowedRoutes.includes(key));
   sidebar(`
     <span class="panel-overline">Cesta k Orlí Stráži</span>
     <h3 class="panel-title">${t.label}</h3>
@@ -862,7 +829,7 @@ function showRoute(key) {
       <div class="risk-bar"><div style="width:${pct}%"></div></div>
     </div>
     <p class="map-desc">${ROUTE_TEXT[key]}</p>
-    ${canChoose ? `<button class="seal-button primary map-choose" data-choose-route="${key}">Vyslat posla touto cestou</button>` : ''}
+    ${options.focusRoutes ? '<p class="map-note">Cestu vybereš v příběhu, tady si ji jen prohlédneš.</p>' : ''}
     <button class="map-back" data-goto-feature="vassal">← Všechny cesty</button>
   `);
 }
@@ -1354,22 +1321,8 @@ export function wireMapChrome() {
     if (town && handleTownClick(t)) return;
     if (handleWorld(t)) return;
     if (!t.closest('.map-svg') && handleWar(t)) return;
-    const layerBtn = t.closest('[data-layer]');
-    if (layerBtn) {
-      layers[layerBtn.dataset.layer] = !layers[layerBtn.dataset.layer];
-      // trade and war each take the sidebar: one at a time
-      if (layerBtn.dataset.layer === 'war' && layers.war) layers.trade = false;
-      if (layerBtn.dataset.layer === 'trade' && layers.trade) layers.war = false;
-      const keep = selected;
-      const keepView = { ...view };
-      render();
-      view = keepView;
-      applyView();
-      selected = null;
-      if (keep) selectThing(keep);
-      else showOverview();
-      return;
-    }
+    const modeBtn = t.closest('[data-mode]');
+    if (modeBtn) return setMode(modeBtn.dataset.mode);
     const tradeBtn = t.closest('[data-trade]');
     if (tradeBtn && !tradeBtn.disabled) return handleTrade(tradeBtn);
     const gotoMarket = t.closest('[data-goto-market]');
@@ -1384,24 +1337,6 @@ export function wireMapChrome() {
       selectThing(null);
       animateTo({ x: 0, y: 0, w: W, h: H });
       return;
-    }
-    const decree = t.closest('[data-decree]');
-    if (decree && !decree.disabled) {
-      const notes = issueDecree(state, decree.dataset.decree, decree.dataset.decreeProv);
-      if (notes) {
-        document.dispatchEvent(new CustomEvent('kingdom:decree', { detail: { label: decreeList(state)[decree.dataset.decree].label, notes } }));
-        const keep = selected;
-        selected = null;
-        if (keep) selectThing(keep);
-        else showOverview();
-      }
-      return;
-    }
-    const choose = t.closest('[data-choose-route]');
-    if (choose && options.onChooseRoute) {
-      const key = choose.dataset.chooseRoute;
-      closeMap();
-      options.onChooseRoute(key);
     }
   });
 }
