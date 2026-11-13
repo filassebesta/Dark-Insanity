@@ -57,6 +57,8 @@ export function toast(message) {
 // ---------- typewriter ----------
 
 function typewrite(el, text, onDone) {
+  // no drop cap when the text opens with a one-letter word: "V táboře", not a big V glued to "táboře"
+  el.classList.toggle('no-dropcap', /^\S\s/.test(text || ''));
   clearInterval(typewriterTimer);
   typewriterTimer = null;
   el._skipHandler = null;
@@ -119,7 +121,7 @@ export function renderResourceBar(state) {
 }
 
 export function renderReignInfo(state) {
-  document.getElementById('reign-name').textContent = `${state.ruler.name} ${state.dynastyName}`;
+  document.getElementById('reign-name').textContent = `${state.ruler.name} z rodu ${state.dynastyName}`;
   const date = `${SEASONS[state.seasonIndex]} · rok ${state.year}`;
   document.getElementById('reign-date').textContent = `${date} · ${state.generation}. generace`;
   document.getElementById('scene-date').textContent = date;

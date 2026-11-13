@@ -101,13 +101,13 @@ export function refreshSuitors(state) {
 }
 
 /** Marries a suitor: they become the spouse, the dowry comes in. Returns the chronicle text. */
-export function marry(state, i) {
+export function marry(state, i, { arranged = false } = {}) {
   const s = state.suitors[i];
   if (!s) return '';
   state.spouse = {
     role: 'spouse', name: s.name, gender: s.gender, age: s.age, alive: true,
     loyalty: clamp(55 + Math.round(s.affection / 4)), quirk: s.quirk, traits: s.traits, portrait: s.portrait,
-    bio: `${s.kindLabel[0].toUpperCase()}${s.kindLabel.slice(1)}. ${s.bio} Svatba z lásky, ne z povinnosti.`,
+    bio: `${s.kindLabel[0].toUpperCase()}${s.kindLabel.slice(1)}. ${s.bio} ${arranged ? 'Sňatek domluvil dohazovač; láska se teprve ukáže.' : 'Svatba z lásky, ne z povinnosti.'}`,
   };
   for (const [k, v] of Object.entries(s.dowry || {})) if (state.resources[k] !== undefined) state.resources[k] = clamp(state.resources[k] + v);
   if (s.house) {
@@ -116,8 +116,8 @@ export function marry(state, i) {
   }
   if (s.realm && state.realms && state.realms[s.realm]) state.realms[s.realm].attitude = clamp(state.realms[s.realm].attitude + 20);
   state.suitors = [];
-  state.flags.married_for_love = true;
-  const text = `${state.ruler.name} ${f(state.ruler) ? 'se provdala za' : 'se oženil s'} ${s.name}, ${s.kindLabel}. Svatba se slavila tři dny.`;
+  if (!arranged) state.flags.married_for_love = true;
+  const text = `Svatba: ${state.ruler.name} a ${s.name}, ${s.kindLabel}. Svatba se slavila tři dny.`;
   state.chronicle.push(makeChronicleEntry(state, text));
   return text;
 }

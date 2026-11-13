@@ -39,19 +39,19 @@ export const NOBLE_EVENTS = [
     cooldown: 9,
     minTurn: 2,
     title: 'Povolávací list',
-    text: 'Královský posel přinesl list s pečetí {K:krále|královny} {king.name}. Koruna táhne do pole a každý šlechtic má dodat muže podle velikosti svého panství.',
+    text: 'Královský posel přinesl list s královskou pečetí. Koruna táhne do pole a každý šlechtic má dodat muže podle velikosti svého panství.',
     choices: [
       {
         label: 'Poslat muže do královského vojska',
         hintType: 'resource', hintKey: 'army',
         effects: { army: -8, favor: 10, prestige: 3 },
-        chronicle: 'Korouhev rodu {dynastyName} odtáhla pod královskou korouhev. Král si zapsal, kdo přišel první.',
+        chronicle: 'Korouhev rodu {dynastyName} odtáhla pod královskou korouhev. {king.Title} si zapsal{K:|a}, kdo přišel první.',
       },
       {
         label: 'Vykoupit se štítným',
         hintType: 'resource', hintKey: 'gold',
         effects: { gold: -14, favor: 3 },
-        chronicle: 'Rod zaplatil štítné místo mužů. Král peníze vzal, ale pohrdavě.',
+        chronicle: 'Rod zaplatil štítné místo mužů. {king.Title} peníze vzal{K:|a}, ale pohrdavě.',
       },
       {
         label: 'Odmítnout — panství potřebuje své muže',
@@ -70,14 +70,14 @@ export const NOBLE_EVENTS = [
     cooldown: 12,
     minTurn: 4,
     title: 'Bitva pod královskou korouhví',
-    text: 'Královské vojsko se střetlo s nepřítelem na rozbahněném poli. Tvá korouhev stojí na křídle a král sleduje boj z návrší.',
+    text: 'Královské vojsko se střetlo s nepřítelem na rozbahněném poli. Tvá korouhev stojí na křídle a {king.title} sleduje boj z návrší.',
     choices: [
       {
         label: 'Vést své muže osobně do první linie',
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.4, traitKey: 'strength', traitScale: 0.04, resourceKey: 'army', resourceScale: 0.5,
-        onSuccess: { effects: { army: -5, prestige: 10, favor: 12, legitimacy: 5 }, traitGain: 'strength', chronicle: 'Korouhev rodu {dynastyName} prolomila nepřátelské křídlo. Král po bitvě objal {ruler.name} před celým vojskem.' },
-        onFailure: { effects: { army: -12, prestige: -4 }, injury: { pool: ['rana', 'ruka', 'noha', 'oko', 'jizva', 'zlomenina'], chance: 0.6 }, chronicle: 'Útok narazil na kopí. Polovina mužů se domů nevrátila a král si všiml jen toho, kdo couvl.' },
+        onSuccess: { effects: { army: -5, prestige: 10, favor: 12, legitimacy: 5 }, traitGain: 'strength', chronicle: 'Korouhev rodu {dynastyName} prolomila nepřátelské křídlo. Po bitvě {king.title} před celým vojskem objal{K:|a} {R:vítěze|vítězku} dne.' },
+        onFailure: { effects: { army: -12, prestige: -4 }, injury: { pool: ['rana', 'ruka', 'noha', 'oko', 'jizva', 'zlomenina'], chance: 0.6 }, chronicle: 'Útok narazil na kopí. Polovina mužů se domů nevrátila a {king.title} si všiml{K:|a} jen toho, kdo couvl.' },
       },
       {
         label: 'Držet se v záloze a šetřit muže',
@@ -90,7 +90,7 @@ export const NOBLE_EVENTS = [
         hintType: 'trait', hintKey: 'intelligence',
         isRoll: true, baseChance: 0.45, traitKey: 'intelligence', traitScale: 0.04,
         onSuccess: { effects: { gold: 18, favor: -2 }, traitGain: 'intelligence', chronicle: 'Zatímco jiní bojovali, muži rodu vyplenili nepřátelský tábor. Truhly jsou plné, čest trochu méně.' },
-        onFailure: { effects: { favor: -10, prestige: -5 }, houseEffects: { '*': { attitude: -4 } }, chronicle: 'Rabování bylo prozrazeno. Král zuří a ostatní rody se smějí.' },
+        onFailure: { effects: { favor: -10, prestige: -5 }, houseEffects: { '*': { attitude: -4 } }, chronicle: 'Rabování bylo prozrazeno. {king.Title} zuří a ostatní rody se smějí.' },
       },
     ],
   },
@@ -106,7 +106,7 @@ export const NOBLE_EVENTS = [
         label: 'Přijet v plné nádheře',
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.5, traitKey: 'eloquence', traitScale: 0.04,
-        onSuccess: { effects: { gold: -10, favor: 10, prestige: 5 }, traitGain: 'eloquence', chronicle: '{ruler.name} {R:zazářil|zazářila} u dvora. Král u hostiny zvedl pohár směrem k rodu {dynastyName}.' },
+        onSuccess: { effects: { gold: -10, favor: 10, prestige: 5 }, traitGain: 'eloquence', chronicle: '{ruler.name} {R:zazářil|zazářila} u dvora. {king.Title} u hostiny zvedl{K:|a} pohár směrem k rodu {dynastyName}.' },
         onFailure: { effects: { gold: -10, prestige: -3 }, chronicle: 'Nádhera rodu u dvora vyzněla spíš směšně. Velmoži se usmívali za rukou.' },
       },
       {
@@ -138,20 +138,20 @@ export const NOBLE_EVENTS = [
         label: 'Uspořádat hostinu, na jakou se nezapomíná',
         hintType: 'resource', hintKey: 'favor',
         effects: { gold: -18, food: -10, favor: 14, prestige: 6 },
-        chronicle: 'Hostina trvala tři dny. Král odjížděl spokojený a jméno rodu {dynastyName} si zapamatoval.',
+        chronicle: 'Hostina trvala tři dny. {king.Title} odjížděl{K:|a} {K:spokojený|spokojená} a jméno rodu {dynastyName} si zapamatoval{K:|a}.',
       },
       {
-        label: 'Pohostit krále důstojně, ale skromně',
+        label: 'Pohostit {K:krále|královnu} důstojně, ale skromně',
         hintType: 'resource', hintKey: 'gold',
         effects: { gold: -6, food: -4, favor: 4 },
-        chronicle: 'Král byl pohoštěn, jak se sluší. Nic víc, nic míň.',
+        chronicle: '{king.Title} byl{K:|a} {K:pohoštěn|pohoštěna}, jak se sluší. Nic víc, nic míň.',
       },
       {
-        label: 'Ukázat králi svou družinu na cvičišti',
+        label: 'Ukázat {K:králi|královně} svou družinu na cvičišti',
         hintType: 'resource', hintKey: 'army',
         isRoll: true, baseChance: 0.5, resourceKey: 'army', resourceScale: 0.5,
-        onSuccess: { effects: { favor: 8, prestige: 6, gold: -4 }, chronicle: 'Král obdivoval kázeň družiny rodu. „Takové muže bych chtěl mít u sebe,“ řekl nahlas.' },
-        onFailure: { effects: { favor: -6, prestige: -3, gold: -4 }, chronicle: 'Družina se před králem zamotala do vlastních kopí. Dvořané se smáli až do večera.' },
+        onSuccess: { effects: { favor: 8, prestige: 6, gold: -4 }, chronicle: '{king.Title} obdivoval{K:|a} kázeň družiny rodu. „Takové muže bych {K:chtěl|chtěla} mít u sebe,“ řekl{K:|a} nahlas.' },
+        onFailure: { effects: { favor: -6, prestige: -3, gold: -4 }, chronicle: 'Družina se před {K:králem|královnou} zamotala do vlastních kopí. Dvořané se smáli až do večera.' },
       },
     ],
   },
@@ -181,7 +181,7 @@ export const NOBLE_EVENTS = [
         hintType: 'resource', hintKey: 'favor',
         effects: { favor: -12 },
         provinceEffects: { own: { loyalty: 8 } },
-        chronicle: 'Rod berni odmítl. Sedláci to ocenili, král méně.',
+        chronicle: 'Rod berni odmítl. Sedláci to ocenili, {king.title} méně.',
       },
     ],
   },
@@ -192,14 +192,14 @@ export const NOBLE_EVENTS = [
     cooldown: 10,
     target: hostileHouse,
     title: 'Obvinění u dvora',
-    text: 'Rod {house.gen} obvinil tvůj rod před králem ze zpronevěry královské berně. Král si tě předvolává, aby ses {R:hájil|hájila}.',
+    text: 'Rod {house.gen} obvinil tvůj rod před {K:králem|královnou} ze zpronevěry královské berně. {king.Title} si tě předvolává, aby ses {R:hájil|hájila}.',
     choices: [
       {
-        label: 'Obhájit se před králem',
+        label: 'Obhájit se před {K:králem|královnou}',
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.45, traitKey: 'eloquence', traitScale: 0.05,
         onSuccess: { effects: { favor: 6, prestige: 4 }, houseEffects: { target: { attitude: -8, power: -6 } }, traitGain: 'eloquence', chronicle: 'Obhajoba byla tak přesvědčivá, že se obvinění obrátilo proti žalobcům.' },
-        onFailure: { effects: { favor: -12, gold: -8 }, chronicle: 'Král obhajobě neuvěřil. Rod zaplatil pokutu a ztratil kus královy důvěry.' },
+        onFailure: { effects: { favor: -12, gold: -8 }, chronicle: '{king.Title} obhajobě neuvěřil{K:|a}. Rod zaplatil pokutu a ztratil kus důvěry koruny.' },
       },
       {
         label: 'Udeřit zpátky tajemstvím, které o nich víš',
@@ -208,7 +208,7 @@ export const NOBLE_EVENTS = [
         effects: { favor: 4 },
         noble: { secrets: -1 },
         houseEffects: { target: { power: -14, attitude: -15 } },
-        chronicle: 'Rod předložil králi listinu, která žalobce umlčela. Teď jsou to oni, kdo se musí hájit.',
+        chronicle: 'Rod předložil {K:králi|královně} listinu, která žalobce umlčela. Teď jsou to oni, kdo se musí hájit.',
       },
       {
         label: 'Uplatit svědky',
@@ -225,7 +225,7 @@ export const NOBLE_EVENTS = [
     cooldown: 30,
     requires: (s) => s.resources.favor >= 60,
     title: 'Úřad u dvora',
-    text: '{king.Title} {king.name} ti nabízí úřad nejvyššího komorníka. Přístup ke králi, ke královské pokladně — a nenávist všech, kdo o úřad stáli.',
+    text: '{king.Title} {king.name} ti nabízí úřad nejvyššího komorníka. Přístup ke {K:králi|královně}, ke královské pokladně — a nenávist všech, kdo o úřad stáli.',
     choices: [
       {
         label: 'Přijmout úřad',
@@ -252,7 +252,7 @@ export const NOBLE_EVENTS = [
     weight: 4,
     requires: (s) => s.ruler.statusTier === 3 && s.resources.favor >= 62 && s.resources.prestige >= 40,
     title: 'Královská milost',
-    text: '{king.Title} {king.name} si předvolal{K:|a} {ruler.title} k trůnu. Za věrné služby chce rod {dynastyName} povýšit mezi velmože země.',
+    text: '{king.Title} {king.name} si tě předvolal{K:|a} k trůnu. Za věrné služby chce rod {dynastyName} povýšit mezi velmože země.',
     choices: [
       {
         label: 'Přijmout s pokorou',
@@ -266,8 +266,8 @@ export const NOBLE_EVENTS = [
         label: 'Požádat i o další panství',
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.45, traitKey: 'eloquence', traitScale: 0.05,
-        onSuccess: { setTier: 4, effects: { legitimacy: 12, prestige: 8, gold: 20, army: 6 }, provinceEffects: { own: { wealth: 18, garrison: 10 } }, traitGain: 'eloquence', chronicle: 'Král se zasmál smělosti a přidal ještě lesy na severu. Rod {dynastyName} je mezi velmoži.' },
-        onFailure: { setTier: 4, effects: { legitimacy: 8, favor: -10 }, provinceEffects: { own: { wealth: 8 } }, chronicle: 'Rod byl povýšen, ale žádost o víc krále urazila. Dvůr si zapamatoval chamtivost.' },
+        onSuccess: { setTier: 4, effects: { legitimacy: 12, prestige: 8, gold: 20, army: 6 }, provinceEffects: { own: { wealth: 18, garrison: 10 } }, traitGain: 'eloquence', chronicle: '{king.Title} se zasmál{K:|a} smělosti a přidal{K:|a} ještě lesy na severu. Rod {dynastyName} je mezi velmoži.' },
+        onFailure: { setTier: 4, effects: { legitimacy: 8, favor: -10 }, provinceEffects: { own: { wealth: 8 } }, chronicle: 'Rod byl povýšen, ale žádost o víc {K:krále|královnu} urazila. Dvůr si zapamatoval chamtivost.' },
       },
     ],
   },
@@ -307,24 +307,24 @@ export const NOBLE_EVENTS = [
     text: '{king.Title} {king.name} ulehl{K:|a}. Je mu {king.age} let a lékaři se tváří vážně. U dvora se začíná mluvit o tom, co bude dál — a kdo by mohl nosit korunu.',
     choices: [
       {
-        label: 'Navštívit krále a ujistit ho o věrnosti',
+        label: 'Navštívit {K:krále|královnu} a ujistit {K:ho|ji} o věrnosti',
         hintType: 'resource', hintKey: 'favor',
         effects: { favor: 9, gold: -4 },
-        chronicle: 'Král byl návštěvou dojat. Ve slabé chvíli si lidé pamatují, kdo přišel.',
+        chronicle: '{king.Title} byl{K:|a} návštěvou {K:dojat|dojata}. Ve slabé chvíli si lidé pamatují, kdo přišel.',
       },
       {
         label: 'Tiše začít shromažďovat příznivce',
         hintType: 'trait', hintKey: 'intelligence',
         effects: { legitimacy: 6, favor: -3 },
         noble: { plot: 1 },
-        chronicle: 'Zatímco král stonal, rod {dynastyName} psal dopisy. Ne všechny byly o jeho zdraví.',
+        chronicle: 'Zatímco {king.title} stonal{K:|a}, rod {dynastyName} psal dopisy. Ne všechny byly o {K:jeho|jejím} zdraví.',
       },
       {
-        label: 'Poslat králi svého lékaře',
+        label: 'Poslat {K:králi|královně} svého lékaře',
         hintType: 'resource', hintKey: 'gold',
         isRoll: true, baseChance: 0.55,
-        onSuccess: { effects: { gold: -8, favor: 14 }, chronicle: 'Lékař rodu krále postavil na nohy. Král to rodu {dynastyName} nezapomene.' },
-        onFailure: { effects: { gold: -8, favor: -6 }, chronicle: 'Králi se po lécích přitížilo. Lékař rodu byl vyhnán od dvora s podezřením.' },
+        onSuccess: { effects: { gold: -8, favor: 14 }, chronicle: 'Lékař rodu {K:krále|královnu} postavil na nohy. {king.Title} to rodu {dynastyName} nezapomene.' },
+        onFailure: { effects: { gold: -8, favor: -6 }, chronicle: '{K:Králi|Královně} se po lécích přitížilo. Lékař rodu byl vyhnán od dvora s podezřením.' },
       },
     ],
   },
@@ -341,11 +341,11 @@ export const NOBLE_EVENTS = [
     text: 'Královo dítě, {king.heirTitle} {king.heirName}, dospívá. Kdyby se tvůj dědic {heir.name} stal jeho chotí, krev rodu {dynastyName} by jednou seděla na trůně.',
     choices: [
       {
-        label: 'Navrhnout sňatek králi',
+        label: 'Navrhnout sňatek {K:králi|královně}',
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.25, traitKey: 'eloquence', traitScale: 0.04, resourceKey: 'favor', resourceScale: 0.6,
-        onSuccess: { effects: { legitimacy: 25, prestige: 8, favor: 4 }, hiddenEffects: { setFlag: ['royal_match', 'heir_married'] }, houseEffects: { '*': { attitude: -6 } }, chronicle: 'Král svolil. Dědic rodu {dynastyName} byl zasnouben s královým dítětem. Ostatní rody zbledly.' },
-        onFailure: { effects: { favor: -6, prestige: -3 }, chronicle: 'Král nabídku odmítl s úsměvem, který bolel víc než slova.' },
+        onSuccess: { effects: { legitimacy: 25, prestige: 8, favor: 4 }, hiddenEffects: { setFlag: ['royal_match', 'heir_married'] }, houseEffects: { '*': { attitude: -6 } }, chronicle: '{king.Title} svolil{K:|a}. Dědic rodu {dynastyName} byl zasnouben s {K:královým|královniným} dítětem. Ostatní rody zbledly.' },
+        onFailure: { effects: { favor: -6, prestige: -3 }, chronicle: '{king.Title} nabídku odmítl{K:|a} s úsměvem, který bolel víc než slova.' },
       },
       {
         label: 'Nabídnout k sňatku i bohaté věno',
@@ -353,7 +353,7 @@ export const NOBLE_EVENTS = [
         hintType: 'resource', hintKey: 'gold',
         isRoll: true, baseChance: 0.45, resourceKey: 'favor', resourceScale: 0.6,
         onSuccess: { effects: { gold: -30, legitimacy: 25, prestige: 8 }, hiddenEffects: { setFlag: ['royal_match', 'heir_married'] }, houseEffects: { '*': { attitude: -6 } }, chronicle: 'Věno přesvědčilo prázdnou královskou pokladnu. Zásnuby byly zpečetěny.' },
-        onFailure: { effects: { gold: -10, favor: -4 }, chronicle: 'Král věno nepřijal. Zálohu na dary už ale rod zpátky nedostal.' },
+        onFailure: { effects: { gold: -10, favor: -4 }, chronicle: '{king.Title} věno nepřijal{K:|a}. Zálohu na dary už ale rod zpátky nedostal.' },
       },
       {
         label: 'Zatím vyčkat',
@@ -377,7 +377,7 @@ export const NOBLE_EVENTS = [
         requires: (s) => s.ruler.statusTier >= 4 || s.flags.royal_match,
         hintType: 'resource', hintKey: 'legitimacy',
         isRoll: true, baseChance: -0.17, traitKey: 'eloquence', traitScale: 0.02, resourceKey: 'legitimacy', resourceScale: 0.8,
-        chanceBonus: (s) => allies(s) * 0.08 + (s.flags.royal_match ? 0.25 : 0)
+        chanceBonus: (s) => allies(s) * 0.08 + (s.flags.royal_match ? 0.25 : 0) + (s.flags.regent ? 0.15 : 0)
           + (!s.king.heir || !s.king.heir.alive || s.king.heir.age < 16 ? 0.1 : 0) + (s.resources.favor - 50) / 400,
         onSuccess: { endGame: 'crowned', chronicle: 'Šlechta se sklonila. Koruna dosedla na hlavu z rodu {dynastyName}.' },
         onFailure: { newKing: true, effects: { favor: -30, legitimacy: -15, prestige: -6 }, houseEffects: { '*': { attitude: -6 } }, chronicle: 'Šlechta za nárokem rodu nestála. Nový panovník si dobře zapamatoval, kdo se natáhl po jeho koruně.' },
@@ -470,11 +470,11 @@ export const NOBLE_EVENTS = [
         onFailure: { effects: { army: -6, prestige: -4 }, provinceEffects: { own: { loyalty: -5 } }, houseEffects: { target: { attitude: -6 } }, chronicle: 'Šarvátka u řeky skončila porážkou. Sousedé si louky nechali.' },
       },
       {
-        label: 'Žalovat u krále',
+        label: 'Žalovat u {K:krále|královny}',
         hintType: 'resource', hintKey: 'favor',
         isRoll: true, baseChance: 0.35, resourceKey: 'favor', resourceScale: 0.7,
-        onSuccess: { effects: { favor: 2 }, houseEffects: { target: { power: -6, attitude: -5 } }, chronicle: 'Král rozhodl ve prospěch rodu {dynastyName}. Sousedé museli kameny vrátit a zaplatit škodu.' },
-        onFailure: { effects: { favor: -4 }, chronicle: 'Král nechtěl ztrácet čas spory o louky a dal za pravdu silnějšímu.' },
+        onSuccess: { effects: { favor: 2 }, houseEffects: { target: { power: -6, attitude: -5 } }, chronicle: '{king.Title} rozhodl{K:|a} ve prospěch rodu {dynastyName}. Sousedé museli kameny vrátit a zaplatit škodu.' },
+        onFailure: { effects: { favor: -4 }, chronicle: '{king.Title} nechtěl{K:|a} ztrácet čas spory o louky a dal{K:|a} za pravdu silnějšímu.' },
       },
       {
         label: 'Ustoupit a nechat jim louky',
@@ -557,11 +557,11 @@ export const NOBLE_EVENTS = [
         onFailure: { effects: { army: -8 }, provinceEffects: { own: { unrest: 10, wealth: -5 } }, chronicle: 'Nájezdníci byli silnější. Vsi hoří a sedláci se ptají, kdo je ochrání.' },
       },
       {
-        label: 'Stěžovat si u krále',
+        label: 'Stěžovat si u {K:krále|královny}',
         hintType: 'resource', hintKey: 'favor',
         isRoll: true, baseChance: 0.35, resourceKey: 'favor', resourceScale: 0.6,
-        onSuccess: { effects: { gold: 10 }, houseEffects: { target: { power: -8, attitude: -5 } }, chronicle: 'Král nařídil náhradu škody. Sousedé platí se skřípěním zubů.' },
-        onFailure: { effects: { favor: -3 }, provinceEffects: { own: { unrest: 6 } }, chronicle: 'Král se do sporu nechtěl plést. Škoda zůstala na rodu.' },
+        onSuccess: { effects: { gold: 10 }, houseEffects: { target: { power: -8, attitude: -5 } }, chronicle: '{king.Title} nařídil{K:|a} náhradu škody. Sousedé platí se skřípěním zubů.' },
+        onFailure: { effects: { favor: -3 }, provinceEffects: { own: { unrest: 6 } }, chronicle: '{king.Title} se do sporu nechtěl{K:|a} plést. Škoda zůstala na rodu.' },
       },
       {
         label: 'Zaplatit „dluh“ a mít klid',
@@ -692,11 +692,11 @@ export const NOBLE_EVENTS = [
         chronicle: 'Dopis zmizel v železné truhle rodu. Někdy se bude hodit.',
       },
       {
-        label: 'Předat dopis králi',
+        label: 'Předat dopis {K:králi|královně}',
         hintType: 'resource', hintKey: 'favor',
         effects: { favor: 10 },
         houseEffects: { target: { attitude: -15, power: -10 } },
-        chronicle: 'Král si dopis přečetl dvakrát. Rod {house.gen} upadl v nemilost a rod {dynastyName} v milost.',
+        chronicle: '{king.Title} si dopis přečetl{K:|a} dvakrát. Rod {house.gen} upadl v nemilost a rod {dynastyName} v milost.',
       },
       {
         label: 'Vrátit dopis tiše pisateli',
@@ -747,9 +747,9 @@ export const NOBLE_EVENTS = [
     id: 'n_spiklenci_zvou',
     scenario: S,
     cooldown: 10,
-    requires: (s) => s.noble.plot < 3 && s.king.alive,
+    requires: (s) => s.noble.plot === 0 && s.king.alive, // an invitation goes to someone not yet in the plot
     title: 'Pozvání do tmy',
-    text: 'Maskovaný posel předal pozvání na schůzku v opuštěné kapli. Nespokojení šlechtici hledají někoho, kdo by se postavil proti {K:králi|královně} {king.name}.',
+    text: 'Maskovaný posel předal pozvání na schůzku v opuštěné kapli. Nespokojení šlechtici hledají někoho, kdo by se postavil proti koruně.',
     choices: [
       {
         label: 'Přidat se ke spiklencům',
@@ -759,7 +759,7 @@ export const NOBLE_EVENTS = [
         chronicle: 'V opuštěné kapli si spiklenci podali ruce. Jedna z nich patřila rodu {dynastyName}.',
       },
       {
-        label: 'Udat spiklence králi',
+        label: 'Udat spiklence {K:králi|královně}',
         hintType: 'resource', hintKey: 'favor',
         effects: { favor: 12, prestige: 3 },
         noble: { secrets: 1 },
@@ -795,7 +795,7 @@ export const NOBLE_EVENTS = [
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.4, traitKey: 'eloquence', traitScale: 0.05,
         onSuccess: { noble: { plot: 1 }, traitGain: 'eloquence', chronicle: 'Velitel stráží se přidal z přesvědčení. Takový muž nezradí.' },
-        onFailure: { effects: { favor: -15 }, noble: { plot: -1 }, chronicle: 'Velitel stráží šel rovnou za králem. Spiknutí se otřásá v základech.' },
+        onFailure: { effects: { favor: -15 }, noble: { plot: -1 }, chronicle: 'Velitel stráží šel rovnou za {K:králem|královnou}. Spiknutí se otřásá v základech.' },
       },
       {
         label: 'Najít jinou cestu',
@@ -820,21 +820,21 @@ export const NOBLE_EVENTS = [
         hintType: 'trait', hintKey: 'strength',
         isRoll: true, baseChance: 0.55, traitKey: 'strength', traitScale: 0.03,
         onSuccess: { effects: { faith: -3 }, chronicle: 'Spiklenec už nikdy nepromluví. Spiknutí žije dál.' },
-        onFailure: { effects: { favor: -20 }, noble: { plotReset: true }, noInjury: true, chronicle: 'Pokus o umlčení se nezdařil a spiklenec utekl ke králi. Spiknutí je rozprášeno a král má podezření.' },
+        onFailure: { effects: { favor: -20 }, noble: { plotReset: true }, noInjury: true, chronicle: 'Pokus o umlčení se nezdařil a spiklenec utekl ke {K:králi|královně}. Spiknutí je rozprášeno a {king.title} má podezření.' },
       },
       {
-        label: 'Předejít mu a přiznat se králi',
+        label: 'Předejít mu a přiznat se {K:králi|královně}',
         hintType: 'resource', hintKey: 'favor',
         effects: { favor: 6, legitimacy: -10 },
         noble: { plotReset: true, secrets: 1 },
-        chronicle: 'Rod předstoupil před krále jako ten, kdo spiknutí „odhalil“. Ostatní spiklenci skončili ve věži.',
+        chronicle: 'Rod předstoupil před {K:krále|královnu} jako ten, kdo spiknutí „odhalil“. Ostatní spiklenci skončili ve věži.',
       },
       {
         label: 'Zapírat a doufat',
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.45, traitKey: 'eloquence', traitScale: 0.04,
         onSuccess: { chronicle: 'Opilcovy řeči nikdo nebral vážně. Spiknutí přežilo.' },
-        onFailure: { effects: { favor: -12 }, noble: { plot: -1 }, chronicle: 'Král poslal vyšetřovatele. Ti nic nedokázali, ale podezření zůstalo.' },
+        onFailure: { effects: { favor: -12 }, noble: { plot: -1 }, chronicle: '{king.Title} poslal{K:|a} vyšetřovatele. Ti nic nedokázali, ale podezření zůstalo.' },
       },
     ],
   },
@@ -845,7 +845,7 @@ export const NOBLE_EVENTS = [
     cooldown: 10,
     target: (s) => ['chancellor', 'marshal', 'spymaster'].find((r) => s[r].alive !== false && s[r].loyalty <= 35) || null,
     title: 'Zrádce mezi svými',
-    text: '{target.name}, {target.your} {target.role}, se tajně schází s lidmi krále. Pokud o něčem ví, může to rodu {dynastyName} zlomit vaz.',
+    text: '{target.name}, {target.your} {target.role}, se tajně schází s lidmi {K:krále|královny}. Pokud o něčem ví, může to rodu {dynastyName} zlomit vaz.',
     choices: [
       {
         label: 'Uplatit ho, aby mlčel',
@@ -859,14 +859,14 @@ export const NOBLE_EVENTS = [
         hintType: 'trait', hintKey: 'strength',
         effects: { favor: -4 },
         replaceCourt: { loyalty: 65, minAge: 30, maxAge: 50 },
-        chronicle: 'Zrádce byl vyhnán z panství. Jestli králi něco řekl, to se teprve ukáže.',
+        chronicle: 'Zrádce byl vyhnán z panství. Jestli {K:králi|královně} něco řekl, to se teprve ukáže.',
       },
       {
         label: 'Krmit ho falešnými zprávami',
         hintType: 'trait', hintKey: 'intelligence',
         isRoll: true, baseChance: 0.45, traitKey: 'intelligence', traitScale: 0.05,
-        onSuccess: { effects: { favor: 5 }, noble: { secrets: 1 }, traitGain: 'intelligence', chronicle: 'Král teď věří, že rod {dynastyName} je mu oddaný až za hrob. Díky zrádci.' },
-        onFailure: { effects: { favor: -10 }, chronicle: 'Zrádce lež prohlédl a donesl králi pravdu.' },
+        onSuccess: { effects: { favor: 5 }, noble: { secrets: 1 }, traitGain: 'intelligence', chronicle: '{king.Title} teď věří, že rod {dynastyName} je {K:mu|jí} oddaný až za hrob. Díky zrádci.' },
+        onFailure: { effects: { favor: -10 }, chronicle: 'Zrádce lež prohlédl a donesl {K:králi|královně} pravdu.' },
       },
     ],
   },
@@ -875,6 +875,7 @@ export const NOBLE_EVENTS = [
 
   {
     id: 'n_mlyn',
+    oneTime: true, // once the mill stands, it stands
     scenario: S,
     cooldown: 20,
     title: 'Mlýn na potoce',
@@ -1003,21 +1004,21 @@ export const NOBLE_EVENTS = [
     scenario: S,
     cooldown: 30,
     title: 'Trhové právo',
-    text: 'Měšťané z přístavní vsi chtějí každý týden pořádat trh. Na trhové právo je ale potřeba královo svolení — a král ho nedává zadarmo.',
+    text: 'Měšťané z přístavní vsi chtějí každý týden pořádat trh. Na trhové právo je ale potřeba svolení koruny — a {king.title} ho nedává zadarmo.',
     choices: [
       {
-        label: 'Požádat krále o trhové právo',
+        label: 'Požádat {K:krále|královnu} o trhové právo',
         hintType: 'resource', hintKey: 'favor',
         isRoll: true, baseChance: 0.35, resourceKey: 'favor', resourceScale: 0.8,
-        onSuccess: { effects: { gold: -5 }, provinceEffects: { own: { wealth: 12, loyalty: 5 } }, chronicle: 'Král pečetí stvrdil trhové právo. Do vsi se sjíždějí kupci z celého pobřeží.' },
-        onFailure: { effects: { gold: -5, favor: -3 }, chronicle: 'Král žádost odložil. Trh nebude.' },
+        onSuccess: { effects: { gold: -5 }, provinceEffects: { own: { wealth: 12, loyalty: 5 } }, chronicle: '{king.Title} pečetí stvrdil{K:|a} trhové právo. Do vsi se sjíždějí kupci z celého pobřeží.' },
+        onFailure: { effects: { gold: -5, favor: -3 }, chronicle: '{king.Title} žádost odložil{K:|a}. Trh nebude.' },
       },
       {
         label: 'Pořádat trh i bez svolení',
         hintType: 'resource', hintKey: 'gold',
         effects: { gold: 8, favor: -8 },
         provinceEffects: { own: { wealth: 8 } },
-        chronicle: 'Trh se koná bez královy pečeti. Výdělky jsou dobré, dopisy od dvora méně.',
+        chronicle: 'Trh se koná bez královské pečeti. Výdělky jsou dobré, dopisy od dvora méně.',
       },
     ],
   },
@@ -1087,7 +1088,7 @@ export const NOBLE_QUIET_EVENT = {
       hintType: 'trait', hintKey: 'intelligence',
       effects: { legitimacy: 2 },
       traitGain: 'intelligence',
-      chronicle: 'Ve starých listinách se našel předek, kterého by se nestyděl ani král.',
+      chronicle: 'Ve starých listinách se našel předek, kterého by se nestyděl ani panovník.',
     },
     {
       label: 'Dát sepsat kroniku rodu',

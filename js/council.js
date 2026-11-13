@@ -27,7 +27,7 @@ const SAY = {
   },
   spymaster: {
     sure: ['Vím, co se šeptá. A šeptá se jen o jednom řešení.', 'Mám své lidi všude. Tohle je správná cesta.', 'Věř mi. Nebo aspoň mým uším.'],
-    unsure: ['Moji lidé nevědí všechno. Ale tohle se zdá nejbezpečnější.', 'Ve tmě se chodí opatrně. Já bych šel{|šla} tudy.'],
+    unsure: ['Moji lidé nevědí všechno. Ale tohle se zdá nejbezpečnější.', 'Ve tmě se chodí opatrně. Já bych volil{|a} tuhle cestu.'],
   },
   spouse: {
     sure: ['Znám tě. A vím, co by bylo správné.', 'Jde o jméno rodu. Rozhodni se takhle.', 'Poslechni srdce i rozum. Oba říkají totéž.'],

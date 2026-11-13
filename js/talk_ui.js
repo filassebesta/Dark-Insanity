@@ -28,7 +28,9 @@ export function talkSection(state, role) {
     const roll = topicRollChoice(state, role, key);
     const pct = roll ? Math.round(rollParts(state, roll).chance * 100) : null;
     const trait = roll && roll.traitScale ? TRAIT_DEFS.find((t) => t.key === roll.traitKey).label : ''; // a wish for a child is luck, not skill
-    const price = cost ? Object.entries(cost).map(([k, v]) => `${v} ${resourceLabel(RESOURCE_DEFS.find((d) => d.key === k), state.scenario).toLowerCase()}`).join(', ') : '';
+    // "5 zlata", "2 grošů"
+    const GEN = { gold: state.scenario === 'sedlak' ? 'grošů' : 'zlata', food: state.scenario === 'sedlak' ? 'zásob' : 'jídla', army: state.scenario === 'sedlak' ? 'čeledi' : 'vojska', prestige: 'prestiže', faith: 'víry' };
+    const price = cost ? Object.entries(cost).map(([k, v]) => `${v} ${GEN[k] || resourceLabel(RESOURCE_DEFS.find((d) => d.key === k), state.scenario).toLowerCase()}`).join(', ') : '';
     const tag = roll ? `${trait ? `${trait} · ` : ''}k% · ${pct} %` : price || 'jistě';
     return `<button class="talk-topic" data-talk-topic="${key}"${block ? ` disabled title="${esc(block)}"` : ''}>
       <b>${esc(def.label)}</b><span>${esc(block || tag)}</span></button>`;

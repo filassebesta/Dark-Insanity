@@ -381,6 +381,7 @@ function offerContract(state) {
     obligation,
     giver: CONTRACT_GIVER[dest],
   });
+  return t.contracts[t.contracts.length - 1];
 }
 
 /** Runs trade for one season. Returns short news lines for the turn summary. */
@@ -393,15 +394,21 @@ export function processTrade(state) {
   for (const c of [...t.contracts]) {
     if (c.until <= state.turn && !c.taken) {
       t.contracts = t.contracts.filter((x) => x.id !== c.id);
-      if (c.obligation && state.resources.favor !== undefined) {
+      // a lord in open revolt owes the crown no grain
+      if (c.obligation && state.resources.favor !== undefined && !(state.flags && state.flags.rebellion)) {
         state.resources.favor = clamp(state.resources.favor - 3);
-        const text = `Nesplněná zakázka: ${loadText(c.qty, c.good)} ${MARKETS[c.dest].to} nedorazilo. Přízeň −3.`;
+        const verb = c.qty === 1 ? 'nedorazil' : c.qty < 5 ? 'nedorazily' : 'nedorazilo';
+        const text = `Nesplněná zakázka: ${loadText(c.qty, c.good)} ${MARKETS[c.dest].to} ${verb}. Přízeň −3.`;
         log(state, text);
         news.push(text);
       }
     }
   }
-  if (state.seasonIndex === 0 && t.contracts.length < 2 && Math.random() < 0.75) offerContract(state);
+  if (state.seasonIndex === 0 && t.contracts.length < 2 && Math.random() < 0.75) {
+    const c = offerContract(state);
+    // a binding order from the lord or the crown is announced, not found later as a penalty
+    if (c && c.obligation) news.push(`Povinná zakázka ${c.dest === 'court' ? 'koruny' : 'vrchnosti'}: ${loadText(c.qty, c.good)} ${MARKETS[c.dest].to}, nejpozději do ${Math.round((c.until - state.turn) / 4)} let. Pošli je v Obchodě, jinak klesne přízeň.`);
+  }
   // caravans on the road
   for (const caravan of [...t.caravans]) {
     // an ambush left unanswered (the game was closed mid-event) ends with the cargo getting through

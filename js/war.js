@@ -11,6 +11,7 @@
 import { clamp, bumpStat, NOBLE_HOUSES } from './data.js';
 import { makeChronicleEntry } from './state.js';
 import { injure } from './injuries.js';
+import { roleLabel } from './court.js';
 import { REALMS, ensureRealms, realmStrength, realmRulerLabel, beatRealm, ownsRealm } from './realms.js';
 
 const HUB = [633, 368];
@@ -36,7 +37,8 @@ export const WAR_TARGETS = {
   },
 };
 
-const LEADERS = { ruler: 'vládce osobně', marshal: 'maršál' };
+// "5 mužů", "1 muž", "3 muži"
+const men = (n) => `${n} ${n === 1 ? 'muž' : n >= 2 && n <= 4 ? 'muži' : 'mužů'}`;
 export const SIZES = { small: 15, medium: 25, large: 40 };
 const WAR_GAP = 8; // seasons of rest between campaigns
 
@@ -75,7 +77,7 @@ export function warTargets(state) {
       const prov = state.provinces.find((p) => p.id === def.seat);
       if (prov && prov.owner === 'player') continue; // their seat is already yours
       out[`house:${h.id}`] = {
-        name: `Soukromá válka: ${def.short}`, enemy: `družina rodu ${def.short}`, loc: `na panství rodu ${def.short}`,
+        name: `Soukromá válka: ${def.short}`, enemy: `družina ${def.gen}`, loc: `na panství ${def.gen}`,
         strength: 0.6 + h.power / 140, march: 1, house: h.id, province: prov ? prov.id : null,
         text: `Nájezd na ${prov ? `panství ${prov.name.replace(/ \(.*\)$/, '')}` : 'jejich panství'}. Kořist a oslabení soupeře — ale král soukromé války nevidí rád.`,
         reward: 'kořist, oslabení rodu; přízeň krále klesne',
@@ -281,10 +283,12 @@ export function processWar(state) {
   }
   // in the field: the siege grinds on by itself a little, then the season's war event
   w.progress = Math.min(100, w.progress + 6);
+  if (w.progress >= 100) { endWar(state, 'win', news); return news; } // the siege ground down the last walls by itself
   if (!state.pendingEvent) {
     const pool = SEASON_WAR_EVENTS.filter((id) => warEventFits(state, id));
-    const last = w.log.length ? w.log[w.log.length - 1] : null;
-    const fresh = pool.filter((id) => id !== last);
+    // the same scene not again within the last three seasons of this campaign
+    const recent = w.log.slice(-3);
+    const fresh = pool.filter((id) => !recent.includes(id));
     const pick = (fresh.length ? fresh : pool)[Math.floor(Math.random() * (fresh.length || pool.length))];
     if (pick) {
       state.pendingEvent = pick;
@@ -297,9 +301,9 @@ export function processWar(state) {
 /** Which war events make sense at this point of the campaign. */
 function warEventFits(state, id) {
   const w = state.war;
-  if (id === 'w_obleh') return w.progress >= 35;
-  if (id === 'w_mir') return w.progress >= 45 && !w.log.includes('w_mir');
-  if (id === 'w_zasoby') return state.resources.food < 25;
+  if (id === 'w_obleh') return w.progress >= 60; // "the last fortress"
+  if (id === 'w_mir') return w.progress >= 60 && !w.log.includes('w_mir'); // "victory is within reach"
+  if (id === 'w_zasoby') return state.resources.food < 15; // the army in the field truly goes hungry
   if (id === 'w_hrdina') return w.morale < 70 && !w.log.includes('w_hrdina');
   if (id === 'w_nemoc' || id === 'w_dezerce') return w.seasons >= 2;
   return true;
@@ -344,7 +348,7 @@ function endWar(state, how, news) {
     state.resources.stability = clamp(state.resources.stability - 3);
     if (state.resources.legitimacy !== undefined && state.scenario === 'panovnik') state.resources.legitimacy = clamp(state.resources.legitimacy - 2);
     if (t.house) state.resources.favor = clamp(state.resources.favor - 4);
-    text = `Tažení skončilo porážkou (${t.name}). Domů se ${back ? `vrací jen ${back} mužů` : 'nevrátil nikdo'} a ${f ? 'vládkyně' : 'vládce'} přišel${f ? 'a' : ''} o kus cti.`;
+    text = `Tažení skončilo porážkou (${t.name}). Domů se ${back ? `vrací jen ${men(back)}` : 'nevrátil nikdo'} a ${f ? 'vládkyně' : 'vládce'} přišel${f ? 'a' : ''} o kus cti.`;
   }
   news.push(text);
   state.chronicle.push(makeChronicleEntry(state, text));
@@ -370,7 +374,7 @@ function endRebellion(state, how, back, news) {
     queueAfter(state, 'w_povstani_porazka');
     text = how === 'retreat'
       ? `Povstalci se stáhli od Vlčího Údělu. ${back} mužů se vrací na tvrz — a královo vojsko táhne za nimi.`
-      : `Povstání proti králi skončilo porážkou. Domů se ${back ? `vrací jen ${back} mužů` : 'nevrátil nikdo'}.`;
+      : `Povstání proti králi skončilo porážkou. Domů se ${back ? `vrací jen ${men(back)}` : 'nevrátil nikdo'}.`;
   }
   news.push(text);
   state.chronicle.push(makeChronicleEntry(state, text));
@@ -396,9 +400,9 @@ function winWar(state, key, t, back) {
       Object.assign(seat, { owner: 'player', loyalty: 35, unrest: 50, garrison: 25 });
       add('favor', -8);
       bumpStat(state, 'seized');
-      return `Rod ${t.name.replace('Soukromá válka: ', '')} je zlomen. Jeho sídlo ${seat.name.replace(/ \(.*\)$/, '')} teď patří rodu ${state.dynastyName}. Král se mračí, ale panství máš ty.`;
+      return `Rod ${NOBLE_HOUSES.find((d) => d.id === t.house).gen} je zlomen. Jeho sídlo ${seat.name.replace(/ \(.*\)$/, '')} teď patří rodu ${state.dynastyName}. Král se mračí, ale panství máš ty.`;
     }
-    return `Nájezd se vydařil. Družina rodu ${t.name.replace('Soukromá válka: ', '')} je rozprášena a vozy plné kořisti míří domů. Král se mračí.`;
+    return `Nájezd se vydařil. Družina ${NOBLE_HOUSES.find((d) => d.id === t.house).gen} je rozprášena a vozy plné kořisti míří domů. Král se mračí.`;
   }
   state.tributes = state.tributes || [];
   const beaten = REALMS[key] ? beatRealm(state, key) : null;
@@ -440,6 +444,8 @@ export function warOrigin(state) {
   return state.scenario === 'slechtic' ? NOBLE_SEAT : HUB;
 }
 
-export function leaderLabel(key) {
-  return LEADERS[key];
+/** Who leads the army, in the right gender: "vládkyně osobně", "maršálka". */
+export function leaderLabel(key, state) {
+  if (key === 'ruler') return state.ruler.gender === 'female' ? 'vládkyně osobně' : 'vládce osobně';
+  return roleLabel('marshal', state.marshal.gender, state.scenario, state.flags).toLowerCase();
 }

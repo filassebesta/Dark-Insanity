@@ -188,7 +188,7 @@ function renderSaveSlotList() {
     row.className = 'province-card';
     const date = new Date(s.savedAt).toLocaleString('cs-CZ');
     row.innerHTML = `
-      <strong>${esc(s.rulerName)} ${esc(s.dynastyName)}</strong>
+      <strong>${esc(s.rulerName)} z rodu ${esc(s.dynastyName)}</strong>
       <div>Rok ${s.year} · ${s.generation}. generace</div>
       <div class="hint">${date}</div>
       <div class="dialog-actions">
