@@ -1802,3 +1802,5 @@ kbd {
 #person-sheet .talk-topic { background: rgba(255,250,238,.55); border-color: rgba(120,90,50,.45); color: #2b2016; }
 #person-sheet .talk-topic span { color: #8a5a2b; }
 #person-sheet .talk-topic:hover:not([disabled]) { background: rgba(255,250,238,.9); border-color: #8a5a2b; }
+/* effect chips inside a building option: spaced, never run together */
+.build-option em i { font-style: normal; display: inline-block; margin: 0 .35rem .2rem 0; padding: .04rem .4rem; border-radius: 2px; background: rgba(60,40,20,.08); }
