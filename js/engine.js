@@ -2,7 +2,7 @@ import { SEASONS, TERRAIN_DEFS, NOBLE_HOUSES, PEASANT_HOME, clamp, randomName, r
 import { makeChronicleEntry, inheritTraits, promote } from './state.js';
 import { ageRealms, realmIncome, realmRulerLabel, realmTitle, REALMS } from './realms.js';
 import { THRONE_STEPS } from './events_throne.js';
-import { processFamily, nextHeir, marry, canConceive, conceiveChance, startPregnancy, acknowledgeBastard } from './family.js';
+import { processFamily, nextHeir, marry, canConceive, conceiveChance, startPregnancy, acknowledgeBastard, keepDaughterHeir } from './family.js';
 import { EVENTS, QUIET_EVENTS } from './events.js';
 import { roleLabel, QUIRK_ROLES, randomQuirk, quirkLabel } from './court.js';
 import { processTrade, resolveIncident, resolveOffer, addTradeMod, ensureTrade, cargoTokens, GOODS, MAX_STOCK } from './trade.js';
@@ -86,6 +86,7 @@ export function interpolate(state, text) {
   if (state.lastBirth) Object.assign(dict, { 'child.name': state.lastBirth.name, 'child.word': state.lastBirth.gender === 'female' ? 'dcera' : 'syn' });
   (state.suitors || []).forEach((x, i) => Object.assign(dict, { [`suitor.${i}.name`]: x.name, [`suitor.${i}.kind`]: x.kindLabel }));
   dict['succession.note'] = state.successionNote || '';
+  if (state.lastSwap) Object.assign(dict, { 'swap.son': state.lastSwap.son, 'swap.daughter': state.lastSwap.daughter });
   // {bastard.name} {bastard.word} "syn"/"dcera" {bastard.parent} the lover
   if (state.lastBastard) Object.assign(dict, { 'bastard.name': state.lastBastard.name, 'bastard.word': state.lastBastard.gender === 'female' ? 'dcera' : 'syn', 'bastard.parent': state.lastBastard.parent });
   dict['predecessor.rel'] = state.predecessorRel || 'otec';
@@ -534,6 +535,7 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
     acknowledgeBastard(state, state.lastBastard.name);
     notes.push({ text: `Uznán${state.lastBastard.gender === 'female' ? 'a' : ''}: ${state.lastBastard.name}`, tone: 'pos' });
   }
+  if (branch.keepDaughter) keepDaughterHeir(state);
   if (branch.bastardAway && state.lastBastard) state.bastards = (state.bastards || []).filter((b) => b.name !== state.lastBastard.name);
   if (branch.conceive) {
     if (canConceive(state) && Math.random() < conceiveChance(state)) {

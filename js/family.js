@@ -187,16 +187,52 @@ export function bearChild(state) {
     (state.siblings = state.siblings || []).push({ ...sib, role: 'sibling' });
     state.heir = child;
   } else if (!state.heir || state.heir.alive === false) state.heir = child;
-  else state.children.push({ ...child, role: 'child' });
+  else if (maleFirst(state) && state.heir.gender === 'female' && !state.heir.bastard && gender === 'male') {
+    // custom: a son comes before an older daughter unless the ruler decides otherwise (event dedicke_pravo, makeHeir)
+    const old = state.heir;
+    state.children.push({ ...old, role: 'child' });
+    state.heir = child;
+    state.lastSwap = { son: child.name, daughter: old.name, fresh: true };
+  } else state.children.push({ ...child, role: 'child' });
   state.lastBirth = { name: child.name, gender, heir: state.heir === child };
   state.lastBirthTurn = state.turn;
   return child;
 }
 
+/** The custom of the house: sons inherit before daughters unless the ruler chose otherwise. */
+export function maleFirst(state) {
+  return state.heirPolicy !== 'eldest';
+}
+
+/** The ruler names a younger child heir (the old heir joins the others). Returns the chronicle line. */
+export function makeHeir(state, i) {
+  const next = (state.children || [])[i];
+  if (!next || next.alive === false || !state.heir || state.heir.alive === false || state.heir.presumptive) return '';
+  const old = state.heir;
+  state.children = state.children.filter((c) => c !== next);
+  state.children.push({ ...old, role: 'child' });
+  state.heir = { ...next, role: 'heir' };
+  // the choice becomes the house's custom: a daughter over a son means eldest first, a son over a daughter, sons first
+  const all = [old, ...state.children];
+  if (f(next) && all.some((c) => !f(c) && c.alive !== false)) state.heirPolicy = 'eldest';
+  else if (!f(next) && all.some((c) => f(c) && c.alive !== false)) state.heirPolicy = 'male';
+  const text = `${state.ruler.name} ${f(state.ruler) ? 'určila' : 'určil'} za ${f(next) ? 'dědičku' : 'dědice'} rodu ${state.dynastyName}: ${next.name}.`;
+  state.chronicle.push(makeChronicleEntry(state, text));
+  return text;
+}
+
+/** The ruler keeps the firstborn daughter as heir after a son was born (event dedicke_pravo). */
+export function keepDaughterHeir(state) {
+  const sw = state.lastSwap;
+  const i = sw ? (state.children || []).findIndex((c) => c.name === sw.daughter) : -1;
+  if (i >= 0) { makeHeir(state, i); state.heirPolicy = 'eldest'; }
+}
+
 /** The eldest living younger child steps up when the heir is gone. Returns true when it happened. */
 export function nextHeir(state) {
   if (state.heir && state.heir.alive !== false) return false;
-  const kids = (state.children || []).filter((c) => c.alive !== false).sort((a, b) => b.age - a.age);
+  const kids = (state.children || []).filter((c) => c.alive !== false)
+    .sort((a, b) => (maleFirst(state) ? (b.gender === 'male') - (a.gender === 'male') : 0) || b.age - a.age);
   if (!kids.length) {
     // no child of their own: the eldest brother or sister holds the place
     const sibs = (state.siblings || []).filter((c) => c.alive !== false).sort((a, b) => b.age - a.age);
@@ -234,6 +270,10 @@ export function processFamily(state) {
     news.push(`Narodilo se dítě: ${state.lastBirth.name}.`);
     if (!state.pendingEvent) state.pendingEvent = 'narozeni';
     else (state.eventQueue = state.eventQueue || []).unshift('narozeni');
+    if (state.lastSwap && state.lastSwap.fresh) {
+      state.lastSwap.fresh = false;
+      (state.eventQueue = state.eventQueue || []).push('dedicke_pravo'); // right after the birth card
+    }
   }
   if (state.seasonIndex === 0) {
     for (const c of state.children) if (c.alive !== false) c.age += 1;

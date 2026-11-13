@@ -14,6 +14,7 @@ import { playMusic, setMusicVolume } from './audio.js';
 import { checkAchievements } from './achievements.js';
 import { openRoll, openCombat } from './dice_ui.js';
 import { wireTalk } from './talk_ui.js';
+import { makeHeir } from './family.js';
 import { renderAmbitionBar, renderWarBar, renderHall, renderEndingAchievements, announceAchievement } from './fame.js';
 
 let currentState = null;
@@ -280,6 +281,12 @@ function wireActions() {
       case 'close-panel':
         closePanels();
         break;
+      case 'make-heir': {
+        // the ruler names a younger child heir (family.js)
+        const line = makeHeir(currentState, Number(actionEl.dataset.i));
+        if (line) { toast(line); saveGame(currentState); closePerson(); openCharacter(currentState); refreshAllPanels(); }
+        break;
+      }
       case 'close-map':
         closeMap();
         break;
