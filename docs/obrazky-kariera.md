@@ -16,7 +16,8 @@ roztřídím je podle obsahu a zpracuju).
 | ✅ | K2 | Císař a císařovna | 4 | 4:5 | `assets/portraits/` | plaketa, Postava, Dvůr |
 | ✅ | K3 | Cizí panovníci | 6 | 4:5 | `assets/portraits/` | mapa světa → klik na zemi |
 | ✅ | K4 | Malovaná mapa světa | 1 | 3:2 | `assets/map/` | Mapa → Svět |
-| ⏳ | K5 | Karty kapitol za ženu + dobytí koruny | 6 | 1:1 | `assets/events/` | karty kapitol (vládne-li žena) |
+| ✅ | K5 | Karty kapitol za ženu + dobytí koruny | 6 | 1:1 | `assets/events/` | karty kapitol (vládne-li žena) |
+| ✅ | F1 | Příběhy z cizích zemí | 17 | 1:1 | `assets/events/` | řetězy Zénon, Sever, Racčí ostrov, Bjarn, Jižní říše, boj o cizí trůn |
 
 **Všech 18 obrázků je dodaných a zapojených** (originály v `assets/_source/gemini/kariera/`).
 Šest scén mělo vložený tmavý pás mezi ~59 % a ~84 % výšky; opraveno jen v tom rozsahu.
@@ -185,3 +186,13 @@ kapitola_koruna_female.jpg — A coronation in a dim Gothic cathedral: a bishop 
 kapitola_cisar_female.jpg — A vast Gothic cathedral: a bishop lifts the third of three crowns from a velvet cushion before a woman ruler in a rich mantle; foreign envoys in exotic clothes watch from the side aisles.
 kapitola_cizi_koruna.jpg — Outside a war camp at dawn: a foreign crown resting on a cloth on the ground in front of a large tent with banners; a defeated foreign ruler in a fur cloak walks away towards a distant line of riders, soldiers of the victor watching in silence.
 ```
+
+---
+
+## Dávka F1 — Příběhy z cizích zemí (1:1, 17 ks) · ✅ dodáno
+
+`zenon_1`, `zenon_2`, `sever_2`, `racci_1`, `racci_3`, `bjarn_1`, `bjarn_3a`, `jih_1`, `jih_1z`, `jih_2`, `jih_4`,
+`trun_{east,north,south}_1`, `trun_{east,north,south}_3c`. Obrázky mají v rohu namalovaný podpis, který
+se při zpracování odřezává (dolní a pravý okraj 7 %); originály jsou v `assets/_source/gemini/zahranici_f1/`.
+Karty kapitol (K5) měly tmavomodrý pás přes dolní třetinu: odstraněn regresí barev přes švy
+(originály v `assets/_source/gemini/kapitoly_k5/`).
