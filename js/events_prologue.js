@@ -17,7 +17,7 @@ export const PROLOGUE_EVENTS = [
     scenario: S, forced: true, free: true,
     image: img('prosba_ucitele'),
     title: 'Kdo z tebe udělal, kým jsi',
-    text: '{ruler.name} {R:se narodil|se narodila} v Lipnici do rodu, který nikdy neměl víc než ruce a kus cizí země. Otec zemřel loni na jaře a grunt teď připadl tobě. Než se chopíš pluhu, vzpomeň si, kdo tě vychoval — protože to, co ti dal, poneseš celý život.',
+    text: 'Narodil{R:|a} ses v Lipnici do rodu, který nikdy neměl víc než ruce a kus cizí země. Otec zemřel loni na jaře a grunt teď připadl tobě. Než se chopíš pluhu, vzpomeň si, kdo tě vychoval — protože to, co ti dal, poneseš celý život.',
     choices: [
       {
         label: 'Farář, který mě po večerech učil číst',
@@ -35,7 +35,7 @@ export const PROLOGUE_EVENTS = [
         label: 'Děd kovář a jeho výheň',
         hintType: 'trait', hintKey: 'patience',
         traits: { strength: 1, patience: 1 }, courtEffects: { marshal: { loyalty: 15 } }, hiddenEffects: { setFlag: 'p_kovar' },
-        chronicle: '{ruler.name} {R:vyrůstal|vyrůstala} u výhně. Kovář ve vsi je dědův učeň a na vnuka mistra nedá dopustit.',
+        chronicle: '{ruler.name} {R:vyrůstal|vyrůstala} u výhně. Ve vsi na {R:vnuka|vnučku} starého mistra nikdo nedá dopustit.',
       },
       {
         label: 'Matka, která vedla krčmu u cesty',
@@ -49,8 +49,8 @@ export const PROLOGUE_EVENTS = [
     id: 'p_prvni_zima',
     scenario: S, forced: true, free: true,
     image: img('kruta_zima'),
-    title: 'První zima',
-    text: 'První zima na vlastním gruntu. Komora je poloprázdná, kobyla stará a do jara daleko. Sousedé jsou na tom podobně a panský les je plný zvěře, na kterou se nesmí sáhnout.',
+    title: 'První rok',
+    text: 'První rok na vlastním gruntu. Komora je poloprázdná, kobyla stará a do žní daleko. Sousedé jsou na tom podobně a panský les je plný zvěře, na kterou se nesmí sáhnout.',
     choices: [
       {
         label: 'Prodat starou kobylu',
@@ -84,7 +84,7 @@ export const PROLOGUE_EVENTS = [
     scenario: S, forced: true, free: true,
     image: img('s_pan_navsteva'),
     title: 'Hold nových hospodářů',
-    text: 'Na jaře přijíždí {lord.title} {lord.name} z Bílé Brány přijmout hold od nových hospodářů. Ve vsi se o {L:něm|ní} říká, že je {lord.nature}: {lord.natureText}. Hospodáři stojí v řadě s čepicemi v rukou a čekají, na koho padne {L:jeho|její} pohled.',
+    text: 'Do vsi přijíždí {lord.title} {lord.name} z Bílé Brány přijmout hold od nových hospodářů. Ve vsi se o {L:něm|ní} říká, že je {lord.nature}: {lord.natureText}. Hospodáři stojí v řadě s čepicemi v rukou a čekají, na koho padne {L:jeho|její} pohled.',
     choices: [
       {
         label: 'Pokleknout a slíbit poctivou službu',
@@ -96,13 +96,13 @@ export const PROLOGUE_EVENTS = [
         label: 'Pozdravit zdvořile a nic víc',
         hintType: 'trait', hintKey: 'patience',
         effects: { prestige: 2 },
-        chronicle: 'Pozdrav, úklona, nic víc. Ve vsi si všimli, že se nový hospodář neplazí.',
+        chronicle: 'Pozdrav, úklona, nic víc. Ve vsi si všimli, že se {R:nový hospodář|nová hospodyně} neplazí.',
       },
       {
         label: 'Promluvit za celou ves o loňských dávkách',
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.4, traitKey: 'eloquence', traitScale: 0.05,
-        onSuccess: { effects: { prestige: 6, favor: 3 }, traitGain: 'eloquence', chronicle: '{lord.Title} vyslechl{L:|a} mladého hospodáře a slevil{L:|a}. Ves má nového mluvčího.' },
+        onSuccess: { effects: { prestige: 6, favor: 3 }, traitGain: 'eloquence', chronicle: '{lord.Title} vyslechl{L:|a} {R:mladého hospodáře|mladou hospodyni} a slevil{L:|a}. Ves má {R:nového mluvčího|novou mluvčí}.' },
         onFailure: { effects: { favor: -8, prestige: 2 }, chronicle: '{lord.Title} {lord.name} se zamračil{L:|a}. Ves tě obdivuje, vrchnost si tě pamatuje.' },
       },
     ],
@@ -174,7 +174,7 @@ export const PROLOGUE_EVENTS = [
     requires: (s) => !!s.flags.p_kovar,
     image: img('nove_kuse'),
     title: 'Dědovo kladivo',
-    text: 'Děd kovář umřel ve spánku a odkázal ti své kladivo, kovadlinu a pár tajemství, která nikomu jinému neřekl. Kovář ve vsi, jeho učeň, se ptá, co s tím vším uděláš.',
+    text: 'Děd kovář umřel ve spánku a odkázal ti své kladivo, kovadlinu a pár tajemství, která nikomu jinému neřekl. Celá ves čeká, co s tím vším uděláš.',
     choices: [
       {
         label: 'Postavit malou výheň na vlastním gruntu',

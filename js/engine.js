@@ -1,12 +1,13 @@
-import { SEASONS, TERRAIN_DEFS, NOBLE_HOUSES, PEASANT_HOME, clamp, randomName, randInt, tierTitle, bumpStat, TRAIT_DEFS, RESOURCE_DEFS, resourceLabel } from './data.js';
+import { SEASONS, TERRAIN_DEFS, NOBLE_HOUSES, PEASANT_HOME, clamp, randomName, randInt, tierTitle, bumpStat, TRAIT_DEFS, RESOURCE_DEFS, resourceLabel, grosLabel } from './data.js';
 import { makeChronicleEntry, inheritTraits, promote } from './state.js';
-import { ageRealms, realmIncome, realmRulerLabel, REALMS } from './realms.js';
+import { ageRealms, realmIncome, realmRulerLabel, realmTitle, REALMS } from './realms.js';
 import { THRONE_STEPS } from './events_throne.js';
-import { processFamily, nextHeir, marry } from './family.js';
+import { processFamily, nextHeir, marry, canConceive, conceiveChance, startPregnancy, acknowledgeBastard } from './family.js';
 import { EVENTS, QUIET_EVENTS } from './events.js';
 import { roleLabel, QUIRK_ROLES, randomQuirk, quirkLabel } from './court.js';
 import { processTrade, resolveIncident, resolveOffer, addTradeMod, ensureTrade, cargoTokens, GOODS, MAX_STOCK } from './trade.js';
 import { processBuilding, buildingDrift, applyTownEffects, settlementDef } from './build.js';
+import { processFarm, applyFarmEffects, loseFarmStock } from './farm.js';
 import {
   effectiveTraits, injuryMods, injure, applyInjuryEffects, processInjuries, injuryTokens,
   injuryEpithetScores, INJURY_EPITHETS, lastingInjuryNames, STRENGTH_FAIL_INJURY,
@@ -83,12 +84,27 @@ export function interpolate(state, text) {
   // {child.name} {child.word} the newborn · {suitor.0.name} {suitor.0.kind} the people to court
   if (state.lastBirth) Object.assign(dict, { 'child.name': state.lastBirth.name, 'child.word': state.lastBirth.gender === 'female' ? 'dcera' : 'syn' });
   (state.suitors || []).forEach((x, i) => Object.assign(dict, { [`suitor.${i}.name`]: x.name, [`suitor.${i}.kind`]: x.kindLabel }));
+  dict['succession.note'] = state.successionNote || '';
+  // {bastard.name} {bastard.word} "syn"/"dcera" {bastard.parent} the lover
+  if (state.lastBastard) Object.assign(dict, { 'bastard.name': state.lastBastard.name, 'bastard.word': state.lastBastard.gender === 'female' ? 'dcera' : 'syn', 'bastard.parent': state.lastBastard.parent });
+  dict['predecessor.rel'] = state.predecessorRel || 'otec';
+  // {conquest.name} "Východní marky", {conquest.gen} "Východních marek", {conquest.old} the ruler who yielded
+  if (state.lastConquest) Object.assign(dict, { 'conquest.name': state.lastConquest.name, 'conquest.gen': state.lastConquest.gen, 'conquest.loc': state.lastConquest.loc, 'conquest.old': state.lastConquest.old, 'conquest.yield': state.lastConquest.yield });
   // {realm.east} = "král Ctibor", {realm.south.name} = "Ctibor"
   if (state.realms) {
     for (const key of Object.keys(REALMS)) {
       if (!state.realms[key]) continue;
-      dict[`realm.${key}`] = realmRulerLabel(state, key);
-      dict[`realm.${key}.name`] = state.realms[key].ruler.name;
+      const r = state.realms[key];
+      const label = realmRulerLabel(state, key);
+      dict[`realm.${key}`] = label;
+      dict[`realm.${key}.Ruler`] = label[0].toUpperCase() + label.slice(1); // at the start of a sentence
+      dict[`realm.${key}.name`] = r.ruler.name;
+      // {realm.east.title} "král" / "královna", {realm.east.Title} at the start of a sentence,
+      // {realm.north.claimant} who fights for that crown (events_foreign.js)
+      const title = realmTitle(key, r.ruler.gender);
+      dict[`realm.${key}.title`] = title;
+      dict[`realm.${key}.Title`] = title[0].toUpperCase() + title.slice(1);
+      if (r.claimant) dict[`realm.${key}.claimant`] = r.claimant.name;
     }
   }
   if (king) {
@@ -113,10 +129,13 @@ export function interpolate(state, text) {
     L: lord ? lord.gender : 'male', M: state.spouse ? state.spouse.gender : 'male',
     K: king ? king.gender : 'male', F: state.formerKing ? state.formerKing.gender : 'male',
     C: state.lastBirth ? state.lastBirth.gender : 'male',
+    B: state.lastBastard ? state.lastBastard.gender : 'male',
     P: (state.pastRulers || []).length ? state.pastRulers.at(-1).gender : 'male',
+    // the foreign rulers: {E:…|…} Eastern Marches, {N:…|…} Northern Wastes, {S:…|…} Southern Empire
+    E: state.realms?.east?.ruler.gender, N: state.realms?.north?.ruler.gender, S: state.realms?.south?.ruler.gender,
   };
   return text
-    .replace(/\{([RHTDLMKFCP]):([^|{}]*)\|([^|{}]*)\}/g, (m, who, male, female) => (genderOf[who] === 'female' ? female : male))
+    .replace(/\{([RHTDLMKFCPBENS]):([^|{}]*)\|([^|{}]*)\}/g, (m, who, male, female) => (genderOf[who] === 'female' ? female : male))
     .replace(/\{([\w.]+)\}/g, (m, key) => (key in dict ? dict[key] : m));
 }
 
@@ -278,8 +297,7 @@ function applyCourtReplacement(state, spec, notes, meta) {
     age: randInt(spec.minAge ?? 30, spec.maxAge ?? 50),
     loyalty: clamp((spec.loyalty ?? 60) + randInt(-5, 5)), alive: true,
     ...(QUIRK_ROLES.includes(role) ? { quirk: randomQuirk() } : {}),
-    history: [{ year: state.year, season: state.seasonIndex, title: 'Jmenování do úřadu', choice: meta?.label || '', outcome: 'normal', delta: null }],
-  };
+    history: [{ year: state.year, season: state.seasonIndex, title: 'Jmenování do úřadu', choice: meta?.label || '', outcome: 'normal', delta: null }], since: state.turn };
   if (meta) meta.replaced = true;
   const fem = state[role].gender === 'female';
   const quirk = quirkLabel(state[role]);
@@ -451,7 +469,8 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
   applyHouseEffects(state, branch.houseEffects, notes);
   applyNobleEffects(state, branch.noble, notes);
   // realm: { <key>: { attitude, power } } — how a foreign court takes what was done
-  for (const [key, fx] of Object.entries(branch.realm || {})) {
+  for (const [k, fx] of Object.entries(branch.realm || {})) {
+    const key = k === 'conquest' ? state.lastConquest && state.lastConquest.key : k; // the crown just taken
     const r = state.realms && state.realms[key];
     if (!r) continue;
     if (fx.attitude) r.attitude = clamp(r.attitude + fx.attitude);
@@ -486,6 +505,7 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
   applyHeirTraits(state, branch.heirTraits, notes);
   applyTradeEffects(state, branch, notes);
   applyTownEffects(state, state.eventContext?.town, branch.town, notes);
+  applyFarmEffects(state, branch.farm, notes); // grain and animals of the peasant's farm
   applyInjuryEffects(state, branch, notes); // wounds, cures and wooden legs
   if (branch.ambition) {
     const a = startAmbition(state, branch.ambition);
@@ -502,6 +522,18 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
     notes.push({ text: `Sňatek: ${state.spouse.name}`, tone: 'pos' });
     // the dowry shows with the outcome
     for (const [k, v] of Object.entries(dowry)) if (state.resources[k] !== undefined) notes.push({ text: `Věno: ${RESOURCE_DEFS.find((d) => d.key === k) ? resourceLabel(RESOURCE_DEFS.find((d) => d.key === k), state.scenario) : k} +${v}`, tone: 'pos' });
+  }
+  // a lover's child (events_family.js narozeni_levobocka): acknowledged, or sent to the monastery
+  if (branch.acknowledge && state.lastBastard) {
+    acknowledgeBastard(state, state.lastBastard.name);
+    notes.push({ text: `Uznán${state.lastBastard.gender === 'female' ? 'a' : ''}: ${state.lastBastard.name}`, tone: 'pos' });
+  }
+  if (branch.bastardAway && state.lastBastard) state.bastards = (state.bastards || []).filter((b) => b.name !== state.lastBastard.name);
+  if (branch.conceive) {
+    if (canConceive(state) && Math.random() < conceiveChance(state)) {
+      startPregnancy(state);
+      notes.push({ text: 'Čekáte dítě', tone: 'pos' });
+    } else notes.push({ text: 'Dítě zatím nepřišlo', tone: 'neg' });
   }
   if (branch.adopt && (!state.heir || state.heir.alive === false)) {
     const g = Math.random() < 0.5 ? 'male' : 'female';
@@ -616,7 +648,7 @@ export const FARM_DECREES = {
   clear: { label: 'Vyklučit kus lesa', text: 'Nové pole za cenu potu a jedné zimy.', effects: { stability: 6, food: 3, army: -1 } },
   hire: { label: 'Najmout čeledíny', text: 'Dva tři páry rukou navíc za mzdu a stravu.', effects: { gold: -8, army: 6 } },
   market: { label: 'Prodat přebytky na trhu', text: 'Obilí a sýry na trh do Brodné.', effects: { food: -10, gold: 6 } },
-  cattle: { label: 'Přikoupit dobytek', text: 'Kráva navíc znamená mléko i tah.', effects: { gold: -10, food: 4, stability: 5 } },
+  cattle: { label: 'Přikoupit dobytek', text: 'Kráva navíc znamená mléko i tah.', effects: { gold: -10, food: 4, stability: 5 }, farm: { cows: 1 } }, // a real cow when the cowshed has room
   neighbours: { label: 'Pomoci sousedům', text: 'Půjčit ruce a sdílet zásoby.', effects: { food: -5, prestige: 6 } },
   lord: { label: 'Přilepšit vrchnosti', text: 'Dar navíc pro panský dvůr.', effects: { gold: -6, favor: 8 } },
 };
@@ -647,6 +679,7 @@ export function issueDecree(state, key, provinceId) {
     applyProvinceEffects(state, { [prov.id]: d.prov }, notes);
   }
   applyEffects(state, d.effects);
+  applyFarmEffects(state, d.farm, notes);
   state.decreeYear = state.year;
   const where = d.prov ? ` (${state.provinces.find((p) => p.id === provinceId).name.replace(/ \(.*\)$/, '')})` : '';
   state.chronicle.push(makeChronicleEntry(state, `${isPeasant(state) ? 'Práce na gruntu' : 'Výnos'} roku ${state.year}: ${d.label}${where}.`));
@@ -699,9 +732,13 @@ function reignOf(state) {
   return state.reign;
 }
 
+// routine scenes (the year's work, chapter cards, a funeral, a birth) are not deeds a reign is remembered by
+const ROUTINE_SCENES = /^(quiet_season|n_klidne_obdobi|s_klidne_obdobi|vynos_roku|s_prace_na_gruntu|nastupnictvi|narozeni|touha_po_diteti|kapitola_.*|p_.*)$/;
+
 function tallyReign(state, branch, meta, outcome) {
   if (!meta || !meta.event || /^(quiet_season|n_klidne_obdobi|s_klidne_obdobi)$/.test(meta.event.id)) return;
   const reign = reignOf(state);
+  const routine = ROUTINE_SCENES.test(meta.event.id);
   let weight = 0;
   for (const [k, v] of Object.entries(branch.effects || {})) {
     reign.sums[k] = (reign.sums[k] || 0) + v;
@@ -719,7 +756,11 @@ function tallyReign(state, branch, meta, outcome) {
   }
   if (branch.setTier || branch.newKing || branch.endGame) weight += 60;
   if (meta.event.forced) weight += 15;
-  if (/^krize/.test(meta.event.id)) bumpStat(state, 'crises');
+  if (meta.battle) weight += 15;
+  if (branch.marrySuitor !== undefined || branch.adopt) weight += 20;
+  if (branch.war) weight += 5;
+  if (/^krize/.test(meta.event.id)) { bumpStat(state, 'crises'); weight += 15; }
+  if (routine) return; // counted in the sums above, never listed as a deed
   // the three weightiest decisions of a reign are what the chronicle remembers
   reign.deeds.push({ year: state.year, title: interpolate(state, meta.event.title), choice: meta.label, outcome, weight });
   reign.deeds.sort((x, y) => y.weight - x.weight);
@@ -773,13 +814,14 @@ export function reignEpithet(state, ruler = state.ruler) {
   for (const [key, score] of Object.entries(scores)) {
     if (score > bestScore) { best = key; bestScore = score; }
   }
-  if (best === 'quiet' && years < 2) return null; // too early to tell
+  if (best === 'quiet' && years < 5) return null; // too early to tell
   const [male, female, reason] = EPITHETS[best] || INJURY_EPITHETS[best.replace('injury_', '')];
   const f = ruler.gender === 'female';
   return {
     key: best,
     word: f ? female : male,
-    reason: reason.replace(/\{([^|{}]*)\|([^|{}]*)\}/g, (m, a, b) => (f ? b : a)),
+    // a farmer has no reign: "za vládu bez bouří" becomes "za život bez bouří"
+    reason: reason.replace(/\{([^|{}]*)\|([^|{}]*)\}/g, (m, a, b) => (f ? b : a)).replace('za vládu', isPeasant(state) ? 'za život' : 'za vládu'),
   };
 }
 
@@ -858,6 +900,7 @@ function markEventSeen(state, event) {
  * engine rolls by itself (the sims).
  */
 export function resolveChoice(state, event, choiceIndex, decided = null) {
+  state.currentEvent = null; // answered: a loaded save does not show it again
   const choice = event.choices[choiceIndex];
   let outcome = 'normal';
   let branch = choice;
@@ -893,6 +936,7 @@ export function resolveChoice(state, event, choiceIndex, decided = null) {
 }
 
 export function resolveRouteChoice(state, event, terrainKey) {
+  state.currentEvent = null;
   const option = event.routeOptions.find((o) => o.terrainKey === terrainKey);
   const risk = TERRAIN_DEFS[terrainKey] ? TERRAIN_DEFS[terrainKey].baseRisk : 0.3;
   const danger = Math.random() < risk;
@@ -921,10 +965,14 @@ const KING_ACTS = new Set(['v_korunni_rada', 'v_zkouska_vernosti', 'v_ozvena_rad
 const kingHelpless = (state) => !!(state.throneArc && state.throneArc.step >= 1 && !state.throneArc.done);
 const marchesAreOurs = (state) => !!(state.realms && state.realms.east && state.realms.east.owner === 'player');
 
+const AT_COURT = new Set(['turnaj', 'hostina_slechty', 'portret_vladce', 'dvorni_blazen', 'vyroci_vlady', 'soud_o_mez', 'prosba_ucitele', 'spor_rybaru', 'hranicni_kamen', 'rvaci_v_krcme', 'touha_po_diteti']);
+
 function eventAvailable(state, e) {
   if (MARCHES_ABROAD.has(e.id) && marchesAreOurs(state)) return false;
   if (!(e.scenarios || [e.scenario || 'panovnik']).includes(state.scenario)) return false;
   if ((state.flags.rebellion || kingHelpless(state)) && (ROYAL_EVENTS.has(e.id) || KING_ACTS.has(e.id))) return false;
+  // a ruler leading the army in the field does not hold feasts, sit for portraits or judge village quarrels
+  if (state.war && state.war.leader === 'ruler' && AT_COURT.has(e.id)) return false;
   if (e.forced) return false; // only ever raised by the engine (state.pendingEvent)
   if (e.oneTime && (state.usedEvents || []).includes(e.id)) return false;
   const last = (state.eventHistory || {})[e.id];
@@ -959,11 +1007,13 @@ export function pickNextEvent(state) {
     return quietAllowed || !available.length ? QUIET_EVENT : available[0];
   }
   // weighted draw: consequence events (weight 3) surface sooner than ordinary ones
-  const total = available.reduce((sum, e) => sum + (e.weight ?? 1), 0);
+  // a weight can depend on the state (e.g. a house without an heir hears about children sooner)
+  const weightOf = (e) => (typeof e.weight === 'function' ? e.weight(state) : e.weight ?? 1);
+  const total = available.reduce((sum, e) => sum + weightOf(e), 0);
   let roll = Math.random() * total;
   let event = available[available.length - 1];
   for (const e of available) {
-    roll -= e.weight ?? 1;
+    roll -= weightOf(e);
     if (roll <= 0) { event = e; break; }
   }
   if (event.onPick) event.onPick(state); // e.g. a buyer asking for whatever fills the warehouse
@@ -1149,7 +1199,7 @@ function retireOldAdvisers(state) {
     for (let i = 0; i < 20 && [state.ruler.name, state.heir.name, state.spouse.name, state.chancellor.name, state.marshal.name, state.spymaster.name].includes(name); i++) name = randomName(g);
     const title = roleLabel(role, c.gender, state.scenario, state.flags);
     state.chronicle.push(makeChronicleEntry(state, `${title} ${c.name} ${c.gender === 'female' ? 'zemřela' : 'zemřel'} ve věku ${c.age} let. Na ${c.gender === 'female' ? 'její' : 'jeho'} místo nastupuje ${name}.`));
-    state[role] = { role, name, gender: g, age: randInt(28, 45), loyalty: clamp(55 + randInt(-8, 8)), alive: true, quirk: randomQuirk() };
+    state[role] = { role, name, gender: g, age: randInt(28, 45), loyalty: clamp(55 + randInt(-8, 8)), alive: true, quirk: randomQuirk(), since: state.turn };
   }
 }
 
@@ -1161,36 +1211,42 @@ function checkNaturalDeath(state) {
 }
 
 /**
- * The new ruler's household. A grown ruler was married off in youth (a spouse of the other sex)
- * and may already have a child; a young one starts single and courts (family.js). Without a child
- * of their own, the eldest brother or sister is the heir until one is born.
+ * The new ruler's household. The ruler is married only if the player married the heir off
+ * (flags.heir_married) — then the years of marriage before the crown may have brought children.
+ * Otherwise they start single and court (family.js) and children come when the player wants them;
+ * until then the eldest brother or sister is the heir.
  */
 const f = (c) => c.gender === 'female';
 
 function generateSuccessorHousehold(state, siblings = []) {
   const age = state.ruler.age;
   const spouseGender = state.ruler.gender === 'female' ? 'male' : 'female';
-  const married = age >= 20 || !!state.flags.heir_married;
+  const married = !!state.flags.heir_married;
   // nobody in the household shares a name with the ruler, a sibling or a councillor
   const taken = new Set([state.ruler.name, ...siblings.map((c) => c.name),
     ...['chancellor', 'marshal', 'spymaster'].map((r) => state[r] && state[r].name)].filter(Boolean));
-  const freshName = (g) => { let n = randomName(g); for (let i = 0; i < 30 && taken.has(n); i++) n = randomName(g); taken.add(n); return n; };
+  const freshName = (g) => { let n = randomName(g); for (let i = 0; i < 80 && taken.has(n); i++) n = randomName(g); taken.add(n); return n; };
   state.spouse = married
     ? { role: 'spouse', name: freshName(spouseGender), gender: spouseGender,
       age: Math.max(16, Math.min(randInt(age - 4, age + 4), 60)), loyalty: clamp(65 + randInt(-10, 10)), alive: true, quirk: randomQuirk() }
     : { role: 'spouse', name: '', gender: spouseGender, age: 0, loyalty: 0, alive: false, none: true };
-  const ownChild = married && age >= 22 && Math.random() < 0.65;
-  const childGender = Math.random() < 0.5 ? 'male' : 'female';
-  if (ownChild) {
-    state.heir = {
-      role: 'heir', name: freshName(childGender), gender: childGender,
-      age: Math.max(0, Math.min(randInt(0, 5), age - 22)), loyalty: clamp(70 + randInt(-10, 10)), alive: true,
-      traits: inheritTraits(state.ruler.traits),
-    };
+  // an heir the player married off had years of family life before the crown: their children come along
+  const kids = married ? Math.max(0, Math.min(3, Math.floor((age - 20) / 6))) : 0;
+  const born = [];
+  for (let i = 0; i < kids; i++) {
+    if (Math.random() > 0.75) continue;
+    const g = Math.random() < 0.5 ? 'male' : 'female';
+    born.push({ role: 'child', name: freshName(g), gender: g, age: Math.max(0, Math.min(age - 20, randInt(0, 4) + (kids - 1 - i) * 5)),
+      loyalty: clamp(70 + randInt(-10, 10)), alive: true, traits: inheritTraits(state.ruler.traits) });
+  }
+  born.sort((a, b) => b.age - a.age);
+  state.successorChildren = born.slice(1);
+  if (born.length) {
+    state.heir = { ...born[0], role: 'heir' };
   } else if (siblings.length) {
     // the eldest brother or sister holds the place until the ruler has a child
     const next = siblings.slice().sort((a, b) => b.age - a.age)[0];
-    state.heir = { ...next, role: 'heir', loyalty: clamp((next.loyalty || 65) - 5) };
+    state.heir = { ...next, role: 'heir', presumptive: true, loyalty: clamp((next.loyalty || 65) - 5) };
   } else {
     state.heir = { role: 'heir', name: '', gender: 'male', age: 0, loyalty: 0, alive: false, none: true, traits: inheritTraits(state.ruler.traits) };
   }
@@ -1199,8 +1255,10 @@ function generateSuccessorHousehold(state, siblings = []) {
 function handleSuccession(state, cause = 'stářím') {
   dropAmbition(state); // the new ruler sets their own goals
   if (state.war && state.war.leader === 'ruler') state.war.leader = 'marshal'; // the marshal takes over the campaign
-  nextHeir(state); // a younger child steps up if the heir is gone
+  nextHeir(state); // a younger child steps up if the heir is gone; without children a brother or sister
   if (state.heir.alive) {
+    // a brother or sister taking over: the main line has died out, a cadet branch carries the house on
+    const cadet = !!state.heir.presumptive;
     const oldName = state.ruler.name;
     const newRulerName = state.heir.name;
     state.pastRulers = state.pastRulers || [];
@@ -1231,12 +1289,26 @@ function handleSuccession(state, cause = 'stářím') {
       reignStartTurn: state.turn,
     };
     state.generation += 1;
-    // the old ruler's younger children are the new ruler's brothers and sisters
-    const siblings = (state.children || []).filter((c) => c.alive !== false);
+    // the old ruler's younger children are the new ruler's brothers and sisters (for a cadet branch: the old ruler's other siblings)
+    const siblings = (cadet ? state.siblings || [] : state.children || []).filter((c) => c.alive !== false);
+    state.successionNote = '';
+    const pf = state.pastRulers.at(-1).gender === 'female';
+    state.predecessorRel = cadet ? (pf ? 'sestra' : 'bratr') : (pf ? 'matka' : 'otec');
+    if (cadet) {
+      state.cadetBranch = (state.cadetBranch || 0) + 1;
+      state.resources.legitimacy = clamp((state.resources.legitimacy ?? 50) - 10);
+      state.resources.prestige = clamp(state.resources.prestige - 5);
+      state.successionNote = ` Hlavní linie rodu vymřela — ${state.ruler.gender === 'female' ? 'sestra' : 'bratr'} ${state.pastRulers.at(-1).gender === 'female' ? 'zesnulé' : 'zesnulého'} vede rod jako vedlejší větev a ne každý to bere jako samozřejmost.`;
+      state.chronicle.push(makeChronicleEntry(state, `${oldName} ${state.pastRulers.at(-1).gender === 'female' ? 'zemřela' : 'zemřel'} bez manželských dětí. Hlavní linie rodu ${state.dynastyName} vymřela; rod pokračuje vedlejší větví.`));
+    }
     generateSuccessorHousehold(state, siblings);
     delete state.flags.heir_married;
+    delete state.flags.no_more_children;
     delete state.flags.harsh_ruler; // a new ruler is not blamed for the old one's cruelty
-    state.children = [];
+    state.children = state.successorChildren || [];
+    delete state.successorChildren;
+    // brothers and sisters stay with the house (the eldest may hold the heir's place)
+    state.siblings = siblings.filter((c) => !(state.heir.presumptive && c.name === state.heir.name)).map((c) => ({ ...c, role: 'sibling' }));
     state.pregnancy = null;
     state.suitors = [];
     if (siblings.length) {
@@ -1249,14 +1321,15 @@ function handleSuccession(state, cause = 'stářím') {
     state.pendingEvent = 'nastupnictvi';
     return true;
   }
+  const how = cause === 'stářím' ? 'stářím' : cause;
   state.gameOver = {
     type: isPeasant(state) ? 'ruined' : 'collapse',
     reason: 'dynasty-extinct',
     text: isPeasant(state)
-      ? `${state.ruler.name} umírá bez žijícího dědice. Rod ${state.dynastyName} vymírá a grunt dostane pán někomu jinému.`
+      ? `${state.ruler.name} umírá ${how} bez žijícího dědice. Rod ${state.dynastyName} vymírá a grunt dostane pán někomu jinému.`
       : isNoble(state)
-      ? `${state.ruler.name} umírá bez žijícího dědice. Rod ${state.dynastyName} vymírá a jeho panství připadá koruně.`
-      : `${state.ruler.name} umírá bez žijícího dědice. Dynastie ${state.dynastyName} vymírá a království se hroutí do chaosu.`,
+      ? `${state.ruler.name} umírá ${how} bez žijícího dědice. Rod ${state.dynastyName} vymírá a jeho panství připadá koruně.`
+      : `${state.ruler.name} umírá ${how} bez žijícího dědice. Dynastie ${state.dynastyName} vymírá a království se hroutí do chaosu.`,
   };
   return false;
 }
@@ -1278,6 +1351,7 @@ export function checkEndConditions(state) {
     if (state.resources.stability <= 0 && !state.flags.chalupa) {
       // the first ruin is not the end: the lord gives the family a cottage at the edge of the village
       state.flags.chalupa = true;
+      loseFarmStock(state); // the cattle are gone with the farm
       const r = state.resources;
       Object.assign(r, { stability: 30, gold: 0, food: Math.max(r.food, 15), army: Math.max(r.army, 12), prestige: clamp(r.prestige - 10) });
       state.chronicle.push(makeChronicleEntry(state, `Grunt rodu ${state.dynastyName} zpustl. Rodina dostala chalupu na kraji vsi a začíná znovu.`));
@@ -1343,10 +1417,11 @@ export function advanceTurn(state) {
 
   const economy = processTurnEconomy(state);
   const built = processBuilding(state); // finished work and what the towns' buildings yield
+  const farm = processFarm(state); // the peasant's grain and animals (farm.js)
   const crowns = state.scenario === 'panovnik' ? realmIncome(state) : 0; // foreign crowns held by the king pay their dues
   if (crowns) state.resources.gold = clamp(state.resources.gold + crowns);
-  const goldIncome = economy.goldIncome + built.gold + crowns;
-  const foodIncome = economy.foodIncome + built.food;
+  const goldIncome = economy.goldIncome + built.gold + crowns + farm.gold;
+  const foodIncome = economy.foodIncome + built.food + farm.food;
   let successionOccurred = false;
   let deathCheckText = '';
 
@@ -1374,11 +1449,12 @@ export function advanceTurn(state) {
     : 'Zásoby jídla docházejí. V krajích roste nevole.');
   const ambitionNews = processAmbition(state);
   updateGoldenAgeStreak(state);
-  const tradeNews = [...familyNews, ...wounds.news, ...worldNews, ...ambitionNews, ...built.news, ...processTrade(state)];
+  const tradeNews = [...familyNews, ...wounds.news, ...worldNews, ...ambitionNews, ...built.news, ...farm.news, ...processTrade(state)];
 
   const seasonLabel = SEASONS[state.seasonIndex];
   const [goldWord, foodWord] = isPeasant(state) ? ['grošů', 'zásob'] : ['zlata', 'jídla'];
-  const turnSummary = `${seasonLabel} roku ${state.year}. Příjem: ${goldIncome >= 0 ? '+' : ''}${goldIncome} ${goldWord}, ${foodIncome >= 0 ? '+' : ''}${foodIncome} ${foodWord}.${deathCheckText}`;
+  const goldText = isPeasant(state) ? grosLabel(goldIncome) : `${goldIncome} ${goldWord}`;
+  const turnSummary = `${seasonLabel} roku ${state.year}. Příjem: ${goldIncome >= 0 ? '+' : ''}${goldText}, ${foodIncome >= 0 ? '+' : ''}${foodIncome} ${foodWord}.${deathCheckText}`;
   state.chronicle.push(makeChronicleEntry(state, turnSummary));
 
   const gameOver = checkEndConditions(state);

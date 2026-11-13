@@ -1434,6 +1434,29 @@ kbd {
 .build-demolish.confirm { border-color: #8a2c26; color: #8a2c26; background: rgba(138,44,38,.08); }
 .build-art, .town-art { display: block; width: 100%; border-radius: 4px; margin: .4rem 0 .8rem; box-shadow: 0 2px 10px rgba(43,33,24,.3); }
 
+/* the farm stock: grain and animals (js/farm.js) */
+.town-svg .tp-pen { fill: rgba(159,165,101,.32); stroke: #8a6440; stroke-width: 3; stroke-dasharray: 3 7; stroke-linecap: round; }
+.farm-stock { display: grid; gap: .45rem; margin: .2rem 0 1rem; }
+.farm-item { display: flex; gap: .7rem; align-items: flex-start; padding: .55rem .7rem; border: 1px solid rgba(120,80,30,.22); border-left: 3px solid #9fa565; background: rgba(255,250,235,.38); border-radius: 3px; }
+.farm-item.missing { opacity: .62; border-left-color: rgba(120,80,30,.25); background: transparent; }
+.farm-ico { flex: none; width: 54px; height: 42px; border-radius: 4px; background: rgba(169,163,108,.35); border: 1px solid rgba(120,80,30,.2); display: grid; place-items: center; }
+.farm-ico svg { width: 100%; height: 100%; }
+.farm-item.missing .farm-ico { filter: grayscale(.85); }
+.farm-main { display: flex; flex-direction: column; gap: .28rem; min-width: 0; flex: 1; }
+.farm-main > b { font-family: var(--font-caps); font-size: .86rem; font-weight: 700; letter-spacing: .08em; color: var(--ink); display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; }
+.farm-main > b small { font-family: var(--font-body, inherit); letter-spacing: 0; font-weight: 400; font-size: .85rem; color: var(--ink-soft); text-align: right; }
+.farm-main > b small b { color: #7a2418; font-size: .95rem; }
+.farm-main em { font-style: normal; font-size: .84rem; line-height: 1.45; color: var(--ink-soft); }
+.farm-main em.farm-warn { font-style: italic; color: #a8452f; }
+.farm-bar { display: block; height: 7px; border-radius: 4px; background: rgba(43,33,24,.14); overflow: hidden; }
+.farm-bar i { display: block; height: 100%; background: linear-gradient(90deg, #c9a24f, #d8b866); border-radius: 4px; }
+.farm-pips { display: flex; gap: 5px; }
+.farm-pips i { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid rgba(58,42,26,.4); background: rgba(255,250,235,.5); }
+.farm-pips i.on { background: #6f8a4a; border-color: #4d6440; }
+.farm-pips i.over { border-style: dashed; border-color: #a8452f; }
+.farm-trade { display: flex; flex-wrap: wrap; gap: .25rem; }
+.farm-trade .trade-mini { margin: 0; }
+
 @media (max-width: 900px) {
   .map-view.town-open .map-layer-toggles { display: none; }
   .town-bar { flex-wrap: wrap; gap: .5rem; }
@@ -1653,6 +1676,9 @@ kbd {
 .gear-buy span { font-size: .85rem; color: rgba(235,227,209,.65); }
 .gear-buy em { font-style: normal; font-size: .8rem; color: var(--gold); }
 .gear-buy i { position: absolute; top: .6rem; right: .75rem; font-style: normal; font-size: .85rem; color: var(--gold-bright); }
+.gear-buy small { font-size: .78rem; font-style: italic; }
+.gear-buy small.gear-why { color: #e09a7f; }
+.gear-buy small.gear-note { color: rgba(156,188,108,.9); }
 .cb-ally { grid-column: 1 / -1; font-size: .78rem; color: #3f6b2a; }
 @media (max-width: 560px) { .cs-gear li { grid-template-columns: 4rem 1fr; } .cs-gear em { grid-column: 2; } }
 
@@ -1752,3 +1778,29 @@ kbd {
 /* a drop cap only when the first word is longer than one letter ("V táboře", not "Vtáboře") */
 .event-text.no-dropcap::first-letter { float: none; font-size: inherit; line-height: inherit; margin: 0; padding: 0; color: inherit; font-family: inherit; }
 .field-hint { font-family: var(--font-body); font-size: .8rem; font-style: italic; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--ink-soft); }
+
+/* ---------- the people to court: a gallery with faces (character sheet) ---------- */
+.cs-suitors { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .8rem; }
+.cs-suitor { display: flex; flex-direction: column; border: 1px solid var(--hairline); background: rgba(255,255,255,.02); cursor: pointer; transition: border-color .2s ease, background .2s ease, transform .2s ease; }
+.cs-suitor:hover, .cs-suitor:focus-visible { border-color: var(--gold-dim); background: rgba(255,255,255,.05); transform: translateY(-2px); outline: none; }
+.cs-suitor.lover { border-color: rgba(176,74,60,.7); box-shadow: inset 0 0 0 1px rgba(176,74,60,.25); }
+.cs-suitor-img { position: relative; aspect-ratio: 4 / 5; overflow: hidden; background: var(--bg-2); }
+.cs-suitor-img .cs-mini { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 2rem; color: var(--gold); }
+.cs-suitor-face { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+.cs-suitor-body { display: flex; flex-direction: column; gap: .2rem; padding: .55rem .6rem .7rem; line-height: 1.25; }
+.cs-suitor-body span { font-family: var(--font-caps); font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.cs-suitor.lover .cs-suitor-body span { color: #d0806f; }
+.cs-suitor-body strong { font-family: var(--font-display); font-weight: 400; font-size: 1.1rem; }
+.cs-suitor-body small { color: rgba(235,227,209,.55); font-size: .78rem; }
+.cs-bar { position: relative; display: block; height: 14px; margin-top: .25rem; background: rgba(90,70,45,.2); }
+.cs-bar i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, var(--rust), var(--olive)); opacity: .7; }
+.cs-bar b { position: relative; z-index: 1; padding-left: .4rem; font-family: var(--font-caps); font-weight: 400; font-size: .58rem; letter-spacing: .12em; text-transform: uppercase; line-height: 14px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+.ps-bar-loyal span { background: linear-gradient(90deg, #5a4a7a, #7d8f9e); }
+
+/* the conversation on the parchment person sheet: dark ink, readable buttons */
+#person-sheet .talk-greet, #person-sheet .talk-reply, #person-sheet .talk-note { color: #3b2c1c; }
+#person-sheet .talk-topic { background: rgba(255,250,238,.55); border-color: rgba(120,90,50,.45); color: #2b2016; }
+#person-sheet .talk-topic span { color: #8a5a2b; }
+#person-sheet .talk-topic:hover:not([disabled]) { background: rgba(255,250,238,.9); border-color: #8a5a2b; }
+/* effect chips inside a building option: spaced, never run together */
+.build-option em i { font-style: normal; display: inline-block; margin: 0 .35rem .2rem 0; padding: .04rem .4rem; border-radius: 2px; background: rgba(60,40,20,.08); }

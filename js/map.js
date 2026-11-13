@@ -13,6 +13,7 @@ import {
   PEASANT_VILLAGE, townIdFor, townOf, levelName, currentProject, ownsTown, startBuilding, startUpgrade, cancelProject, demolish,
 } from './build.js';
 import { renderTownPlan, townSidebar } from './town.js';
+import { buyStock, sellStock, grindGrain } from './farm.js';
 import { worldSvg, worldSidebar, WORLD_IMAGE } from './world.js';
 import {
   warTargets, warBlock, startWar, recallWar, warTarget, marchShare, warOrigin, oddsLabel, leaderLabel, SIZES,
@@ -526,7 +527,7 @@ function showTradeOverview() {
   sidebar(`
     <span class="panel-overline">Obchod</span>
     <h3 class="panel-title">Sklad a karavany</h3>
-    <p class="map-desc">${state.scenario === 'sedlak' ? 'Co grunt vypěstuje navíc, můžeš prodat v Brodu nebo odvézt pánovi. Svobodný sedlák si může koupit místo v kupecké karavaně do ciziny.' : 'Tvé země plní sklad zbožím. Prodej ho hned v Brodu, nebo ho pošli karavanou či lodí do ciziny, kde platí víc, ale cesta trvá a hrozí přepadení.'} Klikni na trh na mapě.</p>
+    <p class="map-desc">${state.scenario === 'sedlak' ? 'Co grunt vypěstuje navíc, můžeš prodat v Brodu nebo odvézt na panský dvůr. Svobodný sedlák si může koupit místo v kupecké karavaně do ciziny.' : 'Tvé země plní sklad zbožím. Prodej ho hned v Brodu, nebo ho pošli karavanou či lodí do ciziny, kde platí víc, ale cesta trvá a hrozí přepadení.'} Klikni na trh na mapě.</p>
     <h4 class="map-sub">Sklad <small>· nejvýš ${MAX_STOCK} vozů od každého</small></h4>
     <div class="trade-stock">${stockRows()}</div>
     <h4 class="map-sub">Na cestě</h4>
@@ -755,7 +756,7 @@ function showPeasantOverview() {
       <span class="mc-place-name"><b>Tvůj grunt</b><small>${esc(levelName('grunt', farm.level))} · ${buildingsWord(farm.buildings.filter((b) => b.ready).length)}${busy ? ' · staví se' : ''}</small></span>
       <em class="mc-action">Stavět</em>
     </button>
-    <div class="mc-summary">${bar('Grunt', r.stability, 'wealth')}${bar('Přízeň pána', r.favor, 'loyalty')}${bar('Pověst', r.prestige, 'garrison')}</div>
+    <div class="mc-summary">${bar('Grunt', r.stability, 'wealth')}${bar('Přízeň vrchnosti', r.favor, 'loyalty')}${bar('Pověst', r.prestige, 'garrison')}</div>
     <h4 class="map-sub">Kdo drží zemi</h4>
     <div class="mc-lands">${state.provinces.map(landCard).join('')}</div>
     ${LEGEND(true)}
@@ -1282,6 +1283,14 @@ function handleTownClick(t) {
     return true;
   }
   if (t.closest('[data-cancel-project]')) { townAction(cancelProject(state, town.id)); return true; }
+  // the farm stock: animals and grain (farm.js)
+  const farmBtn = t.closest('[data-farm-buy], [data-farm-sell], [data-farm-grind]');
+  if (farmBtn) {
+    if (farmBtn.disabled) return true;
+    const d = farmBtn.dataset;
+    townAction(d.farmBuy ? buyStock(state, d.farmBuy) : d.farmSell ? sellStock(state, d.farmSell) : grindGrain(state));
+    return true;
+  }
   const demo = t.closest('[data-demolish]');
   if (demo) {
     if (demo.dataset.confirm) townAction(demolish(state, town.id, Number(demo.dataset.demolish)));

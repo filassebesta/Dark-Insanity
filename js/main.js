@@ -1,5 +1,6 @@
 import { createNewGame, promote, saveGame, listSaves, loadGame, loadMostRecentSave, deleteSave, loadSettings, saveSettings } from './state.js';
 import { advanceTurn, resolveChoice, resolveRouteChoice, checkEndConditions, pickNextEvent } from './engine.js';
+import { EVENTS, QUIET_EVENTS } from './events.js';
 import {
   showScreen, renderResourceBar, updateBookTabFlags, renderTurnSummary, renderEventCard,
   renderCourtPanel, renderChroniclePanel, openPanel, closePanels, isPanelOpen,
@@ -152,7 +153,25 @@ function runNextTurn() {
   renderTurnSummary(result.turnSummary);
   renderTradeNews(result.tradeNews);
 
+  // the season is saved with its open event, so "Pokračovat" brings back the same card
+  if (result.event && result.event.type !== 'route') {
+    currentState.lastSummary = { text: result.turnSummary, trade: result.tradeNews };
+    saveGame(currentState);
+  }
   presentEvent(result.event); // the engine falls back to the quiet-season event
+}
+
+// a loaded chronicle continues with the event that was waiting for an answer, if any
+function resumeOpenEvent() {
+  // (lastSummary marks saves that record the open event; older saves kept the last answered one)
+  const id = currentState.lastSummary && currentState.currentEvent;
+  const event = id && (EVENTS.find((e) => e.id === id) || Object.values(QUIET_EVENTS).find((e) => e.id === id));
+  if (!event) return false;
+  const last = currentState.lastSummary || {};
+  renderTurnSummary(last.text || '');
+  renderTradeNews(last.trade || []);
+  presentEvent(event);
+  return true;
 }
 
 // after a 'free' event (the ambition offer) the season's own event comes without a new season
@@ -172,7 +191,7 @@ function startGame(state) {
   resetResourceMemory();
   showScreen('screen-game');
   refreshAllPanels();
-  runNextTurn();
+  if (!resumeOpenEvent()) runNextTurn();
 }
 
 function renderSaveSlotList() {
@@ -254,8 +273,8 @@ function wireActions() {
         // no scenario menu: every chronicle starts on the plough and rises in the same save
         const name = document.getElementById('input-ruler-name').value.trim();
         const dynasty = document.getElementById('input-dynasty-name').value.trim();
-        const gender = document.querySelector('input[name="ruler-gender"]:checked')?.value || 'male';
-        startGame(createNewGame(name, dynasty, gender));
+        // the chronicle starts with a man; daughters can still inherit later
+        startGame(createNewGame(name, dynasty, 'male'));
         break;
       }
       case 'close-panel':
@@ -379,13 +398,6 @@ function wireActions() {
   document.getElementById('panel-overlay').addEventListener('click', (e) => {
     if (e.target.id === 'panel-overlay') closePanels();
   });
-
-  // the new game form speaks of a farmer or a farmer's wife, not of a king or a queen
-  document.querySelectorAll('input[name="ruler-gender"]').forEach((radio) => radio.addEventListener('change', () => {
-    const female = radio.value === 'female' && radio.checked;
-    document.getElementById('ruler-name-label').textContent = female ? 'Jméno hospodyně' : 'Jméno hospodáře';
-    document.getElementById('input-ruler-name').placeholder = female ? 'např. Anežka' : 'např. Vojtěch';
-  }));
 
   document.getElementById('input-dynasty-name').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') document.querySelector('[data-action="start-new-game"]').click();

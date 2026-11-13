@@ -28,7 +28,7 @@ export const CAREER_EVENTS = [
         label: 'Poslat ke dvoru dar a poděkování za milost',
         hintType: 'resource', hintKey: 'favor',
         effects: { gold: -4, favor: 5 },
-        chronicle: 'Do Vlčího Údělu odjel vůz s darem a dopisem plným díků. Koruna si nového {R:šlechtice|šlechtičnu} zapamatoval.',
+        chronicle: 'Do Vlčího Údělu odjel vůz s darem a dopisem plným díků. Na dvoře si {R:nového šlechtice|novou šlechtičnu} zapamatovali.',
       },
     ],
   },
@@ -221,7 +221,7 @@ export const CAREER_EVENTS = [
     scenario: 'sedlak', forced: true, free: true,
     image: 'assets/events/doziny.jpg',
     title: 'Svobodní',
-    text: 'V truhle leží listina s panskou pečetí a v ní stojí, že rod {dynastyName} už nikomu nepatří. Roboty je konec; dávky se platí v penězích a kdo chce, může jít, kam ho nohy nesou. Ve vsi se na tebe dívají jinak — jedni s obdivem, druzí se závistí. A {lord.title} {lord.name} si dobře pamatuje, že {R:jsi mu utekl|jsi mu utekla} z ruky.',
+    text: 'V truhle leží listina s panskou pečetí a v ní stojí, že rod {dynastyName} už nikomu nepatří. Roboty je konec; dávky se platí v penězích a kdo chce, může jít, kam ho nohy nesou. Ve vsi se na tebe dívají jinak — jedni s obdivem, druzí se závistí. A {lord.title} {lord.name} si dobře pamatuje, že jsi {L:mu|jí} {R:utekl|utekla} z ruky.',
     choices: [
       {
         label: 'Uspořádat hostinu pro celou ves',
@@ -289,6 +289,33 @@ export const CAREER_EVENTS = [
         hintType: 'trait', hintKey: 'strength',
         effects: { prestige: 8, gold: 6 }, realm: { east: { attitude: -8 }, north: { attitude: -8 } },
         chronicle: 'Jeden zákon, jedna daň, jeden pán. Úředníci z Vlčího Údělu odjeli do nových zemí a nikdo je tam nevítal.',
+      },
+    ],
+  },
+  {
+    id: 'kapitola_cizi_koruna',
+    scenario: 'panovnik', forced: true, free: true,
+    image: 'assets/events/kapitola_koruna.jpg',
+    title: 'Koruna {conquest.gen}',
+    text: '{conquest.old} {conquest.yield}. Rod {dynastyName} teď vládne dvěma zemím. Ve Vlčím Údělu se slaví, ale {conquest.loc} se na {R:nového pána|novou paní} dívají lidé, kteří včera ještě bojovali proti {R:němu|ní}. Jak se k nim zachovat, rozhodne, jestli bude nová koruna pevná, nebo zda se při první slabosti rozpadne.',
+    choices: [
+      {
+        label: 'Potvrdit jim jejich zákony a zvyky',
+        hintType: 'trait', hintKey: 'patience',
+        effects: { gold: -6, legitimacy: 4 }, realm: { conquest: { attitude: 10 } },
+        chronicle: 'Dobytá země si ponechala své zákony. Platí daně nové koruně, ale žije po svém.',
+      },
+      {
+        label: 'Dosadit do hradů vlastní hejtmany',
+        hintType: 'trait', hintKey: 'strength',
+        effects: { prestige: 6, gold: 4 }, realm: { conquest: { attitude: -6 } },
+        chronicle: 'Do hradů v dobyté zemi nastoupili hejtmani z Vlčího Údělu. Poslušnost přišla rychle, láska nepřišla vůbec.',
+      },
+      {
+        label: 'Rozdat vojákům podíl z kořisti',
+        hintType: 'resource', hintKey: 'army',
+        effects: { gold: -8, army: 6, stability: 3 },
+        chronicle: 'Kořist z dobyté země se rozdělila mezi ty, kdo ji dobyli. V kasárnách se pilo na zdraví nového pána.',
       },
     ],
   },

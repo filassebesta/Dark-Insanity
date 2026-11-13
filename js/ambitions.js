@@ -142,7 +142,7 @@ export const AMBITIONS = {
   },
   pan: {
     name: 'V pánově přízni', goal: 75, kind: 'reach', years: 3, scenarios: ['sedlak'], unit: 'přízně pána',
-    text: 'Získat přízeň pána sedmdesát pět.',
+    text: 'Získat přízeň vrchnosti sedmdesát pět.',
     metric: (s) => s.resources.favor,
     reward: { effects: { gold: 4, prestige: 2 } }, trait: 'eloquence',
   },

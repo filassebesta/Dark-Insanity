@@ -105,7 +105,7 @@ export const TRADE_EVENTS = [
         label: 'Neprodávat',
         hintType: 'trait', hintKey: 'patience',
         tradeOffer: 0,
-        chronicle: 'Zboží zůstalo ve skladu. Za hranicemi se prodá dráž.',
+        chronicle: 'Zboží zůstalo ve skladu. Jinde se prodá dráž.',
       },
     ],
   },
