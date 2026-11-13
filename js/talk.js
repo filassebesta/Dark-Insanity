@@ -51,7 +51,7 @@ export const TOPICS = {
     roll: { trait: 'intelligence', base: 0.5, scale: 0.04 },
     win: { loyalty: 3, advice: true }, lose: { loyalty: 1 },
     text: [(c, s, role) => `${(s.scenario === 'sedlak' ? ADVICE_PEASANT : ADVICE)[role].line} ${c.name} je rád${g(c, '', 'a')}, že se ${g(c, 'ho', 'jí')} ptáš.`,
-      (c) => `Rada byla dlouhá a spletitá. ${c.name} odešel${g(c, '', 'a')} s pocitem, že tě odpověď nezajímala.`],
+      (c) => `Rada byla dlouhá a spletitá. ${c.name} ${g(c, 'odešel', 'odešla')} s pocitem, že tě odpověď nezajímala.`],
   },
   pochvala: {
     label: 'Pochválit před ostatními', roles: ['spouse', ...ADVISERS],
@@ -152,7 +152,7 @@ export const TOPICS = {
     roll: { trait: 'eloquence', base: 0.35, scale: 0.05 },
     win: { affection: 25, heart: 5 }, lose: { affection: -15, effects: { prestige: -2 } },
     text: [(c) => `Když jste konečně osaměli, ${c.name} přestal${g(c, '', 'a')} odolávat. Od té noci se na tebe dívá jinak.`,
-      (c) => `${c.name} ${g(c, 'tě odstrčil', 'tě odstrčila')} a odešel${g(c, '', 'a')}. A do večera to věděli všichni, kdo to vědět neměli.`],
+      (c) => `${c.name} ${g(c, 'tě odstrčil', 'tě odstrčila')} a ${g(c, 'odešel', 'odešla')}. A do večera to věděli všichni, kdo to vědět neměli.`],
   },
   nam_ruka: {
     label: 'Požádat o ruku', roles: ['suitor'],
@@ -169,7 +169,7 @@ export const TOPICS = {
     roll: { trait: 'eloquence', base: 0.4, scale: 0.05, bonus: (c) => (c.affection - 50) / 80 + (c.loyalty - 50) / 150 },
     win: { lover: true, affection: 5 }, lose: { affection: -12, heart: -5 },
     text: [(c) => `${c.name} dlouho mlčel${g(c, '', 'a')}. Pak ${g(c, 'tě vzal', 'tě vzala')} za ruku: „Ať si říkají, co chtějí.“`,
-      (c, st) => `${c.name} zbledl${g(c, '', 'a')}: „Za koho mě máš?“ A odešel${g(c, '', 'a')} dřív, než jsi ${R(st, 'stačil', 'stačila')} cokoli vysvětlit.`],
+      (c, st) => `${c.name} zbledl${g(c, '', 'a')}: „Za koho mě máš?“ A ${g(c, 'odešel', 'odešla')} dřív, než jsi ${R(st, 'stačil', 'stačila')} cokoli vysvětlit.`],
   },
   mil_noc: {
     label: 'Strávit spolu noc', roles: ['suitor'],
@@ -211,6 +211,7 @@ export function talkBlock(state, role) {
   if (!c || c.alive === false) return 'Mrtví už nemluví.';
   if (kindOf(role) === 'child') return c.age < 4 ? 'Je to ještě malé dítě.' : 'S dětmi si promluvíš, až budou dědici.';
   if (kindOf(role) === 'sibling') return 'Se sourozenci si promluvíš, až budou dědici.';
+  if (kindOf(role) === 'bastard') return 'Je to ještě dítě.';
   if (role === 'heir' && c.age < 4) return 'Dědic je ještě malé dítě.';
   if (c.talkTurn === state.turn) return `Tohle období jste spolu už mluvili. Příště v dalším období.`;
   if (state.gameOver) return 'Kronika skončila.';
