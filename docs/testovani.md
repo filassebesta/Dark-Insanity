@@ -142,3 +142,11 @@ st.currentEvent = 'n_klidne_obdobi'; S.saveGame(st);` a znovu načíst stránku.
 
 Automaticky: `node tools/sim/sim_war.mjs 150 40` (invarianty `army == součet troops`, `war.power == součet sboru`, bez chyb a
 nerozvinutých tokenů) a ostatní simulace z HANDOFF.md kap. 2 (`errors` musí být 0).
+
+
+## Vlastní erb
+
+1. Hrát za sedláka do povýšení (nebo uložit hru s `statusTier 3` a `currentEvent = 'kapitola_erb'`): při kapitole „Erb a tvrz“ se otevře editor sám, bez možnosti zavřít. Projít tvar štítu, všech 7 dělení, barvy, 17 znamení, počet 1/3 a lem; popis erbu pod náhledem se musí skloňovat správně („V zeleném štítě tři zlatí orli“).
+2. „Přijmout erb“: erb je v hlavičce (nad 560 px), v panelu Rody (karta „Tvůj rod“) a v panelu Postava; v kronice je zapsaný popis.
+3. „Změnit erb“ v panelu Rody otevře editor s tlačítkem Zrušit. Po obnovení stránky erb zůstává.
+4. Telefon (390 px): okno přes celou obrazovku, náhled nahoře přilepený, tlačítko „Přijmout erb“ dole přilepené, bez vodorovného posunu.

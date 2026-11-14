@@ -92,6 +92,8 @@ musí být aktivní, jinak je mapa skrytá. Screenshoty ukládat mimo repozitá�
 | `js/events_more.js` | dalších 55 událostí Panovníka |
 | `js/events_noble.js` | 32 událostí Šlechtice |
 | `js/houses.js` | velké rody: `state.houses` (síla, vztah, `rel` mezi rody, léno, hrozba vzpoury), roční vývoj `houseYear`, hotovost `houseMuster`, dvojice rodů `pickPair`, akce panelu `houseActions` / `doHouseAction`, opravy starých uložených her `ensureHouses` (bez DOM) |
+| `js/heraldry.js` | vlastní erb hráče: model `state.crest` (tvar štítu, dělení, dvě barvy pole, znamení, počet, barva, lem), kreslení SVG (`crestSvgOf`, `crestInnerOf`), náhodný erb podle pravidla kov na barvu, popis erbu česky (`blazon`), `ensureCrest` pro starší uložené hry |
+| `js/crest_ui.js` | editor erbu v okně s živým náhledem (`openCrestEditor`) |
 | `js/crests.js` | kreslené erby osmi rodů (`crestSvg`, `crestInner`; barvy v `NOBLE_HOUSES[].colors`) |
 | `js/events_houses.js` | 17 událostí o rodech mezi sebou, o pěti novějších rodech a o vazalech koruny |
 | `js/events_peasant.js` | 32 událostí Sedláka + krize, ozvěny a klidné období sedláka |
@@ -375,6 +377,12 @@ Cizí vládci: `{realm.east}` („král Ctibor“), `{realm.east.Ruler}` (toté�
 - **Větve:** `empire: { decreed, ambition, viceroy, pretender, pardon }`, `regency: { appoint, ambition, loyalty, grab, dismiss, end }`, `realm: { focus | held }`.
 - **Nová id:** `risa_sprava, risa_snem, risa_mistodrzici, risa_pretendent, risa_neduh, risa_karavany, risa_mistokral, risa_vyroci, risa_jih, risa_spiknuti, risa_viry, risa_vrchol, risa_rozpad`, `regentstvi, regent_moc, plnoletost`; konce `empire_peak, empire_fall`; úspěchy `risa_sprava, risa_vrchol, risa_rozpad`; ambice `risa_pevna, risa_dedic`.
 - **Test:** `node tools/sim/sim_empire.mjs 300 40 careful` (stav panovníka vynucený na stupeň 6 se dvěma korunami, mód `random` / `smart` / `careful` = volby podle věrnosti) vypíše četnost příběhů a kolik korun se ztratilo; `node tools/sim/sim_regency.mjs 200 [panovnik|slechtic|sedlak]` zabije vládce s dítětem jako dědicem a zkontroluje pořadí scén, zakázané činy dítěte a tokeny. Náhodné volby dávají ~0,8 příběhu říše za rok (každý ~40–80 % her za 20 let) a o čtvrtinu korun přijdou; „opatrný“ hráč koruny udrží a v ~90 % her dojde k `risa_vrchol`; bot `smartPick` volí jen podle zdrojů (bere zlato a vojáky) a o koruny přijde skoro vždy, což je záměr: o věrnosti rozhoduje výnos.
+
+### Vlastní erb (`js/heraldry.js`, `js/crest_ui.js`)
+- Hned po povýšení na šlechtice (kapitola „Erb a tvrz“, `kapitola_erb`) se otevře editor erbu (`presentEvent` v `main.js`). Poprvé nejde zavřít bez erbu; je tam tlačítko „Náhodný erb“. Později jde změnit z panelu Rody / Vazalové (karta „Tvůj rod“, `data-action="edit-crest"`).
+- Uložení: `state.crest` (`auto: true` = jen zástupný erb ze jména rodu pro starší uložené hry, `ensureCrest`). Při uložení se do kroniky zapíše popis erbu.
+- Zobrazení: hlavička hry (jen šířka nad 560 px), karta v panelu Rody, řádek rodu v panelu Postava. Na mapě zatím vlastní erb není.
+- Každý nakreslený štít má vlastní `clipPath` s unikátním `id` (klip ve skrytém `<svg>` jinak nefunguje pro ostatní štíty).
 
 ### Velké rody a vazalové (`js/houses.js`, `js/crests.js`, `js/events_houses.js`, `NOBLE_HOUSES` v `js/data.js`)
 - **Osm rodů** místo tří. K Bílé Bráně (lichváři, Brodná), Rudým (válečníci, Železný Hřeben) a Sokolům (pohraničníci, Sokolí Hvozd) přibylo pět: **Jelenové z Doubravy** (lesní: dřevo, lov, lučištníci), **páni z Kamenného Kříže** (církevní: víra, desátky), **Říční páni z Přívozu** (řeka, mýta, trh), **Jezdci z Pustého Pole** (stepní jezdci, koně) a **páni z Právova** (staré právo, listiny, legitimita). Záznam v `NOBLE_HOUSES`: `trait` (zaměření jednou větou), `focus`, `troops { spear, archer, horse }` (váhy, součet 1), `muster` (muži družiny při síle 50), `boon` (co ročně přinese přátelský rod: spojenec nebo příbuzný s vztahem ≥ 45), `bonds` (počáteční vztahy k ostatním rodům), `colors` (barvy erbu), u nových rodů `hold`.
