@@ -10,6 +10,7 @@
 
 import { clamp, randInt, bumpStat, grosLabel, clampRes } from './data.js';
 import { makeChronicleEntry } from './state.js';
+import { privilegeStock, contractBonus } from './privileges.js';
 
 export const GOODS = {
   grain: { name: 'Obilí', gen: 'obilí' },
@@ -87,7 +88,7 @@ export function maxStock(state) {
   for (const town of Object.values((state && state.towns) || {})) {
     for (const b of town.buildings || []) if (b.ready && !b.base && WAREHOUSE[b.key]) extra += WAREHOUSE[b.key];
   }
-  return MAX_STOCK + Math.min(WAREHOUSE_CAP, extra);
+  return MAX_STOCK + Math.min(WAREHOUSE_CAP, extra) + privilegeStock(state); // the toll right adds room of its own
 }
 
 // ---------- state ----------
@@ -553,7 +554,7 @@ function offerContract(state) {
     id: t.nextId++, dest, good, qty,
     from: state.turn,
     until: state.turn + randInt(6, 10),
-    reward: Math.round(qty * m.sell[good] * 1.5),
+    reward: Math.round(qty * m.sell[good] * 1.5 * (obligation ? 1 : contractBonus(state))), // a town councillor gets better orders
     favor: obligation ? qty + 2 : 0,
     prestige: obligation ? 0 : 3,
     obligation,

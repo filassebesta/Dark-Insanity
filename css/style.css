@@ -1467,6 +1467,23 @@ kbd {
   .build-thumb { width: 48px; height: 48px; }
 }
 
+/* ---------- privileges and offices (js/privileges.js) ---------- */
+.cs-priv { list-style: none; padding: 0; margin: 0 0 1rem; display: flex; flex-direction: column; gap: .8rem; }
+.cs-priv li { display: grid; gap: .3rem; padding: .7rem .9rem; border-left: 3px solid var(--gold-dim, #9a7b3f); background: rgba(212,175,110,.08); }
+.cs-priv li.danger { border-left-color: #a8452f; background: rgba(168,69,47,.12); }
+.cs-priv b { font-family: var(--font-display); font-weight: 400; font-size: 1.1rem; color: var(--paper); }
+.cs-priv small { font-size: .85rem; color: var(--gold); }
+.cs-priv > li > span { font-size: .95rem; color: rgba(235,227,209,.7); }
+.cs-priv .cs-priv-idle { color: #e09a7f; font-style: italic; }
+.cs-priv-row { display: flex; flex-wrap: wrap; gap: .3rem; align-items: baseline; }
+.cs-priv-row em { font-style: normal; font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; min-width: 3.4rem; color: rgba(235,227,209,.5); }
+.cs-priv-row i { font-style: normal; font-size: .8rem; padding: .05rem .45rem; border-radius: 2px; }
+.cs-priv-row.give i { background: rgba(140,190,120,.15); color: #a9d493; }
+.cs-priv-row.ask i { background: rgba(224,154,127,.15); color: #e09a7f; }
+.cs-priv-risk { font-size: .85rem; color: rgba(235,227,209,.55); font-style: italic; }
+.cs-priv-more { margin: 0 0 2.2rem; font-size: .9rem; color: rgba(235,227,209,.5); }
+.cs-priv-more small { color: rgba(235,227,209,.4); }
+
 /* ---------- injuries (js/injuries.js) ---------- */
 .plaque-hurt { font-style: normal; color: #e09a7f; }
 .plaque-trait.hurt { color: #e09a7f; }
