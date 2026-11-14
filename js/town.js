@@ -87,6 +87,14 @@ const ICONS = {
   lovci: () => `${pine(-44, 14, 1.4)}${pine(46, 14, 1.2)}${rect(-30, -24, 60, 38, C.wood)}${[-18, -10, -2, 6].map((y) => `<path d="M-30 ${y}h60" stroke="${C.wood2}" stroke-width="1.5"/>`).join('')}${gable(-30, -24, 60, 24, C.roof2)}${door(0, 14)}
     <path d="M-10 -36q-6 -8 -12 -6M-10 -36q-2 -10 -8 -14M10 -36q6 -8 12 -6M10 -36q2 -10 8 -14M-10 -36h20" stroke="${C.wall}" stroke-width="2.2" fill="none"/>`,
   // the farm
+  // Skladiště (warehouse in a town): a long low storehouse, big double door, crates and barrels outside
+  sklad: () => `${rect(-52, -26, 104, 40, C.stone)}${hip(-52, -26, 104, 22, C.roof2)}${win(-42, -14)}${win(34, -14)}
+    <path d="M-14 14v-24h28v24" fill="${C.wood2}" stroke="${C.ink}" stroke-width="1.5"/><path d="M0 -10v24M-14 -2h28" stroke="${C.wood}" stroke-width="2"/>
+    ${rect(30, 4, 14, 10, C.wood)}${rect(36, -4, 10, 8, C.wood2)}<ellipse cx="-34" cy="9" rx="6" ry="5" fill="${C.wood}" stroke="${C.ink}" stroke-width="1.2"/><ellipse cx="-24" cy="10" rx="5" ry="4.5" fill="${C.wood2}" stroke="${C.ink}" stroke-width="1.2"/>`,
+  // Kolna na vozy (farm): an open-fronted cart shed with a wagon under the roof
+  kolna: () => `${rect(-44, -28, 4, 42, C.wood2)}${rect(40, -28, 4, 42, C.wood2)}${rect(-44, -30, 88, 6, C.wood)}${gable(-46, -30, 92, 20, '#a08550')}
+    ${rect(-30, -4, 60, 10, C.wood)}<circle cx="-18" cy="10" r="8" fill="none" stroke="${C.wood2}" stroke-width="3"/><circle cx="18" cy="10" r="8" fill="none" stroke="${C.wood2}" stroke-width="3"/>
+    <path d="M-18 10h0M18 10h0M-30 -4v-10h60v10" stroke="${C.wood2}" stroke-width="2" fill="none"/>${[-18, -6, 6, 18].map((x) => `<ellipse cx="${x}" cy="-9" rx="6" ry="5" fill="${C.gold}" stroke="${C.ink}" stroke-width="1"/>`).join('')}`,
   stodola: () => `${rect(-44, -36, 88, 50, C.wood)}${[-30, -14, 2, 18, 34].map((x) => `<path d="M${x} -36v50" stroke="${C.wood2}" stroke-width="1.5"/>`).join('')}${gable(-44, -36, 88, 34, '#a08550')}
     <path d="M-14 14v-28h28v28" fill="${C.wood2}" stroke="${C.ink}" stroke-width="1.5"/><path d="M-14 -14l28 28M14 -14l-28 28" stroke="${C.wood}" stroke-width="2"/>`,
   chlev: () => `${rect(-46, -18, 70, 32, C.wall2)}${hip(-46, -18, 70, 18, '#a08550')}${win(-36, -10)}${win(-14, -10)}${door(12, 14)}
@@ -244,7 +252,7 @@ function plotMarkup(state, id, town, slot, selectedSlot) {
   const art = BUILDING_ART.has(b.key)
     ? `<clipPath id="clip-${slot}"><rect x="${-PLOT_W / 2 + 4}" y="${-PLOT_H / 2 + 4}" width="${PLOT_W - 8}" height="${PLOT_H - 26}" rx="8"/></clipPath>
        <image href="assets/buildings/${b.key}.jpg" x="${-PLOT_W / 2 + 4}" y="${-PLOT_H / 2 + 4}" width="${PLOT_W - 8}" height="${PLOT_H - 26}" preserveAspectRatio="xMidYMid slice" clip-path="url(#clip-${slot})"/>`
-    : `<g class="b-icon" transform="translate(0 ${b.ready ? 24 : 26}) scale(.8)">${b.ready ? ICONS[b.key]() : scaffold()}</g>`;
+    : `<g class="b-icon" transform="translate(0 ${b.ready ? 24 : 26}) scale(.8)">${b.ready ? (ICONS[b.key] || ICONS.stodola)() : scaffold()}</g>`;
   const building = !b.ready ? ' building' : '';
   const progress = !b.ready ? progressBar(state, b.start, b.done) : '';
   return `<g class="plot built${building}${sel}" data-town-slot="${slot}" transform="translate(${x} ${y})" tabindex="0" role="button" aria-label="${esc(def.name)}">
@@ -387,7 +395,7 @@ function catalogList(state, id, slot) {
     .sort((a, b) => rank(a[2]) - rank(b[2]))
     .map(([key, b, why]) => `
       <button class="decree build-option" data-build="${key}" data-slot="${slot}"${why ? ' disabled' : ''}>
-        <span class="build-thumb"><svg viewBox="-64 -100 128 124">${ICONS[key]()}</svg></span>
+        <span class="build-thumb"><svg viewBox="-64 -100 128 124">${(ICONS[key] || ICONS.stodola)()}</svg></span>
         <span class="build-body"><b>${esc(b.name)} <small>${esc(costText(state, b.cost))} · ${b.turns} obd.</small></b>
         <span>${esc(b.text)}</span><em>${effectChips(state, b, key)}</em>${why ? `<em class="build-why">${esc(why)}</em>` : ''}</span>
       </button>`).join('')}</div>`;
@@ -397,7 +405,7 @@ function buildingDetail(state, id, b) {
   const def = buildingDef(b.key);
   const own = ownsTown(state, id);
   return `<div class="build-detail">
-      ${BUILDING_ART.has(b.key) ? `<img class="build-art" src="assets/buildings/${b.key}.jpg" alt="">` : `<span class="build-thumb big"><svg viewBox="-64 -100 128 124">${ICONS[b.key]()}</svg></span>`}
+      ${BUILDING_ART.has(b.key) ? `<img class="build-art" src="assets/buildings/${b.key}.jpg" alt="">` : `<span class="build-thumb big"><svg viewBox="-64 -100 128 124">${(ICONS[b.key] || ICONS.stodola)()}</svg></span>`}
       <h4 class="map-sub">${esc(def.name)}${b.ready ? '' : ' <small>· ve stavbě</small>'}</h4>
       <p class="map-desc">${esc(def.text)}</p>
       ${b.base && isFarm(id) ? `<p class="map-decree-hint">Stojí tu odjakživa. Úroda je dávno započtená v hospodaření gruntu, ale do téhle stavby se ukládají vozy obilí.</p><div class="build-chips">${worksChips(b.key).map((t) => chip(t)).join('')}</div>` : ''}
