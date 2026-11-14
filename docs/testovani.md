@@ -95,3 +95,20 @@ a text neúspěšného povstání nesedí s koncem, mimořádná daň se nenabí
 každý rok, vládce v poli nepořádá další dvorské karty (čarodějnice, relikvie, prorok…), epiteton „Starý“ až po
 3 letech vlády, tribut severu a „druhý rok“ ve vězení opraveny.
 Zbývá: císařství bez obsahu, portréty R6, regentství při dítěti na trůnu, obrázky u narození levobočka a nástupnictví.
+
+## Velké rody a vazalové (osm rodů, panel Vazalové)
+
+Ověřeno simulacemi (`sim_noble`, `sim_career`, `sim`, `sim_peasant`, `sim_regency`, `sim_empire`, `sim_trade`: chyby 0, `unresolved []`)
+a v Chromiu (Playwright, 1366 × 860 a 390 × 844): panel Rody (šlechtic) i Vazalové (panovník), mapa s erby državy, válečná vrstva se
+sedmi cíli, karta události o dvou rodech, dar rodu a svolání hotovosti klikem. Bez chyby v konzoli a bez vodorovného posunu panelu a mapy.
+
+Co zkontrolovat ručně při další změně rodů:
+- každá událost z `js/events_houses.js` v obou stupních a u obou pohlaví (text, nadpis, popisky voleb i kronika bez `{…}`);
+- `node tools/sim/test_houses.mjs` skončí `all ok`;
+- po `crownNoble` zůstane `state.houses` s osmi rody, panel se přejmenuje na Vazalové a nabízí hotovost, přízeň, léno, sňatek a zkrocení;
+- stará uložená hra se třemi rody se při načtení doplní o dalších pět (`ensureHouses`), `rel` je souměrné;
+- Sedlák dál žije na půdě pánů z Bílé Brány (`PEASANT_HOME`, kraj Brodná má majitele `brana`);
+- roční dar rodu nesmí obsahovat vojsko (náklady na žold by šlechtice zruinovaly).
+
+Známo, mimo tuto práci: na telefonu (390 px) má stránka s příběhem u některých událostí (`n_spor_o_hranici`, `n_pozvani_ke_dvoru` i nové) vodorovný přesah 15–55 px
+(šířka `.game-body`); panely Rody a mapa se neposouvají.

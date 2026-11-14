@@ -1,6 +1,8 @@
 import { RESOURCE_DEFS, TRAIT_DEFS, TERRAIN_DEFS, SEASONS, NOBLE_HOUSES, resourceLabel, activeResourceDefs, tierTitle, yearsLabel } from './data.js';
 import { interpolate, computeSuccessChance, attitudeLabel, ownProvinces, reignEpithet } from './engine.js';
 import { ICONS } from './icons.js';
+import { crestSvg } from './crests.js';
+import { houseMuster, musterText, boonText, relLabel, housePairs, houseActions } from './houses.js';
 import { playMusic, setAllMuted } from './audio.js';
 import { rulerPortraitCandidates, memberPortraitCandidates, portraitImg } from './character.js';
 import { roleLabel, loyaltyLabel, quirkLabel } from './court.js';
@@ -130,9 +132,10 @@ export function renderReignInfo(state) {
 export function updateBookTabFlags(state) {
   const anyUnrest = ownProvinces(state).some((p) => p.unrest >= 70);
   const housesTab = document.querySelector('.book-tab[data-panel="houses"]');
-  housesTab.hidden = state.scenario !== 'slechtic';
+  housesTab.hidden = state.scenario === 'sedlak' || !state.houses; // the noble's Rody, the king's Vazalové
+  housesTab.textContent = state.scenario === 'panovnik' ? 'Vazalové' : 'Rody';
   document.querySelector('.book-tab[data-panel="war"]').hidden = state.scenario === 'sedlak'; // a peasant wages no wars
-  if (state.houses) housesTab.classList.toggle('flagged', state.resources.favor <= 25 || state.houses.some((h) => h.attitude < 25));
+  if (state.houses) housesTab.classList.toggle('flagged', (state.scenario === 'slechtic' && state.resources.favor <= 25) || state.houses.some((h) => h.attitude < 25 || h.rebelPending));
   const anyDisloyal = [state.heir, state.spouse, state.chancellor, state.marshal, state.spymaster]
     .some((c) => c.alive && c.loyalty <= 25);
   const mapTab = document.querySelector('.book-tab[data-panel="map"]');
@@ -468,49 +471,140 @@ function bar(value, cls) {
   return `<div class="stat-bar"><div class="stat-bar-fill ${cls}" style="width:${value}%"></div></div>`;
 }
 
+const attTone = (a) => (a >= 55 ? 'good' : a < 40 ? 'bad' : 'warn');
+
+function hsBar(label, value, cls, text) {
+  return `<div class="hs-bar"><span class="hs-bar-l">${label}</span><div class="hs-track"><i class="${cls}" style="width:${value}%"></i></div><b>${text ?? value}</b></div>`;
+}
+
+/** The retinue as a thin three-colour bar (spears, bows, horse) with the count in words below. */
+function hsTroops(m) {
+  const part = (k) => (m.total ? Math.round((m[k] / m.total) * 100) : 0);
+  return `<div class="hs-troops" title="${esc(musterText(m))}">
+      <div class="hs-troops-bar"><i class="spear" style="width:${part('spear')}%"></i><i class="archer" style="width:${part('archer')}%"></i><i class="horse" style="width:${part('horse')}%"></i></div>
+      <small>${m.total} mužů · ${esc(musterText(m))}</small>
+    </div>`;
+}
+
+/** A house's three strongest ties or feuds, as small crests with a sign. */
+function hsRelChips(state, h) {
+  const list = state.houses.filter((o) => o.id !== h.id).map((o) => [o, h.rel ? h.rel[o.id] ?? 0 : 0])
+    .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 3).filter(([, r]) => Math.abs(r) >= 20);
+  if (!list.length) return '';
+  return `<div class="hs-rels">${list.map(([o, r]) => {
+    const od = NOBLE_HOUSES.find((d) => d.id === o.id);
+    return `<span class="hs-rel ${r > 0 ? 'good' : 'bad'}" title="${esc(od.name)}: ${relLabel(r)}">${crestSvg(o.id, 'hs-crest-xs')}<span>${esc(od.short)}</span><b>${r > 0 ? '+' : '−'}${Math.abs(r)}</b></span>`;
+  }).join('')}</div>`;
+}
+
+function hsActions(state, h) {
+  const acts = houseActions(state, h.id);
+  if (!acts.length) return '';
+  return `<div class="hs-actions">${acts.map((a) => `<button class="hs-act" data-house-act="${a.key}" data-house="${h.id}"${a.ok ? '' : ` disabled title="${esc(a.why)}"`}>
+      <b>${esc(a.label)}</b><small>${esc(a.ok ? a.hint : a.why)}</small></button>`).join('')}</div>`;
+}
+
+function hsHouseCard(state, h) {
+  const def = NOBLE_HOUSES.find((d) => d.id === h.id);
+  const seat = state.provinces.find((p) => p.id === def.seat);
+  const land = seat ? seat.name.replace(/ \(.*\)$/, '') : '';
+  const place = def.hold ? `${def.hold.name} · ${land}` : land;
+  const friendly = (h.ally || h.married) && h.attitude >= 45;
+  const m = houseMuster(h);
+  const rising = state.scenario === 'panovnik' && h.rebelPending;
+  return `
+    <div class="hs-card${rising ? ' rising' : ''}" data-house-card="${h.id}">
+      <div class="hs-head">
+        ${crestSvg(h.id, 'hs-crest-lg')}
+        <div class="hs-id"><span class="role">${esc(place)}</span><strong>${esc(def.name)}</strong>
+          <em>${esc(def.trait)}</em>
+          <small>${h.head.gender === 'female' ? 'Paní' : 'Pán'} ${esc(h.head.name)}, ${h.head.age} let</small></div>
+      </div>
+      <p class="hs-text">${esc(def.text)}</p>
+      ${hsBar('Vztah', h.attitude, 'loyalty', `<span class="hs-att ${attTone(h.attitude)}">${attitudeLabel(h.attitude)}</span>`)}
+      ${hsBar('Moc rodu', h.power, 'garrison')}
+      ${hsTroops(m)}
+      <p class="hs-boon${friendly ? ' on' : ''}">${friendly ? 'Přítel rodu' : 'Pro přátele rodu'}: ${esc(boonText(def))}</p>
+      ${hsRelChips(state, h)}
+      <div class="hs-badges">${h.ally ? '<span class="house-badge good">Spojenec</span>' : ''}${h.married ? '<span class="house-badge gold">Sňatek</span>' : ''}${h.fief ? '<span class="house-badge gold">Léno</span>' : ''}${rising ? '<span class="house-badge bad">Hrozí vzpoura</span>' : ''}</div>
+      ${hsActions(state, h)}
+    </div>`;
+}
+
+/** The ties and feuds of the houses: the strongest pairs with a marker between enmity and kinship. */
+function hsRelations(state) {
+  const pairs = housePairs(state).filter(([, , r]) => Math.abs(r) >= 15).slice(0, 8);
+  if (!pairs.length) return '';
+  return `<div class="hs-card hs-relations">
+    <h4>Vztahy mezi rody</h4>
+    ${pairs.map(([a, b, r]) => {
+      const da = NOBLE_HOUSES.find((d) => d.id === a.id);
+      const db = NOBLE_HOUSES.find((d) => d.id === b.id);
+      return `<div class="hs-pair" title="${esc(da.name)} a ${esc(db.name)}">
+        ${crestSvg(a.id, 'hs-crest-sm')}
+        <div class="hs-pair-mid"><span>${esc(da.short)} · ${esc(db.short)}</span>
+          <div class="hs-axis"><i style="left:${(r + 100) / 2}%" class="${r > 0 ? 'good' : 'bad'}"></i></div>
+          <small class="${r > 0 ? 'good' : 'bad'}">${relLabel(r)} (${r > 0 ? '+' : '−'}${Math.abs(r)})</small></div>
+        ${crestSvg(b.id, 'hs-crest-sm')}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
 export function renderHousesPanel(state) {
   const host = document.getElementById('houses-list');
-  if (!host || !state.houses || !state.noble) return; // the houses panel belongs to the noble scenario
-  const k = state.king;
-  const kh = k.heir && k.heir.alive ? k.heir : null;
-  const kingCard = `
-    <div class="house-card crown">
-      <div class="house-head">
-        <span class="house-crest">${ICONS.legitimacy}</span>
-        <div><span class="role">Koruna</span><strong>${k.alive ? `Král ${esc(k.name)}` : 'Trůn je prázdný'}</strong>
-        <small>${k.alive ? `${k.age} let` : ''}${kh ? ` · ${kh.gender === 'female' ? 'princezna' : 'princ'} ${esc(kh.name)} (${kh.age})` : ' · bez dědice'}</small></div>
-      </div>
-      <div class="stat-bar-row"><span class="label">Přízeň krále</span>${bar(state.resources.favor, 'loyalty')}<span>${state.resources.favor}</span></div>
-      ${state.flags.royal_match ? '<span class="house-badge gold">Zasnoubeno s korunou</span>' : ''}
+  if (!host || !state.houses || state.scenario === 'sedlak') return; // the houses panel belongs to the noble and the king
+  const king = state.scenario === 'panovnik';
+  const head = document.getElementById('houses-title');
+  if (head) head.textContent = king ? 'Vazalové' : 'Rody';
+  const over = document.getElementById('houses-overline');
+  if (over) over.textContent = king ? 'Velké rody pod korunou' : 'Koruna a soupeři';
+  let top = '';
+  if (king) {
+    const levy = state.houses.filter((h) => h.attitude >= 35).reduce((acc, h) => {
+      const m = houseMuster(h);
+      for (const k of ['total', 'spear', 'archer', 'horse']) acc[k] += m[k];
+      return acc;
+    }, { total: 0, spear: 0, archer: 0, horse: 0 });
+    const strong = state.houses.filter((h) => h.power >= 68).length;
+    const rising = state.houses.filter((h) => h.rebelPending).length;
+    const mood = Math.round(state.houses.reduce((s, h) => s + h.attitude, 0) / state.houses.length);
+    const strongText = strong ? `${strong === 1 ? 'Jeden rod je příliš mocný' : strong < 5 ? `${strong} rody jsou příliš mocné` : `${strong} rodů je příliš mocných`}. ` : '';
+    top = `<div class="hs-card crown">
+      <div class="hs-head"><span class="house-crest">${ICONS.legitimacy}</span>
+        <div class="hs-id"><span class="role">Koruna</span><strong>Hotovost vazalů</strong>
+        <small>${levy.total} mužů, kdyby všechny rody poslechly</small></div></div>
+      ${hsTroops(levy)}
+      ${hsBar('Nálada rodů', mood, 'loyalty', `<span class="hs-att ${attTone(mood)}">${attitudeLabel(mood)}</span>`)}
+      <p class="hs-text">${rising ? 'V některém z rodů se schyluje k otevřené vzpouře. ' : ''}${strongText}Přízeň, léno a sňatek rody vážou, hotovost je rozhněvá a zkrocení je může vyprovokovat. Každý krok k jednomu rodu zanechá stopu v ostatních.</p>
     </div>`;
-  const houses = state.houses.map((h) => {
-    const def = NOBLE_HOUSES.find((d) => d.id === h.id);
-    const seat = state.provinces.find((p) => p.id === def.seat);
-    const tone = h.attitude >= 55 ? 'good' : h.attitude < 40 ? 'bad' : 'warn';
-    return `
-      <div class="house-card">
-        <div class="house-head">
-          <span class="house-crest">${ICONS.houses}</span>
-          <div><span class="role">${esc(seat ? seat.name : '')}</span><strong>${esc(def.name)}</strong>
-          <small>${h.head.gender === 'female' ? 'Paní' : 'Pán'} ${esc(h.head.name)}, ${h.head.age} let</small></div>
-        </div>
-        <p class="house-text">${esc(def.text)}</p>
-        <div class="stat-bar-row"><span class="label">Vztah</span>${bar(h.attitude, 'loyalty')}<span class="house-att ${tone}">${attitudeLabel(h.attitude)}</span></div>
-        <div class="stat-bar-row"><span class="label">Moc rodu</span>${bar(h.power, 'garrison')}<span>${h.power}</span></div>
-        <div class="house-badges">${h.ally ? '<span class="house-badge good">Spojenec</span>' : ''}${h.married ? '<span class="house-badge gold">Sňatek</span>' : ''}</div>
-      </div>`;
-  }).join('');
-  const plot = state.noble.plot;
-  const held = state.provinces.filter((p) => p.owner === 'player').length;
-  host.innerHTML = kingCard + houses + `
-    <div class="house-card intrigue">
+  } else {
+    const k = state.king;
+    const kh = k && k.heir && k.heir.alive ? k.heir : null;
+    top = k ? `
+    <div class="hs-card crown">
+      <div class="hs-head"><span class="house-crest">${ICONS.legitimacy}</span>
+        <div class="hs-id"><span class="role">Koruna</span><strong>${k.alive ? `${k.gender === 'female' ? 'Královna' : 'Král'} ${esc(k.name)}` : 'Trůn je prázdný'}</strong>
+        <small>${k.alive ? `${k.age} let` : ''}${kh ? ` · ${kh.gender === 'female' ? 'princezna' : 'princ'} ${esc(kh.name)} (${kh.age})` : ' · bez dědice'}</small></div></div>
+      ${hsBar('Přízeň krále', state.resources.favor, 'loyalty')}
+      ${state.flags.royal_match ? '<span class="house-badge gold">Zasnoubeno s korunou</span>' : ''}
+    </div>` : '';
+  }
+  let tail = '';
+  if (!king && state.noble) {
+    const plot = state.noble.plot;
+    const held = state.provinces.filter((p) => p.owner === 'player').length;
+    tail = `
+    <div class="hs-card intrigue">
       <h4>Tajná hra</h4>
       <div class="stat-bar-row"><span class="label">Spiknutí</span><div class="plot-steps">${[1, 2, 3].map((i) => `<i class="${i <= plot ? 'on' : ''}"></i>`).join('')}</div><span>${plot}/3</span></div>
       <div class="stat-bar-row"><span class="label">Tajemství</span><span class="secrets">${'✦'.repeat(Math.min(state.noble.secrets, 8)) || '—'}</span><span>${state.noble.secrets}</span></div>
-      <p class="house-text">Cesty k trůnu: nárok po smrti krále (podpoří ho spojenci a sňatek s korunou), spiknutí dovedené do konce, nebo — pro významného šlechtice — otevřené povstání ve válečném tažení. Spojenci zvyšují šance všech tří.</p>
+      <p class="hs-text">Cesty k trůnu: nárok po smrti krále (podpoří ho spojenci a sňatek s korunou), spiknutí dovedené do konce, nebo — pro významného šlechtice — otevřené povstání ve válečném tažení. Spojenci zvyšují šance všech tří. Dar rodu přihodí do vztahu kapku vděku, na spojenectví ale potřebuješ příležitost.</p>
       ${state.flags.rebellion ? '<span class="house-badge bad">Otevřená vzpoura proti koruně</span>' : ''}
-      ${held > 1 ? `<p class="house-text">Panství rodu: ${held} kraje.</p>` : ''}
+      ${held > 1 ? `<p class="hs-text">Panství rodu: ${held} kraje.</p>` : ''}
     </div>`;
+  }
+  host.innerHTML = top + state.houses.map((h) => hsHouseCard(state, h)).join('') + hsRelations(state) + tail;
 }
 
 // ---------- chronicle panel ----------

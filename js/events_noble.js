@@ -4,6 +4,8 @@
 //   noble { plot, secrets, plotReset }   setTier   newKing   endGame
 // Choices may carry requires(state) (shown only when it holds) and chanceBonus(state).
 
+import { houseLanded } from './houses.js';
+
 const S = 'slechtic';
 const allies = (s) => s.houses.filter((h) => h.ally).length;
 const hostileHouse = (s) => {
@@ -16,7 +18,7 @@ const friendlyHouse = (s) => {
 };
 const anyHouse = (s) => s.houses[Math.floor(Math.random() * s.houses.length)].id;
 // a house broken in a private war loses its seat to the player (war.js): no feasts at home, no border stones
-const landed = (s, h) => s.provinces.some((p) => p.owner === h.id);
+const landed = (s, h) => houseLanded(s, h); // the old houses own a province, the newer ones hold a držba (houses.js)
 const landedHouse = (s) => {
   const pool = s.houses.filter((h) => landed(s, h));
   return pool.length ? pool[Math.floor(Math.random() * pool.length)].id : null;

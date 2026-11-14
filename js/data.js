@@ -51,14 +51,60 @@ export function tierTitle(tier, gender) {
   return (gender === 'female' ? STATUS_TIERS_FEMALE : STATUS_TIERS)[tier];
 }
 
-// Šlechtic scenario: the realm is shared with the crown and three rival houses.
+// The great houses of the realm: they share the land with the crown (Šlechtic) and bow to it later (Panovník).
+//   seat    the province their power sits in (the three old houses own it outright; the five newer ones hold a "držba"
+//           inside somebody else's land: `hold` says where on the painted map and what it is called)
+//   trait   one line about what the house is known for · focus   its mechanical speciality (houses.js FOCUS)
+//   troops  weights of spearmen / archers / horsemen in its retinue (sum 1) — read by the war system
+//   muster  men the retinue sends to a war at full strength; the real number scales with the house's power (houses.js houseMuster)
+//   boon    what a friendly house (ally or in-law) brings every year · bonds   starting relations with the other houses (-100…100)
+//   colors  [field, charge] of the coat of arms drawn in crests.js
 export const NOBLE_HOUSES = [
   { id: 'brana', name: 'páni z Bílé Brány', gen: 'pánů z Bílé Brány', short: 'Bílá Brána', seat: 'brodna',
-    text: 'Nejbohatší rod v zemi. Drží obilnici Brodnou, půjčují králi peníze a za úsměvem skrývají nůž.' },
+    text: 'Nejbohatší rod v zemi. Drží obilnici Brodnou, půjčují králi peníze a za úsměvem skrývají nůž.',
+    trait: 'Lichváři a žoldnéři', focus: 'finance',
+    troops: { spear: 0.6, archer: 0.25, horse: 0.15 }, muster: 12, boon: { gold: 2 },
+    bonds: { rudi: -15, ricane: -40, soudci: 20 }, colors: ['#e9e2cd', '#2f4f7a'] },
   { id: 'rudi', name: 'Rudí páni z Hřebene', gen: 'Rudých pánů z Hřebene', short: 'Rudí', seat: 'zelezny-hreben',
-    text: 'Válečnický rod z hor. Jejich kovárny zbrojí půl království a jejich trpělivost je krátká jako jejich meče.' },
+    text: 'Válečnický rod z hor. Jejich kovárny zbrojí půl království a jejich trpělivost je krátká jako jejich meče.',
+    trait: 'Válečníci a kováři', focus: 'war',
+    troops: { spear: 0.5, archer: 0.05, horse: 0.45 }, muster: 22, boon: { stability: 1, prestige: 1 },
+    bonds: { sokolove: -30, kriz: -25, pustopolci: 25 }, colors: ['#9b2d20', '#d6d3c8'] },
   { id: 'sokolove', name: 'Sokolové', gen: 'Sokolů', short: 'Sokolové', seat: 'sokoli-hvozd',
-    text: 'Hrdý pohraniční rod, který stráží hranici s Marcemi. Věrní, prchliví a nebezpeční, když se cítí uraženi.' },
+    text: 'Hrdý pohraniční rod, který stráží hranici s Marcemi. Věrní, prchliví a nebezpeční, když se cítí uraženi.',
+    trait: 'Pohraničníci a sokolníci', focus: 'border',
+    troops: { spear: 0.15, archer: 0.4, horse: 0.45 }, muster: 16, boon: { stability: 1 },
+    bonds: { jelenove: -35, pustopolci: 30 }, colors: ['#2b5578', '#e4dcc2'] },
+  { id: 'jelenove', name: 'Jelenové z Doubravy', gen: 'Jelenů z Doubravy', short: 'Jelenové', seat: 'sokoli-hvozd',
+    text: 'Lesní rod, který žije ze dřeva, zvěře a smoly. Jejich hájenky jsou schované v hvozdu, kam se cizí vojsko bojí vstoupit, a jejich lučištníci netrefí vedle.',
+    trait: 'Lesní páni: dřevo, lov, lučištníci', focus: 'forest',
+    troops: { spear: 0.3, archer: 0.6, horse: 0.1 }, muster: 12, boon: { food: 3 },
+    bonds: { ricane: 25, kriz: 10 },
+    hold: { name: 'Doubrava', kind: 'Lesní hájovna', at: [905, 470] }, colors: ['#3f5f35', '#d8b24a'] },
+  { id: 'kriz', name: 'páni z Kamenného Kříže', gen: 'pánů z Kamenného Kříže', short: 'Kamenný Kříž', seat: 'zelezny-hreben',
+    text: 'Zbožný rod, který po generace dává církvi syny a klášteru dary. Opatství na jejich panství drží zpověď, desátky i víru půl země.',
+    trait: 'Církevní rod: víra, desátky, kázání', focus: 'church',
+    troops: { spear: 0.65, archer: 0.1, horse: 0.25 }, muster: 9, boon: { faith: 3 },
+    bonds: { soudci: 35 },
+    hold: { name: 'Kamenný Kříž', kind: 'Klášter na hoře', at: [846, 108] }, colors: ['#5c3b72', '#dcc27a'] },
+  { id: 'ricane', name: 'Říční páni z Přívozu', gen: 'Říčních pánů z Přívozu', short: 'Přívozští', seat: 'brodna',
+    text: 'Plavci a výběrčí mýta. Tři přívozy, dvě věže na řece a nepsané právo, že žádný vůz s obilím nepřejede Brodnici bez jejich požehnání.',
+    trait: 'Říční rod: mýta, plavba, trh', focus: 'river',
+    troops: { spear: 0.5, archer: 0.35, horse: 0.15 }, muster: 10, boon: { gold: 2 },
+    bonds: { soudci: 10 },
+    hold: { name: 'Přívoz', kind: 'Říční věž a přívoz', at: [740, 566] }, colors: ['#2a6674', '#dfe6dc'] },
+  { id: 'pustopolci', name: 'Jezdci z Pustého Pole', gen: 'Jezdců z Pustého Pole', short: 'Pustopolští', seat: 'brodna',
+    text: 'Potomci stepních jezdců, které před sto lety přivedl do země starý král jako žoldnéře a nechal je tady. Chovají koně rychlejší než vítr a nikdy úplně nezapomněli, že na východě leží step.',
+    trait: 'Jezdecký rod: koně, ostrá jízda', focus: 'steppe',
+    troops: { spear: 0.05, archer: 0.3, horse: 0.65 }, muster: 18, boon: { prestige: 2, food: 1 },
+    bonds: { kriz: -10 },
+    hold: { name: 'Pusté Pole', kind: 'Stanový tábor a ohrady', at: [905, 626] }, colors: ['#c4973c', '#2d2118'] },
+  { id: 'soudci', name: 'páni z Právova', gen: 'pánů z Právova', short: 'Právovští', seat: 'capital',
+    text: 'Rod písařů a soudců, kteří znají zemské právo zpaměti a mají starší listiny než sám trůn. Co se jim nehodí, to nepopírají. Oni to jen prohlásí za nezákonné.',
+    trait: 'Rod starého práva: soudy, listiny', focus: 'law',
+    troops: { spear: 0.7, archer: 0.2, horse: 0.1 }, muster: 8, boon: { legitimacy: 2 },
+    bonds: {},
+    hold: { name: 'Právov', kind: 'Zemský soudní dvůr', at: [566, 452] }, colors: ['#2c2b36', '#d9d6cc'] },
 ];
 export const NOBLE_HOME = 'pobrezni-mark';
 

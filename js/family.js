@@ -94,13 +94,17 @@ function newSuitor(state) {
   const g = gender === 'female' ? 0 : 1;
   let house = null;
   if (k.house && state.houses && state.houses.length) house = pickRandom(state.houses).id;
-  const houseGen = house ? NOBLE_HOUSES.find((d) => d.id === house).gen : '';
+  const houseDef = house ? NOBLE_HOUSES.find((d) => d.id === house) : null;
+  const houseGen = houseDef ? houseDef.gen : '';
+  // a bride or groom of a great house brings what the house is good at on top of the usual dowry (data.js boon, doubled)
+  const dowry = { ...k.dowry };
+  if (houseDef) for (const [res, v] of Object.entries(houseDef.boon || {})) dowry[res] = (dowry[res] || 0) + 2 * v;
   return {
     name: freshName(state, gender), gender,
     age: clamp(state.ruler.age + randInt(-6, 3), k.minAge || 17, 45),
     kindKey: i, kindLabel: k.kind[g].replace('{house}', houseGen), bio: k.text[g],
     affection: randInt(10, 30), loyalty: randInt(35, 55), quirk: randomQuirk(), traits: inheritTraits(),
-    dowry: { ...k.dowry }, house, realm: k.realm || null, alive: true,
+    dowry, house, realm: k.realm || null, alive: true,
     portrait: `suitor_${state.scenario}_${i}_${gender}`, // assets/portraits, see docs/obrazky-rodina.md
   };
 }

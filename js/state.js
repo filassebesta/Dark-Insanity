@@ -3,6 +3,7 @@ import { QUIRK_ROLES, randomQuirk, biography } from './court.js';
 import { ensureRealms } from './realms.js';
 import { dropAmbition } from './ambitions.js';
 import { farmWorth } from './farm.js';
+import { createHouses, ensureHouses } from './houses.js';
 
 const SAVE_PREFIX = 'insanityKingdom.save.';
 const SAVE_INDEX_KEY = 'insanityKingdom.saveIndex';
@@ -150,11 +151,11 @@ function createNobleGame(rulerName, dynastyName, gender) {
   return state;
 }
 
-/** The realm around a noble or a peasant: the king, the three great houses and who holds which land. */
+/** The realm around a noble or a peasant: the king, the great houses and who holds which land. */
 function createWorld(state, homeOwner) {
   // every province exists on the map, but only the home estate is the player's
   const owners = { capital: 'crown', [NOBLE_HOME]: homeOwner };
-  for (const h of NOBLE_HOUSES) owners[h.seat] = h.id;
+  for (const h of NOBLE_HOUSES) if (!h.hold) owners[h.seat] = h.id; // the newer houses only hold a držba inside these lands
   for (const p of state.provinces) {
     p.owner = owners[p.id];
     if (p.owner === 'player') Object.assign(p, { loyalty: 62, unrest: 22, wealth: 45, garrison: 35 });
@@ -167,13 +168,7 @@ function createWorld(state, homeOwner) {
     heir: { name: randomName(kingHeirGender), gender: kingHeirGender, age: randInt(7, 11), alive: true },
     reign: 1,
   };
-  state.houses = NOBLE_HOUSES.map((h) => {
-    const g = Math.random() < 0.75 ? 'male' : 'female';
-    return {
-      id: h.id, power: randInt(50, 70), attitude: randInt(40, 55), ally: false, married: false,
-      head: { name: randomName(g), gender: g, age: randInt(38, 62) },
-    };
-  });
+  state.houses = createHouses(); // the great houses with their relations to one another (houses.js)
 }
 
 // ---------- Sedlák: a peasant farm in Lipnice, under the lords of Bílá Brána ----------
@@ -385,7 +380,7 @@ export function listSaves() {
 
 export function loadGame(slotId) {
   const raw = localStorage.getItem(SAVE_PREFIX + slotId);
-  return raw ? JSON.parse(raw) : null;
+  return raw ? ensureHouses(JSON.parse(raw)) : null; // houses added since the save was made join the realm
 }
 
 export function loadMostRecentSave() {

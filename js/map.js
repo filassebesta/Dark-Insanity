@@ -4,6 +4,8 @@
 
 import { TERRAIN_DEFS, NOBLE_HOUSES, SEASONS, RESOURCE_DEFS, resourceLabel } from './data.js';
 import { attitudeLabel, interpolate } from './engine.js';
+import { crestInner, crestSvg } from './crests.js';
+import { houseMuster, musterText, boonText, relLabel } from './houses.js';
 import {
   GOODS, MARKETS, maxStock, ESCORT_ARMY, ensureTrade, routeFor, originPoint, marketAccess, price, riskOf,
   caravanFee, canSend, sendCaravan, sellAtHome, buyAtHome, convertFood, loadText, trendOf, bestMarket, marketWants,
@@ -254,6 +256,7 @@ function render() {
       <g class="map-overlays">${overlays()}</g>
       <g class="map-labels">${Object.entries(PROVINCES).map(([id, p]) => provinceLabel(id, p)).join('')}</g>
       <g class="map-features">${Object.entries(FEATURES).map(([id, f]) => featureMarker(id, f)).join('')}</g>
+      <g class="map-holds">${holdDefs().map(holdMarker).join('')}</g>
       <g class="map-markets${layers.trade ? ' show' : ''}">${marketMarkers()}</g>
       <g class="map-war${layers.war ? ' show' : ''}${state.war ? ' active' : ''}">${warLayer()}</g>
 
@@ -405,6 +408,22 @@ function featureMarker(id, f) {
     <circle class="f-ring" r="${f.r}"/>
     ${badge}
     <text class="f-label" y="${f.r + 15}">${esc(townId === 'grunt' ? 'Tvůj grunt' : f.name)}</text>
+  </g>`;
+}
+
+/** The seats the newer houses hold inside somebody else's land: a small coat of arms on the painted map. */
+function holdDefs() {
+  return NOBLE_HOUSES.filter((d) => d.hold && (state.houses || []).some((h) => h.id === d.id));
+}
+
+function holdMarker(def) {
+  const [x, y] = def.hold.at;
+  const active = selected && selected.type === 'hold' && selected.id === def.id;
+  return `<g class="map-hold${active ? ' active' : ''}" data-hold="${def.id}" transform="translate(${x} ${y})">
+    <circle class="f-hit" r="22"/>
+    <ellipse class="h-shadow" cx="1" cy="15" rx="9" ry="3"/>
+    <g class="h-crest" transform="translate(-10.5 -13) scale(.52)">${crestInner(def.id)}</g>
+    <text class="f-label" y="30">${esc(def.hold.name)}</text>
   </g>`;
 }
 
@@ -919,6 +938,45 @@ function settlementCards(provinceId) {
   }).join('')}</div>`;
 }
 
+/** The seats of the newer houses inside a province, as cards that lead to the crest on the map. */
+function holdCards(provinceId) {
+  const list = holdDefs().filter((d) => !provinceId || d.seat === provinceId); // no province = all of them
+  if (!list.length) return '';
+  return `<h4 class="map-sub">Državy rodů</h4><div class="mc-places">${list.map((d) => {
+    const h = (state.houses || []).find((x) => x.id === d.id);
+    return `<button class="mc-place" data-goto-hold="${d.id}">
+      <span class="mc-crest">${crestSvg(d.id, 'hs-crest-sm')}</span>
+      <span class="mc-place-name"><b>${esc(d.hold.name)}</b><small>${esc(d.short)} · ${esc(d.hold.kind)}${h && state.scenario !== 'sedlak' ? ` · ${attitudeLabel(h.attitude).toLowerCase()}` : ''}</small></span>
+    </button>`;
+  }).join('')}</div>`;
+}
+
+/** The sidebar for one of those seats. */
+function showHold(id) {
+  const d = NOBLE_HOUSES.find((x) => x.id === id);
+  const h = (state.houses || []).find((x) => x.id === id);
+  if (!d || !h) return showOverview();
+  const prov = state.provinces.find((p) => p.id === d.seat);
+  const peasant = state.scenario === 'sedlak';
+  const m = houseMuster(h);
+  const owner = foreignOwner(d.seat);
+  sidebar(`
+    <span class="panel-overline">Država rodu · ${esc(PROVINCES[d.seat].label)}</span>
+    <h3 class="panel-title">${esc(d.hold.name)}</h3>
+    <div class="mc-owner mc-owner-crest">
+      ${crestSvg(d.id, 'hs-crest-lg')}
+      <div><b>${esc(d.name)}</b>
+      <span>${h.head.gender === 'female' ? 'Paní' : 'Pán'} ${esc(h.head.name)}, ${h.head.age} let${!peasant && h.ally ? ' · spojenec' : ''}${!peasant && h.married ? ' · spřízněni sňatkem' : ''}</span>
+      <span>${esc(d.hold.kind)} v kraji ${esc(PROVINCES[d.seat].label)}${owner && owner.kind === 'house' ? `, kde vládne ${esc(owner.label)}` : owner && owner.kind === 'crown' ? ', na korunní zemi' : ''}</span></div>
+    </div>
+    <p class="map-desc">${esc(d.text)}</p>
+    <div class="mc-summary">${peasant ? '' : bar('Vztah k tobě', h.attitude, 'loyalty')}${bar('Moc rodu', h.power, 'garrison')}</div>
+    <p class="map-note"><b>${esc(d.trait)}.</b> Družina: ${m.total} mužů (${esc(musterText(m))}). Přítel rodu přináší ${esc(boonText(d))}.</p>
+    ${prov ? `<button class="mc-place" data-goto-province="${d.seat}"><span class="mc-level dot"></span><span class="mc-place-name"><b>${esc(PROVINCES[d.seat].label)}</b><small>kraj</small></span></button>` : ''}
+    <button class="map-back" data-overview>← Celá země</button>
+  `);
+}
+
 /** One land as a card: who holds it, how it stands. */
 function landCard(prov) {
   const def = PROVINCES[prov.id];
@@ -960,6 +1018,7 @@ function showLandsOverview() {
     <h4 class="map-sub">${king ? 'Kraje koruny' : 'Tvá země'}</h4>
     <div class="mc-lands">${own.map(landCard).join('')}</div>
     ${others.length ? `<h4 class="map-sub">${king ? 'Ztracené kraje' : 'Kdo drží zbytek země'}</h4><div class="mc-lands">${others.map(landCard).join('')}</div>` : ''}
+    ${holdCards(null)}
     ${LEGEND(false)}
   `);
 }
@@ -1000,6 +1059,7 @@ function showForeignProvince(id, f) {
     ${!peasant && h ? `<div class="mc-summary">${bar('Vztah k tobě', h.attitude, 'loyalty')}${bar('Moc rodu', h.power, 'garrison')}</div>` : ''}
     ${!peasant && !h ? `<div class="mc-summary">${bar('Přízeň krále', state.resources.favor ?? 0, 'loyalty')}</div>` : ''}
     ${peasant && home && id === home.province ? `<p class="map-note">Tady, ve vsi ${esc(home.village)}, stojí tvůj grunt.</p>` : ''}
+    ${holdCards(id)}
     ${settlementCards(id)}
     <button class="map-back" data-overview>← Celá země</button>
   `);
@@ -1020,6 +1080,7 @@ function showProvince(id) {
       ${bar('Věrnost', prov.loyalty, 'loyalty')}${bar('Nepokoje', prov.unrest, 'unrest')}
       ${bar('Bohatství', prov.wealth, 'wealth')}${bar('Posádka', prov.garrison, 'garrison')}
     </div>
+    ${holdCards(id)}
     ${settlementCards(id)}
     <button class="map-back" data-overview>← Celá země</button>
   `);
@@ -1060,6 +1121,9 @@ function showRoute(key) {
 
 function targetPoint(t) {
   if (t.at) return t.at;
+  // a private war on a house that holds a držba: the marker stands beside its crest, not on top of the other houses of the province
+  const held = t.house && NOBLE_HOUSES.find((d) => d.id === t.house && d.hold);
+  if (held) return [held.hold.at[0] + 28, held.hold.at[1] - 6];
   const p = t.province && PROVINCES[t.province];
   // away from the province's own name and from its towns
   if (t.province === 'brodna') return [455, 705];
@@ -1206,7 +1270,7 @@ function refreshWar() {
 
 function selectThing(sel) {
   selected = sel;
-  svg.querySelectorAll('.map-province.selected, .map-feature.active, .map-route.active, .map-market.active').forEach((el) => el.classList.remove('selected', 'active'));
+  svg.querySelectorAll('.map-province.selected, .map-feature.active, .map-hold.active, .map-route.active, .map-market.active').forEach((el) => el.classList.remove('selected', 'active'));
   if (!sel) {
     showOverview();
     return;
@@ -1218,6 +1282,9 @@ function selectThing(sel) {
     svg.querySelector(`.map-feature[data-feature="${sel.id}"]`).classList.add('active');
     if (sel.id === 'vassal') svg.querySelector('.map-routes').classList.add('show');
     showFeature(sel.id);
+  } else if (sel.type === 'hold') {
+    svg.querySelector(`.map-hold[data-hold="${sel.id}"]`)?.classList.add('active');
+    showHold(sel.id);
   } else if (sel.type === 'market') {
     svg.querySelector(`.map-market[data-market="${sel.id}"]`)?.classList.add('active');
     showMarket(sel.id);
@@ -1325,6 +1392,11 @@ function tooltipFor(target) {
   const provEl = target.closest('[data-province]');
   const featEl = target.closest('[data-feature]');
   const routeEl = target.closest('[data-route]');
+  const holdEl = target.closest('[data-hold]');
+  if (holdEl) {
+    const d = NOBLE_HOUSES.find((x) => x.id === holdEl.dataset.hold);
+    return `<strong>${esc(d.hold.name)}</strong><span>${esc(d.name)}</span><span>${esc(d.trait)}</span>`;
+  }
   if (featEl) {
     const f = FEATURES[featEl.dataset.feature];
     const tid = townIdFor(state, featEl.dataset.feature);
@@ -1408,6 +1480,8 @@ function wireInteractions(canvas) {
     const featEl = e.target.closest('[data-feature]');
     const routeEl = e.target.closest('[data-route]');
     const provEl = e.target.closest('[data-province]');
+    const holdEl = e.target.closest('[data-hold]');
+    if (holdEl) return focusHold(holdEl.dataset.hold);
     if (featEl) return focusFeature(featEl.dataset.feature);
     if (routeEl) return focusRoute(routeEl.dataset.route);
     if (provEl) return focusProvince(provEl.dataset.province);
@@ -1550,6 +1624,12 @@ function focusFeature(id) {
   animateTo(id === 'vassal' ? fitBox(VASSAL_VIEW) : fitBox({ x: x - 210, y: y - 150, w: 420, h: 300 }));
 }
 
+function focusHold(id) {
+  selectThing({ type: 'hold', id });
+  const [x, y] = NOBLE_HOUSES.find((d) => d.id === id).hold.at;
+  animateTo(fitBox({ x: x - 150, y: y - 105, w: 300, h: 210 }));
+}
+
 function focusRoute(key) {
   selectThing({ type: 'route', id: key });
   animateTo(fitBox(bounds(ROUTES[key].points), 0.1));
@@ -1580,6 +1660,8 @@ export function wireMapChrome() {
     if (prov) return focusProvince(prov.dataset.gotoProvince);
     const feat = t.closest('[data-goto-feature]');
     if (feat) return focusFeature(feat.dataset.gotoFeature);
+    const hold = t.closest('[data-goto-hold]');
+    if (hold) return focusHold(hold.dataset.gotoHold);
     const route = t.closest('[data-goto-route]');
     if (route) return focusRoute(route.dataset.gotoRoute);
     if (t.closest('[data-overview]')) {
