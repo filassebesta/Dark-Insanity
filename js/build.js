@@ -12,7 +12,7 @@
 // only what the player builds pays off on top.
 // No DOM here — town.js draws it, engine.js runs it every season.
 
-import { clamp, bumpStat } from './data.js';
+import { clamp, bumpStat, clampRes } from './data.js';
 import { makeChronicleEntry } from './state.js';
 import { ensureTrade, MAX_STOCK } from './trade.js';
 import { farmBuildingDone } from './farm.js';
@@ -340,7 +340,7 @@ export function canAfford(state, cost) {
 
 function pay(state, cost, share = 1) {
   for (const [k, v] of Object.entries(cost || {})) {
-    if (state.resources[k] !== undefined) state.resources[k] = clamp(state.resources[k] - Math.round(v * share));
+    if (state.resources[k] !== undefined) state.resources[k] = clampRes(k, state.resources[k] - Math.round(v * share));
   }
 }
 
@@ -350,7 +350,7 @@ function addRes(state, key, value) {
   if (r[key] === undefined || !value) return 0;
   if (key === 'legitimacy' && state.scenario === 'slechtic') return 0;
   const before = r[key];
-  r[key] = clamp(before + value);
+  r[key] = clampRes(key, before + value);
   return r[key] - before;
 }
 

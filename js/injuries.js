@@ -8,7 +8,7 @@
 // injuries live in state.ruler.injuries = [{ key, since, healsAt?, treated?, aided? }].
 // No DOM here — engine.js applies them, ui.js and character.js show them.
 
-import { randInt, bumpStat } from './data.js';
+import { randInt, bumpStat, clampRes } from './data.js';
 import { makeChronicleEntry } from './state.js';
 
 // traits: change to the ruler's traits · rolls: every roll · army: rolls that need the sword
@@ -140,7 +140,7 @@ export function injure(state, spec, notes = []) {
     r.injuries.push({ key, since: state.turn, ...(def.heals ? { healsAt: state.turn + randInt(...def.heals) } : {}) });
   }
   for (const [k, v] of Object.entries(def.onset || {})) {
-    if (state.resources[k] !== undefined) state.resources[k] = Math.max(0, Math.min(100, state.resources[k] + v));
+    if (state.resources[k] !== undefined) state.resources[k] = clampRes(k, state.resources[k] + v);
   }
   notes.push({ text: `Zranění: ${def.name.toLowerCase()}${def.heals ? '' : ' (natrvalo)'}`, tone: 'neg' });
   bumpStat(state, 'injuries');

@@ -1,4 +1,4 @@
-import { SEASONS, TERRAIN_DEFS, NOBLE_HOUSES, PEASANT_HOME, clamp, randomName, randInt, tierTitle, bumpStat, TRAIT_DEFS, RESOURCE_DEFS, resourceLabel, grosLabel } from './data.js';
+import { SEASONS, TERRAIN_DEFS, NOBLE_HOUSES, PEASANT_HOME, clamp, randomName, randInt, tierTitle, bumpStat, TRAIT_DEFS, RESOURCE_DEFS, resourceLabel, grosLabel, clampRes } from './data.js';
 import { makeChronicleEntry, inheritTraits, promote } from './state.js';
 import { ageRealms, realmIncome, realmRulerLabel, realmTitle, REALMS } from './realms.js';
 import { THRONE_STEPS } from './events_throne.js';
@@ -212,7 +212,7 @@ export function applyEffects(state, effects) {
   if (!effects) return;
   for (const key of Object.keys(effects)) {
     if (state.resources[key] === undefined) continue;
-    state.resources[key] = clamp(state.resources[key] + effects[key]);
+    state.resources[key] = clampRes(key, state.resources[key] + effects[key]);
   }
 }
 
@@ -357,7 +357,7 @@ function applyQuirks(state) {
     if (!c || c.alive === false) continue;
     if (c.quirk === 'oddany') c.loyalty = Math.min(90, c.loyalty + 2);
     if (c.quirk === 'ctizadostivy' && r.prestige < 40) c.loyalty = clamp(c.loyalty - 3);
-    if (c.quirk === 'chamtivy') r.gold = clamp(r.gold - 2);
+    if (c.quirk === 'chamtivy') r.gold = clampRes('gold', r.gold - 2);
     if (c.quirk === 'zbozny') r.faith = clamp(r.faith + 2);
   }
   const h = state.heir;
@@ -1063,8 +1063,8 @@ function processPeasantEconomy(state) {
     foodIncome -= (free ? 2 : 5) + (nature === 'chamtivy' ? (free ? 0 : 2) : nature === 'spravedlivy' ? -1 : 0);
     goldIncome -= (free ? 3 : 1) + (nature === 'chamtivy' && free ? 1 : 0);
   }
-  r.gold = clamp(r.gold + goldIncome);
-  r.food = clamp(r.food + foodIncome);
+  r.gold = clampRes('gold', r.gold + goldIncome);
+  r.food = clampRes('food', r.food + foodIncome);
   if (r.army < 15 && state.turn % 2 === 0) r.stability = clamp(r.stability - 1); // too few hands for the fields
   else if (r.food >= 20 && r.favor >= 40 && r.stability < 65 && state.turn % 2 === 1) r.stability = clamp(r.stability + 1);
   if (r.food <= 5) r.stability = clamp(r.stability - 3);
@@ -1089,8 +1089,8 @@ function processTurnEconomy(state) {
   const tierBonus = isNoble(state) && state.ruler.statusTier >= 4 ? 2 : 0;
   const goldIncome = (capable(state, 'chancellor') ? 1 : 0) + Math.round(totalWealth / goldDiv) - Math.round(state.resources.army / armyGoldDiv) - 1 + traitBonuses(state).gold + tierBonus;
   const foodIncome = Math.round(totalWealth / foodDiv) - Math.round(state.resources.army / armyFoodDiv) + SEASON_FOOD[state.seasonIndex];
-  state.resources.gold = clamp(state.resources.gold + goldIncome);
-  state.resources.food = clamp(state.resources.food + foodIncome);
+  state.resources.gold = clampRes('gold', state.resources.gold + goldIncome);
+  state.resources.food = clampRes('food', state.resources.food + foodIncome);
   // stability erodes only once the provinces are noticeably restless, and recovers under a legitimate ruler
   const held = lands.length || 1;
   const avgUnrest = totalUnrest / held - traitBonuses(state).calm;
@@ -1442,7 +1442,7 @@ export function advanceTurn(state) {
   const built = processBuilding(state); // finished work and what the towns' buildings yield
   const farm = processFarm(state); // the peasant's grain and animals (farm.js)
   const crowns = state.scenario === 'panovnik' ? realmIncome(state) : 0; // foreign crowns held by the king pay their dues
-  if (crowns) state.resources.gold = clamp(state.resources.gold + crowns);
+  if (crowns) state.resources.gold = clampRes('gold', state.resources.gold + crowns);
   const goldIncome = economy.goldIncome + built.gold + crowns + farm.gold;
   const foodIncome = economy.foodIncome + built.food + farm.food;
   let successionOccurred = false;

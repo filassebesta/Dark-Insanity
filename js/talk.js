@@ -4,7 +4,7 @@
 // rollParts); a cold relationship makes them harder. Talks change loyalty,
 // sometimes a trait, a resource or bring news. No DOM here — talk_ui.js draws it.
 
-import { clamp, bumpStat, TRAIT_DEFS } from './data.js';
+import { clamp, bumpStat, TRAIT_DEFS, clampRes } from './data.js';
 import { roleLabel, COURT_ROLES } from './court.js';
 import { personOf, marry, canConceive, conceiveChance, startPregnancy, isMarried, takeLover, loverCanConceive, loverConceiveChance, startLoverPregnancy } from './family.js';
 
@@ -271,7 +271,7 @@ export function holdTalk(state, role, key, success) {
   const res = success ? t.win : t.lose || t.win;
   const notes = [];
   const cost = t.cost ? t.cost(state) : null;
-  for (const [k, v] of Object.entries(cost || {})) state.resources[k] = clamp(state.resources[k] - v);
+  for (const [k, v] of Object.entries(cost || {})) state.resources[k] = clampRes(k, state.resources[k] - v);
   // a suitor's heart, a court member's loyalty
   let delta = res.loyalty || res.affection || 0;
   if (kindOf(role) === 'suitor') {
@@ -281,7 +281,7 @@ export function holdTalk(state, role, key, success) {
     if (res.lover) takeLover(state, idx);
     if (res.bastard) startLoverPregnancy(state, idx);
     if (res.endLover) c.lover = false;
-    for (const [k, v] of Object.entries(res.effects || {})) if (state.resources[k] !== undefined) state.resources[k] = clamp(state.resources[k] + v);
+    for (const [k, v] of Object.entries(res.effects || {})) if (state.resources[k] !== undefined) state.resources[k] = clampRes(k, state.resources[k] + v);
     const text = (success ? t.text[0] : t.text[1] || t.text[0])(c, state, role);
     c.talkTurn = state.turn;
     if (t.yearly) { c.topicYear = c.topicYear || {}; c.topicYear[key] = state.year; }
@@ -299,10 +299,10 @@ export function holdTalk(state, role, key, success) {
   // a promise to the ambitious is paid in loyalty now and remembered
   if (res.promise) { c.promised = state.turn; }
   c.loyalty = clamp(c.loyalty + delta);
-  for (const [k, v] of Object.entries(res.effects || {})) if (state.resources[k] !== undefined) state.resources[k] = clamp(state.resources[k] + v);
+  for (const [k, v] of Object.entries(res.effects || {})) if (state.resources[k] !== undefined) state.resources[k] = clampRes(k, state.resources[k] + v);
   if (res.advice) {
     const a = (state.scenario === 'sedlak' ? ADVICE_PEASANT : ADVICE)[role];
-    for (const [k, v] of Object.entries(a.effects)) if (state.resources[k] !== undefined) state.resources[k] = clamp(state.resources[k] + v);
+    for (const [k, v] of Object.entries(a.effects)) if (state.resources[k] !== undefined) state.resources[k] = clampRes(k, state.resources[k] + v);
     notes.push(...Object.entries(a.effects).map(([k, v]) => `${k}:${v}`));
   }
   if (res.teach) state.ruler.traits[TEACHES[role]] = Math.min(10, state.ruler.traits[TEACHES[role]] + 1);

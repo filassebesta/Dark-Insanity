@@ -1,4 +1,4 @@
-import { RESOURCE_DEFS, PROVINCE_TEMPLATES, NOBLE_HOUSES, NOBLE_HOME, PEASANT_HOME, randInt, randomName, clamp } from './data.js';
+import { RESOURCE_DEFS, PROVINCE_TEMPLATES, NOBLE_HOUSES, NOBLE_HOME, PEASANT_HOME, randInt, randomName, clamp, clampRes } from './data.js';
 import { QUIRK_ROLES, randomQuirk, biography } from './court.js';
 import { ensureRealms } from './realms.js';
 import { dropAmbition } from './ambitions.js';
@@ -236,7 +236,7 @@ export function ennoblePeasant(state) {
   if (farm) {
     const stock = farmWorth(state); // grain and animals go with it; the riding horse stays with its rider
     const worth = 5 + 3 * farm.buildings.filter((b) => b.ready && !b.base).length + 4 * Math.max(0, farm.level - 1) + stock;
-    state.resources.gold = clamp(state.resources.gold + worth);
+    state.resources.gold = clampRes('gold', state.resources.gold + worth);
     delete state.towns.grunt;
     farewell.push(`Grunt v Lipnici${stock ? ' i s dobytkem a obilím' : ''} koupil soused za ${worth} zlatých.`);
   }
@@ -244,7 +244,7 @@ export function ennoblePeasant(state) {
   // the usurer in Brodná does not forget a debtor just because he now has a coat of arms
   if (state.flags.s_dluh) {
     delete state.flags.s_dluh;
-    state.resources.gold = clamp(state.resources.gold - 20);
+    state.resources.gold = clampRes('gold', state.resources.gold - 20);
     farewell.push('Lichvář z Brodné si dluh vybral hned při podpisu listiny.');
   }
   state.gameOver = null;
@@ -260,8 +260,8 @@ export function crownNoble(state) {
   state.ruler.reignStartTurn = state.turn;
   delete state.resources.favor;
   state.resources.legitimacy = Math.max(state.resources.legitimacy, 55);
-  state.resources.army = clamp(state.resources.army + 25);
-  state.resources.gold = clamp(state.resources.gold + 20);
+  state.resources.army = clampRes('army', state.resources.army + 25);
+  state.resources.gold = clampRes('gold', state.resources.gold + 20);
   for (const p of state.provinces) {
     const house = (state.houses || []).find((h) => h.id === p.owner);
     if (p.owner !== 'player') {

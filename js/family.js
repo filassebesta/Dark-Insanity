@@ -14,7 +14,7 @@
 // state.children = [{ role: 'child', name, gender, age, traits, loyalty, alive }]
 // state.pregnancy = { due }   ·   No DOM here.
 
-import { clamp, randInt, randomName, NOBLE_HOUSES, pickRandom } from './data.js';
+import { clamp, randInt, randomName, NOBLE_HOUSES, pickRandom, clampRes } from './data.js';
 import { randomQuirk } from './court.js';
 import { makeChronicleEntry, inheritTraits } from './state.js';
 
@@ -140,7 +140,7 @@ export function marry(state, i, { arranged = false } = {}) {
     loyalty: clamp(55 + Math.round(s.affection / 4)), quirk: s.quirk, traits: s.traits, portrait: s.portrait,
     bio: `${s.kindLabel[0].toUpperCase()}${s.kindLabel.slice(1)}. ${s.bio} ${arranged ? 'Sňatek domluvil dohazovač; láska se teprve ukáže.' : 'Svatba z lásky, ne z povinnosti.'}`,
   };
-  for (const [k, v] of Object.entries(s.dowry || {})) if (state.resources[k] !== undefined) state.resources[k] = clamp(state.resources[k] + v);
+  for (const [k, v] of Object.entries(s.dowry || {})) if (state.resources[k] !== undefined) state.resources[k] = clampRes(k, state.resources[k] + v);
   if (s.house) {
     const h = state.houses.find((x) => x.id === s.house);
     if (h) { h.attitude = clamp(h.attitude + 20); h.married = true; }
