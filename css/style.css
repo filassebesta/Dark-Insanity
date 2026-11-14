@@ -337,7 +337,7 @@ kbd {
   cursor: default;
 }
 .resource-chip .icon { color: var(--chip-color, var(--gold)); display: inline-flex; }
-.resource-chip .value { font-weight: 600; min-width: 1.6em; font-variant-numeric: tabular-nums; }
+.resource-chip .value { font-weight: 600; min-width: 2.4em; font-variant-numeric: tabular-nums; }
 .resource-chip.flash-pos { animation: flashPos .9s ease; }
 .resource-chip.flash-neg { animation: flashNeg .9s ease; }
 @keyframes flashPos { 0% { color: #b9dc8f; transform: translateY(-2px) scale(1.15); } 100% { color: var(--paper); transform: none; } }

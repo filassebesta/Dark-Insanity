@@ -8,7 +8,7 @@
 // a given load by a deadline; the king's and the lord's are obligations.
 // No DOM here — map.js draws it, engine.js runs it every season.
 
-import { clamp, randInt, bumpStat, grosLabel } from './data.js';
+import { clamp, randInt, bumpStat, grosLabel, clampRes } from './data.js';
 import { makeChronicleEntry } from './state.js';
 
 export const GOODS = {
@@ -171,7 +171,7 @@ export function sellAtHome(state, good, qty) {
   if (qty <= 0) return null;
   const gold = qty * price(state, 'brod', good);
   t.stock[good] -= qty;
-  state.resources.gold = clamp(state.resources.gold + gold);
+  state.resources.gold = clampRes('gold', state.resources.gold + gold);
   return `Prodáno ${loadText(qty, good)} za ${state.scenario === 'sedlak' ? grosLabel(gold) : `${gold} zlata`}.`;
 }
 
@@ -179,7 +179,7 @@ export function buyAtHome(state, good, qty, dest = 'brod') {
   const t = ensureTrade(state);
   const cost = qty * price(state, dest, good, 'buy');
   if (!cost || state.resources.gold < cost || t.stock[good] + qty > MAX_STOCK) return null;
-  state.resources.gold = clamp(state.resources.gold - cost);
+  state.resources.gold = clampRes('gold', state.resources.gold - cost);
   t.stock[good] += qty;
   return `Koupeno ${loadText(qty, good)} za ${cost}.`;
 }
@@ -189,13 +189,13 @@ export function convertFood(state, toGrain) {
   const t = ensureTrade(state);
   if (toGrain) {
     if (state.resources.food < 6 || t.stock.grain >= MAX_STOCK) return null;
-    state.resources.food = clamp(state.resources.food - 6);
+    state.resources.food = clampRes('food', state.resources.food - 6);
     t.stock.grain += 1;
     return 'Z vlastních zásob se nachystal vůz obilí na prodej.';
   }
   if (t.stock.grain < 1) return null;
   t.stock.grain -= 1;
-  state.resources.food = clamp(state.resources.food + 4);
+  state.resources.food = clampRes('food', state.resources.food + 4);
   return 'Vůz obilí se vrátil do sýpek.';
 }
 
@@ -222,8 +222,8 @@ export function sendCaravan(state, dest, good, qty, escort) {
   const t = ensureTrade(state);
   const m = MARKETS[dest];
   const fee = caravanFee(state, dest, qty) + (escort ? 1 : 0);
-  state.resources.gold = clamp(state.resources.gold - fee);
-  if (escort) state.resources.army = clamp(state.resources.army - ESCORT_ARMY);
+  state.resources.gold = clampRes('gold', state.resources.gold - fee);
+  if (escort) state.resources.army = clampRes('army', state.resources.army - ESCORT_ARMY);
   t.stock[good] -= qty;
   const contract = t.contracts.find((c) => c.dest === dest && c.good === good && c.qty <= qty && !c.taken);
   if (contract) contract.taken = true;
@@ -271,10 +271,10 @@ function deliver(state, caravan, news) {
   if (gold >= 15) {
     state.resources.prestige = clamp(state.resources.prestige + 1);
   }
-  state.resources.gold = clamp(state.resources.gold + gold);
+  state.resources.gold = clampRes('gold', state.resources.gold + gold);
   bumpStat(state, 'delivered');
   bumpStat(state, 'tradeGold', gold);
-  if (caravan.escort) state.resources.army = clamp(state.resources.army + ESCORT_ARMY);
+  if (caravan.escort) state.resources.army = clampRes('army', state.resources.army + ESCORT_ARMY);
   t.caravans = t.caravans.filter((c) => c.id !== caravan.id);
   const coin = state.scenario === 'sedlak' ? 'grošů' : 'zlata';
   const text = `${caravan.sea ? 'Loď' : 'Karavana'} se vrátila ${m.from}: ${loadText(caravan.qty, caravan.good)}${contract ? ' (zakázka)' : ''} vyneslo ${gold} ${coin}${extras.length ? `, ${extras.join(', ')}` : ''}.`;
@@ -290,7 +290,7 @@ export function resolveIncident(state, kind, notes) {
   if (!caravan) return;
   const news = [];
   if (kind === 'ransom') {
-    state.resources.gold = clamp(state.resources.gold - ctx.ransom);
+    state.resources.gold = clampRes('gold', state.resources.gold - ctx.ransom);
     deliver(state, caravan, news);
   } else if (kind === 'deliver') {
     deliver(state, caravan, news);
@@ -299,7 +299,7 @@ export function resolveIncident(state, kind, notes) {
     const contract = t.contracts.find((c) => c.id === caravan.contract);
     if (contract) contract.taken = false; // the order still stands, if there is time to send another load
     log(state, `Náklad ${loadText(caravan.qty, caravan.good)} je ztracen${caravan.escort ? ', doprovod se vrátil s prázdnou' : ''}.`);
-    if (caravan.escort) state.resources.army = clamp(state.resources.army + ESCORT_ARMY - 2);
+    if (caravan.escort) state.resources.army = clampRes('army', state.resources.army + ESCORT_ARMY - 2);
     notes.push({ text: `Ztraceno: ${loadText(caravan.qty, caravan.good)}`, tone: 'neg' });
   }
   for (const n of news) notes.push({ text: n.replace(/^.*?: /, ''), tone: 'pos' });
@@ -314,7 +314,7 @@ export function resolveOffer(state, mult, notes) {
   const qty = Math.min(ctx.qty, t.stock[ctx.good]);
   const gold = Math.round(ctx.offer * mult * (qty / ctx.qty));
   t.stock[ctx.good] -= qty;
-  state.resources.gold = clamp(state.resources.gold + gold);
+  state.resources.gold = clampRes('gold', state.resources.gold + gold);
   notes.push({ text: `Prodáno ${loadText(qty, ctx.good)} za ${state.scenario === 'sedlak' ? grosLabel(gold) : `${gold} zlata`}`, tone: 'pos' });
   state.tradeCtx = null;
 }

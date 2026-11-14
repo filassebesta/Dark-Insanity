@@ -8,7 +8,7 @@
 // state.war = { target, power, start, morale, progress, leader, arrive, seasons, log }
 // state.tributes = [{ from, gold, until }]   ·   No DOM here.
 
-import { clamp, bumpStat, NOBLE_HOUSES } from './data.js';
+import { clamp, bumpStat, NOBLE_HOUSES, clampRes } from './data.js';
 import { makeChronicleEntry } from './state.js';
 import { injure } from './injuries.js';
 import { roleLabel } from './court.js';
@@ -143,7 +143,7 @@ export function startWar(state, key, size, leader = 'marshal') {
   if (why) return { error: why };
   const t = warTargets(state)[key];
   const men = SIZES[size];
-  state.resources.army = clamp(state.resources.army - men);
+  state.resources.army = clampRes('army', state.resources.army - men);
   state.war = {
     target: key, power: men, start: state.turn, morale: leader === 'ruler' ? 70 : 60, progress: 0,
     leader: leader === 'ruler' ? 'ruler' : 'marshal', arrive: state.turn + t.march, seasons: 0, log: [],
@@ -253,7 +253,7 @@ export function processWar(state) {
   const news = [];
   // tributes from beaten enemies
   if (state.tributes && state.tributes.length) {
-    for (const t of state.tributes) state.resources.gold = clamp(state.resources.gold + t.gold);
+    for (const t of state.tributes) state.resources.gold = clampRes('gold', state.resources.gold + t.gold);
     const ended = state.tributes.filter((t) => t.until <= state.turn);
     for (const t of ended) news.push(`Poslední tribut ${t.from} dorazil. Další už nepřijde.`);
     state.tributes = state.tributes.filter((t) => t.until > state.turn);
@@ -266,7 +266,7 @@ export function processWar(state) {
   w.seasons += 1;
   // the army eats; a hungry army loses heart
   const eat = Math.ceil(w.power / 8);
-  if (state.resources.food >= eat) state.resources.food = clamp(state.resources.food - eat);
+  if (state.resources.food >= eat) state.resources.food = clampRes('food', state.resources.food - eat);
   else { state.resources.food = 0; w.morale = Math.max(0, w.morale - 12); news.push('Vojsku v poli došly zásoby. Morálka padá.'); }
   if (w.seasons > 4) w.morale = Math.max(0, w.morale - 3); // long wars wear men down
   if (state.seasonIndex === 3) {
@@ -322,7 +322,7 @@ function endWar(state, how, news) {
   const f = state.ruler.gender === 'female';
   const back = Math.max(0, w.power);
   state.lastWar = { ...warTokens(state), 'war.men': String(back) };
-  state.resources.army = clamp(state.resources.army + back);
+  state.resources.army = clampRes('army', state.resources.army + back);
   state.war = null;
   state.warNext = state.turn + WAR_GAP;
   if (t.rebellion && !t.gone) return endRebellion(state, how, back, news);
@@ -336,7 +336,7 @@ function endWar(state, how, news) {
   } else if (how === 'peace') {
     text = t.gone ? 'Tažení skončilo: o co se bojovalo, to už není třeba dobývat.' : `Mír s nepřítelem (${t.name}). Vojsko se vrací domů s výkupným a ${back} muži.`;
     if (!t.gone) {
-      state.resources.gold = clamp(state.resources.gold + 10);
+      state.resources.gold = clampRes('gold', state.resources.gold + 10);
       state.resources.prestige = clamp(state.resources.prestige + 2);
     }
   } else if (how === 'retreat') {
@@ -382,7 +382,7 @@ function endRebellion(state, how, back, news) {
 
 function winWar(state, key, t, back) {
   const r = state.resources;
-  const add = (k, v) => { if (r[k] !== undefined) r[k] = clamp(r[k] + v); };
+  const add = (k, v) => { if (r[k] !== undefined) r[k] = clampRes(k, r[k] + v); };
   if (t.province && !t.house) {
     const p = state.provinces.find((x) => x.id === t.province);
     if (p) Object.assign(p, { lost: false, loyalty: 35, unrest: 50, garrison: 30 });

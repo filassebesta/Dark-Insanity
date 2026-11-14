@@ -114,6 +114,16 @@ export function yearsLabel(n) {
   return `${n} let`;
 }
 
+/**
+ * Stock resources can grow past 100 (a full treasury, a big granary, a large host); the rest are gauges of 0–100.
+ */
+export const RESOURCE_CAP = { gold: 999, food: 999, army: 250 };
+
+/** Clamps a resource value to its own ceiling: clampRes('gold', 340) stays 340, clampRes('faith', 140) is 100. */
+export function clampRes(key, value) {
+  return Math.max(0, Math.min(RESOURCE_CAP[key] ?? 100, value));
+}
+
 export function clamp(value, min = 0, max = 100) {
   return Math.max(min, Math.min(max, Math.round(value)));
 }

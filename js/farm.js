@@ -6,7 +6,7 @@
 // Every season engine.js calls processFarm. No DOM here.
 // state.farm = { grain, cows, horses, pigs }, created lazily (old saves work).
 
-import { clamp, randInt } from './data.js';
+import { clamp, randInt, clampRes } from './data.js';
 
 const FARM_TOWN = 'grunt';
 
@@ -128,7 +128,7 @@ export function buyBlock(state, key) {
 export function buyStock(state, key) {
   const why = buyBlock(state, key);
   if (why) return { error: why };
-  state.resources.gold = clamp(state.resources.gold - STOCK[key].buy);
+  state.resources.gold = clampRes('gold', state.resources.gold - STOCK[key].buy);
   addStock(state, key, 1);
   return { message: `${STOCK[key].bought} za ${coins(STOCK[key].buy)}.` };
 }
@@ -146,7 +146,7 @@ export function sellStock(state, key) {
   const s = STOCK[key];
   const rider = key === 'horses' && state.farm.horses === 1 && state.gear && state.gear.horse === 'kun';
   addStock(state, key, -1);
-  state.resources.gold = clamp(state.resources.gold + s.sell);
+  state.resources.gold = clampRes('gold', state.resources.gold + s.sell);
   return { message: `${s.sold} (+${coins(s.sell)}).${rider ? ' S ním odešel i tvůj jezdecký kůň.' : ''}` };
 }
 
@@ -155,7 +155,7 @@ export function grindGrain(state) {
   const f = ensureFarm(state);
   if (!f || f.grain <= 0) return { error: 'Ve stodole není obilí.' };
   f.grain -= 1;
-  state.resources.food = clamp(state.resources.food + FLOUR);
+  state.resources.food = clampRes('food', state.resources.food + FLOUR);
   return { message: `Pytel obilí se semlel na mouku (zásoby +${FLOUR}).` };
 }
 
@@ -171,7 +171,7 @@ export function processFarm(state) {
   const r = state.resources;
   const addFood = (n) => {
     const before = r.food;
-    r.food = clamp(r.food + n);
+    r.food = clampRes('food', r.food + n);
     out.food += r.food - before;
   };
   // the mill keeps its toll every season; horses plough in spring and haul the harvest in autumn
