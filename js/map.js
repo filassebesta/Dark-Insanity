@@ -8,7 +8,7 @@ import {
   GOODS, MARKETS, maxStock, ESCORT_ARMY, ensureTrade, routeFor, originPoint, marketAccess, price, riskOf,
   caravanFee, canSend, sendCaravan, sellAtHome, buyAtHome, convertFood, loadText, trendOf, bestMarket, marketWants,
   buyMargin, planEstimate, sortedContracts, contractStatus, seasonsLeftText, fulfillContract, sellAllAtHome, coinName,
-  reservedFor,
+  reservedFor, priceSeries,
 } from './trade.js';
 import { esc } from './ui.js';
 import {
@@ -548,6 +548,52 @@ function contractList(filterDest) {
   }).join('')}</ul>`;
 }
 
+const CHART_SPANS = [{ n: 4, label: '1 rok' }, { n: 8, label: '2 roky' }, { n: 20, label: '5 let' }, { n: 40, label: '10 let' }];
+const CHART_COLORS = { brod: '#7a5a2b', court: '#7a2418', manor: '#7a2418', east: '#2f5d8a', south: '#4f7d3a', north: '#6a4a8a' };
+
+/** Price chart: pick the good and the period; one line per market that buys it. */
+function priceChart() {
+  const t = ensureTrade(state);
+  t.chart = t.chart || { good: 'grain', span: 8 };
+  if (!GOODS[t.chart.good]) t.chart.good = 'grain';
+  const { entries, series } = priceSeries(state, t.chart.good, t.chart.span);
+  const goodChips = Object.entries(GOODS).map(([g, def]) => `<button class="trade-chip${g === t.chart.good ? ' on' : ''}" data-trade="chart-good" data-good="${g}">${esc(def.name)}</button>`).join('');
+  const spanChips = CHART_SPANS.map((s) => `<button class="trade-chip${s.n === t.chart.span ? ' on' : ''}" data-trade="chart-span" data-n="${s.n}">${s.label}</button>`).join('');
+  const have = entries.length;
+  let body;
+  if (have < 2 || !series.length) {
+    body = `<p class="map-desc">${series.length ? 'Obchodní kniha se teprve plní — graf se objeví po příštím období.' : 'Tohle zboží teď nemá kam prodat.'}</p>`;
+  } else {
+    const W = 296, H = 138, L = 30, R = 8, T = 10, B = 24;
+    const all = series.flatMap((s) => s.values);
+    let lo = Math.floor(Math.min(...all)), hi = Math.ceil(Math.max(...all));
+    if (hi - lo < 2) hi = lo + 2;
+    const xs = (i) => L + (i * (W - L - R)) / (have - 1);
+    const ys = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+    const grid = [lo, Math.round((lo + hi) / 2), hi].map((v) => `<line class="pc-grid" x1="${L}" x2="${W - R}" y1="${ys(v)}" y2="${ys(v)}"/><text class="pc-ytick" x="${L - 4}" y="${ys(v) + 3}">${v}</text>`).join('');
+    // a tick at every spring (the year changes), or every few seasons when the view is short
+    const ticks = entries.map((e, i) => (e.season === 0 || i === 0 ? `<line class="pc-tick" x1="${xs(i)}" x2="${xs(i)}" y1="${H - B}" y2="${H - B + 4}"/><text class="pc-xtick" x="${xs(i)}" y="${H - 6}">rok ${e.year}</text>` : '')).join('');
+    const lines = series.map((s) => {
+      const c = CHART_COLORS[s.dest] || '#555';
+      const pts = s.values.map((v, i) => `${xs(i).toFixed(1)},${ys(v).toFixed(1)}`).join(' ');
+      return `<polyline class="pc-line" points="${pts}" stroke="${c}"/><circle class="pc-dot" cx="${xs(have - 1).toFixed(1)}" cy="${ys(s.now).toFixed(1)}" r="3.2" fill="${c}"/>`;
+    }).join('');
+    const legend = series.map((s) => {
+      const c = CHART_COLORS[s.dest] || '#555';
+      const d = Math.round(s.delta * 10) / 10;
+      const cls = d >= 0.5 ? 'up' : d <= -0.5 ? 'down' : 'flat';
+      return `<li data-goto-market="${s.dest}"><i style="background:${c}"></i><b>${esc(s.short)}</b><span>${s.now.toFixed(1)}</span><em class="tr ${cls}">${d >= 0.5 ? '↑' : d <= -0.5 ? '↓' : '→'} ${d > 0 ? '+' : ''}${d.toFixed(1)} proti průměru</em><small>${s.min.toFixed(1)}–${s.max.toFixed(1)}</small></li>`;
+    }).join('');
+    body = `<svg class="price-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Vývoj ceny za posledních ${have} období">${grid}${ticks}${lines}</svg>
+      <ul class="pc-legend">${legend}</ul>
+      <p class="pc-note">Cena za vůz v ${esc(coinName(state))}, ${have < t.chart.span ? `zatím za ${have} období` : `posledních ${have} období`}. Čísla vpravo: rozpětí v období.</p>`;
+  }
+  return `<h4 class="map-sub">Vývoj cen <small>· za poslední dobu</small></h4>
+    <div class="trade-goods pc-chips">${goodChips}</div>
+    <div class="trade-goods pc-chips">${spanChips}</div>
+    ${body}`;
+}
+
 function showTradeOverview() {
   const t = ensureTrade(state);
   sidebar(`
@@ -557,6 +603,7 @@ function showTradeOverview() {
     <h4 class="map-sub">Sklad <small>· nejvýš ${maxStock(state)} vozů od každého${maxStock(state) > 20 ? ` (stavby +${maxStock(state) - 20})` : ''}</small></h4>
     <div class="trade-stock">${stockRows()}</div>
     <div class="trade-bulk"><button class="trade-mini" data-trade="sell-all"${Object.keys(GOODS).some((g) => ensureTrade(state).stock[g] > reservedFor(state, g)) ? '' : ' disabled'} title="V Brodu, ale zboží slíbené povinným zakázkám zůstane ve skladu">Prodat vše v Brodu</button></div>
+    ${priceChart()}
     <h4 class="map-sub">Na cestě</h4>
     ${t.caravans.length ? `<ul class="trade-caravans">${t.caravans.map((c) => `
       <li data-goto-market="${c.dest}"><b>${c.sea ? 'Loď' : 'Karavana'} · ${esc(loadText(c.qty, c.good))}</b><span>${esc(MARKETS[c.dest].to)}${c.escort ? ' · s doprovodem' : ''} · ${c.held ? '<em class="bad">přepadena!</em>' : `návrat ${etaText(c.arrive)}`}</span></li>`).join('')}</ul>`
@@ -698,6 +745,8 @@ function handleTrade(btn) {
   else if (kind === 'qty') tradeForm.qty = Math.max(1, Math.min(10, tradeForm.qty + Number(btn.dataset.n)));
   else if (kind === 'qty-max') tradeForm.qty = Math.min(10, t.stock[tradeForm.good]) || 1;
   else if (kind === 'escort') tradeForm.escort = !tradeForm.escort;
+  else if (kind === 'chart-good') { t.chart = { ...(t.chart || { span: 8 }), good: btn.dataset.good }; showTradeOverview(); return; }
+  else if (kind === 'chart-span') { t.chart = { ...(t.chart || { good: 'grain' }), span: Number(btn.dataset.n) }; showTradeOverview(); return; }
   else if (kind === 'sell-all') message = sellAllAtHome(state) || 'Není co prodat.';
   else if (kind === 'fulfill') {
     const res = fulfillContract(state, Number(btn.dataset.id));
