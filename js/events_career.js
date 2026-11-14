@@ -221,7 +221,7 @@ export const CAREER_EVENTS = [
     scenario: 'sedlak', forced: true, free: true,
     image: 'assets/events/doziny.jpg',
     title: 'Svobodní',
-    text: 'V truhle leží listina s panskou pečetí a v ní stojí, že rod {dynastyName} už nikomu nepatří. Roboty je konec; dávky se platí v penězích a kdo chce, může jít, kam ho nohy nesou. Ve vsi se na tebe dívají jinak — jedni s obdivem, druzí se závistí. A {lord.title} {lord.name} si dobře pamatuje, že jsi {L:mu|jí} {R:utekl|utekla} z ruky.',
+    text: 'V truhle leží listina s pečetí a v ní stojí, že rod {dynastyName} už nikomu nepatří. Roboty je konec; dávky se platí v penězích a kdo chce, může jít, kam ho nohy nesou. Ve vsi se na tebe dívají jinak — jedni s obdivem, druzí se závistí. A {lord.title} {lord.name} si dobře pamatuje, že jsi {L:mu|jí} {R:utekl|utekla} z ruky.',
     choices: [
       {
         label: 'Uspořádat hostinu pro celou ves',
