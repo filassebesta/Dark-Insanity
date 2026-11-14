@@ -15,6 +15,8 @@ import { checkAchievements } from './achievements.js';
 import { openRoll, openCombat } from './dice_ui.js';
 import { wireTalk } from './talk_ui.js';
 import { makeHeir } from './family.js';
+import { renderContractBar } from './contract_bar.js';
+import { fulfillContract, takeTradeAlerts } from './trade.js';
 import { renderAmbitionBar, renderWarBar, renderHall, renderEndingAchievements, announceAchievement } from './fame.js';
 
 let currentState = null;
@@ -38,6 +40,7 @@ function refreshAllPanels(bumpedTrait = null) {
   renderHousesPanel(currentState);
   renderAmbitionBar(currentState);
   renderWarBar(currentState);
+  renderContractBar(currentState);
 }
 
 // achievements earned by what just happened go to the Hall of Fame
@@ -153,6 +156,7 @@ function runNextTurn() {
 
   renderTurnSummary(result.turnSummary);
   renderTradeNews(result.tradeNews);
+  takeTradeAlerts(currentState).forEach((line, i) => setTimeout(() => toast(line), 600 + i * 700));
 
   // the season is saved with its open event, so "Pokračovat" brings back the same card
   if (result.event && result.event.type !== 'route') {
@@ -531,6 +535,38 @@ document.addEventListener('kingdom:trade', (e) => {
   if (e.detail.message) toast(e.detail.message);
 });
 
+// the strip of mandatory contracts: a card opens the trade map on its market, "Splnit" sends the wagons
+function wireContractBar() {
+  const bar = document.getElementById('contract-bar');
+  if (!bar) return;
+  const open = (market) => { if (currentState) openMap(currentState, { layer: 'trade', market }); };
+  bar.addEventListener('click', (e) => {
+    if (!currentState) return;
+    const go = e.target.closest('[data-ctb-fulfill]');
+    if (go) {
+      e.stopPropagation();
+      const res = fulfillContract(currentState, Number(go.dataset.ctbFulfill));
+      if (!res.error) saveGame(currentState);
+      refreshAllPanels();
+      toast(res.error || res.message);
+      return;
+    }
+    if (e.target.closest('[data-ctb-brod]')) { open('brod'); return; }
+    const card = e.target.closest('[data-ctb-open]');
+    if (card) {
+      const c = (currentState.trade?.contracts || []).find((x) => String(x.id) === card.dataset.ctbOpen);
+      if (c) open(c.dest);
+    }
+  });
+  bar.addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-ctb-open]')) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.target.click();
+    }
+  });
+}
+
 // a campaign started or recalled on the map
 document.addEventListener('kingdom:war', (e) => {
   if (!currentState) return;
@@ -572,6 +608,7 @@ document.addEventListener('kingdom:talk', (e) => {
 
 wireActions();
 wireMapChrome();
+wireContractBar();
 wireTalk();
 wireKeyboard();
 wireMenuAmbience();
