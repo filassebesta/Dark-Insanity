@@ -1889,3 +1889,6 @@ body.has-contract-bar .toast-container { top: 14.5rem; }
 .trade-btns { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .1rem; }
 .trade-btns .trade-mini { margin: .1rem 0 .1rem .2rem; }
 .trade-table td:first-child { white-space: normal; }
+.talk-topic.armed { border-color: #a8452f; background: rgba(168,69,47,.16); } .talk-topic.armed span { color: #a8452f; font-weight: 600; }
+#person-sheet .talk-topic.armed { background: rgba(168,69,47,.14); border-color: #a8452f; }
+#person-sheet .talk-topic.armed span { color: #a8452f; }

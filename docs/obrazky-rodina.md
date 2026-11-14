@@ -13,6 +13,7 @@ Portréty nápadnic a nápadníků (po svatbě se stanou tváří manžela/ky), 
 | ✅ | R5 | Významný šlechtic | 12 | události velmože |
 | ⏳ | R6 | Nápadnice a nápadníci šlechtice a krále | 16 | námluvy ve vyšších stupních |
 | ✅ | R7 | Další ženy na výběr (všechny stupně) | 7 | galerie žen v listu postavy |
+| ⏳ | R8 | Dospělé děti a sourozenci (od 17 let) | 8 | Rodina, Dvůr, list postavy |
 
 **Dávka R2 je kompletní:** devět scén z první dodávky (názvy byly poprohazované, roztříděno podle obsahu) a tři z doobjednávky R2b.
 
@@ -312,4 +313,42 @@ suitor_slechtic_4_female.jpg — A young widow of a minor knight, about 26: dark
 suitor_slechtic_5_female.jpg — A castle burgrave's daughter, about 20: practical riding cloak over a green gown, dark hair tied back, a sharp confident gaze.
 suitor_panovnik_4_female.jpg — A witty lady of the royal court, about 24: rich wine-red gown with fur trim, elaborate braided hair with pearls, an amused, slightly dangerous smile.
 suitor_panovnik_5_female.jpg — An archbishop's niece, about 21: modest grey-blue silk gown, a delicate gold cross, light hair under a fine veil, demure look with a curious spark.
+```
+
+---
+
+## Dávka R8 — Dospělé děti a sourozenci od 17 let (4:5, 8 ks)
+
+Dítě, sourozenec nebo levoboček má do 16 let portrét dítěte či dospívajícího. Od 17 let hra bere
+dospělý obličej `adult_<s|n>_<male|female>_<0|1>` (s = selský, n = šlechtický a královský; dvě varianty,
+vybírá se podle jména, ať si sourozenci nejsou podobní). Než jsou namalované, zastupuje je jiný dospělý portrét.
+
+```
+Generate one separate image for each line below. Each line has a file name
+and a description. Return every image as its own file named exactly as the
+file name. Do not combine images into a grid or sprite sheet.
+
+Format: aspect ratio 4:5, 1024 x 1280. A waist-up portrait, the face in the
+upper third, looking slightly past the viewer, plain dark background with a
+soft warm glow behind the head. Every person must look clearly different
+from the others (face, hair, build, clothing). Young adults, 18 to 24 years
+old, fully clothed, historically accurate dress.
+
+Style for every image: painted in the style of a dark-fantasy narrative RPG,
+muted oil painting with visible loose brushwork and subtle canvas texture,
+desaturated earthy palette of ochre, rust, olive green and dusty slate blue,
+soft chiaroscuro lighting, late-medieval Central European (Bohemian)
+setting of the 14th century, realistic proportions. Avoid: anime, cartoon,
+3D render, photography, oversaturated colours, airbrushed digital art, any
+text, letters, watermark or signature.
+
+Images:
+adult_s_male_0.jpg — A young peasant man, about 20: coarse linen shirt and wool jerkin, sun-browned skin, short brown hair, strong hands, an honest tired look.
+adult_s_male_1.jpg — A young peasant man, about 22: patched tunic, rope belt, lean face with a light stubble, fair hair, a cautious half-smile.
+adult_s_female_0.jpg — A young peasant woman, about 19: plain wool dress, sleeves rolled, a braid over one shoulder, freckles, a steady, hard-working gaze.
+adult_s_female_1.jpg — A young peasant woman, about 21: linen dress with a dark apron, hair under a simple kerchief, rosy weathered cheeks, a quick sharp smile.
+adult_n_male_0.jpg — A young nobleman, about 20: fine dark doublet with a small fur collar, a thin circlet-free head, short dark hair, proud but still unsure.
+adult_n_male_1.jpg — A young nobleman, about 23: deep green velvet coat, a signet ring, light brown hair to the shoulders, a calm clever face.
+adult_n_female_0.jpg — A young noblewoman, about 19: wine-red gown with a modest neckline, dark braided hair with a thin silver band, a composed gaze.
+adult_n_female_1.jpg — A young noblewoman, about 22: dusty blue gown with fine embroidery, light hair under a sheer veil, a quiet, watchful look.
 ```
