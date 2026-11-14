@@ -79,7 +79,7 @@ export function warTargets(state) {
       out[`house:${h.id}`] = {
         name: `Soukromá válka: ${def.short}`, enemy: `družina ${def.gen}`, loc: `na panství ${def.gen}`,
         strength: 0.6 + h.power / 140, march: 1, house: h.id, province: prov ? prov.id : null,
-        text: `Nájezd na ${prov ? `panství ${prov.name.replace(/ \(.*\)$/, '')}` : 'jejich panství'}. Kořist a oslabení soupeře — ale král soukromé války nevidí rád.`,
+        text: `Nájezd na ${def.hold ? `državu ${def.hold.name}` : prov ? `panství ${prov.name.replace(/ \(.*\)$/, '')}` : 'jejich panství'}. Kořist a oslabení soupeře — ale král soukromé války nevidí rád.`,
         reward: 'kořist, oslabení rodu; přízeň krále klesne',
       };
     }

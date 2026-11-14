@@ -17,6 +17,7 @@ import { readyToOffer, startAmbition, skipAmbition, settleAmbition, dropAmbition
 import { processWar, applyWarEffects, warTokens } from './war.js';
 import { processPrivileges, applyPrivilegeEffects, flushPrivilegeNews, privilegeTokens } from './privileges.js';
 import { empireTokens, empireGenders, processEmpire, empireYear, applyEmpireBranch, heldKeys } from './empire.js';
+import { ensureHouses, housesNeedMending, houseYear, addRel } from './houses.js';
 import { regencyTokens, startRegency, applyRegencyBranch, processRegency, regencyOn, childRuler, COMING_OF_AGE } from './regency.js';
 
 const TRAIT_MIN = 1;
@@ -30,6 +31,7 @@ export function interpolate(state, text) {
   const province = ctx.province && state.provinces.find((p) => p.id === ctx.province);
   const target = ctx.role && state[ctx.role];
   const house = ctx.house && houseOf(state, ctx.house);
+  const house2 = ctx.house2 && houseOf(state, ctx.house2); // a second house in the same story: {house2.gen}, {J:…|…}
   const king = state.king;
   const own = ownProvinces(state)[0];
   const dict = {
@@ -56,7 +58,16 @@ export function interpolate(state, text) {
       'house.name': house.def.name, 'house.gen': house.def.gen, 'house.short': house.def.short, // {house.gen}: "z rodu pánů z Bílé Brány"
       'house.head': house.head.name, 'house.headTitle': house.head.gender === 'female' ? 'paní' : 'pán',
       'house.HeadTitle': house.head.gender === 'female' ? 'Paní' : 'Pán',
-      'house.seat': state.provinces.find((p) => p.id === house.def.seat).name,
+      'house.seat': (house.def.hold && house.def.hold.name) || state.provinces.find((p) => p.id === house.def.seat).name,
+      'house.trait': house.def.trait,
+    });
+  }
+  if (house2) {
+    Object.assign(dict, {
+      'house2.name': house2.def.name, 'house2.gen': house2.def.gen, 'house2.short': house2.def.short,
+      'house2.head': house2.head.name, 'house2.headTitle': house2.head.gender === 'female' ? 'paní' : 'pán',
+      'house2.HeadTitle': house2.head.gender === 'female' ? 'Paní' : 'Pán',
+      'house2.seat': (house2.def.hold && house2.def.hold.name) || state.provinces.find((p) => p.id === house2.def.seat).name,
     });
   }
   Object.assign(dict, cargoTokens(state));
@@ -136,7 +147,7 @@ export function interpolate(state, text) {
   }
   // gendered word forms: {R:přijel|přijela} follows the ruler, {H:...} the house head in context
   const genderOf = {
-    R: state.ruler.gender, H: house ? house.head.gender : 'male',
+    R: state.ruler.gender, H: house ? house.head.gender : 'male', J: house2 ? house2.head.gender : 'male',
     T: target ? target.gender : 'male', D: state.heir ? state.heir.gender : 'male',
     L: lord ? lord.gender : 'male', M: state.spouse ? state.spouse.gender : 'male',
     K: king ? king.gender : 'male', F: state.formerKing ? state.formerKing.gender : 'male',
@@ -151,7 +162,7 @@ export function interpolate(state, text) {
     ...empireGenders(state),
   };
   return text
-    .replace(/\{([RHTDLMKFCPBENSQVYGUWXZ]):([^|{}]*)\|([^|{}]*)\}/g, (m, who, male, female) => (genderOf[who] === 'female' ? female : male))
+    .replace(/\{([RHJTDLMKFCPBENSQVYGUWXZ]):([^|{}]*)\|([^|{}]*)\}/g, (m, who, male, female) => (genderOf[who] === 'female' ? female : male))
     .replace(/\{([\w.]+)\}/g, (m, key) => (key in dict ? dict[key] : m));
 }
 
@@ -236,8 +247,9 @@ const PROVINCE_STAT_LABELS = { loyalty: 'věrnost', unrest: 'nepokoje', wealth: 
 function applyProvinceEffects(state, provinceEffects, notes) {
   if (!provinceEffects) return;
   for (const [key, fx] of Object.entries(provinceEffects)) {
+    const seatOf = () => { const d = NOBLE_HOUSES.find((x) => x.id === state.eventContext?.house); return d && d.seat; }; // 'seat' = the land of the house in the story
     const ids = (key === '*' || key === 'own') ? ownProvinces(state).map((p) => p.id)
-      : [key === 'target' ? state.eventContext?.province : key];
+      : [key === 'target' ? state.eventContext?.province : key === 'seat' ? seatOf() : key];
     for (const id of ids) {
       const prov = state.provinces.find((p) => p.id === id);
       if (!prov || prov.lost) continue;
@@ -388,7 +400,7 @@ function applyHouseEffects(state, houseEffects, notes) {
   for (const [key, fx] of Object.entries(houseEffects)) {
     const list = key === '*' ? state.houses
       : key === 'allies' ? state.houses.filter((h) => h.ally)
-        : state.houses.filter((h) => h.id === (key === 'target' ? state.eventContext?.house : key));
+        : state.houses.filter((h) => h.id === (key === 'target' ? state.eventContext?.house : key === 'target2' ? state.eventContext?.house2 : key));
     for (const h of list) {
       const short = NOBLE_HOUSES.find((d) => d.id === h.id).short;
       if (fx.attitude) {
@@ -408,6 +420,9 @@ function applyHouseEffects(state, houseEffects, notes) {
         state.flags.heir_married = true; // one heir, one marriage — in every stage
         notes.push({ text: `Sňatek s rodem: ${short}`, tone: 'pos' });
       }
+      if (fx.fief) { h.fief = true; notes.push({ text: `Léno pro rod: ${short}`, tone: 'pos' }); }
+      if (fx.rebel === true && !h.rebelPending) { h.rebelPending = true; queueEvent(state, 'h_v_vzpoura_rodu'); notes.push({ text: `${short}: hrozí vzpoura`, tone: 'neg' }); }
+      if (fx.rebel === false) h.rebelPending = false;
     }
   }
 }
@@ -485,6 +500,12 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
   const notes = [];
   const touched = {};
   applyHouseEffects(state, branch.houseEffects, notes);
+  // houseRel: how two houses of the story ({ house, house2 }) stand to each other after this
+  if (branch.houseRel && state.eventContext && state.eventContext.house && state.eventContext.house2) {
+    const { house: a, house2: b } = state.eventContext;
+    addRel(state, a, b, branch.houseRel);
+    notes.push({ text: `${NOBLE_HOUSES.find((d) => d.id === a).short} a ${NOBLE_HOUSES.find((d) => d.id === b).short}: vztah ${branch.houseRel > 0 ? '+' : ''}${branch.houseRel}`, tone: branch.houseRel > 0 ? 'pos' : 'neg' });
+  }
   applyNobleEffects(state, branch.noble, notes);
   // realm: { <key>: { attitude, power } } — how a foreign court takes what was done;
   // 'conquest' = the crown just taken, 'focus' = the held realm the event is about, 'held' = every held crown
@@ -1065,6 +1086,7 @@ export function pickNextEvent(state) {
 /** What an event is about: a settlement, a province, a house or a member of the court. */
 function setTargetContext(state, t) {
   if (!t) return;
+  if (typeof t === 'object') { state.eventContext = { ...t }; return; } // { house, house2 }: two houses in one story (houses.js pickPair)
   // 'town:<id>' = a settlement; its province counts as the event's province too
   if (typeof t === 'string' && t.startsWith('town:')) {
     const id = t.slice(5);
@@ -1511,6 +1533,7 @@ function processRegencyScenes(state) {
 // Advances one round (season). Returns { turnSummary, event, successionOccurred, gameOver }.
 export function advanceTurn(state) {
   ensureCourtData(state);
+  if (housesNeedMending(state)) ensureHouses(state); // houses added since the save was made
   state.turn += 1;
   state.seasonIndex = state.turn % SEASONS.length;
   if (state.seasonIndex === 0) state.year += 1;
@@ -1545,6 +1568,7 @@ export function advanceTurn(state) {
   }
 
   const worldNews = state.seasonIndex === 0 ? ageRealms(state) : []; // news from abroad: rulers die, crowns rise up
+  if (state.seasonIndex === 0 && state.houses) worldNews.push(...houseYear(state, (id) => queueEvent(state, id))); // the houses drift, give and sulk (houses.js)
   if (state.seasonIndex === 0) worldNews.push(...empireYear(state), ...processRegency(state)); // held crowns simmer, a regent's years go by
   // an empty granary stirs the lands up; say so before it shows in the stability
   if (!isPeasant(state) && state.resources.food < 20) worldNews.unshift(state.resources.food < 8
