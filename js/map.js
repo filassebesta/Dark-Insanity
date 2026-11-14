@@ -2,20 +2,20 @@
 // with clickable SVG overlays. Coordinates are pixels of the original
 // 1264x848 painting; zoom/pan works by animating the SVG viewBox.
 
-import { TERRAIN_DEFS, NOBLE_HOUSES, SEASONS } from './data.js';
+import { TERRAIN_DEFS, NOBLE_HOUSES, SEASONS, RESOURCE_DEFS, resourceLabel } from './data.js';
 import { attitudeLabel, interpolate } from './engine.js';
 import {
   GOODS, MARKETS, maxStock, ESCORT_ARMY, ensureTrade, routeFor, originPoint, marketAccess, price, riskOf,
   caravanFee, canSend, sendCaravan, sellAtHome, buyAtHome, convertFood, loadText, trendOf, bestMarket, marketWants,
-  buyMargin, planEstimate, sortedContracts, contractStatus, seasonsLeftText, fulfillContract, sellAllAtHome, coinName,
-  reservedFor, priceSeries, backEstimate,
+  buyMargin, planEstimate, sortedContracts, contractStatus, seasonsLeftText, fulfillContract, sellAllAtHome, coinName, THRESH_FOOD,
+  reservedFor, priceSeries, backEstimate, stockCap,
 } from './trade.js';
 import { esc } from './ui.js';
 import {
   PEASANT_VILLAGE, townIdFor, townOf, levelName, currentProject, ownsTown, startBuilding, startUpgrade, cancelProject, demolish,
 } from './build.js';
-import { renderTownPlan, townSidebar } from './town.js';
-import { buyStock, sellStock, grindGrain } from './farm.js';
+import { renderTownPlan, townSidebar, farmIcon } from './town.js';
+import { buyStock, sellStock, grindGrain, millGrain, ensureFarm, roomFor, countOf, eatFood, STOCK, ANIMALS, plural } from './farm.js';
 import { worldSvg, worldSidebar, WORLD_IMAGE } from './world.js';
 import {
   warTargets, warBlock, startWar, recallWar, warTarget, marchShare, warOrigin, oddsLabel, leaderLabel, SIZES,
@@ -526,7 +526,7 @@ function stockRows() {
           <button class="trade-mini" data-trade="best" data-good="${g}" title="${b.home ? 'Prodá vše hned v Brodu' : 'Otevře vypravení karavany na nejlepší trh'}${keep ? `, ${keep} vozů zůstane pro zakázky` : ''}">Prodat za nejlepší cenu</button></span>`;
       }
     }
-    return `<div class="trade-stock-row${n ? '' : ' empty'}"><span>${esc(def.name)}</span><div class="stat-bar"><div class="stat-bar-fill wealth" style="width:${(n / cap) * 100}%"></div></div><b>${n}</b>${best}</div>`;
+    return `<div class="trade-stock-row${n ? '' : ' empty'}"><span>${esc(def.name)}</span><div class="stat-bar"><div class="stat-bar-fill wealth" style="width:${Math.min(100, (n / stockCap(state, g)) * 100)}%"></div></div><b>${n}</b>${best}</div>`;
   }).join('');
 }
 
@@ -594,12 +594,87 @@ function priceChart() {
     ${body}`;
 }
 
+// ---------- "Přehled majetku": what the player owns, at the top of the trade panel ----------
+
+const OWN_RES = ['gold', 'food', 'army'];
+const FARM_HOME = { cows: 'chlév', horses: 'stáj', pigs: 'chlívek' };
+const farmHome = (k) => FARM_HOME[k] || '';
+
+/** A card of the overview: icon or none, name, "n / room" with a bar, a short note. */
+function ownCard({ name, n, room, ico = '', note = '', missing = false, pips = false, wide = false }) {
+  const bar = room
+    ? (pips
+      ? `<span class="farm-pips">${Array.from({ length: Math.max(room, n) }, (_, i) => `<i class="${i < n ? 'on' : ''}${i >= room ? ' over' : ''}"></i>`).join('')}</span>`
+      : `<span class="own-bar"><i style="width:${Math.min(100, Math.round((n / room) * 100))}%"></i></span>`)
+    : '';
+  return `<div class="own-card${missing ? ' missing' : ''}${wide ? ' wide' : ''}">
+    ${ico ? `<span class="own-ico"><svg viewBox="-30 -24 62 44">${ico}</svg></span>` : ''}
+    <div class="own-body"><b>${esc(name)}</b>
+      ${missing ? '' : `<span class="own-n"><em>${n}</em>${room ? ` / ${room}` : ''}</span>${bar}`}
+      ${note ? `<small>${esc(note)}</small>` : ''}</div>
+  </div>`;
+}
+
+function holdingsBlock() {
+  const t = ensureTrade(state);
+  const peasant = state.scenario === 'sedlak';
+  const cards = [];
+  // treasury and stores, in the owner's own words (groše, zásoby, čeleď for a peasant)
+  for (const key of OWN_RES) {
+    const def = RESOURCE_DEFS.find((d) => d.key === key);
+    const n = state.resources[key];
+    if (n === undefined) continue;
+    cards.push(`<div class="own-card res res-${key}"><div class="own-body"><b>${esc(resourceLabel(def, state.scenario))}</b><span class="own-n"><em>${n}</em></span></div></div>`);
+  }
+  // the farm: animals with their buildings, then the barn and the mill's flour
+  const farm = peasant ? ensureFarm(state) : null;
+  const farmCards = [];
+  if (farm) {
+    const cap = maxStock(state);
+    for (const k of ['grain', 'flour', ...ANIMALS]) {
+      const s = STOCK[k];
+      const n = countOf(state, k);
+      const room = roomFor(state, k);
+      const wagons = !!s.trade;
+      const hasMill = state.towns && state.towns.grunt && state.towns.grunt.buildings.some((b) => b.key === 'mlynek' && b.ready);
+      const missing = k === 'flour' ? !n && !hasMill : !wagons && !room && !n;
+      const note = missing ? (k === 'flour' ? 'Mouka potřebuje mlýn.' : s.none) : wagons ? `${plural(n, s.forms)}${k === 'grain' ? ' · stodola' : ' · mlýn'}` : farmHome(k);
+      farmCards.push(ownCard({ name: s.name, n, room: k === 'flour' ? cap : room, ico: farmIcon(k), note, missing, pips: !wagons }));
+    }
+  }
+  // the other goods in wagons (a noble or a king: all of them, grain and flour too)
+  const goodCards = [];
+  for (const [g, def] of Object.entries(GOODS)) {
+    if (farm && (g === 'grain' || g === 'flour')) continue;
+    if (!t.stock[g]) continue;
+    goodCards.push(ownCard({ name: def.name, n: t.stock[g], room: stockCap(state, g), note: 'vozů' }));
+  }
+  // caravans on the road and the nearest mandatory contract
+  const road = t.caravans.length
+    ? `${t.caravans.length} ${t.caravans.length === 1 ? 'cesta' : t.caravans.length < 5 ? 'cesty' : 'cest'}: ${t.caravans.map((c) => MARKETS[c.dest].short).join(', ')}`
+    : 'nic na cestě';
+  const duty = sortedContracts(state).filter((c) => c.obligation);
+  const dutyLine = duty.length
+    ? `${duty.length === 1 ? '1 povinná zakázka' : `${duty.length} povinné zakázky`}, nejbližší do ${etaText(duty[0].until, 'gen')} (${seasonsLeftText(Math.max(0, duty[0].until - state.turn))})`
+    : 'žádná povinná zakázka';
+  return `<h4 class="map-sub">Přehled majetku</h4>
+    <div class="own-grid">
+      ${cards.join('')}
+      ${farmCards.length ? `<p class="own-label">Hospodářství</p>${farmCards.join('')}` : ''}
+      <p class="own-label">${farm ? 'Další zboží ve skladu' : 'Zboží ve skladu'}</p>
+      ${goodCards.length ? goodCards.join('') : `<p class="own-empty">${farm ? 'Nic dalšího.' : 'Sklad je prázdný.'}</p>`}
+      <p class="own-label">Na cestě</p>
+      <div class="own-line"><span>Karavany: <b>${esc(road)}</b></span><span>Zakázky: <b>${esc(dutyLine)}</b>${duty.length ? ' <button class="trade-mini" data-trade="to-contracts">Zobrazit</button>' : ''}</span></div>
+    </div>`;
+}
+
 function showTradeOverview() {
   const t = ensureTrade(state);
   sidebar(`
     <span class="panel-overline">Obchod</span>
     <h3 class="panel-title">Sklad a karavany</h3>
     <p class="map-desc">${state.scenario === 'sedlak' ? 'Co grunt vypěstuje navíc, můžeš prodat v Brodu nebo odvézt na panský dvůr. Svobodný sedlák si může koupit místo v kupecké karavaně do ciziny.' : 'Tvé země plní sklad zbožím. Prodej ho hned v Brodu, nebo ho pošli karavanou či lodí do ciziny, kde platí víc, ale cesta trvá a hrozí přepadení.'} Klikni na trh na mapě.</p>
+    ${holdingsBlock()}
     <h4 class="map-sub">Sklad <small>· nejvýš ${maxStock(state)} vozů od každého${maxStock(state) > 20 ? ` (stavby +${maxStock(state) - 20})` : ''}</small></h4>
     <div class="trade-stock">${stockRows()}</div>
     <div class="trade-bulk"><button class="trade-mini" data-trade="sell-all"${Object.keys(GOODS).some((g) => ensureTrade(state).stock[g] > reservedFor(state, g)) ? '' : ' disabled'} title="V Brodu, ale zboží slíbené povinným zakázkám zůstane ve skladu">Prodat vše v Brodu</button></div>
@@ -651,7 +726,7 @@ function showMarket(dest) {
   const m = MARKETS[dest];
   const blocked = marketAccess(state, dest);
   const coin = coinName(state);
-  const cap = maxStock(state);
+  const foodWord = state.scenario === 'sedlak' ? 'zásob' : 'jídla';
   const rows = Object.keys(GOODS).filter((g) => m.sell[g] || m.buy?.[g]).map((g) => {
     const sell = m.sell[g] ? price(state, dest, g) : null;
     const buy = m.buy?.[g] ? price(state, dest, g, 'buy') : null;
@@ -659,7 +734,7 @@ function showMarket(dest) {
     const trendCell = tr ? `${sell} <em class="tr ${tr.cls}" title="Cena proti základní (${m.sell[g]}): ${signed(tr.pct)} %">${tr.arrow} ${signed(tr.pct)} %</em>` : '–';
     const margin = m.home ? null : buyMargin(state, dest, g);
     const marginCell = m.home ? '' : `<td class="margin ${margin > 0 ? 'pos' : margin < 0 ? 'neg' : ''}" title="Zisk na voz, když zboží koupíš v Brodu a prodáš tady (bez poplatků)">${margin === null ? '–' : signed(margin)}</td>`;
-    const canBuy = state.resources.gold >= buy && t.stock[g] < cap;
+    const canBuy = state.resources.gold >= buy && t.stock[g] < stockCap(state, g);
     const buyBtn = buy && !blocked && m.home ? `<button class="trade-mini" data-trade="buy" data-good="${g}" data-dest="${dest}"${canBuy ? '' : ' disabled'}>Koupit</button>` : '';
     const actions = m.home && !blocked ? `
       <button class="trade-mini" data-trade="sell" data-good="${g}" data-n="1"${t.stock[g] && sell ? '' : ' disabled'}>Prodat 1</button>
@@ -715,8 +790,9 @@ function showMarket(dest) {
   const convert = m.home ? `
     <h4 class="map-sub">Sýpky a sklad</h4>
     <div class="trade-convert">
-      <button class="trade-mini" data-trade="convert-in"${state.resources.food >= 6 && t.stock.grain < cap ? '' : ' disabled'}>Vymlátit vůz obilí ze zásob (−6 jídla)</button>
-      <button class="trade-mini" data-trade="convert-out"${t.stock.grain ? '' : ' disabled'}>Vrátit vůz do sýpek (+4 jídla)</button>
+      <button class="trade-mini" data-trade="convert-in"${state.resources.food >= THRESH_FOOD && t.stock.grain < stockCap(state, 'grain') ? '' : ' disabled'}>Vymlátit vůz obilí ze zásob (−${THRESH_FOOD} ${foodWord})</button>
+      <button class="trade-mini" data-trade="convert-out"${t.stock.grain ? '' : ' disabled'}>Semlít vůz obilí pro domácnost (+${eatFood(state, 'grain')} ${foodWord})</button>
+      <button class="trade-mini" data-trade="convert-flour"${t.stock.flour ? '' : ' disabled'}>Upéct chleba z vozu mouky (+${eatFood(state, 'flour')} ${foodWord})</button>
     </div>` : '';
   const bulk = m.home && !blocked ? `<div class="trade-bulk"><button class="trade-mini" data-trade="sell-all"${Object.keys(GOODS).some((g) => t.stock[g] > reservedFor(state, g)) ? '' : ' disabled'} title="Zboží slíbené povinným zakázkám zůstane ve skladu">Prodat vše (mimo zakázky)</button></div>` : '';
   sidebar(`
@@ -755,6 +831,7 @@ function handleTrade(btn) {
   else if (kind === 'buy') message = buyAtHome(state, btn.dataset.good, 1, btn.dataset.dest || 'brod');
   else if (kind === 'convert-in') message = convertFood(state, true);
   else if (kind === 'convert-out') message = convertFood(state, false);
+  else if (kind === 'convert-flour') message = convertFood(state, false, 'flour');
   else if (kind === 'good') { tradeForm.good = btn.dataset.good; tradeForm.qty = Math.min(tradeForm.qty, t.stock[tradeForm.good]) || 1; }
   else if (kind === 'qty') tradeForm.qty = Math.max(1, Math.min(10, tradeForm.qty + Number(btn.dataset.n)));
   else if (kind === 'qty-max') tradeForm.qty = Math.min(10, t.stock[tradeForm.good]) || 1;
@@ -763,6 +840,7 @@ function handleTrade(btn) {
   else if (kind === 'back-qty') tradeForm.back = tradeForm.back ? { ...tradeForm.back, qty: Math.max(1, Math.min(10, tradeForm.back.qty + Number(btn.dataset.n))) } : null;
   else if (kind === 'chart-good') { t.chart = { ...(t.chart || { span: 8 }), good: btn.dataset.good }; showTradeOverview(); return; }
   else if (kind === 'chart-span') { t.chart = { ...(t.chart || { good: 'grain' }), span: Number(btn.dataset.n) }; showTradeOverview(); return; }
+  else if (kind === 'to-contracts') { host.querySelector('.map-sidebar .trade-contracts')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
   else if (kind === 'sell-all') message = sellAllAtHome(state) || 'Není co prodat.';
   else if (kind === 'fulfill') {
     const res = fulfillContract(state, Number(btn.dataset.id));
@@ -1427,11 +1505,22 @@ function handleTownClick(t) {
   }
   if (t.closest('[data-cancel-project]')) { townAction(cancelProject(state, town.id)); return true; }
   // the farm stock: animals and grain (farm.js)
-  const farmBtn = t.closest('[data-farm-buy], [data-farm-sell], [data-farm-grind]');
+  if (t.closest('[data-open-trade]')) { setMode('trade'); return true; }
+  const farmBtn = t.closest('[data-farm-buy], [data-farm-sell], [data-farm-grind], [data-farm-mill], [data-farm-sell-all]');
   if (farmBtn) {
     if (farmBtn.disabled) return true;
     const d = farmBtn.dataset;
-    townAction(d.farmBuy ? buyStock(state, d.farmBuy) : d.farmSell ? sellStock(state, d.farmSell) : grindGrain(state));
+    let res;
+    if (d.farmBuy) res = buyStock(state, d.farmBuy);
+    else if (d.farmSell) res = sellStock(state, d.farmSell);
+    else if (d.farmGrind) res = grindGrain(state, d.farmGrind);
+    else if (d.farmSellAll) {
+      // everything of the good except what a mandatory contract waits for, at the Brod price
+      const key = d.farmSellAll;
+      const qty = ensureTrade(state).stock[key] - reservedFor(state, key);
+      res = qty > 0 ? { message: sellAtHome(state, key, qty) } : { error: 'Tenhle náklad je slíbený povinné zakázce.' };
+    } else res = millGrain(state);
+    townAction(res);
     return true;
   }
   const demo = t.closest('[data-demolish]');

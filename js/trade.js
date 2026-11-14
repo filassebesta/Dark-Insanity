@@ -11,9 +11,11 @@
 import { clamp, randInt, bumpStat, grosLabel, clampRes } from './data.js';
 import { makeChronicleEntry } from './state.js';
 import { privilegeStock, contractBonus } from './privileges.js';
+import { hasFarm, grainRoom, eatFood } from './farm.js';
 
 export const GOODS = {
   grain: { name: 'Obilí', gen: 'obilí' },
+  flour: { name: 'Mouka', gen: 'mouky' },
   iron: { name: 'Železo', gen: 'železa' },
   furs: { name: 'Kožešiny', gen: 'kožešin' },
   salt: { name: 'Sůl a ryby', gen: 'soli a ryb' },
@@ -33,38 +35,38 @@ export const MARKETS = {
   brod: {
     name: 'Trh v Brodu', short: 'Brod', to: 'na trh do Brodu', from: 'z Brodu', at: [716, 652], home: true,
     text: 'Velký trh u brodu přes Brodnici. Prodá se tu všechno a hned, jen ne za nejlepší cenu.',
-    sell: { grain: 1, iron: 2, furs: 2, salt: 1, cloth: 2, wine: 1 },
-    buy: { grain: 2, iron: 4, furs: 4, salt: 2, cloth: 4 },
+    sell: { grain: 1, flour: 2, iron: 2, furs: 2, salt: 1, cloth: 2, wine: 1 },
+    buy: { grain: 2, flour: 4, iron: 4, furs: 4, salt: 2, cloth: 4 },
   },
   court: {
     name: 'Královský dvůr', short: 'Dvůr', to: 'ke královskému dvoru', from: 'od královského dvora', at: HUB, days: 1, risk: 0.06,
     danger: 'zloději na Královské cestě', scenarios: ['slechtic'],
     text: 'Dvůr krále ve Vlčím Údělu. Platí slušně, a kdo dodává koruně, toho si král pamatuje.',
-    sell: { grain: 2, iron: 3, furs: 3, salt: 2, cloth: 3, wine: 5 }, favor: true,
+    sell: { grain: 2, flour: 3, iron: 3, furs: 3, salt: 2, cloth: 3, wine: 5 }, favor: true,
   },
   manor: {
     name: 'Panský dvůr', short: 'Pán', to: 'na panský dvůr', from: 'z panského dvora', at: [505, 600], days: 1, risk: 0.03,
     danger: 'lapkové u cesty', scenarios: ['sedlak'],
     text: 'Dvůr pánů z Bílé Brány. Bere, co sedlák přiveze, a dobrou dodávku si zapamatuje.',
-    sell: { grain: 2, iron: 2, furs: 3, salt: 2, cloth: 3, wine: 4 }, favor: true,
+    sell: { grain: 2, flour: 3, iron: 2, furs: 3, salt: 2, cloth: 3, wine: 4 }, favor: true,
   },
   east: {
     name: 'Východní marky', short: 'Marky', to: 'do Východních marek', from: 'z Východních marek', at: [1222, 440], days: 2, risk: 0.22,
     danger: 'lapkové v Sokolím hvozdu', route: [HUB, [700, 402], [780, 414], [860, 424], [985, 398], [1100, 420], [1222, 440]],
     text: 'Bojovní markrabata za hvozdem. Platí dobře za železo a sukno, obilí mají vlastní.',
-    sell: { grain: 1, iron: 7, furs: 2, salt: 3, cloth: 5, wine: 4 }, buy: { furs: 3 },
+    sell: { grain: 1, flour: 2, iron: 7, furs: 2, salt: 3, cloth: 5, wine: 4 }, buy: { furs: 3 },
   },
   south: {
     name: 'Jižní říše', short: 'Jih', to: 'do Jižní říše', from: 'z Jižní říše', at: [262, 812], days: 2, risk: 0.18, sea: true,
     danger: 'piráti a bouře', route: [PORT, [230, 430], [150, 520], [140, 650], [190, 760], [262, 812]],
     text: 'Bohatá říše za mořem. Kupí kožešiny a železo a prodává víno, které se jinde zlatem vyvažuje.',
-    sell: { grain: 2, iron: 4, furs: 7, salt: 2, cloth: 3 }, buy: { wine: 2, salt: 3 },
+    sell: { grain: 2, flour: 3, iron: 4, furs: 7, salt: 2, cloth: 3 }, buy: { wine: 2, salt: 3 },
   },
   north: {
     name: 'Severní pustiny', short: 'Sever', to: 'do Severních pustin', from: 'ze Severních pustin', at: [820, 34], days: 3, risk: 0.3,
     danger: 'horalé v průsmyku a mráz', route: [HUB, [612, 300], [602, 238], [626, 172], [632, 138], [720, 90], [820, 34]],
     text: 'Chladná země za horami. Obilí tam má cenu stříbra, cesta přes průsmyk ale bere životy.',
-    sell: { grain: 5, iron: 3, furs: 1, salt: 5, cloth: 5, wine: 5 }, buy: { furs: 2 },
+    sell: { grain: 5, flour: 7, iron: 3, furs: 1, salt: 5, cloth: 5, wine: 5 }, buy: { furs: 2 },
   },
 };
 
@@ -89,6 +91,11 @@ export function maxStock(state) {
     for (const b of town.buildings || []) if (b.ready && !b.base && WAREHOUSE[b.key]) extra += WAREHOUSE[b.key];
   }
   return MAX_STOCK + Math.min(WAREHOUSE_CAP, extra) + privilegeStock(state); // the toll right adds room of its own
+}
+
+/** Wagons of one good the player can keep: a peasant's grain is limited by the barn, the rest by the warehouse. */
+export function stockCap(state, good) {
+  return good === 'grain' && hasFarm(state) ? Math.min(maxStock(state), grainRoom(state)) : maxStock(state);
 }
 
 // ---------- state ----------
@@ -350,25 +357,29 @@ export function sellAllAtHome(state) {
 export function buyAtHome(state, good, qty, dest = 'brod') {
   const t = ensureTrade(state);
   const cost = qty * price(state, dest, good, 'buy');
-  if (!cost || state.resources.gold < cost || t.stock[good] + qty > maxStock(state)) return null;
+  if (!cost || state.resources.gold < cost || t.stock[good] + qty > stockCap(state, good)) return null;
   state.resources.gold = clampRes('gold', state.resources.gold - cost);
   t.stock[good] += qty;
   return `Koupeno ${loadText(qty, good)} za ${cost}.`;
 }
 
-// threshing grain out of the stores, or putting grain back into them
-export function convertFood(state, toGrain) {
+// threshing grain out of the stores (6 zásoby = 1 vůz), or eating a wagon of grain or flour
+// (the same rates as the farm view: farm.js eatFood, always below what a wagon costs in zásoby)
+export const THRESH_FOOD = 6;
+
+export function convertFood(state, toGrain, good = 'grain') {
   const t = ensureTrade(state);
   if (toGrain) {
-    if (state.resources.food < 6 || t.stock.grain >= maxStock(state)) return null;
-    state.resources.food = clampRes('food', state.resources.food - 6);
+    if (state.resources.food < THRESH_FOOD || t.stock.grain >= stockCap(state, 'grain')) return null;
+    state.resources.food = clampRes('food', state.resources.food - THRESH_FOOD);
     t.stock.grain += 1;
     return 'Z vlastních zásob se nachystal vůz obilí na prodej.';
   }
-  if (t.stock.grain < 1) return null;
-  t.stock.grain -= 1;
-  state.resources.food = clampRes('food', state.resources.food + 4);
-  return 'Vůz obilí se vrátil do sýpek.';
+  if (t.stock[good] < 1) return null;
+  const food = eatFood(state, good);
+  t.stock[good] -= 1;
+  state.resources.food = clampRes('food', state.resources.food + food);
+  return good === 'flour' ? `Vůz mouky se upekl na chleba (zásoby +${food}).` : `Vůz obilí se semlel pro domácnost (zásoby +${food}).`;
 }
 
 // ---------- caravans ----------
@@ -451,7 +462,7 @@ function deliver(state, caravan, news) {
   let bought = '';
   if (caravan.back && m.buy && m.buy[caravan.back.good]) {
     const unit = price(state, caravan.dest, caravan.back.good, 'buy');
-    const room = Math.max(0, maxStock(state) - t.stock[caravan.back.good]);
+    const room = Math.max(0, stockCap(state, caravan.back.good) - t.stock[caravan.back.good]);
     const n = Math.max(0, Math.min(caravan.back.qty, room, Math.floor(state.resources.gold / unit)));
     if (n > 0) {
       const cost = n * unit;
@@ -583,14 +594,8 @@ function alert(state, text) {
 function produce(state) {
   const t = state.trade;
   const add = (good, n) => { t.stock[good] = Math.min(maxStock(state), t.stock[good] + n); };
-  if (state.scenario === 'sedlak') {
-    // the farm's surplus: a wagon at harvest, now and then another
-    if (state.resources.food >= 20) {
-      if (state.seasonIndex === 2) add('grain', 2);
-      if (Math.random() < state.resources.stability / 180) add('grain', 1);
-    }
-    return;
-  }
+  // a peasant's grain is the farm's harvest into the barn (farm.js processFarm), not a province's yield
+  if (state.scenario === 'sedlak') return;
   const rolls = state.scenario === 'slechtic' ? 2 : 1; // the estate lives off its trade
   for (const p of state.provinces) {
     if (p.lost || (p.owner && p.owner !== 'player')) continue;

@@ -5,7 +5,7 @@ import { THRONE_STEPS } from './events_throne.js';
 import { processFamily, nextHeir, marry, canConceive, conceiveChance, startPregnancy, acknowledgeBastard, keepDaughterHeir } from './family.js';
 import { EVENTS, QUIET_EVENTS } from './events.js';
 import { roleLabel, QUIRK_ROLES, randomQuirk, quirkLabel } from './court.js';
-import { processTrade, resolveIncident, resolveOffer, addTradeMod, ensureTrade, cargoTokens, GOODS, maxStock } from './trade.js';
+import { processTrade, resolveIncident, resolveOffer, addTradeMod, ensureTrade, cargoTokens, GOODS, stockCap } from './trade.js';
 import { processBuilding, buildingDrift, applyTownEffects, settlementDef } from './build.js';
 import { processFarm, applyFarmEffects, loseFarmStock } from './farm.js';
 import {
@@ -343,7 +343,7 @@ function applyTradeEffects(state, branch, notes) {
   if (branch.tradeStock) {
     const t = ensureTrade(state);
     for (const [g, n] of Object.entries(branch.tradeStock)) {
-      t.stock[g] = Math.max(0, Math.min(maxStock(state), t.stock[g] + n));
+      t.stock[g] = Math.max(0, Math.min(stockCap(state, g), t.stock[g] + n));
       notes.push({ text: `Sklad: ${GOODS[g].name.toLowerCase()} ${n > 0 ? '+' : ''}${n}`, tone: n > 0 ? 'pos' : 'neg' });
     }
   }
