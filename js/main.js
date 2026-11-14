@@ -1,5 +1,6 @@
 import { createNewGame, promote, saveGame, listSaves, loadGame, loadMostRecentSave, deleteSave, loadSettings, saveSettings } from './state.js';
-import { advanceTurn, resolveChoice, resolveRouteChoice, checkEndConditions, pickNextEvent } from './engine.js';
+import { advanceTurn, resolveChoice, resolveRouteChoice, checkEndConditions, pickNextEvent, queueEvent } from './engine.js';
+import { doHouseAction } from './houses.js';
 import { EVENTS, QUIET_EVENTS } from './events.js';
 import {
   showScreen, renderResourceBar, updateBookTabFlags, renderTurnSummary, renderEventCard,
@@ -353,6 +354,17 @@ function wireActions() {
       if (panel === 'chronicle') renderChroniclePanel(currentState);
       openPanel(panel);
     });
+  });
+
+  // the houses panel (Rody / Vazalové): a gift, the call of the levy, a fief, a marriage, taming a house
+  document.getElementById('houses-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-house-act]');
+    if (!btn || btn.disabled || !currentState) return;
+    const res = doHouseAction(currentState, btn.dataset.house, btn.dataset.houseAct);
+    if (res.pending) queueEvent(currentState, 'h_v_vzpoura_rodu'); // a failed taming: the house is about to rise
+    if (res.ok) saveGame(currentState);
+    refreshAllPanels();
+    toast(res.text);
   });
 
   // court cards (Dvůr) and family in the character sheet open the person detail

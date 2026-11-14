@@ -34,11 +34,14 @@ export function boonText(def) {
 
 // ---------- creating and mending the houses ----------
 
-function newHouse(def) {
+/** A new house with a head whose name nobody else at the heads of the houses already bears. */
+function newHouse(def, taken = []) {
   const g = Math.random() < 0.75 ? 'male' : 'female';
+  let name = randomName(g);
+  for (let i = 0; i < 60 && taken.includes(name); i++) name = randomName(g);
   return {
     id: def.id, power: randInt(50, 70), attitude: randInt(40, 55), ally: false, married: false,
-    head: { name: randomName(g), gender: g, age: randInt(38, 62) }, rel: {},
+    head: { name, gender: g, age: randInt(38, 62) }, rel: {},
   };
 }
 
@@ -65,7 +68,8 @@ function seedRelations(houses) {
 
 /** All the houses of the realm for a new world. */
 export function createHouses() {
-  const houses = NOBLE_HOUSES.map(newHouse);
+  const houses = [];
+  for (const def of NOBLE_HOUSES) houses.push(newHouse(def, houses.map((h) => h.head.name)));
   seedRelations(houses);
   return houses;
 }
@@ -80,7 +84,7 @@ export function ensureHouses(state) {
     if (state.scenario !== 'panovnik') return state;
     state.houses = [];
   }
-  for (const def of NOBLE_HOUSES) if (!state.houses.some((h) => h.id === def.id)) state.houses.push(newHouse(def));
+  for (const def of NOBLE_HOUSES) if (!state.houses.some((h) => h.id === def.id)) state.houses.push(newHouse(def, state.houses.map((h) => h.head.name)));
   seedRelations(state.houses);
   return state;
 }

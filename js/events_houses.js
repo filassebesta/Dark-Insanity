@@ -438,7 +438,7 @@ const EVENT_LIST = [
     },
     image: img('slechta_odmita_dan'),
     title: 'Rod, který příliš zesílil',
-    text: 'Zprávy se ke dvoru sbíhají šeptem: rod {house.gen} drží víc zbrojných než koruna dokáže zaplatit. {house.HeadTitle} {house.head} se na sněmu usmívá a nikdy neřekne nic, co by šlo vyložit jako hrozbu. A právě to znepokojuje {chancellor.title} {chancellor.name} nejvíc. „Kdo nic nežádá,“ praví, „ten buď nic nechce, nebo chce všechno.“',
+    text: 'Zprávy se ke dvoru sbíhají šeptem: rod {house.gen} drží víc zbrojných než koruna dokáže zaplatit. {house.HeadTitle} {house.head} se na sněmu usmívá a nikdy neřekne nic, co by šlo vyložit jako hrozbu. {chancellor.Title} {chancellor.name} ten klid nesnáší: „Kdo nic nežádá,“ praví, „ten buď nic nechce, nebo chce všechno.“',
     choices: [
       {
         label: 'Zkrotit rod právem: zabavit část lén',
@@ -592,7 +592,7 @@ const EVENT_LIST = [
         hintType: 'resource', hintKey: 'prestige',
         effects: { prestige: -2 },
         houseEffects: { target: { attitude: 5 } },
-        chronicle: 'Koruna přimhouřila oko. Rod {house.gen} ví, že to bylo poprvé. A ví taky, že o poslední nepůjde.',
+        chronicle: 'Koruna přimhouřila oko. Rod {house.gen} ví, že to bylo poprvé, a ví taky, že ne naposledy.',
       },
       {
         label: 'Poslat komisaře, ať muže spočítá',
@@ -632,7 +632,7 @@ const EVENT_LIST = [
         label: 'Nařídit smír pod hrozbou pokuty',
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.5, traitKey: 'eloquence', traitScale: 0.04,
-        onSuccess: { effects: { prestige: 4, legitimacy: 2 }, houseEffects: { target: { attitude: 3 }, target2: { attitude: 3 } }, houseRel: 24, traitGain: 'eloquence', chronicle: 'Pod královským pohledem si oba rody podaly ruce. Dvůr vydechl a písaři smazali dvě stránky obžaloby.' },
+        onSuccess: { effects: { prestige: 4, legitimacy: 2 }, houseEffects: { target: { attitude: 3 }, target2: { attitude: 3 } }, houseRel: 24, traitGain: 'eloquence', chronicle: 'Pod pohledem koruny si oba rody podaly ruce. Dvůr vydechl a písaři smazali dvě stránky obžaloby.' },
         onFailure: { effects: { prestige: -2 }, houseEffects: { target: { attitude: -6 }, target2: { attitude: -6 } }, houseRel: -4, chronicle: 'Smír přísahaly obě strany a oba už věděly, že ho nedodrží. Koruna se tvářila, že neví.' },
       },
       {

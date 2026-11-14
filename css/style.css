@@ -2066,3 +2066,81 @@ body.map-open .toast-container { top: auto; bottom: 1.2rem; left: 38%; }
 .decree.build-option { display: flex; flex-direction: row; align-items: flex-start; text-align: left; gap: .7rem; }
 .decree.build-option .build-body { align-items: flex-start; text-align: left; }
 .decree.build-option .build-chips, .decree.build-option .build-body em { justify-content: flex-start; }
+
+/* ---------- houses panel: Rody (šlechtic) and Vazalové (panovník), prefix hs- ---------- */
+.hs-card { display: flex; flex-direction: column; gap: .5rem; padding: .95rem 1rem; border: 1px solid rgba(90,70,45,.22); background: rgba(255,255,255,.2); }
+.hs-card.crown { border-color: var(--gold-dim); background: rgba(200,164,106,.14); }
+.hs-card.intrigue { background: rgba(43,33,24,.06); }
+.hs-card.rising { border-color: var(--blood); box-shadow: inset 0 0 0 1px rgba(138,44,38,.28); }
+.hs-card h4 { font-family: var(--font-caps); font-size: .78rem; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 .2rem; }
+.hs-head { display: flex; gap: .8rem; align-items: center; }
+.hs-crest { display: block; flex-shrink: 0; filter: drop-shadow(0 2px 2px rgba(40,25,10,.35)); }
+.hs-crest-lg { width: 46px; height: 55px; }
+.hs-crest-sm { width: 24px; height: 29px; }
+.hs-crest-xs { width: 15px; height: 18px; }
+.hs-id { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.hs-id .role { font-family: var(--font-caps); font-size: .64rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-faint); }
+.hs-id strong { font-family: var(--font-display); font-weight: 400; font-size: 1.15rem; }
+.hs-id em { font-style: normal; font-size: .8rem; color: var(--rust); }
+.hs-id small { color: var(--ink-soft); font-size: .85rem; }
+.hs-text { font-size: .9rem; line-height: 1.45; color: var(--ink-soft); margin: .1rem 0; }
+.hs-bar { display: grid; grid-template-columns: 4.9rem 1fr auto; align-items: center; gap: .6rem; font-size: .85rem; }
+.hs-bar-l { font-family: var(--font-caps); font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint); }
+.hs-bar > b { font-weight: 600; min-width: 1.6rem; text-align: right; }
+.hs-track { height: 4px; background: rgba(90,70,45,.18); overflow: hidden; }
+.hs-track i { display: block; height: 100%; background: var(--ink-soft); transition: width .6s var(--ease-out); }
+.hs-track i.loyalty { background: var(--olive); }
+.hs-track i.garrison { background: var(--slate); }
+.hs-att { font-family: var(--font-caps); font-size: .66rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+.hs-att.good { color: var(--olive); }
+.hs-att.warn { color: #a8823f; }
+.hs-att.bad { color: var(--rust); }
+.hs-troops-bar { display: flex; height: 6px; background: rgba(90,70,45,.14); overflow: hidden; }
+.hs-troops-bar i { display: block; height: 100%; }
+.hs-troops-bar .spear { background: #7a5a3a; }
+.hs-troops-bar .archer { background: var(--olive); }
+.hs-troops-bar .horse { background: var(--gold); }
+.hs-troops small { display: block; font-size: .8rem; color: var(--ink-soft); margin-top: .25rem; }
+.hs-boon { font-size: .82rem; color: var(--ink-faint); margin: 0; }
+.hs-boon.on { color: var(--olive); font-weight: 600; }
+.hs-rels { display: flex; gap: .45rem; flex-wrap: wrap; }
+.hs-rel { display: inline-flex; align-items: center; gap: .3rem; padding: .1rem .45rem .1rem .35rem; border: 1px solid currentColor; font-size: .74rem; }
+.hs-rel.good { color: var(--olive); }
+.hs-rel.bad { color: var(--blood); }
+.hs-badges { display: flex; gap: .4rem; flex-wrap: wrap; }
+.hs-badges:empty { display: none; }
+.hs-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.6rem, 1fr)); gap: .4rem; margin-top: .25rem; }
+.hs-act { display: flex; flex-direction: column; gap: .1rem; text-align: left; padding: .4rem .55rem; background: rgba(42,34,27,.06); border: 1px solid rgba(90,70,45,.35); color: var(--ink); cursor: pointer; font: inherit; transition: border-color .2s ease, background .2s ease; }
+.hs-act b { font-family: var(--font-caps); font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.hs-act small { font-size: .74rem; color: var(--ink-soft); line-height: 1.25; }
+.hs-act:hover:not(:disabled), .hs-act:focus-visible { border-color: var(--gold); background: rgba(200,164,106,.22); }
+.hs-act:disabled { opacity: .55; cursor: not-allowed; }
+.hs-pair { display: grid; grid-template-columns: 24px 1fr 24px; gap: .6rem; align-items: center; }
+.hs-pair-mid { display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
+.hs-pair-mid > span { font-size: .82rem; }
+.hs-pair-mid small { font-size: .74rem; }
+.hs-pair-mid small.good { color: var(--olive); }
+.hs-pair-mid small.bad { color: var(--blood); }
+.hs-axis { position: relative; height: 5px; background: linear-gradient(90deg, var(--blood), #d2c4a6 50%, var(--olive)); }
+.hs-axis i { position: absolute; top: -3px; width: 4px; height: 11px; background: var(--ink); transform: translateX(-50%); }
+@media (max-width: 480px) {
+  #panel-houses { padding: 1.6rem 1rem; }
+  .hs-bar { grid-template-columns: 4.2rem 1fr auto; gap: .45rem; }
+  .hs-actions { grid-template-columns: 1fr 1fr; }
+}
+
+/* houses' seats (državy) on the painted map and in the map sidebar */
+.map-hold { cursor: pointer; }
+.map-hold .f-hit { fill: transparent; }
+.map-hold .h-shadow { fill: rgba(20, 12, 4, .38); }
+.map-hold .h-crest { transform: translate(-10.5px, -13px) scale(.52); filter: drop-shadow(0 1px 1.5px rgba(10, 6, 2, .75)); transition: transform .2s ease; }
+.map-hold:hover .h-crest, .map-hold.active .h-crest { transform: translate(-12.4px, -15.5px) scale(.62); }
+.map-hold .f-label {
+  font-family: var(--font-body); font-style: italic; font-weight: 600; font-size: 14px;
+  text-anchor: middle; fill: #2b2118; paint-order: stroke; stroke: rgba(240, 228, 198, .92); stroke-width: 4; stroke-linejoin: round;
+  opacity: 0; transition: opacity .2s ease; pointer-events: none;
+}
+.map-hold:hover .f-label, .map-hold.active .f-label, .map-svg.zoomed .map-hold .f-label { opacity: .95; }
+.mc-crest { flex: none; display: flex; align-items: center; justify-content: center; width: 1.9rem; }
+.mc-owner-crest { flex-direction: row; align-items: center; gap: .8rem; }
+.mc-owner-crest > div { display: flex; flex-direction: column; gap: .1rem; min-width: 0; }
