@@ -150,3 +150,4 @@ nerozvinutých tokenů) a ostatní simulace z HANDOFF.md kap. 2 (`errors` musí 
 2. „Přijmout erb“: erb je v hlavičce (nad 560 px), v panelu Rody (karta „Tvůj rod“) a v panelu Postava; v kronice je zapsaný popis.
 3. „Změnit erb“ v panelu Rody otevře editor s tlačítkem Zrušit. Po obnovení stránky erb zůstává.
 4. Telefon (390 px): okno přes celou obrazovku, náhled nahoře přilepený, tlačítko „Přijmout erb“ dole přilepené, bez vodorovného posunu.
+5. Mapa: při `statusTier` 3–4 je erb nad sídlem na pobřeží, u krále nad hlavním městem (popisek při přiblížení); v režimu Válka je erb na praporu vojska i v záhlaví panelu.

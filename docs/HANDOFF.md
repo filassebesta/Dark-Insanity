@@ -381,7 +381,7 @@ Cizí vládci: `{realm.east}` („král Ctibor“), `{realm.east.Ruler}` (toté�
 ### Vlastní erb (`js/heraldry.js`, `js/crest_ui.js`)
 - Hned po povýšení na šlechtice (kapitola „Erb a tvrz“, `kapitola_erb`) se otevře editor erbu (`presentEvent` v `main.js`). Poprvé nejde zavřít bez erbu; je tam tlačítko „Náhodný erb“. Později jde změnit z panelu Rody / Vazalové (karta „Tvůj rod“, `data-action="edit-crest"`).
 - Uložení: `state.crest` (`auto: true` = jen zástupný erb ze jména rodu pro starší uložené hry, `ensureCrest`). Při uložení se do kroniky zapíše popis erbu.
-- Zobrazení: hlavička hry (jen šířka nad 560 px), karta v panelu Rody, řádek rodu v panelu Postava. Na mapě zatím vlastní erb není.
+- Zobrazení: hlavička hry (jen šířka nad 560 px), karta v panelu Rody, řádek rodu v panelu Postava. Na mapě je vlastní erb nad sídlem (šlechtic: Pobřežní marka, král: hlavní město; `ownSeatMarker` v `map.js`), na praporu vojska v poli a v záhlaví panelu Válka. Znamení je 25 (vlk, medvěd, orel, věž, meč, koruna, hvězda, půlměsíc, slunce, dub, snop, pluh, kladivo, roh, klíč, lilie, kolo, lev, kůň, ryba, loď, kanec, křídlo, zvon, kotva, kříž).
 - Každý nakreslený štít má vlastní `clipPath` s unikátním `id` (klip ve skrytém `<svg>` jinak nefunguje pro ostatní štíty).
 
 ### Velké rody a vazalové (`js/houses.js`, `js/crests.js`, `js/events_houses.js`, `NOBLE_HOUSES` v `js/data.js`)
