@@ -5,6 +5,7 @@
 import { TERRAIN_DEFS, NOBLE_HOUSES, SEASONS, RESOURCE_DEFS, resourceLabel } from './data.js';
 import { attitudeLabel, interpolate } from './engine.js';
 import { crestInner, crestSvg } from './crests.js';
+import { crestInnerOf, crestSvgOf, ensureCrest } from './heraldry.js';
 import { houseMuster, musterText, boonText, relLabel } from './houses.js';
 import {
   GOODS, MARKETS, maxStock, ESCORT_ARMY, ensureTrade, routeFor, originPoint, marketAccess, price, riskOf,
@@ -260,6 +261,7 @@ function render() {
       <g class="map-labels">${Object.entries(PROVINCES).map(([id, p]) => provinceLabel(id, p)).join('')}</g>
       <g class="map-features">${Object.entries(FEATURES).map(([id, f]) => featureMarker(id, f)).join('')}</g>
       <g class="map-holds">${holdDefs().map(holdMarker).join('')}</g>
+      ${ownSeatMarker()}
       <g class="map-markets${layers.trade ? ' show' : ''}">${marketMarkers()}</g>
       <g class="map-war${layers.war ? ' show' : ''}${state.war ? ' active' : ''}">${warLayer()}</g>
 
@@ -417,6 +419,17 @@ function featureMarker(id, f) {
 /** The seats the newer houses hold inside somebody else's land: a small coat of arms on the painted map. */
 function holdDefs() {
   return NOBLE_HOUSES.filter((d) => d.hold && (state.houses || []).some((h) => h.id === d.id));
+}
+
+/** The player's own coat of arms over the family seat: the manor on the coast, or the royal castle. Not for a peasant. */
+function ownSeatMarker() {
+  if (state.scenario === 'sedlak') return '';
+  const [x, y] = state.scenario === 'panovnik' ? [633, 306] : [330, 336];
+  return `<g class="map-own" transform="translate(${x} ${y})" pointer-events="none">
+    <ellipse class="h-shadow" cx="1" cy="16" rx="10" ry="3"/>
+    <g class="h-crest" transform="translate(-12 -15) scale(.6)">${crestInnerOf(ensureCrest(state))}</g>
+    <text class="f-label" y="31">${esc(state.scenario === 'panovnik' ? `Dynastie ${state.dynastyName}` : `Sídlo rodu ${state.dynastyName}`)}</text>
+  </g>`;
 }
 
 function holdMarker(def) {
@@ -1163,7 +1176,7 @@ function warLayer() {
     army = `<path class="war-route" d="${smoothPath(pts)}"/>
       <g class="war-army" data-war-army transform="translate(${x.toFixed(0)} ${y.toFixed(0)})">
         <circle class="wa-hit" r="26"/>
-        <path class="wa-pole" d="M0 12V-26"/><path class="wa-flag" d="M0 -26h22l-6 7 6 7H0z"/>
+        <path class="wa-pole" d="M0 12V-46"/><g class="wa-crest" transform="translate(2 -46) scale(.72)">${crestInnerOf(ensureCrest(state))}</g>
         <circle class="wa-base" r="9" cy="12"/><text class="wa-men" y="16">${state.war.power}</text>
       </g>`;
   }
@@ -1188,7 +1201,7 @@ function showWarOverview() {
   const tributes = (state.tributes || []).map((x) => `<li>${esc(x.from[0].toUpperCase() + x.from.slice(1))}: ${x.gold} zlata za období, do ${etaText(x.until, 'gen')}</li>`).join('');
   sidebar(`
     ${warTabsHtml(warForm)}
-    <span class="panel-overline">Válka</span>
+    <span class="panel-overline rc-banner">${crestSvgOf(ensureCrest(state), 'hs-crest-xs')}Válka</span>
     <h3 class="panel-title">Tažení</h3>
     <p class="map-desc">Vypravit vojsko je velké rozhodnutí. Tažení trvá několik období, vojsko jí ze sýpek a každé období v poli přinese bitvu, obléhání nebo jiné zkoušky. V bitvě sám rozestavíš muže. Klikni na cíl na mapě.</p>
     ${rest}
@@ -1224,7 +1237,7 @@ function showWarStatus() {
   const corpsLine = Object.entries(w.troops || {}).filter(([, n]) => n > 0).map(([k, n]) => `${n} ${TROOP_NAMES[k]}`).join(' · ');
   sidebar(`
     ${warTabsHtml(warForm)}
-    <span class="panel-overline">Vojsko v poli</span>
+    <span class="panel-overline rc-banner">${crestSvgOf(ensureCrest(state), 'hs-crest-xs')}Vojsko v poli</span>
     <h3 class="panel-title">${esc(t.name)}</h3>
     <span class="map-verdict ${marching ? 'warn' : 'good'}">${marching ? `Na pochodu · na místě ${etaText(w.arrive)}` : `V poli ${w.seasons} ${w.seasons === 1 ? 'období' : 'období'}`}</span>
     <p class="map-desc">Velí ${esc(leader)} (${leaderLabel(w.leader, state)}). ${esc(t.text)}</p>

@@ -65,17 +65,37 @@ export const CHARGES = {
   wheat: { name: 'snop', g: 'm', pl: 'snopy', label: 'Snop', draw: (f, c) => `<path d="M20 40V14" stroke="${c}" stroke-width="1.800" stroke-linecap="round"/>
     <g fill="${c}">${[[20, 9, 0], [14.500, 14.500, -35], [25.500, 14.500, 35], [12.500, 22, -35], [27.500, 22, 35], [14.500, 29, -30], [25.500, 29, 30]].map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="2.400" ry="4.600" transform="rotate(${r} ${x} ${y})"/>`).join('')}</g>
     <path d="M13 37h14" stroke="${f}" stroke-width="1.500" stroke-linecap="round"/>` },
-  plough: { name: 'pluh', g: 'm', pl: 'pluhy', label: 'Pluh', draw: (f, c) => `<path d="M8 35l14-4 7 5-12 2z" fill="${c}"/><path d="M22 31L30 13l3 1-6 20z" fill="${c}"/><path d="M29 13l8-3-2 6z" fill="${c}"/>
-    <path d="M10 16h9v3h-3.500v11h-3V19H10z" fill="${c}"/>` },
+  plough: { name: 'pluh', g: 'm', pl: 'pluhy', label: 'Pluh', draw: (f, c) => `<g stroke="${c}" stroke-linecap="round" fill="none"><path d="M5 19L31 25" stroke-width="3.400"/><path d="M31 25L35 10M32 10h6" stroke-width="3.200"/></g>
+    <path d="M11 20l5.500 1.300-2.200 14.700-4.800-1z" fill="${c}"/><path d="M8.500 36.500l12.500-1.700-1.600 3H8.500z" fill="${c}"/>` },
   hammer: { name: 'kladivo', g: 'n', pl: 'kladiva', label: 'Kladivo', draw: (f, c) => `<rect x="9.500" y="9" width="21" height="9" rx="1.600" fill="${c}"/><path d="M18 18h4v22h-4z" fill="${c}"/>
     <path d="M12 13.500h16" stroke="${f}" stroke-width="1" opacity=".5"/>` },
-  horn: { name: 'lovecký roh', g: 'm', pl: 'lovecké rohy', label: 'Roh', draw: (f, c) => `<path d="M8 33c-1-9 5-20 15-22 7-1 11 3 11 7-3-2-7-2-11 1-5 4-5 11-1 16 3 4 8 4 11 2-3 6-12 7-18 3-4-2-6-4-7-7z" fill="${c}"/>
-    <path d="M30 13l5 4" stroke="${c}" stroke-width="2.200" stroke-linecap="round"/>` },
+  horn: { name: 'lovecký roh', g: 'm', pl: 'lovecké rohy', label: 'Roh', draw: (f, c) => `<path d="M30 16C21 13.500 12 18.500 11.500 26c-.3 6 4 10 10 9.500 4-.4 6.500-3 6.500-6.500" fill="none" stroke="${c}" stroke-width="4.200" stroke-linecap="round"/>
+    <path d="M27.500 12l9.500-3.500-1.800 13.500-6.200-3.500z" fill="${c}"/><circle cx="28" cy="29" r="2.600" fill="${c}"/>` },
   key: { name: 'klíč', g: 'm', pl: 'klíče', label: 'Klíč', draw: (f, c) => `<circle cx="20" cy="13.500" r="6.500" fill="none" stroke="${c}" stroke-width="3.200"/><path d="M20 20v20M20 33h6M20 38h5" stroke="${c}" stroke-width="3" stroke-linecap="round"/>` },
   lily: { name: 'lilie', g: 'f', pl: 'lilie', label: 'Lilie', draw: (f, c) => `<path d="M20 7c4 5 5 10 2.500 17-.5 2-.5 3.500 0 5h-5c.5-1.500.5-3 0-5C15 17 16 12 20 7z" fill="${c}"/>
     <path d="M18 24c-4-4-9-3-11 2 2 4 6 5 9 2zM22 24c4-4 9-3 11 2-2 4-6 5-9 2z" fill="${c}"/><path d="M11 33h18v3.600H11zM17 36.600h6V41h-6z" fill="${c}"/>` },
   wheel: { name: 'mlýnské kolo', g: 'n', pl: 'mlýnská kola', label: 'Kolo', draw: (f, c) => `<circle cx="20" cy="24" r="14" fill="none" stroke="${c}" stroke-width="3"/><circle cx="20" cy="24" r="3.600" fill="${c}"/>
     <g stroke="${c}" stroke-width="2.400" stroke-linecap="round">${Array.from({ length: 8 }, (_, i) => { const a = (i * Math.PI) / 4; return `<path d="M${(20 + Math.cos(a) * 3.600).toFixed(1)} ${(24 + Math.sin(a) * 3.600).toFixed(1)}L${(20 + Math.cos(a) * 13).toFixed(1)} ${(24 + Math.sin(a) * 13).toFixed(1)}"/>`; }).join('')}</g>` },
+  lion: { name: 'lví hlava', g: 'f', pl: 'lví hlavy', label: 'Lev', draw: (f, c) => `<g fill="${c}">${Array.from({ length: 12 }, (_, i) => { const a = (i * Math.PI) / 6; return `<circle cx="${(20 + Math.cos(a) * 11.5).toFixed(1)}" cy="${(24 + Math.sin(a) * 11.5).toFixed(1)}" r="4.2"/>`; }).join('')}</g>
+    <circle cx="20" cy="24" r="9.4" fill="${c}" stroke="${f}" stroke-width="1.4"/><circle cx="16.4" cy="21.8" r="1.4" fill="${f}"/><circle cx="23.6" cy="21.8" r="1.4" fill="${f}"/>
+    <path d="M18 26h4l-2 2.8z" fill="${f}"/><path d="M20 28.8v2.2M16.4 31c1.700 1.300 5.500 1.300 7.200 0" stroke="${f}" stroke-width="1.2" stroke-linecap="round" fill="none"/>` },
+  horse: { name: 'koňská hlava', g: 'f', pl: 'koňské hlavy', label: 'Kůň', draw: (f, c) => `<path d="M21 7l3 5c4 1.600 6.500 6 7.500 12L34 40H21l-.6-9c-3.200.6-6.200 0-8.700-1.600L8 27c-1.200-1.500-1-3.600.5-4.700L14 19.500c1.200-4 3.800-8 7-12.500z" fill="${c}"/>
+    <circle cx="19.600" cy="17" r="1.500" fill="${f}"/><path d="M11 25.500l2.200 1.200M25 14c2 4 3 8 3 13" stroke="${f}" stroke-width="1.200" stroke-linecap="round" fill="none"/>` },
+  fish: { name: 'ryba', g: 'f', pl: 'ryby', label: 'Ryba', draw: (f, c) => `<path d="M6 24c5-8.500 15-10 21-3l7-5.500v17L27 27c-6 7-16 5.500-21-3z" fill="${c}"/>
+    <circle cx="12.500" cy="22.500" r="1.500" fill="${f}"/><path d="M17 19c1.500 3.500 1.500 7 0 10M21.500 18c1.500 4 1.500 8.500 0 11.500" stroke="${f}" stroke-width="1.100" stroke-linecap="round" fill="none" opacity=".7"/>` },
+  ship: { name: 'loď', g: 'f', pl: 'lodě', label: 'Loď', draw: (f, c) => `<path d="M6 29h28l-4.500 8H10.500z" fill="${c}"/><path d="M20 7.500V29" stroke="${c}" stroke-width="2" stroke-linecap="round"/>
+    <path d="M21.500 9C28 12 30.500 18 29.500 26.500H21.500zM18.500 12.500C13 15.500 11 20 12 26.500h6.500z" fill="${c}"/><path d="M20 7.500l5.500 2L20 11.500z" fill="${c}"/>
+    <path d="M5 39.500q3-2.500 6 0t6 0 6 0 6 0 6 0" stroke="${c}" stroke-width="1.600" stroke-linecap="round" fill="none"/>` },
+  boar: { name: 'kančí hlava', g: 'f', pl: 'kančí hlavy', label: 'Kanec', draw: (f, c) => `<path d="M6 27c0-4.500 4-7.500 10-8.500 4-4 10-4.500 14-1l4-3-1 7c1.500 4 .5 9-4 13H19c-4-1.500-6.500-4.500-7-8-3.500.5-6-.5-6-3.500z" fill="${c}"/>
+    <path d="M9 30c-3.200 1-4 3.600-3 6 3-.5 5-2.200 6-4.500z" fill="${c}"/><circle cx="19.500" cy="22.500" r="1.500" fill="${f}"/><circle cx="8.200" cy="26.500" r="1.100" fill="${f}"/>
+    <path d="M26 20c1.500 3 2 6 1.500 9" stroke="${f}" stroke-width="1.200" stroke-linecap="round" fill="none"/>` },
+  wing: { name: 'křídlo', g: 'n', pl: 'křídla', label: 'Křídlo', draw: (f, c) => `<path d="M8 37C7 23 15 12 32 8c-3 3-4 5-5 8 3-1 5-1 7 0-3 2-5 4-6 7 2 0 4 1 5 2-4 2-8 4-11 8 2 0 3.500.5 4.500 1.500-6 2-12 2.500-18.500 2.500z" fill="${c}"/>
+    <path d="M13 34c2-7 7-12 14-15" stroke="${f}" stroke-width="1.100" stroke-linecap="round" fill="none" opacity=".6"/>` },
+  bell: { name: 'zvon', g: 'm', pl: 'zvony', label: 'Zvon', draw: (f, c) => `<path d="M20 7.500c-1.700 0-2.800 1.100-2.800 2.700C12 12 11 18 11 25.500L7.500 32v2.500h25V32L29 25.500c0-7.500-1-13.500-6.200-15.300 0-1.600-1.100-2.700-2.800-2.700z" fill="${c}"/>
+    <circle cx="20" cy="37.500" r="2.800" fill="${c}"/><path d="M14.500 28.500h11" stroke="${f}" stroke-width="1.100" opacity=".6"/>` },
+  anchor: { name: 'kotva', g: 'f', pl: 'kotvy', label: 'Kotva', draw: (f, c) => `<circle cx="20" cy="11" r="3.300" fill="none" stroke="${c}" stroke-width="2.600"/>
+    <g stroke="${c}" stroke-width="2.800" stroke-linecap="round" fill="none"><path d="M20 14.500V38M13.500 19h13M8.500 29c1 6.500 5.500 9.500 11.500 9.500S30.500 35.500 31.500 29"/></g>
+    <path d="M5.500 28.500l6-1.500-2 6zM34.500 28.500l-6-1.500 2 6z" fill="${c}"/>` },
   cross: { name: 'kříž', g: 'm', pl: 'kříže', label: 'Kříž', draw: (f, c) => `<path d="M17 8h6v11h11v6H23v16h-6V25H6v-6h11z" fill="${c}"/>` },
 };
 export const CHARGE_KEYS = Object.keys(CHARGES);

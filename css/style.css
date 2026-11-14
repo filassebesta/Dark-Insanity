@@ -2306,3 +2306,12 @@ body.map-open .toast-container { top: auto; bottom: 1.2rem; left: 38%; }
   .ce-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .ce-grid.shapes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+/* the house's own crest on the map (the seat) and on the army's banner */
+.map-own .f-hit { fill: transparent; }
+.map-own .h-shadow { fill: rgba(20, 12, 4, .38); }
+.map-own .h-crest { filter: drop-shadow(0 1px 1.5px rgba(10, 6, 2, .75)); }
+.map-own .f-label { font-family: var(--font-body); font-style: italic; font-weight: 600; font-size: 14px; text-anchor: middle; fill: #2b2118; paint-order: stroke; stroke: rgba(240, 228, 198, .92); stroke-width: 4; stroke-linejoin: round; opacity: 0; transition: opacity .2s ease; pointer-events: none; }
+.map-svg.zoomed .map-own .f-label { opacity: .95; }
+.war-army .wa-crest { filter: drop-shadow(0 1px 1.5px rgba(10, 6, 2, .7)); transform-box: fill-box; transform-origin: left top; animation: flagWave 2.2s ease-in-out infinite; }
+.panel-overline.rc-banner { display: flex; align-items: center; gap: .45rem; }
