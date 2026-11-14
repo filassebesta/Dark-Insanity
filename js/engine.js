@@ -15,6 +15,8 @@ import {
 import { gearMods } from './gear.js';
 import { readyToOffer, startAmbition, skipAmbition, settleAmbition, dropAmbition, FAILURE } from './ambitions.js';
 import { processWar, applyWarEffects, warTokens } from './war.js';
+import { empireTokens, empireGenders, processEmpire, empireYear, applyEmpireBranch, heldKeys } from './empire.js';
+import { regencyTokens, startRegency, applyRegencyBranch, processRegency, regencyOn, childRuler, COMING_OF_AGE } from './regency.js';
 
 const TRAIT_MIN = 1;
 const TRAIT_MAX = 10;
@@ -59,6 +61,7 @@ export function interpolate(state, text) {
   Object.assign(dict, cargoTokens(state));
   Object.assign(dict, injuryTokens(state));
   Object.assign(dict, warTokens(state));
+  Object.assign(dict, empireTokens(state), regencyTokens(state));
   const town = ctx.town && settlementDef(ctx.town);
   if (town) {
     // {town.name} Brod, {town.loc} v Brodu, {town.Loc} V Brodu
@@ -141,9 +144,12 @@ export function interpolate(state, text) {
     P: (state.pastRulers || []).length ? state.pastRulers.at(-1).gender : 'male',
     // the foreign rulers: {E:…|…} Eastern Marches, {N:…|…} Northern Wastes, {S:…|…} Southern Empire
     E: state.realms?.east?.ruler.gender, N: state.realms?.north?.ruler.gender, S: state.realms?.south?.ruler.gender,
+    // the regent {G:…|…}; the local lords of the held crowns {U:…|…} Marches, {W:…|…} Wastes, {X:…|…} the one in question, {Z:…|…} the claimant
+    G: state.regency && state.regency.regent ? state.regency.gender : 'male',
+    ...empireGenders(state),
   };
   return text
-    .replace(/\{([RHTDLMKFCPBENSQVY]):([^|{}]*)\|([^|{}]*)\}/g, (m, who, male, female) => (genderOf[who] === 'female' ? female : male))
+    .replace(/\{([RHTDLMKFCPBENSQVYGUWXZ]):([^|{}]*)\|([^|{}]*)\}/g, (m, who, male, female) => (genderOf[who] === 'female' ? female : male))
     .replace(/\{([\w.]+)\}/g, (m, key) => (key in dict ? dict[key] : m));
 }
 
@@ -433,6 +439,8 @@ export const NOBLE_ENDINGS = {
       : 'Grunt dostal jiný hospodář';
     return `${lady ? 'Paní' : 'Pán'} ztratil${lady ? 'a' : ''} s rodem ${s.dynastyName} trpělivost. ${lost} a ${s.ruler.name} odchází s rodinou a uzlíkem na cestu, která nikam nevede.`;
   },
+  empire_peak: (s) => `Tři koruny drží pohromadě i bez meče na stole. ${s.ruler.name} z rodu ${s.dynastyName} odchází na vrcholu říše, v níž markrabata, náčelníci i velmoži z Vlčího Údělu sedí u jednoho stolu a daně chodí včas. Kronikáři v Markách, v horách i v hlavním městě budou psát o době, kdy se země poprvé naučily dohodnout — a nikdo ještě netuší, jak dlouho to bez ${s.ruler.gender === 'female' ? 'ní' : 'něj'} vydrží.`,
+  empire_fall: (s) => `Poslední cizí koruna je pryč a říše, kterou ${s.ruler.name} {R:skládal|skládala} z dobytých zemí, se rozpadla stejně rychle, jako vznikla. Zbývá Vlčí Úděl, rod ${s.dynastyName} a kronika, která si zapamatuje, že kdo dobývá mečem, musí vládnout trpělivostí — a že to druhé je těžší.`,
   exile: (s) => `Král ztratil s rodem ${s.dynastyName} trpělivost. Panství bylo zabaveno a ${s.ruler.name} odchází s rodinou do vyhnanství.`,
 };
 
@@ -476,18 +484,25 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
   const touched = {};
   applyHouseEffects(state, branch.houseEffects, notes);
   applyNobleEffects(state, branch.noble, notes);
-  // realm: { <key>: { attitude, power } } — how a foreign court takes what was done
+  // realm: { <key>: { attitude, power } } — how a foreign court takes what was done;
+  // 'conquest' = the crown just taken, 'focus' = the held realm the event is about, 'held' = every held crown
   for (const [k, fx] of Object.entries(branch.realm || {})) {
-    const key = k === 'conquest' ? state.lastConquest && state.lastConquest.key : k; // the crown just taken
-    const r = state.realms && state.realms[key];
-    if (!r) continue;
-    if (fx.attitude) r.attitude = clamp(r.attitude + fx.attitude);
-    if (fx.power) r.power = clamp(r.power + fx.power);
-    // the consequence abroad shows with the outcome
-    const rn = REALMS[key] && REALMS[key].name;
-    if (rn && fx.attitude) notes.push({ text: `${rn}: vztah ${fx.attitude > 0 ? '+' : ''}${fx.attitude}`, tone: fx.attitude > 0 ? 'pos' : 'neg' });
-    if (rn && fx.power) notes.push({ text: `${rn}: síla ${fx.power > 0 ? '+' : ''}${fx.power}`, tone: fx.power > 0 ? 'pos' : 'neg' });
+    const keys = k === 'conquest' ? [state.lastConquest && state.lastConquest.key]
+      : k === 'focus' ? [state.eventContext && state.eventContext.realm]
+        : k === 'held' ? heldKeys(state) : [k];
+    for (const key of keys) {
+      const r = state.realms && state.realms[key];
+      if (!r) continue;
+      if (fx.attitude) r.attitude = clamp(r.attitude + fx.attitude);
+      if (fx.power) r.power = clamp(r.power + fx.power);
+      // the consequence abroad shows with the outcome
+      const rn = REALMS[key] && REALMS[key].name;
+      if (rn && fx.attitude) notes.push({ text: `${rn}: ${r.owner === 'player' ? 'věrnost' : 'vztah'} ${fx.attitude > 0 ? '+' : ''}${fx.attitude}`, tone: fx.attitude > 0 ? 'pos' : 'neg' });
+      if (rn && fx.power) notes.push({ text: `${rn}: ${r.owner === 'player' ? 'moc koruny' : 'síla'} ${fx.power > 0 ? '+' : ''}${fx.power}`, tone: fx.power > 0 ? 'pos' : 'neg' });
+    }
   }
+  applyEmpireBranch(state, branch.empire, notes); // the local lord, a viceroy, a claimant, the year's decree
+  applyRegencyBranch(state, branch.regency, notes); // a child ruler's regent
   if (branch.setTier && branch.setTier !== state.ruler.statusTier) {
     const rising = branch.setTier > state.ruler.statusTier;
     state.ruler.statusTier = branch.setTier;
@@ -637,7 +652,7 @@ function takeDueEcho(state) {
     if (!event || (event.scenario || 'panovnik') !== state.scenario) continue;
     state.eventContext = echo.context;
     if ((event.requires && !event.requires(state)) || (state.flags.rebellion && ROYAL_EVENTS.has(event.id))
-      || (MARCHES_ABROAD.has(event.id) && marchesAreOurs(state))) { state.eventContext = null; continue; }
+      || (MARCHES_ABROAD.has(event.id) && marchesAreOurs(state)) || childActs(state, event)) { state.eventContext = null; continue; }
     state.echoOrigin = echo.from;
     return event;
   }
@@ -746,7 +761,7 @@ function reignOf(state) {
 }
 
 // routine scenes (the year's work, chapter cards, a funeral, a birth) are not deeds a reign is remembered by
-const ROUTINE_SCENES = /^(quiet_season|n_klidne_obdobi|s_klidne_obdobi|vynos_roku|s_prace_na_gruntu|nastupnictvi|narozeni|narozeni_levobocka|touha_po_diteti|kapitola_.*|p_.*|ambice.*|cil_.*)$/;
+const ROUTINE_SCENES = /^(quiet_season|n_klidne_obdobi|s_klidne_obdobi|vynos_roku|s_prace_na_gruntu|nastupnictvi|narozeni|narozeni_levobocka|touha_po_diteti|kapitola_.*|p_.*|ambice.*|cil_.*|risa_sprava|regentstvi|plnoletost)$/;
 
 function tallyReign(state, branch, meta, outcome) {
   if (!meta || !meta.event || /^(quiet_season|n_klidne_obdobi|s_klidne_obdobi)$/.test(meta.event.id)) return;
@@ -975,6 +990,10 @@ const MARCHES_ABROAD = new Set(['pohranicni_najezd', 'valka_s_markami', 'cizi_vy
   'o_clo', 'zrada_spehmistra', 'ozvena_markrabi', 'ozvena_uprchlici', 'ozvena_dluh_markam']);
 // events where the king acts in person (beyond ROYAL_EVENTS): not while the king lies helpless
 const KING_ACTS = new Set(['v_korunni_rada', 'v_zkouska_vernosti', 'v_ozvena_rada']);
+// a child on the throne does not duel, brawl, hunt wolves or court: events where the ruler acts in person
+const CHILD_ACTS = new Set(['rvaci_v_krcme', 'turnaj', 'v_turnaj', 'vlci', 'souboj_slechticu', 'potulny_rytir', 'atentat', 'n_kralovsky_snatek', 'cizi_princezna']);
+const hasFight = (e) => (e.choices || []).some((c) => c.combat);
+const childActs = (state, e) => childRuler(state) && (CHILD_ACTS.has(e.id) || hasFight(e));
 const kingHelpless = (state) => !!(state.throneArc && state.throneArc.step >= 1 && !state.throneArc.done);
 const marchesAreOurs = (state) => !!(state.realms && state.realms.east && state.realms.east.owner === 'player');
 
@@ -986,6 +1005,7 @@ function eventAvailable(state, e) {
   if ((state.flags.rebellion || kingHelpless(state)) && (ROYAL_EVENTS.has(e.id) || KING_ACTS.has(e.id))) return false;
   // a ruler leading the army in the field does not hold feasts, sit for portraits or judge village quarrels
   if (state.war && state.war.leader === 'ruler' && AT_COURT.has(e.id)) return false;
+  if (childActs(state, e)) return false;
   if (e.forced) return false; // only ever raised by the engine (state.pendingEvent)
   if (e.oneTime && (state.usedEvents || []).includes(e.id)) return false;
   const last = (state.eventHistory || {})[e.id];
@@ -1003,13 +1023,16 @@ export function pickNextEvent(state) {
   state.echoOrigin = null;
   if (!state.pendingEvent && state.eventQueue && state.eventQueue.length) state.pendingEvent = state.eventQueue.shift();
   if (state.pendingEvent) {
-    const forced = EVENTS.find((e) => e.id === state.pendingEvent);
+    let forced = EVENTS.find((e) => e.id === state.pendingEvent);
     state.pendingEvent = null;
+    if (forced && forced.dropIf && forced.dropIf(state)) forced = null; // the reason for the scene is gone (a lost crown, a regency settled)
     // a forced event left over from the previous stage of life (the king's death after the crown is won) is dropped
     if (forced && (forced.scenarios || [forced.scenario || 'panovnik']).includes(state.scenario)) {
       if (forced.target) setTargetContext(state, forced.target(state));
       return forced;
     }
+    // a scene that was dropped (no longer fitting, or a crisis card this stage has no text for) must not hold up the ones waiting behind it
+    if (state.eventQueue && state.eventQueue.length) return pickNextEvent(state);
   }
   const echo = takeDueEcho(state);
   if (echo) return echo;
@@ -1041,6 +1064,8 @@ function setTargetContext(state, t) {
   if (typeof t === 'string' && t.startsWith('town:')) {
     const id = t.slice(5);
     state.eventContext = { town: id, province: settlementDef(id).province };
+  } else if (typeof t === 'string' && t.startsWith('realm:')) {
+    state.eventContext = { realm: t.slice(6) }; // a held foreign crown (empire.js)
   } else if (state.provinces.some((p) => p.id === t)) state.eventContext = { province: t };
   else if ((state.houses || []).some((h) => h.id === t)) state.eventContext = { house: t };
   else state.eventContext = { role: t };
@@ -1271,10 +1296,26 @@ function generateSuccessorHousehold(state, siblings = []) {
   }
 }
 
+const BIRTH_CARDS = ['narozeni', 'dedicke_pravo', 'narozeni_levobocka'];
+/** The birth card of the dying ruler's last child must not come after the succession scene. */
+function dropStaleBirthCards(state) {
+  const dropped = state.pendingEvent === 'narozeni' || (state.eventQueue || []).includes('narozeni');
+  if (BIRTH_CARDS.includes(state.pendingEvent)) state.pendingEvent = null;
+  state.eventQueue = (state.eventQueue || []).filter((id) => !BIRTH_CARDS.includes(id));
+  if (dropped && state.lastSwap) state.lastSwap.fresh = false;
+  if (dropped && state.lastBirth) {
+    const b = state.lastBirth;
+    state.chronicle.push(makeChronicleEntry(state, `${b.name} ${b.gender === 'female' ? 'se narodila' : 'se narodil'} v týž čas, kdy rod ${state.dynastyName} pochovával ${(state.pastRulers || []).at(-1)?.gender === 'female' ? 'vládkyni' : 'vládce'}.`));
+  }
+}
+
 function handleSuccession(state, cause = 'stářím') {
   dropAmbition(state); // the new ruler sets their own goals
   if (state.war && state.war.leader === 'ruler') state.war.leader = 'marshal'; // the marshal takes over the campaign
   nextHeir(state); // a younger child steps up if the heir is gone; without children a brother or sister
+  // who could govern for a child: the widow(er) and the old ruler's grown brothers and sisters (before the household is renewed)
+  const oldSpouse = state.spouse && state.spouse.alive !== false && !state.spouse.none && !state.spouse.divorced ? { ...state.spouse } : null;
+  const oldKin = (state.siblings || []).filter((c) => c.alive !== false && c.age >= 18 && c.name !== (state.heir && state.heir.name)).sort((a, b) => b.age - a.age)[0] || null;
   if (state.heir.alive) {
     // a brother or sister taking over: the main line has died out, a cadet branch carries the house on
     const cadet = !!state.heir.presumptive;
@@ -1334,13 +1375,25 @@ function handleSuccession(state, cause = 'stářím') {
     state.siblings = siblings.filter((c) => !(state.heir.presumptive && c.name === state.heir.name)).map((c) => ({ ...c, role: 'sibling' }));
     state.pregnancy = null;
     state.suitors = [];
+    dropStaleBirthCards(state); // a child born in the season the ruler died is a brother or sister now, not a card after the funeral
+    for (const rec of Object.values((state.empire && state.empire.r) || {})) rec.viceroy = false; // the heir who ruled a held crown is the ruler now
+    // a ruler under sixteen governs through a regent: the scene follows the funeral
+    state.regency = null;
+    if (state.ruler.age < COMING_OF_AGE) {
+      startRegency(state, {
+        parent: oldSpouse && !cadet && !viaBastard ? { name: oldSpouse.name, gender: oldSpouse.gender, age: oldSpouse.age, loyalty: oldSpouse.loyalty } : null,
+        kin: oldKin ? { name: oldKin.name, gender: oldKin.gender, age: oldKin.age, rel: cadet && !viaBastard ? (oldKin.gender === 'female' ? 'sestra' : 'bratr') : (oldKin.gender === 'female' ? 'teta' : 'strýc') } : null,
+      });
+      state.chronicle.push(makeChronicleEntry(state, `${state.ruler.name} nastupuje ve věku ${state.ruler.age < 1 ? 'několika měsíců' : state.ruler.age === 1 ? 'jednoho roku' : `${state.ruler.age} let`}. Dokud nedospěje, musí za ${f(state.ruler) ? 'ni' : 'něj'} vládnout někdo jiný.`));
+    }
     if (siblings.length) {
       const names = siblings.map((c) => c.name).join(', ');
       const presumptive = state.heir.alive && siblings.some((x) => x.name === state.heir.name);
       state.chronicle.push(makeChronicleEntry(state, `Sourozenci ${isPeasant(state) ? (f(state.ruler) ? 'nové hospodyně' : 'nového hospodáře') : isNoble(state) ? (f(state.ruler) ? 'nové paní' : 'nového pána') : (f(state.ruler) ? 'nové vládkyně' : 'nového vládce')} (${names}) zůstávají při rodu${presumptive ? `; ${state.heir.name} je ${f(state.heir) ? 'dědičkou' : 'dědicem'}, dokud se nenarodí dítě` : ''}.`));
     }
-    // the new ruler's first scene (events_family.js)
+    // the new ruler's first scene (events_family.js); for a child, the choice of a regent follows it
     if (state.pendingEvent) (state.eventQueue = state.eventQueue || []).unshift(state.pendingEvent);
+    if (regencyOn(state)) (state.eventQueue = state.eventQueue || []).unshift('regentstvi');
     state.pendingEvent = 'nastupnictvi';
     return true;
   }
@@ -1431,6 +1484,25 @@ function processAmbition(state) {
   return [text];
 }
 
+/** A child ruler's regency: the choice of a regent, and the scene that ends it at sixteen. */
+function processRegencyScenes(state) {
+  if (state.gameOver) return;
+  // an older save with a child on the throne gets its regency now
+  if (state.regency === undefined && state.generation > 1 && childRuler(state)) startRegency(state);
+  const C = state.regency;
+  if (!C || C.ended) return;
+  const queued = (id) => state.pendingEvent === id || (state.eventQueue || []).includes(id);
+  if (!C.regent) {
+    if (!queued('regentstvi') && state.turn - (C.askedAt ?? -99) >= 2) { C.askedAt = state.turn; queueEvent(state, 'regentstvi'); }
+    return;
+  }
+  if (state.ruler.age >= COMING_OF_AGE) {
+    if (C.comeFirst === undefined) C.comeFirst = state.turn;
+    if (!queued('plnoletost') && state.turn - (C.comeAt ?? -99) >= 3) { C.comeAt = state.turn; queueEvent(state, 'plnoletost'); }
+    if (state.turn - C.comeFirst > 16) C.ended = state.turn; // the scene never got its turn: the regency simply lapses
+  }
+}
+
 // Advances one round (season). Returns { turnSummary, event, successionOccurred, gameOver }.
 export function advanceTurn(state) {
   ensureCourtData(state);
@@ -1466,6 +1538,7 @@ export function advanceTurn(state) {
   }
 
   const worldNews = state.seasonIndex === 0 ? ageRealms(state) : []; // news from abroad: rulers die, crowns rise up
+  if (state.seasonIndex === 0) worldNews.push(...empireYear(state), ...processRegency(state)); // held crowns simmer, a regent's years go by
   // an empty granary stirs the lands up; say so before it shows in the stability
   if (!isPeasant(state) && state.resources.food < 20) worldNews.unshift(state.resources.food < 8
     ? 'Sýpky jsou prázdné. Hlad bouří kraje a stabilita se drolí — je třeba sehnat obilí nebo poslat část vojska domů.'
@@ -1489,6 +1562,8 @@ export function advanceTurn(state) {
     return { turnSummary, event: null, successionOccurred, gameOver };
   }
 
+  // scenes waiting in the queue (a regent to choose, the coming of age, a chapter card) go before anything that comes up on its own
+  if (!state.pendingEvent && state.eventQueue && state.eventQueue.length) state.pendingEvent = state.eventQueue.shift();
   raiseCrisis(state);
   // the army in the field: supplies, the end of a campaign, the season's war event
   tradeNews.unshift(...processWar(state));
@@ -1505,6 +1580,8 @@ export function advanceTurn(state) {
   if (!state.pendingEvent && !isPeasant(state) && state.seasonIndex <= 1 && decreeAvailable(state) && ownProvinces(state).length) state.pendingEvent = 'vynos_roku'; // spring, or summer when spring was busy
   // (autumn, or winter when the autumn was taken by something more pressing)
   if (!state.pendingEvent && isPeasant(state) && state.seasonIndex >= 2 && decreeAvailable(state)) state.pendingEvent = 's_prace_na_gruntu';
+  processEmpire(state); // the autumn decree for the foreign crowns the king holds (events_empire.js risa_sprava)
+  processRegencyScenes(state); // a child ruler needs a regent, and at sixteen the regency ends
   const event = pickNextEvent(state);
   state.currentEvent = event ? event.id : null;
   return { turnSummary, event, successionOccurred, gameOver: null, tradeNews };
