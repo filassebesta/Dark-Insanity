@@ -62,8 +62,23 @@ export function memberPortraitCandidates(c, role, scenario) {
   const small = (role === 'heir' || role === 'child') && c.age < 7 ? [`assets/portraits/child_${g}.jpg`] : [];
   // a peasant's household has its own faces (s_<role>_<gender>), never the royal court's
   const base = `assets/portraits/${scenario === 'sedlak' ? 's_' : ''}${role === 'child' ? 'heir' : role}_${g}`;
+  // children, brothers, sisters and bastards grow up: from 17 on they get a grown-up face (adult_<s|n>_<gender>_<0|1>,
+  // docs/obrazky-rodina.md R8) — until those are painted, a fitting adult portrait stands in
+  if ((role === 'heir' || role === 'child') && !c.portrait && c.age >= ADULT_AGE) {
+    const stage = scenario === 'sedlak' ? 's' : 'n';
+    let h = 0;
+    for (const ch of String(c.name || '')) h = (h * 31 + ch.charCodeAt(0)) % 997;
+    const v = h % 2;
+    const stand = g === 'male'
+      ? `assets/portraits/${scenario === 'sedlak' ? 's_spouse' : 'spouse'}_male.jpg`
+      : `assets/portraits/ruler_${scenario === 'sedlak' ? 'peasant' : scenario === 'slechtic' ? 'noble' : 'king'}_female.jpg`;
+    return [...own, `assets/portraits/adult_${stage}_${g}_${v}.jpg`, `assets/portraits/adult_${stage}_${g}_${1 - v}.jpg`, stand, `${base}.jpg`, `${base}.png`];
+  }
   return [...own, ...small, `${base}.jpg`, `${base}.png`];
 }
+
+// the age at which a child's portrait gives way to a grown-up one
+const ADULT_AGE = 17;
 
 function reignYears(state) {
   return Math.floor((state.turn - (state.ruler.reignStartTurn || 0)) / 4);

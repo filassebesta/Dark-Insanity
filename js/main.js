@@ -603,6 +603,7 @@ document.addEventListener('kingdom:talk', (e) => {
   if (!currentState) return;
   saveGame(currentState);
   refreshAllPanels();
+  if (e.detail.closed) { closePerson(); openCharacter(currentState); toast(e.detail.text); return; }
   renderPersonSheet(currentState, e.detail.role);
 });
 

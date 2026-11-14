@@ -6,7 +6,7 @@
 
 import { clamp, bumpStat, TRAIT_DEFS, clampRes } from './data.js';
 import { roleLabel, COURT_ROLES } from './court.js';
-import { personOf, marry, canConceive, conceiveChance, startPregnancy, isMarried, takeLover, loverCanConceive, loverConceiveChance, startLoverPregnancy } from './family.js';
+import { personOf, marry, canDivorce, divorce, canConceive, conceiveChance, startPregnancy, isMarried, takeLover, loverCanConceive, loverConceiveChance, startLoverPregnancy } from './family.js';
 
 // 'suitor:2' → 'suitor', 'spouse' → 'spouse'
 const kindOf = (role) => String(role).split(':')[0];
@@ -126,6 +126,12 @@ export const TOPICS = {
     win: { loyalty: 4, child: true }, lose: { loyalty: 2 },
     text: [(c) => `Noc patřila jen vám dvěma. Za pár týdnů ${g(c, 'jsi poznala, že čekáš dítě, a ' + c.name + ' tě nadšeně zvedl do náruče', c.name + ' ti s úsměvem oznámila, že čeká dítě')}.`,
       (c) => `Noc patřila jen vám dvěma. Dítě zatím nepřišlo — ale ${c.name} se usmívá a říká, že máte čas.`],
+  },
+  rozvod: {
+    label: 'Navrhnout rozvod', roles: ['spouse'], confirm: true, tag: 'má těžké následky',
+    available: (c, s) => isMarried(s),
+    win: { divorce: true },
+    text: [(c, s) => `${c.name} dlouho mlčel${g(c, '', 'a')}. Pak ${g(c, 'si sbalil', 'si sbalila')} věci a ${g(c, 'odešel', 'odešla')} z domu. Děti zůstávají s tebou a ve dvoře je najednou ticho.`],
   },
   nam_rec: {
     label: 'Dát se do řeči', roles: ['suitor'],
@@ -293,6 +299,14 @@ export function holdTalk(state, role, key, success) {
       return { text, delta: 0, notes, role: 'spouse' };
     }
     return { text, delta, notes, role };
+  }
+  if (res.divorce) {
+    const why = canDivorce(state);
+    if (why) return { text: why, delta: 0, notes, role };
+    const text = t.text[0](c, state, role);
+    divorce(state);
+    bumpStat(state, 'talks');
+    return { text, delta: 0, notes, role, closed: true };
   }
   if (res.child) { startPregnancy(state); delete state.flags.no_more_children; }
   if (key === 'dar' && c.quirk === 'chamtivy') delta += 4;
