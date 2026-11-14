@@ -344,6 +344,8 @@ function yieldSummary(state, id) {
     ...Object.entries(y.stock).map(([g, n]) => chip(`${GOODS[g].name.toLowerCase()} +${n} / rok`)),
     ...(y.warehouse ? [chip(`sklad +${y.warehouse} vozů od každého zboží`)] : []),
     ...Object.entries(y.drift).filter(([, v]) => v).map(([k, v]) => chip(`${DRIFT_LABEL[k]} +${v}`)),
+    // the farm's own works: room for animals, the mill, the barn (farm.js) are not income lines
+    ...(isFarm(id) ? [...new Set((townOf(state, id).buildings || []).filter((b) => b.ready && !b.base).flatMap((b) => worksChips(b.key)))].map((t) => chip(t)) : []),
   ];
   return rows.length ? `<div class="build-chips">${rows.join('')}</div>` : '<p class="map-desc">Zatím tu nestojí nic, co by ti něco dávalo.</p>';
 }
