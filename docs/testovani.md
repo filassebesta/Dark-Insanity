@@ -151,3 +151,9 @@ nerozvinutých tokenů) a ostatní simulace z HANDOFF.md kap. 2 (`errors` musí 
 3. „Změnit erb“ v panelu Rody otevře editor s tlačítkem Zrušit. Po obnovení stránky erb zůstává.
 4. Telefon (390 px): okno přes celou obrazovku, náhled nahoře přilepený, tlačítko „Přijmout erb“ dole přilepené, bez vodorovného posunu.
 5. Mapa: při `statusTier` 3–4 je erb nad sídlem na pobřeží, u krále nad hlavním městem (popisek při přiblížení); v režimu Válka je erb na praporu vojska i v záhlaví panelu.
+
+## Obraz bojiště se zónami
+
+1. Při bitvě v poli, obléhání a přepadení je nahoře malovaný obraz; klik na zónu (levé křídlo / střed / pravé křídlo, u obléhání hradby / brána / průlom) otevře její nabídku pod obrazem a zóna se zvýrazní. Pruh dole je záloha.
+2. Steppery v nabídce mění počty a čísla v zóně se hned přepočítají; „Automaticky“ a „Všichni do zálohy“ fungují jako dřív.
+3. Telefon (390 px): obraz přes celou šířku, popisky zón se zmenší, nabídka vybrané zóny je pod obrazem; bez vodorovného posunu.

@@ -1,7 +1,7 @@
 // Battle: how a clash of two armies is decided once the player has placed the men.
 //
 // A battle has slots: on the field the left wing, the centre and the right wing (plus the
-// reserve), at a siege the walls, the gate and the rear. Each slot is a small fight of its own:
+// reserve), at a siege the walls, the gate and the breach. Each slot is a small fight of its own:
 // the strength of the men placed there (type, numbers, who stands next to whom, terrain), and
 // the types set against each other: spears beat horse, horse beats archers, archers beat spears
 // in the open (and win everything behind a screen of spears). The reserve rides to the front
@@ -44,7 +44,7 @@ export const KINDS = {
     slots: [
       { key: 'W', name: 'Hradby', loc: 'u hradeb', to: 'k hradbám' },
       { key: 'G', name: 'Brána', loc: 'u brány', to: 'k bráně' },
-      { key: 'B', name: 'Týl', loc: 've vojenském týlu', to: 'do týlu' },
+      { key: 'B', name: 'Průlom', loc: 'u průlomu', to: 'k průlomu' },
       { key: 'Z', name: 'Záloha', loc: 'v záloze', reserve: true },
     ],
   },
