@@ -114,8 +114,8 @@ export const BUILDINGS = {
   },
   mlyn: {
     name: 'Mlýn', cost: { gold: 10 }, turns: 2, minLevel: 1,
-    income: { food: 1 },
-    text: 'Mele obilí celého okolí a mlynář odvádí každý desátý pytel.',
+    income: { food: 1 }, stock: { flour: 1 },
+    text: 'Mele obilí celého okolí. Mlynář odvádí každý desátý pytel a každé jaro přibude ve skladu vůz mouky na prodej.',
   },
   krcma: {
     name: 'Krčma', cost: { gold: 6 }, turns: 1, minLevel: 1,
@@ -197,11 +197,11 @@ export const FARM_BUILDINGS = {
   stodola: {
     name: 'Stodola', cost: { gold: 5 }, turns: 2, minLevel: 1,
     income: { food: 2 }, seasons: [2], onBuild: { stability: 2 },
-    text: 'Místo pro úrodu a obilí v pytlích. Co se nevejde pod střechu, to sežerou myši a déšť.',
+    text: 'Místo pro úrodu: do stodoly se vejde dvanáct vozů obilí (bez ní jen čtyři na půdě chalupy). Co se nevejde pod střechu, to sežerou myši a déšť.',
   },
   mlynek: {
     name: 'Mlýn', cost: { gold: 12 }, turns: 3, minLevel: 2,
-    text: 'Vodní mlýnek na potoce za humny. Mele obilí celé vsi a z každého pytle si nechá mírku.',
+    text: 'Vodní mlýnek na potoce za humny. Každé období semele až dva vozy obilí na mouku, která se prodá dráž než zrno, a mlynářova mírka zůstane v komoře.',
   },
   chlev: {
     name: 'Chlév', cost: { gold: 6 }, turns: 2, minLevel: 1,
@@ -219,7 +219,7 @@ export const FARM_BUILDINGS = {
   kolna: {
     name: 'Kolna na vozy', cost: { gold: 6 }, turns: 1, minLevel: 1,
     warehouse: WAREHOUSE.kolna,
-    text: 'Přístřešek pro vozy a pytle s obilím. Do skladu se vejdou o čtyři vozy od každého zboží víc.',
+    text: 'Přístřešek pro vozy a pytle s obilím. Do skladu i do stodoly se vejdou o čtyři vozy od každého zboží víc.',
   },
   vcelin: {
     name: 'Včelín', cost: { gold: 4 }, turns: 1, minLevel: 1,

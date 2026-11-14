@@ -54,8 +54,8 @@ export function smartPick(E, state, event, randomness = 0.15) {
 }
 
 // The farm (farm.js) for a sensible peasant: build a cowshed, a stable, a mill
-// and a pigsty when there is money to spare, keep the pens full and sell grain
-// the barn cannot hold. Turned on in the sims with FARM=1.
+// and a pigsty when there is money to spare, keep the pens full, sell the flour
+// the mill makes and the grain the barn cannot hold. Turned on in the sims with FARM=1.
 //   import { farmRule } from './smart.mjs';  farmRule(B, F, state);   (B = build.js, F = farm.js)
 const FARM_PLAN = ['chlev', 'staj', 'mlynek', 'chlivek'];
 const FARM_BUY = ['cows', 'pigs', 'horses'];
@@ -74,5 +74,7 @@ export function farmRule(B, F, state) {
     }
   }
   for (const key of FARM_BUY) if (!F.buyBlock(state, key) && state.resources.gold >= F.STOCK[key].buy + keep) F.buyStock(state, key);
-  while (state.farm.grain > 8) F.sellStock(state, 'grain');
+  // the chain: the mill grinds by itself, the flour goes to Brod; grain over 8 wagons is sold raw
+  for (let i = 0; i < 20 && F.countOf(state, 'flour') > 0 && !F.sellStock(state, 'flour').error; i++);
+  for (let i = 0; i < 20 && F.countOf(state, 'grain') > 8 && !F.sellStock(state, 'grain').error; i++);
 }

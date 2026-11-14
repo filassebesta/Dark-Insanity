@@ -1457,6 +1457,42 @@ kbd {
 .farm-trade { display: flex; flex-wrap: wrap; gap: .25rem; }
 .farm-trade .trade-mini { margin: 0; }
 
+/* "Od pole k trhu": the grain -> flour -> market chain in the farm view */
+.farm-chain { list-style: none; margin: 0 0 .5rem; padding: 0; display: grid; gap: .3rem; }
+.farm-chain li { display: grid; grid-template-columns: 6.6rem 1fr; gap: .5rem; align-items: baseline; padding: .35rem .6rem; border-left: 3px solid #c9a24f; background: rgba(255,250,235,.34); border-radius: 3px; font-size: .86rem; line-height: 1.4; color: var(--ink-soft); }
+.fc-name { font-family: var(--font-caps); font-size: .76rem; font-weight: 700; letter-spacing: .08em; color: var(--ink); text-transform: uppercase; }
+.fc-name i { font-style: normal; display: inline-grid; place-items: center; width: 1.15rem; height: 1.15rem; margin-right: .25rem; border-radius: 50%; background: #7a2418; color: #f6e8c8; font-size: .7rem; letter-spacing: 0; }
+.fc-text b { color: #7a2418; }
+.farm-chain-btns { display: flex; flex-wrap: wrap; gap: .25rem; margin: 0 0 .8rem; }
+.farm-chain-btns .trade-mini { margin: 0; }
+
+/* "Přehled majetku" at the top of the trade panel: two columns of small cards */
+.own-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; margin: 0 0 1rem; }
+.own-grid > p, .own-grid > .own-line { grid-column: 1 / -1; margin: 0; }
+.own-label { font-family: var(--font-caps); font-size: .68rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-faint); margin-top: .35rem !important; }
+.own-empty { font-size: .85rem; color: var(--ink-soft); font-style: italic; }
+.own-card { display: flex; gap: .45rem; align-items: center; min-width: 0; padding: .4rem .5rem; border: 1px solid rgba(120,80,30,.22); border-left: 3px solid #9fa565; background: rgba(255,250,235,.38); border-radius: 3px; }
+.own-card.res { border-left-color: #c9a24f; }
+.own-card.res-food { border-left-color: #a5ad6a; }
+.own-card.res-army { border-left-color: #c4715a; }
+.own-card.missing { opacity: .6; border-left-color: rgba(120,80,30,.25); background: transparent; }
+.own-ico { flex: none; width: 38px; height: 30px; border-radius: 3px; background: rgba(169,163,108,.35); display: grid; place-items: center; }
+.own-card.missing .own-ico { filter: grayscale(.85); }
+.own-ico svg { width: 100%; height: 100%; }
+.own-body { display: flex; flex-direction: column; gap: .12rem; min-width: 0; flex: 1; }
+.own-body b { font-family: var(--font-caps); font-size: .72rem; font-weight: 700; letter-spacing: .07em; color: var(--ink); }
+.own-n { font-size: .82rem; color: var(--ink-soft); }
+.own-n em { font-style: normal; font-size: 1.02rem; font-weight: 700; color: #7a2418; }
+.own-bar { display: block; height: 5px; border-radius: 3px; background: rgba(43,33,24,.14); overflow: hidden; }
+.own-bar i { display: block; height: 100%; background: linear-gradient(90deg, #c9a24f, #d8b866); }
+.own-body small { font-size: .74rem; line-height: 1.25; color: var(--ink-faint); }
+.own-line { display: grid; gap: .25rem; font-size: .84rem; color: var(--ink-soft); }
+.own-line b { color: var(--ink); font-weight: 600; }
+.own-line .trade-mini { margin: 0 0 0 .3rem; }
+@media (max-width: 380px) {
+  .farm-chain li { grid-template-columns: 1fr; gap: .1rem; }
+}
+
 @media (max-width: 900px) {
   .map-view.town-open .map-layer-toggles { display: none; }
   .town-bar { flex-wrap: wrap; gap: .5rem; }
@@ -1932,3 +1968,4 @@ body.map-open .toast-container { top: auto; bottom: 1.2rem; left: 38%; }
 .pc-note { font-size: .78rem; color: #6a5238; margin: 0 0 .6rem; }
 .trade-sub { margin: .5rem 0 .2rem; font-family: var(--font-caps); font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: #6a5238; font-weight: 400; }
 .trade-sub small { text-transform: none; letter-spacing: 0; opacity: .8; }
+.build-upgrade b, .build-upgrade span { display: block; }

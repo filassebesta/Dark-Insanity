@@ -8,6 +8,7 @@
 // where '$loss' is the privilege the lord is about to take back (state.privilegeLoss, event pv_odebrani).
 
 import { RESOURCE_DEFS, RESOURCE_CAP, resourceLabel, clamp, clampRes } from './data.js';
+import { ensureTrade, maxStock } from './trade.js';
 
 export const MAX_PRIVILEGES = 3;   // what a lord will grant a house at one time (the reeve's seal is not his gift)
 const OFFER_GAP = 6;               // seasons between two new privileges (a year and a half)
@@ -19,7 +20,7 @@ const farmTown = (s) => s.towns && s.towns.grunt;
 const hasMill = (s) => !!farmTown(s) && farmTown(s).buildings.some((b) => b.key === 'mlynek' && b.ready);
 
 // grants / duties: { season: fx, spring: fx, autumn: fx } with fx = { gold, food, army, stability, faith, prestige, favor, grain }
-//   ('grain' = sacks in the farm's barn); risks: now and then something goes wrong (chance per matching season)
+//   ('grain' / 'flour' = wagons in the stock: the barn and the mill); risks: now and then something goes wrong (chance per matching season)
 export const PRIVILEGES = {
   rychtar: {
     key: 'rychtar', name: 'Rychtář', what: 'rychtářský úřad', tiers: [1, 2], giver: 'lord',
@@ -34,8 +35,9 @@ export const PRIVILEGES = {
     key: 'mlyn', name: 'Mlýnské právo', what: 'mlýnské právo', tiers: [1, 2], giver: 'lord',
     text: 'Právo mlít pro celou ves a brát si z každého pytle mírku. Panský mlynář o ně přichází, a proto ho bere jako urážku.',
     needs: hasMill, needsText: 'Platí jen dokud na gruntu stojí mlýn.',
-    grants: { autumn: { gold: 3, grain: 3 } },
+    grants: { autumn: { gold: 2, flour: 1 } },
     duties: { spring: { gold: -1 } },
+    grantsNote: ['mouka z cizího obilí jde do skladu jako zboží na prodej'],
     dutiesNote: ['ročně činže panskému dvoru'],
     risks: [{ on: 'autumn', chance: 0.15, fx: { gold: -2 }, news: 'Na mlýnském potoce se utrhla stavidla. Oprava stála dva groše.' }],
     hint: 'mlýn na gruntu a přízeň pána',
@@ -190,7 +192,8 @@ const WHEN_AT = (state) => ({ season: true, spring: state.seasonIndex === 0, aut
 /** What a privilege gives and costs, as readable lines for the character sheet. */
 export function privilegeLines(state, def) {
   const label = (k) => {
-    if (k === 'grain') return 'obilí (pytle)';
+    if (k === 'grain') return 'obilí (vozy)';
+    if (k === 'flour') return 'mouka (vozy)';
     const d = RESOURCE_DEFS.find((x) => x.key === k);
     return d ? resourceLabel(d, state.scenario) : k;
   };
@@ -229,10 +232,10 @@ export function processPrivileges(state) {
   const at = WHEN_AT(state);
   const give = (fx) => {
     for (const [k, v] of Object.entries(fx || {})) {
-      if (k === 'grain') {
-        const f = state.farm;
-        if (!f) continue;
-        f.grain = Math.max(0, f.grain + v); // what the barn cannot hold rots when the farm is processed
+      if (k === 'grain' || k === 'flour') {
+        const t = ensureTrade(state);
+        // wagons into the stock; what the barn cannot hold rots when the farm is processed
+        t.stock[k] = Math.max(0, Math.min(maxStock(state), (t.stock[k] || 0) + v));
         continue;
       }
       if (r[k] === undefined) continue;
