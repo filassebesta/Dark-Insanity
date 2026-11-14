@@ -223,6 +223,8 @@ export function ennoblePeasant(state) {
   state.noble = { province: NOBLE_HOME, plot: 0, secrets: 0 };
   for (const h of state.houses) h.attitude = clamp(h.attitude - 8); // the old houses look down on an upstart
   delete state.peasant;
+  delete state.troops; // a peasant's farmhands become soldiers only when the house recruits (troops.js)
+  delete state.recruitQueue;
   // the reeve, the smith and the innkeeper stay in Lipnice; a lord's household needs a steward, a captain and an ear at court
   const neighbours = ['chancellor', 'marshal', 'spymaster'].map((r) => state[r].name).join(', ');
   state.chancellor = newCharacter('chancellor', { minAge: 38, maxAge: 55, loyalty: 58 });

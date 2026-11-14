@@ -5,7 +5,9 @@
 // At 100 % progress the campaign is won, at zero morale or with no men
 // left it is lost; the player can recall the army at any time.
 //
-// state.war = { target, power, start, morale, progress, leader, arrive, seasons, log }
+// state.war = { target, power, troops, start, morale, progress, leader, arrive, seasons, log, battles, scouted, battle }
+//   power = men in the field (always the sum of troops = { spear, archer, horse, siege, merc }, see troops.js);
+//   battle = the enemy's line of the battle being fought (battle.js)
 // state.tributes = [{ from, gold, until }]   ·   No DOM here.
 
 import { clamp, bumpStat, NOBLE_HOUSES, clampRes } from './data.js';
@@ -13,32 +15,41 @@ import { makeChronicleEntry } from './state.js';
 import { injure } from './injuries.js';
 import { roleLabel } from './court.js';
 import { REALMS, ensureRealms, realmStrength, realmRulerLabel, beatRealm, ownsRealm } from './realms.js';
+import {
+  TROOP_KEYS, apportion, emptyTroops, troopsTotal, ensureTroops, freeTroops, syncTroops, countLabel,
+} from './troops.js';
+import { AVG_POW, avgPow, buildEnemy, fieldCorps, scoreAgainst, GRADE_LABEL, lossLine } from './battle.js';
 
 const HUB = [633, 368];
 const NOBLE_SEAT = [345, 372];
 
 // strength: how hard the enemy fights (troops needed for even odds = 25 × strength)
 // march: seasons on the road · at: where the army goes on the map
+// army: the mix of the enemy host (weights) · style: how it stands in the line (battle.js STYLES)
+// terrain / def: where the battle is fought and the home advantage · fort: has walls (siege engines help)
 export const WAR_TARGETS = {
   east: {
     name: 'Východní marky', enemy: 'markrabata se svými družinami', loc: 've Východních markách', strength: 1.3, march: 2, at: [1222, 440],
+    army: { horse: 0.55, spear: 0.3, archer: 0.15 }, style: 'wings', terrain: 'plain', def: 1, fort: true,
     text: 'Bojovní markrabata za Sokolím hvozdem. Těžký protivník, ale porážka je donutí platit tribut na léta.',
     reward: 'tribut 3 zlata za období na 6 let, velká prestiž', scenarios: ['panovnik'],
   },
   north: {
     name: 'Severní pustiny', enemy: 'severní kmeny', loc: 'v Severních pustinách', strength: 0.9, march: 2, at: [1010, 60],
+    army: { spear: 0.5, archer: 0.4, horse: 0.1 }, style: 'skirmish', terrain: 'forest', def: 1, fort: false,
     text: 'Chudé kmeny za horami. Snadnější kořist, ale zima tam zabíjí víc mužů než meče.',
     reward: 'kožešiny do skladu, tribut 1 zlato za období na 3 roky, prestiž', scenarios: ['panovnik'], winterHard: true,
   },
   south: {
     name: 'Jižní říše', enemy: 'jižní flotila a přístavní posádky', loc: 'na pobřeží Jižní říše', strength: 1.6, march: 1, at: [262, 812], sea: true,
+    army: { archer: 0.45, spear: 0.45, horse: 0.1 }, style: 'garrison', terrain: 'coast', def: 1.08, fort: true,
     text: 'Bohatá říše za mořem. Dobýt ji nejde, ale nájezd na její přístavy přinese velkou kořist.',
     reward: 'velká kořist ve zlatě, prestiž; jižní kupci budou rok platit méně', scenarios: ['panovnik'],
   },
 };
 
 // "5 mužů", "1 muž", "3 muži"
-const men = (n) => `${n} ${n === 1 ? 'muž' : n >= 2 && n <= 4 ? 'muži' : 'mužů'}`;
+export const men = (n) => `${n} ${n === 1 ? 'muž' : n >= 2 && n <= 4 ? 'muži' : 'mužů'}`;
 export const SIZES = { small: 15, medium: 25, large: 40 };
 const WAR_GAP = 8; // seasons of rest between campaigns
 
@@ -63,6 +74,7 @@ export function warTargets(state) {
       const name = p.name.replace(/ \(.*\)$/, '');
       out[`prov:${p.id}`] = {
         name: `Znovudobytí: ${name}`, enemy: 'vzbouřenci a cizí posádky', loc: `v kraji ${name}`, strength: 1.0, march: 1, province: p.id,
+        army: { spear: 0.55, archer: 0.25, horse: 0.2 }, style: 'line', terrain: 'plain', def: 1, fort: true,
         text: `Kraj ${name} se odtrhl od koruny. Dokud ho nezískáš zpět, zlatý věk nepřijde.`,
         reward: 'kraj se vrátí koruně, legitimita a prestiž',
       };
@@ -76,9 +88,13 @@ export function warTargets(state) {
       if (h.ally || h.married) continue; // one does not raid allies or in-laws
       const prov = state.provinces.find((p) => p.id === def.seat);
       if (prov && prov.owner === 'player') continue; // their seat is already yours
+      // the house's own mix and muster if its record has them (noble houses may), else a plain line army
+      const army = def.troops || h.troops || { spear: 0.5, archer: 0.25, horse: 0.25 };
+      const muster = h.muster || def.muster || 0;
       out[`house:${h.id}`] = {
         name: `Soukromá válka: ${def.short}`, enemy: `družina ${def.gen}`, loc: `na panství ${def.gen}`,
-        strength: 0.6 + h.power / 140, march: 1, house: h.id, province: prov ? prov.id : null,
+        strength: muster ? (muster * avgPow(army)) / (25 * AVG_POW) : 0.6 + h.power / 140, march: 1, house: h.id, province: prov ? prov.id : null,
+        army, men: muster || 0, style: 'line', terrain: 'hills', def: 1.06, fort: true,
         text: `Nájezd na ${prov ? `panství ${prov.name.replace(/ \(.*\)$/, '')}` : 'jejich panství'}. Kořist a oslabení soupeře — ale král soukromé války nevidí rád.`,
         reward: 'kořist, oslabení rodu; přízeň krále klesne',
       };
@@ -92,6 +108,14 @@ export function warTargets(state) {
 /** Houses that would ride with the player against the crown. */
 export function rebelAllies(state) {
   return (state.houses || []).filter((h) => (h.ally || h.married) && h.attitude >= 50);
+}
+
+const houseDef = (h) => NOBLE_HOUSES.find((d) => d.id === h.id) || {};
+/** The retinue an allied house sends: its muster in its own mix of men. */
+export function allyRetinue(h) {
+  const d = houseDef(h);
+  const n = h.muster || d.muster || 6;
+  return apportion(d.troops || h.troops || { spear: 0.5, archer: 0.25, horse: 0.25 }, n);
 }
 
 /**
@@ -113,6 +137,7 @@ function rebellionTarget(state) {
   return {
     name: 'Povstání proti koruně', enemy: 'královské vojsko', loc: 'u Vlčího Údělu',
     strength, march: 1, province: 'capital', rebellion: true,
+    army: { spear: 0.4, archer: 0.22, horse: 0.28, merc: 0.1 }, style: 'line', terrain: 'plain', def: 1.05, fort: true,
     text: `Otevřená vzpoura proti koruně. Když vyhraješ, usedneš na trůn; když prohraješ, čeká tě kat nebo cizina. Spojenci a nárok oslabují královo vojsko: ${help}.`,
     reward: 'královská koruna',
   };
@@ -123,7 +148,38 @@ export function warPoint(state, key) {
   return t.at || null;
 }
 
-/** Why a campaign cannot start now (null = it can). */
+/**
+ * The men a size stands for: spread over the free troops in their own mix (no siege engines).
+ * `size` is a number or one of SIZES' keys.
+ */
+export function presetCorps(state, size) {
+  const want = typeof size === 'number' ? size : SIZES[size] || 0;
+  const free = freeTroops(state);
+  const keys = ['spear', 'archer', 'horse', 'merc'];
+  const out = emptyTroops();
+  let left = Math.min(want, keys.reduce((n, k) => n + free[k], 0));
+  for (let pass = 0; pass < 4 && left > 0; pass++) {
+    const w = {};
+    for (const k of keys) w[k] = Math.max(0, free[k] - out[k]);
+    const give = apportion(w, left);
+    for (const k of keys) {
+      const n = Math.min(give[k], free[k] - out[k]);
+      out[k] += n;
+      left -= n;
+    }
+  }
+  return out;
+}
+
+/** A corps made of a size's name ('small'...) or an object of men by type, cleaned of nonsense. */
+function corpsOf(state, sizeOrCorps) {
+  if (typeof sizeOrCorps === 'string') return presetCorps(state, sizeOrCorps);
+  const out = emptyTroops();
+  for (const k of TROOP_KEYS) out[k] = Math.max(0, Math.floor((sizeOrCorps && sizeOrCorps[k]) || 0));
+  return out;
+}
+
+/** Why a campaign cannot start now (null = it can). `size` is a name of SIZES or a corps { spear, archer, horse, siege, merc }. */
 export function warBlock(state, key, size) {
   if (state.gameOver) return 'Kronika skončila.';
   if (state.scenario === 'sedlak') return 'Sedlák války nevede.';
@@ -131,9 +187,18 @@ export function warBlock(state, key, size) {
   if (state.turn < (state.warNext || 0)) return 'Vojsko se ještě zotavuje z minulého tažení.';
   const t = warTargets(state)[key];
   if (!t) return 'Tenhle cíl teď není.';
-  const men = SIZES[size];
-  if (!men) return 'Vyber, kolik mužů vytáhne.';
-  if (state.resources.army - men < 8) return 'Tolik mužů nemáš — doma musí zůstat aspoň posádka.';
+  ensureTroops(state);
+  const named = typeof size === 'string';
+  const want = named ? SIZES[size] : troopsTotal(corpsOf(state, size));
+  if (!want) return 'Vyber, kolik mužů vytáhne.';
+  const free = freeTroops(state);
+  if (named) {
+    if (TROOP_KEYS.reduce((n, k) => n + (k === 'siege' ? 0 : free[k]), 0) < want) return 'Tolik volných mužů nemáš — část je v posádkách nebo ve výcviku.';
+  } else {
+    const c = corpsOf(state, size);
+    if (TROOP_KEYS.some((k) => c[k] > free[k])) return 'Tolik mužů toho typu nemáš — část je v posádkách.';
+  }
+  if (state.resources.army - want < 8) return 'Tolik mužů nemáš — doma musí zůstat aspoň posádka.';
   if (state.resources.food < 10) return 'Bez zásob se do pole táhnout nedá.';
   return null;
 }
@@ -143,11 +208,14 @@ export function startWar(state, key, size, leader = 'marshal') {
   const why = warBlock(state, key, size);
   if (why) return { error: why };
   const t = warTargets(state)[key];
-  const men = SIZES[size];
+  const corps = corpsOf(state, size);
+  const men = troopsTotal(corps);
+  ensureTroops(state);
+  for (const k of TROOP_KEYS) state.troops[k] -= corps[k];
   state.resources.army = clampRes('army', state.resources.army - men);
   state.war = {
-    target: key, power: men, start: state.turn, morale: leader === 'ruler' ? 70 : 60, progress: 0,
-    leader: leader === 'ruler' ? 'ruler' : 'marshal', arrive: state.turn + t.march, seasons: 0, log: [],
+    target: key, power: men, troops: { ...corps }, start: state.turn, morale: leader === 'ruler' ? 70 : 60, progress: 0,
+    leader: leader === 'ruler' ? 'ruler' : 'marshal', arrive: state.turn + t.march, seasons: 0, log: [], battles: 0,
   };
   const who = leader === 'ruler' ? state.ruler.name : state.marshal.name;
   let text = `Vojsko vytáhlo do pole: ${t.name}. ${men} mužů vede ${who}.`;
@@ -156,10 +224,18 @@ export function startWar(state, key, size, leader = 'marshal') {
     state.flags.rebellion = true;
     state.resources.favor = 0;
     const allies = rebelAllies(state);
-    state.war.power += allies.length * 6; // the allied houses send their retinues
+    let extra = 0;
+    for (const h of allies) {
+      // the allied houses send their retinues, in their own mix of men
+      const r = allyRetinue(h);
+      for (const k of TROOP_KEYS) state.war.troops[k] += r[k] || 0;
+      extra += troopsTotal(r);
+    }
+    state.war.power = troopsTotal(state.war.troops);
     for (const h of state.houses) h.attitude = clamp(h.attitude + (allies.includes(h) ? 5 : -6));
-    text = `Rod ${state.dynastyName} pozvedl zbraně proti koruně! ${men} mužů${allies.length ? ` a družiny spojenců (${allies.length * 6} mužů)` : ''} vede ${who} na Vlčí Úděl.`;
+    text = `Rod ${state.dynastyName} pozvedl zbraně proti koruně! ${men} mužů${allies.length ? ` a družiny spojenců (${extra} mužů)` : ''} vede ${who} na Vlčí Úděl.`;
   }
+  syncTroops(state);
   state.chronicle.push(makeChronicleEntry(state, text));
   return { message: text };
 }
@@ -175,22 +251,35 @@ function lostTargetFallback(state) {
   return { name: 'tažení', enemy: 'nepřítel', loc: 'v poli', strength: 1, march: 0, gone: true, text: '', reward: '' };
 }
 
-/** The army against the enemy in words, for a planned or running campaign: [label, tone]. */
+/** The score S of a corps against a target in an ordinary battle: positive = the man has the better of it. Memoised. */
+let scoreMemo = { key: '', S: 0 };
+function corpsScore(state, t, corps, progress = 0) {
+  const key = `${t.name}|${t.strength}|${t.men || ''}|${progress}|${TROOP_KEYS.map((k) => corps[k] || 0).join(',')}`;
+  if (scoreMemo.key === key) return scoreMemo.S;
+  const enemy = buildEnemy(t, 'field', 12345, progress);
+  const S = troopsTotal(corps) > 0 ? scoreAgainst('field', { terrain: t.terrain || 'plain', def: t.def || 1 }, corps, enemy, {}) : -1;
+  scoreMemo = { key, S };
+  return S;
+}
+
+/** The army against the enemy in words, for a planned or running campaign: [label, tone]. `men` is a number or a corps. */
 export function oddsLabel(state, key, men) {
   const t = warTargets(state)[key] || warTarget(state);
   if (!t) return ['', ''];
-  const ratio = men / (25 * t.strength);
-  if (ratio >= 1.3) return ['Převaha', 'good'];
-  if (ratio >= 0.85) return ['Vyrovnané síly', 'warn'];
+  const corps = typeof men === 'number' ? presetCorps(state, men) : men;
+  const S = corpsScore(state, t, corps, 0);
+  if (S >= 0.12) return ['Převaha', 'good'];
+  if (S >= -0.08) return ['Vyrovnané síly', 'warn'];
   return ['Nepřítel je silnější', 'bad'];
 }
 
-/** How the odds of the war events lean: numbers against the enemy, morale and who leads. */
+/** How the odds of the war events lean: the corps against the enemy, morale and who leads. */
 export function warBonus(state) {
   const w = state.war;
   if (!w) return 0;
   const t = warTarget(state);
-  const ratio = w.power / (25 * t.strength);
+  const S = corpsScore(state, t, fieldCorps(state), w.progress || 0);
+  const ratio = (1 + Math.min(0.95, S)) / (1 - Math.min(0.95, S));
   return Math.max(-0.25, Math.min(0.25, (ratio - 1) * 0.3)) + (w.morale - 50) / 250 + (w.leader === 'ruler' ? 0.08 : 0);
 }
 
@@ -208,14 +297,36 @@ export function warTokens(state) {
   };
 }
 
+/** The men of the corps in the field, lost proportionally (engines last): keeps power == sum of troops. */
+export function warLose(state, n) {
+  const w = state.war;
+  const t = fieldCorps(state);
+  const weights = {};
+  for (const k of TROOP_KEYS) weights[k] = t[k] * (k === 'siege' ? 0.5 : 1);
+  const take = apportion(weights, Math.min(n, troopsTotal(t)));
+  for (const k of TROOP_KEYS) t[k] = Math.max(0, t[k] - (take[k] || 0));
+  w.power = troopsTotal(t);
+}
+
+/** Men joining the corps in the field (levy: spearmen first). */
+export function warGain(state, n) {
+  const w = state.war;
+  const t = fieldCorps(state);
+  const add = apportion({ spear: 4, archer: 1 }, n);
+  t.spear += add.spear;
+  t.archer += add.archer;
+  w.power = troopsTotal(t);
+}
+
 /**
  * Branch effect `war` of a war event:
  *   progress, morale, power (men lost or gained), end: 'win' | 'peace' | 'retreat',
- *   wound: chance that a ruler who leads in person is hurt
+ *   wound: chance that a ruler who leads in person is hurt, scout: the enemy line is now known
  */
 export function applyWarEffects(state, fx, notes) {
   if (!fx || !state.war) return;
   const w = state.war;
+  fieldCorps(state);
   if (fx.progress) {
     // more men than the enemy needs push harder; too few push less
     const t = warTarget(state);
@@ -223,7 +334,8 @@ export function applyWarEffects(state, fx, notes) {
     w.progress = Math.max(0, Math.min(100, w.progress + Math.round(fx.progress * scale)));
   }
   if (fx.morale) w.morale = Math.max(0, Math.min(100, w.morale + fx.morale));
-  if (fx.power) w.power = Math.max(0, w.power + fx.power);
+  if (fx.power) fx.power < 0 ? warLose(state, -fx.power) : warGain(state, fx.power);
+  if (fx.scout) w.scouted = true;
   if (fx.won) bumpStat(state, 'battlesWon');
   if (fx.wound && w.leader === 'ruler' && Math.random() < fx.wound) {
     injure(state, { pool: ['pohmozdeni', 'zlomenina', 'rana', 'rana', 'jizva', 'oko', 'ruka', 'noha'] }, notes);
@@ -236,6 +348,31 @@ export function applyWarEffects(state, fx, notes) {
   if (fx.end) w.ending = fx.end; // settled at the start of the next season
 }
 
+/**
+ * What a fought battle (battle.js fightBattle) does to the campaign: the dead by type,
+ * progress and morale by how the day went, a wound for a leader in the front rank.
+ */
+export function applyBattleResult(state, r, notes) {
+  const w = state.war;
+  if (!w) return;
+  const t = fieldCorps(state);
+  for (const k of TROOP_KEYS) t[k] = Math.max(0, t[k] - (r.losses[k] || 0));
+  w.power = troopsTotal(t);
+  w.progress = Math.max(0, Math.min(100, w.progress + r.progress));
+  w.morale = Math.max(0, Math.min(100, w.morale + r.morale));
+  w.battles = (w.battles || 0) + 1;
+  delete w.battle;
+  if (r.win) bumpStat(state, 'battlesWon');
+  notes.push({ text: `${GRADE_LABEL[r.grade]}. Ztráty: ${lossLine(r.losses)}`, tone: r.win ? 'pos' : r.grade === 'draw' ? 'neutral' : 'neg' });
+  const parts = [];
+  if (r.progress) parts.push(`postup ${r.progress > 0 ? '+' : ''}${r.progress}`);
+  if (r.morale) parts.push(`morálka ${r.morale > 0 ? '+' : ''}${r.morale}`);
+  if (parts.length) notes.push({ text: `Tažení: ${parts.join(', ')}`, tone: r.progress + r.morale >= 0 ? 'pos' : 'neg' });
+  if (r.wound && w.leader === 'ruler' && Math.random() < r.wound) {
+    injure(state, { pool: ['pohmozdeni', 'zlomenina', 'rana', 'rana', 'jizva', 'oko', 'ruka', 'noha'] }, notes);
+  }
+}
+
 /** Brings the army home before the war is decided. */
 export function recallWar(state) {
   if (!state.war) return { error: 'Žádné vojsko není v poli.' };
@@ -244,7 +381,7 @@ export function recallWar(state) {
   return { message: news[0] };
 }
 
-const SEASON_WAR_EVENTS = ['w_bitva', 'w_obleh', 'w_nemoc', 'w_dezerce', 'w_mir', 'w_zasoby', 'w_hrdina', 'w_zved'];
+const SEASON_WAR_EVENTS = ['w_bitva', 'w_obleh', 'w_prepad', 'w_nemoc', 'w_dezerce', 'w_mir', 'w_zasoby', 'w_hrdina', 'w_zved'];
 
 /**
  * Every season: supplies, weariness, tributes, the end of a campaign and the
@@ -265,14 +402,27 @@ export function processWar(state) {
   if (t.gone) { endWar(state, 'peace', news); return news; }
   if (w.ending) { endWar(state, w.ending, news); return news; }
   w.seasons += 1;
-  // the army eats; a hungry army loses heart
-  const eat = Math.ceil(w.power / 8);
+  const corps = fieldCorps(state);
+  // the army eats (mercenaries bring their own bread); a hungry army loses heart
+  const eat = Math.ceil((w.power - corps.merc) / 8);
   if (state.resources.food >= eat) state.resources.food = clampRes('food', state.resources.food - eat);
   else { state.resources.food = 0; w.morale = Math.max(0, w.morale - 12); news.push('Vojsku v poli došly zásoby. Morálka padá.'); }
   if (w.seasons > 4) w.morale = Math.max(0, w.morale - 3); // long wars wear men down
   if (state.seasonIndex === 3) {
     w.morale = Math.max(0, w.morale - (t.winterHard ? 6 : 3));
-    if (t.winterHard) w.power = Math.max(0, w.power - 1);
+    if (t.winterHard) warLose(state, 1);
+  }
+  // hired swords in the field are paid in gold every season, or they walk away
+  if (corps.merc > 0) {
+    const pay = Math.max(1, Math.round(corps.merc * 0.3));
+    if (state.resources.gold >= pay) state.resources.gold = clampRes('gold', state.resources.gold - pay);
+    else {
+      const gone = Math.max(1, Math.ceil(corps.merc * 0.35));
+      corps.merc -= gone;
+      w.power = troopsTotal(corps);
+      w.morale = Math.max(0, w.morale - 5);
+      news.push(`Žoldnéři v poli nedostali žold: ${countLabel('merc', gone)} ${gone === 1 ? 'zběhl' : 'zběhli'}.`);
+    }
   }
   // a ruler away at war is missed at home
   if (w.leader === 'ruler' && w.seasons % 2 === 0) state.resources.stability = clamp(state.resources.stability - 1);
@@ -282,8 +432,8 @@ export function processWar(state) {
     news.push(`Vojsko táhne: ${t.name}. Na místě bude ${state.turn + 1 >= w.arrive ? 'příští období' : 'za dvě období'}.`);
     return news;
   }
-  // in the field: the siege grinds on by itself a little, then the season's war event
-  w.progress = Math.min(100, w.progress + 6);
+  // in the field: the siege grinds on by itself a little (engines grind faster at a walled place), then the season's war event
+  w.progress = Math.min(100, w.progress + 6 + (t.fort ? Math.min(8, Math.round(1.5 * corps.siege)) : 0));
   if (w.progress >= 100) { endWar(state, 'win', news); return news; } // the siege ground down the last walls by itself
   if (!state.pendingEvent) {
     const pool = SEASON_WAR_EVENTS.filter((id) => warEventFits(state, id));
@@ -306,6 +456,7 @@ function warEventFits(state, id) {
   if (id === 'w_mir') return w.progress >= 60 && !w.log.includes('w_mir'); // "victory is within reach"
   if (id === 'w_zasoby') return state.resources.food < 15; // the army in the field truly goes hungry
   if (id === 'w_hrdina') return w.morale < 70 && !w.log.includes('w_hrdina');
+  if (id === 'w_prepad') return w.seasons >= 2 && !w.log.includes('w_prepad'); // an ambush, once a campaign
   if (id === 'w_nemoc' || id === 'w_dezerce') return w.seasons >= 2;
   return true;
 }
@@ -321,9 +472,12 @@ function endWar(state, how, news) {
   const t = warTarget(state);
   const key = w.target;
   const f = state.ruler.gender === 'female';
+  const corps = fieldCorps(state);
   const back = Math.max(0, w.power);
   state.lastWar = { ...warTokens(state), 'war.men': String(back) };
+  if (ensureTroops(state)) for (const k of TROOP_KEYS) state.troops[k] += corps[k] || 0;
   state.resources.army = clampRes('army', state.resources.army + back);
+  syncTroops(state);
   state.war = null;
   state.warNext = state.turn + WAR_GAP;
   if (t.rebellion && !t.gone) return endRebellion(state, how, back, news);

@@ -14,7 +14,9 @@ import {
 } from './injuries.js';
 import { gearMods } from './gear.js';
 import { readyToOffer, startAmbition, skipAmbition, settleAmbition, dropAmbition, FAILURE } from './ambitions.js';
-import { processWar, applyWarEffects, warTokens } from './war.js';
+import { processWar, applyWarEffects, applyBattleResult, warTokens } from './war.js';
+import { syncTroops, armyUpkeep, processTroops, garrisonDrift, garrisonPower, garrisonMen, TROOP_KEYS } from './troops.js';
+import { autoFight } from './battle.js';
 import { processPrivileges, applyPrivilegeEffects, flushPrivilegeNews, privilegeTokens } from './privileges.js';
 import { empireTokens, empireGenders, processEmpire, empireYear, applyEmpireBranch, heldKeys } from './empire.js';
 import { regencyTokens, startRegency, applyRegencyBranch, processRegency, regencyOn, childRuler, COMING_OF_AGE } from './regency.js';
@@ -242,17 +244,41 @@ function applyProvinceEffects(state, provinceEffects, notes) {
       const prov = state.provinces.find((p) => p.id === id);
       if (!prov || prov.lost) continue;
       const shortName = prov.name.replace(/ \(.*\)$/, '');
+      // men posted to the province (troops.js) hold it: a lost land may be saved, raiders and rebels do less harm
+      const gp = garrisonPower(prov);
+      let eff = fx;
       if (fx.lost) {
-        prov.lost = true;
-        notes.push({ text: `Ztracena provincie ${shortName}`, tone: 'neg' });
-        continue;
+        if (gp >= 8 && Math.random() < Math.min(0.7, gp / 40)) {
+          eff = { unrest: 8, loyalty: -4 };
+          const hurt = Math.max(1, Math.round(garrisonMen(prov) * 0.15));
+          for (const k of TROOP_KEYS) {
+            if (!prov.troops || !prov.troops[k]) continue;
+            const n = Math.min(prov.troops[k], Math.ceil(hurt / 2));
+            prov.troops[k] -= n;
+            state.resources.army = clampRes('army', state.resources.army - n);
+          }
+          syncTroops(state);
+          notes.push({ text: `Posádka udržela kraj ${shortName}`, tone: 'pos' });
+        } else {
+          prov.lost = true;
+          notes.push({ text: `Ztracena provincie ${shortName}`, tone: 'neg' });
+          continue;
+        }
+      } else if (gp >= 4) {
+        // a harmful push (unrest up, loyalty or wealth down) is softened by a garrison, up to a half
+        const soft = 1 - Math.min(0.5, gp / 50);
+        eff = { ...fx };
+        for (const stat of ['unrest', 'loyalty', 'wealth']) {
+          const harmful = stat === 'unrest' ? eff[stat] > 0 : eff[stat] < 0;
+          if (harmful) eff[stat] = Math.round(eff[stat] * soft);
+        }
       }
       for (const stat of Object.keys(PROVINCE_STAT_LABELS)) {
-        if (!fx[stat]) continue;
-        prov[stat] = clamp(prov[stat] + fx[stat]);
+        if (!eff[stat]) continue;
+        prov[stat] = clamp(prov[stat] + eff[stat]);
         if (key !== '*' || isNoble(state)) {
-          const good = stat === 'unrest' ? fx[stat] < 0 : fx[stat] > 0;
-          notes.push({ text: `${shortName}: ${PROVINCE_STAT_LABELS[stat]} ${fx[stat] > 0 ? '+' : ''}${fx[stat]}`, tone: good ? 'pos' : 'neg' });
+          const good = stat === 'unrest' ? eff[stat] < 0 : eff[stat] > 0;
+          notes.push({ text: `${shortName}: ${PROVINCE_STAT_LABELS[stat]} ${eff[stat] > 0 ? '+' : ''}${eff[stat]}`, tone: good ? 'pos' : 'neg' });
         }
       }
     }
@@ -574,7 +600,9 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
   // the year's work or decree chosen in the story (events_farm.js); a decree acts on the event's province
   if (branch.decreeSkip) state.decreeYear = state.year;
   if (branch.decree) notes.push(...(issueDecree(state, branch.decree, state.eventContext?.province) || []));
-  applyWarEffects(state, branch.war, notes); // a war event moves the campaign
+  if (meta && meta.fight) applyBattleResult(state, meta.fight, notes); // a battle fought with a placed army (battle.js)
+  applyWarEffects(state, meta && meta.fight ? null : branch.war, notes); // a war event moves the campaign (a fought battle did it already)
+  syncTroops(state); // whatever changed the army number, the troops by type follow
   recordCourtHistory(state, meta, touched, outcome);
   scheduleEcho(state, branch.echo, meta);
   tallyReign(state, branch, meta, outcome);
@@ -710,6 +738,7 @@ export function issueDecree(state, key, provinceId) {
     applyProvinceEffects(state, { [prov.id]: d.prov }, notes);
   }
   applyEffects(state, d.effects);
+  syncTroops(state);
   applyFarmEffects(state, d.farm, notes);
   state.decreeYear = state.year;
   const where = d.prov ? ` (${state.provinces.find((p) => p.id === provinceId).name.replace(/ \(.*\)$/, '')})` : '';
@@ -936,15 +965,20 @@ export function resolveChoice(state, event, choiceIndex, decided = null) {
   let outcome = 'normal';
   let branch = choice;
 
+  let fight = null; // a battle fought with a placed army: the deployment screen's result, or the best placing the engine makes
   if (choice.isRoll) {
-    const success = decided ? decided.success : rollDice(state, choice).success;
+    let success;
+    if (choice.deploy && state.war) {
+      fight = decided && decided.battle ? decided.battle : autoFight(state, choice.deploy, choice.stance || null);
+      success = fight.win;
+    } else success = decided ? decided.success : rollDice(state, choice).success;
     branch = success ? choice.onSuccess : choice.onFailure;
     outcome = success ? 'success' : 'failure';
     // a fight already dealt its own wounds blow by blow
     if (decided && decided.combat) branch = { ...branch, injury: undefined, noInjury: true };
   }
 
-  const notes = applyBranch(state, branch, { event, label: choice.label, battle: choice.resourceKey === 'army' }, outcome);
+  const notes = applyBranch(state, branch, { event, label: choice.label, battle: choice.resourceKey === 'army', fight }, outcome);
   // a lost test of strength (a brawl, a hunt, a duel) can leave a wound even where the story does not say so
   if (outcome === 'failure' && choice.traitKey === 'strength' && !branch.injury && !branch.noInjury && !choice.noInjury
     && Math.random() < STRENGTH_FAIL_INJURY) injure(state, 'random', notes);
@@ -952,7 +986,7 @@ export function resolveChoice(state, event, choiceIndex, decided = null) {
   if (traitGained) {
     state.ruler.traits[traitGained] = clampTrait(state.ruler.traits[traitGained] + 1);
   }
-  const text = branch.chronicle ? interpolate(state, branch.chronicle) : '';
+  const text = fight ? interpolate(state, fight.story) : branch.chronicle ? interpolate(state, branch.chronicle) : '';
   if (text) state.chronicle.push(makeChronicleEntry(state, text));
   flushPrivilegeNews(state); // a privilege granted or lost follows the story's own line
   markEventSeen(state, event);
@@ -1115,10 +1149,13 @@ function processTurnEconomy(state) {
   // taxes minus the court and the army; the land feeds itself, the harvest comes in
   // autumn and winter eats into the stores. A noble lives off a single estate.
   const SEASON_FOOD = isNoble(state) ? [-2, 0, 6, -5] : [-3, 0, 8, -7]; // jaro, léto, podzim, zima
-  const [goldDiv, armyGoldDiv, foodDiv, armyFoodDiv] = isNoble(state) ? [11, 14, 16, 20] : [50, 15, 80, 25];
+  const [goldDiv, foodDiv] = isNoble(state) ? [11, 16] : [50, 80]; // the army's share is in troops.js upkeepDivs
   const tierBonus = isNoble(state) && state.ruler.statusTier >= 4 ? 2 : 0;
-  const goldIncome = (capable(state, 'chancellor') ? 1 : 0) + Math.round(totalWealth / goldDiv) - Math.round(state.resources.army / armyGoldDiv) - 1 + traitBonuses(state).gold + tierBonus;
-  const foodIncome = Math.round(totalWealth / foodDiv) - Math.round(state.resources.army / armyFoodDiv) + SEASON_FOOD[state.seasonIndex];
+  // the army costs by what it is made of (troops.js): spearmen are cheap, riders and hired swords are not
+  const keep = armyUpkeep(state);
+  const goldIncome = (capable(state, 'chancellor') ? 1 : 0) + Math.round(totalWealth / goldDiv) - Math.round(keep.gold) - 1 + traitBonuses(state).gold + tierBonus;
+  const foodIncome = Math.round(totalWealth / foodDiv) - Math.round(keep.food) + SEASON_FOOD[state.seasonIndex];
+  const unpaid = state.resources.gold + goldIncome < 0;
   state.resources.gold = clampRes('gold', state.resources.gold + goldIncome);
   state.resources.food = clampRes('food', state.resources.food + foodIncome);
   // stability erodes only once the provinces are noticeably restless, and recovers under a legitimate ruler
@@ -1133,7 +1170,7 @@ function processTurnEconomy(state) {
   if (state.resources.food <= 5) state.resources.stability = clamp(state.resources.stability - 5);
   driftProvinces(state);
   if (isNoble(state)) driftNoble(state);
-  return { goldIncome, foodIncome };
+  return { goldIncome, foodIncome, unpaid };
 }
 
 // Passive weight of the ruler's traits (5 is average): strength keeps order in
@@ -1162,12 +1199,13 @@ function driftProvinces(state) {
   const noble = isNoble(state);
   for (const p of ownProvinces(state)) {
     const built = buildingDrift(state, p.id); // churches, walls, taverns… in the province's towns
+    const post = garrisonDrift(p); // the men the player posted there (troops.js)
     // a noble's villages answer to their lord, not to a claim on the throne
     const unrestBase = noble ? 34 : 45;
-    const unrestTarget = unrestBase - (r.stability - 50) * 0.6 - (p.garrison - 50) * 0.25 - (p.wealth - 50) * 0.15 + (r.food < 20 ? 20 : 0) - bonus.order - built.order;
+    const unrestTarget = unrestBase - (r.stability - 50) * 0.6 - (p.garrison - 50) * 0.25 - (p.wealth - 50) * 0.15 + (r.food < 20 ? 20 : 0) - bonus.order - built.order - post.order;
     p.unrest = clamp(toward(p.unrest, unrestTarget, 0.2, 4) + randInt(-3, 3));
     const standing = noble ? 55 + (r.stability - 50) * 0.4 + (r.prestige - 50) * 0.2 : 45 + (r.legitimacy - 50) * 0.7 + (r.prestige - 50) * 0.2;
-    const loyaltyTarget = standing - Math.max(0, p.unrest - 50) * 0.4 + bonus.loyalty + built.loyalty;
+    const loyaltyTarget = standing - Math.max(0, p.unrest - 50) * 0.4 + bonus.loyalty + built.loyalty + post.loyalty;
     p.loyalty = clamp(toward(p.loyalty, loyaltyTarget, 0.15, 3) + randInt(-2, 2));
   }
   // fame and legitimacy fade unless renewed; faith settles back toward custom
@@ -1517,6 +1555,7 @@ export function advanceTurn(state) {
 
   const economy = processTurnEconomy(state);
   const built = processBuilding(state); // finished work and what the towns' buildings yield
+  const troopNews = processTroops(state, { unpaid: economy.unpaid }); // training ends, unpaid mercenaries leave
   const farm = processFarm(state); // the peasant's grain and animals (farm.js)
   const priv = processPrivileges(state); // rights and offices: what they give and what they cost (privileges.js)
   if (priv.event) queueEvent(state, priv.event);
@@ -1554,7 +1593,7 @@ export function advanceTurn(state) {
   if (!isPeasant(state) && state.resources.stability < 28 && state.resources.stability >= 20) worldNews.push('V zemi se bouří nevole. Bez pevné ruky se kraje začnou vymykat z moci.');
   const ambitionNews = processAmbition(state);
   updateGoldenAgeStreak(state);
-  const tradeNews = [...familyNews, ...wounds.news, ...worldNews, ...ambitionNews, ...built.news, ...farm.news, ...priv.news, ...processTrade(state)];
+  const tradeNews = [...troopNews, ...familyNews, ...wounds.news, ...worldNews, ...ambitionNews, ...built.news, ...farm.news, ...priv.news, ...processTrade(state)];
 
   const seasonLabel = SEASONS[state.seasonIndex];
   const [goldWord, foodWord] = isPeasant(state) ? ['grošů', 'zásob'] : ['zlata', 'jídla'];
@@ -1589,6 +1628,7 @@ export function advanceTurn(state) {
   if (!state.pendingEvent && isPeasant(state) && state.seasonIndex >= 2 && decreeAvailable(state)) state.pendingEvent = 's_prace_na_gruntu';
   processEmpire(state); // the autumn decree for the foreign crowns the king holds (events_empire.js risa_sprava)
   processRegencyScenes(state); // a child ruler needs a regent, and at sixteen the regency ends
+  syncTroops(state);
   const event = pickNextEvent(state);
   state.currentEvent = event ? event.id : null;
   return { turnSummary, event, successionOccurred, gameOver: null, tradeNews };
