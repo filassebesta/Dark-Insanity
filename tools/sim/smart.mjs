@@ -28,6 +28,10 @@ function branchValue(E, state, b) {
   if (b.setTier) v += (b.setTier - state.ruler.statusTier) * 60;
   if (b.endGame) v += END_VALUE[b.endGame] ?? -200;
   if (b.injury) v -= 8;
+  // privileges (privileges.js): a right is worth having, losing one is a blow, and talking the lord round saves one
+  if (b.grantPrivilege) v += 9 * [].concat(b.grantPrivilege).length;
+  if (b.revokePrivilege) v -= 10 * [].concat(b.revokePrivilege).length;
+  if (b.keepPrivilege) v += 8;
   if (b.traitGain) v += 3;
   return v;
 }

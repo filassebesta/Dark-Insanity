@@ -11,6 +11,7 @@ import { talkSection } from './talk_ui.js';
 import { personOf, maleFirst } from './family.js';
 import { ensureGear, shopFor, ITEMS, SLOTS } from './gear.js';
 import { fighterOf } from './combat.js';
+import { privilegeOverview, MAX_PRIVILEGES } from './privileges.js';
 
 const TIER_SLUGS = [null, 'peasant', 'freeman', 'minor_noble', 'noble', 'king', 'emperor'];
 const OLD_AGE = 55;
@@ -92,6 +93,7 @@ function yearsWord(n) {
 
 const TRAIT_NAME = { strength: 'síla', eloquence: 'výřečnost', intelligence: 'inteligence', patience: 'trpělivost' };
 const SEASON_LOC = ['na jaře', 'v létě', 'na podzim', 'v zimě'];
+const SEASON_FROM = ['jara', 'léta', 'podzimu', 'zimy'];
 
 /** Gear: what the ruler carries into a fight, and what can be bought (gear.js). */
 function gearBlock(state) {
@@ -113,6 +115,26 @@ function gearBlock(state) {
     <ul class="cs-gear">${worn}</ul>
     <h4 class="cs-section cs-sub">${state.scenario === 'sedlak' ? 'U kováře' : 'Zbrojíř a koňský trh'} <small>· v pokladně ${state.resources.gold} ${coin}</small></h4>
     <div class="gear-shop">${shop}</div>`;
+}
+
+/** Privileges and offices (privileges.js): what the house holds, what it gives and asks, and what could still be had. */
+function privilegeBlock(state) {
+  if (state.ruler.statusTier > 3 || state.scenario === 'panovnik') return '';
+  const ov = privilegeOverview(state);
+  if (!ov.held.length && !ov.open.length) return '';
+  const items = ov.held.map((p) => `
+    <li class="${p.danger ? 'danger' : ''}">
+      <b>${esc(p.name)}</b><small>od ${SEASON_FROM[p.season]} roku ${p.year}${p.danger ? ' · pán je nespokojený' : ''}</small>
+      <span>${esc(p.text)}</span>
+      ${p.idle ? `<span class="cs-priv-idle">${esc(p.idle)}</span>` : ''}
+      ${p.grants.length ? `<div class="cs-priv-row give"><em>Dává</em>${p.grants.map((g) => `<i>${esc(g)}</i>`).join('')}</div>` : ''}
+      ${p.duties.length ? `<div class="cs-priv-row ask"><em>Žádá</em>${p.duties.map((g) => `<i>${esc(g)}</i>`).join('')}</div>` : ''}
+      ${p.risks.length ? `<div class="cs-priv-risk">${p.risks.map(esc).join(' ')}</div>` : ''}
+    </li>`).join('');
+  const more = ov.open.length
+    ? `<p class="cs-priv-more">${ov.full ? `Víc než ${MAX_PRIVILEGES} práva ti pán nedá, dokud nějaké nevrátíš. ` : ''}Ještě by šlo získat: ${ov.open.map((o) => `${esc(o.name)} <small>(${esc(o.hint)})</small>`).join(' · ')}.</p>` : '';
+  return `<h4 class="cs-section">Privilegia a úřady</h4>
+    ${items ? `<ul class="cs-priv">${items}</ul>` : '<p class="cs-priv-more">Zatím nemáš žádné privilegium ani úřad.</p>'}${more}`;
 }
 
 /** The ruler's wounds: what they take away and when (if ever) they heal. */
@@ -258,6 +280,7 @@ export function renderCharacterSheet(state) {
       <h4 class="cs-section">Vlastnosti</h4>
       <div class="cs-traits">${traits}</div>
       ${ambitionSection(state)}
+      ${privilegeBlock(state)}
       ${injuryBlock(state)}
       ${gearBlock(state)}
       <h4 class="cs-section">Vliv na vládu</h4>
