@@ -15,6 +15,8 @@ import { playMusic, setMusicVolume } from './audio.js';
 import { checkAchievements } from './achievements.js';
 import { openRoll, openCombat } from './dice_ui.js';
 import { openBattle } from './battle_ui.js';
+import { openCrestEditor, closeCrestEditor } from './crest_ui.js';
+import { hasOwnCrest } from './heraldry.js';
 import { wireTalk } from './talk_ui.js';
 import { makeHeir } from './family.js';
 import { renderContractBar } from './contract_bar.js';
@@ -54,6 +56,7 @@ function award() {
 let hallReturn = 'screen-menu';
 
 function closeOverlays() {
+  closeCrestEditor();
   closePanels();
   closeMap();
   closeCharacter();
@@ -94,6 +97,13 @@ function presentEvent(event) {
     onChoiceSelected: handleChoiceSelected,
     onRouteSelected: handleRouteSelected,
   });
+  // the new noble designs the house's coat of arms before anything else (the chapter card waits behind the window)
+  if (event.id === 'kapitola_erb' && !hasOwnCrest(currentState)) {
+    setTimeout(() => {
+      if (activeEvent !== event || hasOwnCrest(currentState)) return;
+      openCrestEditor(currentState, { first: true, onDone: () => { saveGame(currentState); refreshAllPanels(); toast('Rod má svůj erb'); } });
+    }, 450);
+  }
 }
 
 const TRAIT_LABELS = { strength: 'Síla', eloquence: 'Výřečnost', intelligence: 'Inteligence', patience: 'Trpělivost' };
@@ -291,6 +301,10 @@ function wireActions() {
       }
       case 'close-panel':
         closePanels();
+        break;
+      case 'edit-crest':
+        closePanels();
+        openCrestEditor(currentState, { onDone: () => { saveGame(currentState); refreshAllPanels(); toast('Erb rodu je změněn'); } });
         break;
       case 'make-heir': {
         // the ruler names a younger child heir (family.js)

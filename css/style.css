@@ -2259,3 +2259,50 @@ body.map-open .toast-container { top: auto; bottom: 1.2rem; left: 38%; }
   .rc-go { min-width: 0; }
   .map-sidebar .rc-row { padding: .3rem .4rem; gap: .45rem; }
 }
+
+/* ---------- the house's own coat of arms: header slot, panel card and the editor (ce-) ---------- */
+.reign-crest { display: inline-flex; align-items: center; margin-right: .15rem; flex: none; }
+.reign-crest[hidden] { display: none; }
+.hs-crest-md { width: 28px; height: 34px; }
+.cs-crest { display: inline-block; vertical-align: middle; margin-right: .55rem; }
+.hs-card.own { border-color: var(--gold-dim); background: rgba(200,164,106,.1); }
+.hs-card.own .trade-mini { align-self: flex-start; }
+@media (max-width: 560px) { .reign-crest { display: none; } }
+
+.ce-overlay { position: fixed; inset: 0; z-index: 140; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(8,6,4,.72); overflow-y: auto; }
+.ce-panel { position: relative; width: 100%; max-width: 760px; max-height: calc(100dvh - 2rem); overflow-y: auto; background: var(--paper, #efe6d2); color: var(--ink, #2a1f15); border: 1px solid var(--gold-dim); box-shadow: 0 18px 60px rgba(0,0,0,.6); padding: 1.3rem 1.4rem 0; display: grid; grid-template-columns: minmax(200px, 250px) 1fr; column-gap: 1.6rem; align-items: start; }
+.ce-head { grid-column: 1 / -1; }
+.ce-lead { margin: .2rem 0 .8rem; font-size: .98rem; color: var(--ink-soft, #5a4430); }
+.ce-preview { position: sticky; top: 0; display: flex; flex-direction: column; align-items: center; gap: .6rem; padding: .8rem .4rem; border: 1px solid rgba(90,70,45,.22); background: rgba(255,255,255,.28); }
+.ce-crest { width: 128px; height: 154px; filter: drop-shadow(0 4px 5px rgba(40,25,10,.45)); }
+.ce-blazon { margin: 0; text-align: center; font-style: italic; font-size: .98rem; line-height: 1.35; }
+.ce-note { margin: 0; text-align: center; font-size: .82rem; color: #7a2418; }
+.ce-sub { margin: .9rem 0 .35rem; font-family: var(--font-caps); font-size: .76rem; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-faint, #7a6a52); }
+.ce-body > .ce-sub:first-child { margin-top: 0; }
+.ce-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: .4rem; }
+.ce-grid.shapes, .ce-grid.counts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ce-grid.counts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ce-opt { display: flex; flex-direction: column; align-items: center; gap: .15rem; padding: .35rem .2rem .3rem; border: 1px solid rgba(90,70,45,.3); background: rgba(255,255,255,.35); color: inherit; font: inherit; cursor: pointer; min-width: 0; }
+.ce-opt svg { width: 34px; height: 41px; }
+.ce-opt span { font-size: .72rem; line-height: 1.1; text-align: center; overflow-wrap: anywhere; }
+.ce-opt.wide { padding: .55rem .2rem; }
+.ce-opt.wide span { font-size: .9rem; }
+.ce-opt:hover { border-color: var(--gold); }
+.ce-opt.on { border-color: var(--blood, #8a2c26); background: rgba(138,44,38,.12); box-shadow: inset 0 0 0 1px var(--blood, #8a2c26); }
+.ce-swatches { display: flex; flex-wrap: wrap; gap: .45rem; }
+.ce-sw { width: 34px; height: 34px; border-radius: 50%; border: 2px solid rgba(40,25,10,.35); background: var(--sw, transparent); cursor: pointer; padding: 0; font: inherit; color: var(--ink-faint, #7a6a52); line-height: 1; }
+.ce-sw.metal { border-color: rgba(40,25,10,.5); }
+.ce-sw.none { background: rgba(255,255,255,.45); }
+.ce-sw.on { outline: 3px solid var(--blood, #8a2c26); outline-offset: 2px; }
+.ce-actions { position: sticky; bottom: 0; z-index: 3; grid-column: 1 / -1; display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; padding: .8rem 0 1rem; margin-top: 1rem; background: linear-gradient(to top, var(--paper, #efe6d2) 78%, rgba(239,230,210,0)); }
+.ce-actions .ce-save { margin-left: auto; }
+@media (max-width: 700px) {
+  .ce-overlay { padding: 0; align-items: stretch; }
+  .ce-panel { max-height: 100dvh; height: 100dvh; grid-template-columns: 1fr; padding: 1rem 1rem 0; border: 0; }
+  .ce-preview { position: static; flex-direction: row; text-align: left; gap: .9rem; padding: .6rem .7rem; }
+  .ce-crest { width: 84px; height: 101px; flex: none; }
+  .ce-blazon, .ce-note { text-align: left; }
+  .ce-preview { position: sticky; top: -1rem; z-index: 2; background: var(--paper, #efe6d2); box-shadow: 0 6px 10px -6px rgba(0,0,0,.35); }
+  .ce-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .ce-grid.shapes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}

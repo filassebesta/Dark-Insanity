@@ -5,6 +5,7 @@ import { TRAIT_DEFS, STATUS_TIERS, SEASONS, tierTitle, yearsLabel } from './data
 import { traitBonuses, reignEpithet } from './engine.js';
 import { biography, loyaltyLabel, roleLabel, quirkLabel, quirkText } from './court.js';
 import { esc } from './ui.js';
+import { crestSvgOf, ensureCrest } from './heraldry.js';
 import { effectiveTraits, injuriesOf, injuryFx, INJURIES } from './injuries.js';
 import { ambitionSection } from './fame.js';
 import { talkSection } from './talk_ui.js';
@@ -268,7 +269,7 @@ export function renderCharacterSheet(state) {
     <div class="cs-info">
       <span class="panel-overline">${esc(title)} · ${state.generation}. generace</span>
       <h2 class="cs-name">${esc(r.name)}</h2>
-      <div class="cs-dynasty">${state.scenario === 'panovnik' ? 'z dynastie' : 'z rodu'} ${esc(state.dynastyName)}</div>
+      <div class="cs-dynasty">${state.scenario === 'sedlak' ? '' : crestSvgOf(ensureCrest(state), 'hs-crest-sm cs-crest')}${state.scenario === 'panovnik' ? 'z dynastie' : 'z rodu'} ${esc(state.dynastyName)}</div>
       ${epithetLine}
       <div class="cs-facts">
         <div><span>Věk</span><strong>${r.age}</strong></div>

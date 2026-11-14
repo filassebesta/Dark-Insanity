@@ -2,6 +2,7 @@ import { RESOURCE_DEFS, TRAIT_DEFS, TERRAIN_DEFS, SEASONS, NOBLE_HOUSES, resourc
 import { interpolate, computeSuccessChance, attitudeLabel, ownProvinces, reignEpithet } from './engine.js';
 import { ICONS } from './icons.js';
 import { crestSvg } from './crests.js';
+import { crestSvgOf, ensureCrest, hasOwnCrest, blazon } from './heraldry.js';
 import { houseMuster, musterText, boonText, relLabel, housePairs, houseActions } from './houses.js';
 import { playMusic, setAllMuted } from './audio.js';
 import { rulerPortraitCandidates, memberPortraitCandidates, portraitImg } from './character.js';
@@ -127,6 +128,13 @@ export function renderReignInfo(state) {
   const date = `${SEASONS[state.seasonIndex]} · rok ${state.year}`;
   document.getElementById('reign-date').textContent = `${date} · ${state.generation}. generace`;
   document.getElementById('scene-date').textContent = date;
+  // the house's own coat of arms, once there is a house to bear one
+  const slot = document.getElementById('reign-crest');
+  if (slot) {
+    slot.hidden = state.scenario === 'sedlak';
+    slot.innerHTML = state.scenario === 'sedlak' ? '' : crestSvgOf(ensureCrest(state), 'hs-crest-md');
+    slot.title = state.scenario === 'sedlak' ? '' : `Erb rodu ${state.dynastyName}`;
+  }
 }
 
 export function updateBookTabFlags(state) {
@@ -604,7 +612,14 @@ export function renderHousesPanel(state) {
       ${held > 1 ? `<p class="hs-text">Panství rodu: ${held} kraje.</p>` : ''}
     </div>`;
   }
-  host.innerHTML = top + state.houses.map((h) => hsHouseCard(state, h)).join('') + hsRelations(state) + tail;
+  const crest = ensureCrest(state);
+  const own = `<div class="hs-card own">
+      <div class="hs-head">${crestSvgOf(crest, 'hs-crest-lg')}
+        <div class="hs-id"><span class="role">${king ? 'Dynastie' : 'Tvůj rod'}</span><strong>${esc(state.dynastyName)}</strong>
+        <small>${hasOwnCrest(state) ? esc(blazon(crest)) : 'Rod zatím nemá vlastní erb.'}</small></div></div>
+      <button class="trade-mini" data-action="edit-crest">${hasOwnCrest(state) ? 'Změnit erb' : 'Navrhnout erb'}</button>
+    </div>`;
+  host.innerHTML = own + top + state.houses.map((h) => hsHouseCard(state, h)).join('') + hsRelations(state) + tail;
 }
 
 // ---------- chronicle panel ----------
