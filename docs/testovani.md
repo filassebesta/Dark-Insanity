@@ -95,3 +95,34 @@ a text neúspěšného povstání nesedí s koncem, mimořádná daň se nenabí
 každý rok, vládce v poli nepořádá další dvorské karty (čarodějnice, relikvie, prorok…), epiteton „Starý“ až po
 3 letech vlády, tribut severu a „druhý rok“ ve vězení opraveny.
 Zbývá: císařství bez obsahu, portréty R6, regentství při dítěti na trůnu, obrázky u narození levobočka a nástupnictví.
+
+## Ruční test: vojsko podle typů, rozestavení a posádky
+
+Šlechtic nebo Panovník (Sedlák války nevede). Spustit `python3 -m http.server`, načíst hru; nejrychleji přes konzoli
+prohlížeče (stránka už má moduly načtené, stav uložit a kliknout na „Pokračovat“):
+`const S = await import('/js/state.js'); const st = S.createNewGame('A','B','male','slechtic'); st.ruler.statusTier = 4;
+Object.assign(st.resources, { army: 40, gold: 120, food: 70 }); st.lastSummary = { text: 'Jaro', trade: [] };
+st.currentEvent = 'n_klidne_obdobi'; S.saveGame(st);` a znovu načíst stránku. Železo do skladu:
+`(await import('/js/trade.js')).ensureTrade(st).stock.iron = 6` před uložením.
+
+1. **Verbování** (klávesa V → záložka Vojsko): přehled doma / v poli / ve výcviku / limit a údržba za období; u každého typu cena
+   (jízda a stroje chtějí železo), doba výcviku, stepper počtu dávek a „Verbovat“. Kopiníci a lučištníci jsou za období hotoví
+   (ve frontě „Ve výcviku“), jízda za dvě, žoldnéři hned. Zrušení výcviku vrátí půl zlata. „−5“ u typu propustí muže.
+   Po dosažení limitu (30 + 20 na kraj + kasárny) tlačítko řekne proč nejde. Žoldnéři bez zlata (zlato 0 a záporný příjem)
+   zběhnou: zpráva v novinkách období.
+2. **Sbor** (záložka Tažení): předvolby plní steppery typů, „Vytáhne N mužů · doma zůstane M“; „Síly“ se mění se skladbou
+   (jízda proti kopiníkům je horší než proti lučištníkům). Vytáhnout nejde s méně než 8 muži doma ani s muži v posádkách.
+3. **Bitva:** po pochodu přijde událost „Bitva v poli“ (též „Pod hradbami“ a „Přepadení v soutěsce“). Volba „Seřadit vojsko“
+   otevře obrazovku rozestavení: čtyři sloty, krok 1/5/10, tlačítka − a +, „Automaticky“, „Všichni do zálohy“. Nepřítel je
+   buď přesně (maršál nebo špeh se schopností, zvěd z `w_zved`, druhá bitva tažení), nebo jen odhad. Zkoušet: jízda na křídlo
+   proti lučištníkům, kopiníci proti jízdě, lučištníci s kopiníky ve stejném slotu, prázdné křídlo (prolomení). Po „Zahájit bitvu“
+   výsledek (stupně, slot po slotu, ztráty po typech, nepřítel, postup a morálka) a po „Pokračovat“ vyprávění 3–5 vět v kronice.
+   U obléhání stroje u hradeb a brány zrychlí postup. U „Obejít je lesem“ je záloha obchvat (vydaří se podle inteligence).
+4. **Posádky** (záložka Posádky nebo tlačítko „Spravovat posádku“ v panelu kraje): vybrat kraj, steppery přesunou volné muže do
+   posádky; věrnost a nepokoje kraje se do několika období pohnou, muži v posádce nemohou do pole. Událost, která kraj ztrácí
+   (`sokoli-hvozd` při neúspěšné bitvě, vzpoura), se silnou posádkou občas skončí jen nepokoji.
+5. **Telefon (390 px):** všechny stránky bez vodorovného posunu; na mapě je při režimu Válka mapa jen 30 % výšky, ať je víc místa
+   na panel. Obrazovka rozestavení skládá sloty pod sebe.
+
+Automaticky: `node tools/sim/sim_war.mjs 150 40` (invarianty `army == součet troops`, `war.power == součet sboru`, bez chyb a
+nerozvinutých tokenů) a ostatní simulace z HANDOFF.md kap. 2 (`errors` musí být 0).

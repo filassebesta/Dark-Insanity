@@ -23,17 +23,17 @@ export const GARRISON_KEYS = ['spear', 'archer', 'horse', 'merc'];
 // pow: strength of one man in the field (battle.js) · gar: weight of one man in a garrison
 export const TROOPS = {
   spear: {
-    key: 'spear', short: 'kopí', name: 'Kopiníci', batch: 5, cost: { gold: 6 }, train: 1, goldW: 0.8, foodW: 0.92, pow: 1.0, gar: 1.0,
+    key: 'spear', short: 'kopí', name: 'Kopiníci', batch: 5, cost: { gold: 6 }, train: 1, goldW: 0.95, foodW: 1.0, pow: 1.0, gar: 1.0,
     forms: ['kopiník', 'kopiníci', 'kopiníků'],
     text: 'Levná a rychlá pěchota. Kopí zastaví jízdu, ale na volném poli je střílí lučištníci.',
   },
   archer: {
-    key: 'archer', short: 'luky', name: 'Lučištníci', batch: 5, cost: { gold: 9 }, train: 1, goldW: 0.95, foodW: 0.92, pow: 0.9, gar: 0.8,
+    key: 'archer', short: 'luky', name: 'Lučištníci', batch: 5, cost: { gold: 9 }, train: 1, goldW: 1.0, foodW: 1.0, pow: 0.9, gar: 0.8,
     forms: ['lučištník', 'lučištníci', 'lučištníků'],
     text: 'Palba z dálky. Slabí zblízka a proti jízdě, ale za kopiníky jsou strašliví.',
   },
   horse: {
-    key: 'horse', short: 'jízda', name: 'Jízda a rytíři', batch: 2, cost: { gold: 10, iron: 1 }, train: 2, goldW: 1.9, foodW: 1.45, pow: 2.0, gar: 0.6,
+    key: 'horse', short: 'jízda', name: 'Jízda a rytíři', batch: 2, cost: { gold: 10, iron: 1 }, train: 2, goldW: 1.5, foodW: 1.25, pow: 2.0, gar: 0.6,
     forms: ['jezdec', 'jezdci', 'jezdců'],
     text: 'Drahý a pomalu cvičený úder. Na křídle smete lučištníky, do ježka kopí nechoďte.',
   },

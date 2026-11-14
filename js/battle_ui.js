@@ -7,8 +7,8 @@
 import { TROOP_ICONS } from './icons.js';
 import { TROOPS, TROOP_KEYS, troopsTotal } from './troops.js';
 import {
-  KINDS, slotsOf, prepareBattle, fieldCorps, knownEnemy, enemyView, autoDeploy, normalizeDeployment, previewDeployment,
-  fightBattle, ctxOf, terrainLabel, GRADE_LABEL, lossLine,
+  KINDS, slotsOf, prepareBattle, fieldCorps, enemyView, autoDeploy, normalizeDeployment, previewDeployment,
+  fightBattle, terrainLabel, GRADE_LABEL, lossLine,
 } from './battle.js';
 import { esc } from './ui.js';
 
@@ -37,9 +37,7 @@ export function openBattle(state, choice, onDone, host = panel()) {
   const kind = battle.kind;
   const corps = fieldCorps(state);
   const view = enemyView(state, battle);
-  const known = knownEnemy(state, battle);
-  const mods = battle.stance === 'flank' ? { reserveEff: 1 } : kind === 'ambush' ? { reserveEff: 0.5 } : {};
-  const autoDep = () => autoDeploy(kind, ctxOf(battle), corps, known.slots, mods);
+  const autoDep = () => autoDeploy(state, battle);
   let dep = normalizeDeployment(kind, corps, autoDep());
   let step = 5;
   const slotName = (s) => (s.reserve && battle.stance === 'flank' ? 'Obchvat' : s.name);

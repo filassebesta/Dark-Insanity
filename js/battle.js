@@ -423,7 +423,7 @@ const scoreOf = (kind, ctx, enemy, mods, dep) => evaluate(kind, ctx, dep, enemy,
  * The best placing of the corps against the enemy line the man believes in
  * (a rule of thumb, then moves of a few men between slots while they help).
  */
-export function autoDeploy(kind, ctx, corps, enemy, mods = {}, iterations = 24) {
+export function bestDeployment(kind, ctx, corps, enemy, mods = {}, iterations = 24) {
   let dep = normalizeDeployment(kind, corps, quickDeploy(kind, corps, enemy));
   let best = scoreOf(kind, ctx, enemy, mods, dep);
   const keys = slotsOf(kind).map((s) => s.key);
@@ -561,32 +561,38 @@ export function fightBattle(state, battle, deployment, rng = Math.random) {
 
 /** The quick, deterministic odds of a corps against a target's line, as the score S of its best placing. */
 export function scoreAgainst(kind, ctx, corps, enemy, mods) {
-  const dep = autoDeploy(kind, ctx, corps, enemy, mods, 6);
+  const dep = bestDeployment(kind, ctx, corps, enemy, mods, 6);
   return evaluate(kind, ctx, dep, enemy, mods).S;
 }
 
-/** Headless: the battle fought with the best placing the man knows how to make (sims and "Automaticky"). */
+const modsOf = (battle) => (battle.stance === 'flank' ? { reserveEff: 1 } : battle.kind === 'ambush' ? { reserveEff: 0.5 } : {});
+
+/**
+ * autoDeploy(state, enemy): the placing the "Automaticky" button and the simulations use. `enemy` is the battle
+ * (state.war.battle, made by prepareBattle); the placing is made against the line the man believes in:
+ * the true one with a marshal, a spy or a scout, an estimate without.
+ */
+export function autoDeploy(state, enemy = state.war && state.war.battle) {
+  const known = knownEnemy(state, enemy);
+  return bestDeployment(enemy.kind, ctxOf(enemy), fieldCorps(state), known.slots, modsOf(enemy));
+}
+
+/** Headless: the battle fought with the best placing the man knows how to make (sims and ordinary events). */
 export function autoFight(state, kind, stance, rng = Math.random) {
   const battle = prepareBattle(state, kind, stance);
-  const corps = fieldCorps(state);
-  const known = knownEnemy(state, battle);
-  const mods = stance === 'flank' ? { reserveEff: 1 } : kind === 'ambush' ? { reserveEff: 0.5 } : {};
-  const dep = autoDeploy(kind, ctxOf(battle), corps, known.slots, mods);
-  return fightBattle(state, battle, dep, rng);
+  return fightBattle(state, battle, autoDeploy(state, battle), rng);
 }
 
 /** What a man in charge sees for a placing: the score against the enemy line he believes in. */
 export function previewDeployment(state, battle, dep) {
   const known = knownEnemy(state, battle);
-  const mods = battle.stance === 'flank' ? { reserveEff: 1 } : battle.kind === 'ambush' ? { reserveEff: 0.5 } : {};
-  const ev = evaluate(battle.kind, ctxOf(battle), normalizeDeployment(battle.kind, fieldCorps(state), dep), known.slots, mods);
+  const ev = evaluate(battle.kind, ctxOf(battle), normalizeDeployment(battle.kind, fieldCorps(state), dep), known.slots, modsOf(battle));
   return { S: ev.S + commanderEdge(state), fronts: ev.fronts, reserveAt: ev.myReserveAt };
 }
 
 // ---------- the story ----------
 
 const NOUN = { spear: ['kopiníci', 'li'], archer: ['lučištníci', 'li'], horse: ['jízda', 'la'], siege: ['obléhací stroje', 'ly'], merc: ['žoldnéři', 'li'] };
-const ENEMY_NOUN = { spear: ['nepřátelští kopiníci', 'li'], archer: ['nepřátelští lučištníci', 'li'], horse: ['nepřátelská jízda', 'la'], merc: ['nepřátelští žoldnéři', 'li'] };
 const verb = (who, stem, table = NOUN) => `${table[who][0]} ${stem}${table[who][1]}`;
 
 /** The leader in the right gender for the narration: a token the engine fills in ({R:…|…} or {V:…|…}). */
@@ -664,4 +670,3 @@ export function lossLine(losses) {
   return TROOP_KEYS.filter((k) => losses[k]).map((k) => countLabel(k, losses[k])).join(', ') || 'žádné ztráty';
 }
 
-export { ENEMY_NOUN };

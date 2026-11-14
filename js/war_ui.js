@@ -7,8 +7,8 @@
 import { TROOP_ICONS } from './icons.js';
 import {
   TROOPS, TROOP_KEYS, GARRISON_KEYS, countLabel, ensureTroops, freeTroops, stationed, troopsTotal, armyUpkeep, upkeepOf,
-  recruitCap, committedMen, queuedMen, ironStock, recruitBlock, recruit, cancelRecruit, disband, garrisonOf, garrisonMen,
-  garrisonPower, garrisonDrift, garrisonLabel, assignGarrison, garrisonBlock,
+  recruitCap, queuedMen, ironStock, recruitBlock, recruit, cancelRecruit, disband, garrisonOf, garrisonMen,
+  garrisonDrift, garrisonLabel, assignGarrison, garrisonBlock,
 } from './troops.js';
 import { presetCorps, SIZES } from './war.js';
 import { esc } from './ui.js';
@@ -209,4 +209,3 @@ export function handleWarUi(t, state, form) {
   return null;
 }
 
-export { garrisonPower };

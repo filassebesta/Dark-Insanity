@@ -53,6 +53,7 @@ node tools/sim/sim_peasant.mjs 400 0.5     # Sedlák; 2. argument = ambice
 node tools/sim/sim_trade.mjs sedlak 200    # libovolný scénář s botem, který obchoduje (3. arg "notrade" = bez obchodu)
 node tools/sim/sim_empire.mjs 300 40 careful  # císař se dvěma korunami: příběhy říše, věrnost zemí, konce (mód random|smart|careful)
 node tools/sim/sim_regency.mjs 200 panovnik  # dítě na trůnu: regentství, plnoletost, zakázané činy dítěte
+node tools/sim/sim_war.mjs 150 40          # vojsko podle typů pod zátěží: verbování, posádky, tažení, bitvy; kontroluje army == součet troops
 ```
 
 **Prohlížečové testy:** Playwright (Chromium). Moduly lze importovat přímo ve
@@ -108,8 +109,12 @@ musí být aktivní, jinak je mapa skrytá. Screenshoty ukládat mimo repozitá�
 | `js/combat.js` | souboj po kolech: nepřátelé, akce, hody k6+, zranění z boje (bez DOM) |
 | `js/dice_ui.js` | „stůl“: hod k% u riskantních voleb a souboj po kolech v příběhovém panelu |
 | `js/events_bandits.js` | zbojníci: na cestě, noční přepadení, zbojnický hejtman |
-| `js/war.js` | válečná tažení: cíle, vojsko v poli, zásoby, morálka, postup, konec tažení, tributy (bez DOM) |
-| `js/events_war.js` | 8 událostí v poli (bitva, obléhání, úplavice, dezertéři, mír, hlad, hrdina, zvěd) + triumf a porážka |
+| `js/war.js` | válečná tažení: cíle a skladba nepřítele, sbor v poli, zásoby, morálka, postup, konec tažení, tributy (bez DOM) |
+| `js/troops.js` | typy vojáků (kopiníci, lučištníci, jízda, stroje, žoldnéři), `state.troops`, `syncTroops`, verbování a fronta výcviku, údržba podle typů, posádky provincií (bez DOM) |
+| `js/battle.js` | bitva se sloty: rozestavení, protiklady, záloha, ztráty po typech, vyprávění, `autoDeploy`, zpravodajství o nepříteli (bez DOM) |
+| `js/war_ui.js` | stránky vojska v panelu Válka (záložky Tažení / Vojsko / Posádky): sbor, verbování, posádky; HTML a kliknutí |
+| `js/battle_ui.js` | obrazovka rozestavení před bitvou a výsledek (v příběhovém panelu, bez drag&dropu) |
+| `js/events_war.js` | 9 událostí v poli (bitva, obléhání, přepadení, úplavice, dezertéři, mír, hlad, hrdina, zvěd) + triumf a porážka |
 | `js/ambitions.js` | ambice: cíle vládce s termínem, postup, odměna, nesplnění (bez DOM) |
 | `js/events_ambition.js` | událost „Čeho chceš dosáhnout“ (nabídka tří ambicí, `free: true`) |
 | `js/achievements.js` | Síň slávy: 28 úspěchů napříč všemi hrami (localStorage) |
@@ -245,11 +250,24 @@ Cizí vládci: `{realm.east}` („král Ctibor“), `{realm.east.Ruler}` (toté�
 ### Válečná tažení
 - Záložka **Válka** (klávesa **V**, vrstva mapy „Válka“) u Panovníka a Šlechtice; Sedlák války nevede.
 - Cíle (`warTargets`): Východní marky (síla 1,3, tribut 3 zlata/období na 6 let), Severní pustiny (0,9, zima, kožešiny a malý tribut), Jižní říše (1,6, nájezd po moři, kořist), **znovudobytí ztraceného kraje** (bez něj nepřijde zlatý věk) a u Šlechtice **soukromá válka** proti rodu, který není spojenec ani příbuzný (kořist, rod oslabí, král se mračí).
-- Hráč volí velikost (15/25/40 mužů z vojska, doma musí zůstat aspoň 8) a velitele: vládce osobně (morálka +, šance +8 %, riziko zranění, doma chybí: stabilita −1 každé 2. období), nebo maršál.
-- `state.war`: pochod 1–2 období, pak v poli každé období +6 % postupu a jedna válečná událost (`state.pendingEvent`), větve `war: { progress, morale, power, won, wound, end }`. Vojsko jí `ceil(muži/8)` jídla za období; dlouhá válka a zima berou morálku.
+- Hráč sestaví **sbor**: kolik kterého typu vytáhne (kroky podle dávky typu, předvolby Oddíl 15 / Vojsko 25 / Celá hotovost 40 plní kroky sami; zbytek zůstane doma, doma musí zůstat aspoň 8 a muži v posádkách do pole nemohou) a zvolí velitele: vládce osobně (morálka +, šance +8 %, riziko zranění, doma chybí: stabilita −1 každé 2. období), nebo maršál. `startWar(state, key, sbor | 'small'|'medium'|'large', leader)` bere i název velikosti (sim_career.mjs).
+- `state.war`: pochod 1–2 období, pak v poli každé období +6 % postupu (u pevností +1,5 za obléhací stroj, nejvýš +8) a jedna válečná událost (`state.pendingEvent`), větve `war: { progress, morale, power, won, wound, end, scout }`. `war.troops` = sbor po typech, `war.power` je vždy jeho součet. Vojsko jí `ceil((muži − žoldnéři)/8)` jídla za období; žoldnéři v poli berou 0,3 zlata za muže, bez zlata 35 % zběhne; dlouhá válka a zima berou morálku.
 - Konec: 100 % postupu = vítězství (událost `w_triumf`), morálka 0 nebo ≤ 2 muži = porážka (`w_porazka`), mír z události, nebo odvolání (prestiž −3). Mezi taženími 8 období odpočinku.
-- Šance (`warBonus`): poměr mužů k síle nepřítele, morálka, velitel. Rozumný hráč s celou hotovostí vyhraje nebo uzavře mír téměř vždy, s malým oddílem je to hazard.
-- Simulace botů tažení nezačínají, takže vyvážení bez války je beze změny. Bot, který válčí pořád a volí náhodně, ale Panovníka vyčerpá (kolapsy ~60 %).
+- Šance (`warBonus`, `oddsLabel`): sbor proti skutečné skladbě nepřítele (`battle.js scoreAgainst`), morálka, velitel. Menší oddíl než nepřítel prohrává téměř jistě (bitva je „téměř deterministická“), vyrovnané síly s rozumným rozestavením asi 65–75 %.
+- Simulace botů tažení nezačínají (kromě povstání v `sim_career.mjs`), takže vyvážení bez války je beze změny. Bot, který válčí pořád a volí náhodně, ale Panovníka vyčerpá (kolapsy ~60 %).
+
+#### Vojsko podle typů (`troops.js`)
+- `state.resources.army` zůstává jediným číslem, které znají události a ekonomika; `state.troops = { spear, archer, horse, siege, merc }` je jeho rozpis a **vždy platí army == součet troops**. `syncTroops(state)` to vynutí po každé změně (konec `applyBranch`, `resolveChoice`, konec `advanceTurn`, mapa): nárůst z událostí přijde jako levy (kopiníci 4 : lučištníci 1), úbytek se bere poměrně, nejdřív z volných mužů (posádky až naposled). Starý stav bez `troops` se líně rozdělí 60/25/15 %; Sedlák `troops` nemá (jeho „vojsko“ je čeleď), při povýšení se smaže.
+- Typy (`TROOPS`): kopiníci (6 zlata za 5, 1 období výcviku), lučištníci (9 za 5, 1), jízda a rytíři (10 zlata + 1 železo za 2, 2 období; potřebuje železo ze skladu obchodu `state.trade.stock.iron`), obléhací stroje (18 zlata + 2 železa za kus, 2 období; k ničemu v poli), žoldnéři (12 zlata za 5, hned; žold zlatem každé období, bez zlata 35 % odejde). Ikony `TROOP_ICONS` v `icons.js`.
+- Fronta výcviku `state.recruitQueue = [{ type, n, ready }]`, hotové jednotky přidá `processTroops` na začátku `advanceTurn`; zrušení vrátí půl zlata. **Limit** `recruitCap` = 30 + 20 × vlastní kraje + 10 × kasárna + 4 × kovárna (nejvýš 250), počítá se doma + v poli + ve výcviku. „Zbrojnice“ ve hře není, její roli mají kasárna a kovárna. Propuštění `disband` jen u volných mužů.
+- **Údržba** (`armyUpkeep`): místo `army / 14` (král `/ 15`) vážený součet podle typů (kopiníci 0,95 · lučištníci 1,0 · jízda 1,5 · stroje 1,5 · žoldnéři 4,5; jídlo 1,0 / 1,0 / 1,25 / 0,5 / 0). Výchozí skladba 60/25/15 má váhu ~1,04 a levy z událostí (kopiníci 4 : lučištníci 1) ~0,96, takže ekonomika zůstala v původním pásmu.
+- **Posádky:** `province.troops = { spear, archer, horse, merc }`. Posádka (váha: kopiník 1, lučištník 0,8, žoldnéř 1,2, jízda 0,6) snižuje cílové nepokoje až o 12 a zvyšuje cílovou věrnost až o 5 (`garrisonDrift` v `driftProvinces`); v `applyProvinceEffects` od síly 8 zabrání ztrátě kraje s šancí `síla / 40` (nejvýš 70 %, posádka přijde o 15 % mužů), od síly 4 zmírní škodlivé posuny (nepokoje nahoru, věrnost a bohatství dolů) nejvýš o polovinu. Správa v záložce Posádky a v panelu kraje (tlačítko „Spravovat posádku“).
+
+#### Bitva s rozestavením (`battle.js`)
+- Události s volbou `deploy: 'field' | 'siege' | 'ambush'` (`w_bitva`, `w_obleh`, nová `w_prepad`; `stance: 'flank'` u obchvatu) otevřou obrazovku rozestavení (`battle_ui.js`): sloty levé křídlo / střed / pravé křídlo / záloha, u obléhání hradby / brána / týl / záloha, steppery (krok 1/5/10), „Automaticky“, „Všichni do zálohy“. Nerozdělení jdou do zálohy, ta dorazí tam, kde je nejhůř. Výsledek jde do `resolveChoice` jako `decided = { success, battle }`; větve události (`onSuccess`/`onFailure`) zůstávají jen pro záložní cestu bez vojska v poli, radu a boty, jejich `war` se u odehrané bitvy **přeskočí** a použije se výsledek (`applyBattleResult`: ztráty po typech, postup, morálka, zranění velitele).
+- Pravidla: v každém slotu moc = muži × síla typu × protiklady (kopiníci > jízda > lučištníci > kopiníci; žoldnéři neutrální) × místo (jízda na křídle ×1,2, ve středu ×0,85; lučištníci za kopiníky až ×1,3 a menší ztráty) × terén cíle × domácí půda. Skóre S = půl součtu sil + půl průměru slotů, prolomený slot −0,05, k tomu morálka, velitel (vládce osobně, schopný maršál, síla), hlad a náhoda (sd ≈ 0,11). Stupně: rozhodující vítězství / vítězství / nerozhodně / porážka / rozprášeni. Ztráty po slotech podle tlaku a protikladů. Vyprávění 3–5 vět s rodovými tokeny `{R:…|…}` / `{V:…|…}` (velitel).
+- **Zpravodajství:** přesná skladba nepřítele, když má schopný maršál nebo špeh, po `war.scouted` (zvěd `w_zved` zaplacený), po první bitvě tažení nebo u bystrého velitele; jinak jen odhad („převážně jízda“, „asi 25–40 mužů“) a počty ±30 %. `autoDeploy(state, battle)` rozestaví podle toho, co hráč ví; boti a události bez zásahu hráče používají `autoFight` (výchozí rozestavení = automatické).
+- Skladba nepřátel (`WAR_TARGETS`, `warTargets`): `army` (váhy), `style` (jak stojí v řadě), `terrain`, `def`, `fort`: východní marky těžká jízda na křídlech, sever pěchota a luky v lese, jih posádky a lučištníci na pobřeží, kraje a koruna smíšeně (koruna i s žoldnéři), rod podle `troops` a `muster` v záznamu `NOBLE_HOUSES` (nepovinné; družiny spojenců při povstání taky, `allyRetinue`). Počet mužů nepřítele `enemyMen` = `25 × síla × 1,125 / průměrná síla skladby`, takže výchozí sbor 25 mužů je pořád vyrovnaný soupeř síly 1,0.
 
 ### Ambice a Síň slávy
 - **Ambice** (`ambitions.js`): zhruba jednou za 1–2 roky (pokud žádná neběží) přijde událost `ambice` se třemi cíli podle scénáře (19 ambicí: stavby, povýšení sídla, pokladna, bitvy, víra, prestiž, klid v krajích, obchod, výchova dědice, legitimita, královská přízeň, spojenectví, a 8 selských). Druh `gain` (přírůstek od začátku), `reach` (dosáhnout), `below` (nejvýš). Splnění: odměna (větev události) + bod vlastnosti; nesplnění v termínu: prestiž −2 (sedlák −1). Nový vládce začíná bez ambice.
@@ -431,5 +449,6 @@ a šance rytířské bitvy (Sedlák), ekonomika v `processPeasantEconomy` a `pro
 - Rada zatím nezná budoucí důsledky kromě dluhů (příznaky jako `loan_taken`); šlo by ji naučit víc.
 - Případně ukládání do více slotů s přehledem scénáře a přídomku vládce.
 - Válka: ztráta kraje může přijít i jako protiútok po porážce; spojenci, kteří pošlou posily; obrázky válečných scén (sekce 19 promptů).
+- Vojsko: drag&dropu na obrazovce rozestavení (dnes jen steppery), zbrojnice jako vlastní budova, nepřátelské obléhací stroje a lodě, žoldnéři najímaní z cizích zemí, cena verbování v jídle, ikony slotů a obrázek bitevního pole.
 - Ambice: víc cílů a ambice pro dědice a rádce; úspěchy za konkrétní rozhodnutí v událostech.
 - Stavění: rada, která doporučuje stavby, další události o stavbách (hlavně pro Sedláka), ozvěny navázané na stavby a obrázky budov (sekce 16 promptů).
