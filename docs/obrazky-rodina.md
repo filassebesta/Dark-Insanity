@@ -11,7 +11,7 @@ Portréty nápadnic a nápadníků (po svatbě se stanou tváří manžela/ky), 
 | ✅ | R3 | Boj o trůn, kapitoly a zlatý věk | 9 | velké zlomy kariéry |
 | ✅ | R4 | Svobodník | 10 | události svobodného sedláka |
 | ✅ | R5 | Významný šlechtic | 12 | události velmože |
-| ⏳ | R6 | Nápadnice a nápadníci šlechtice a krále | 16 | námluvy ve vyšších stupních |
+| ◐ | R6 | Nápadnice a nápadníci šlechtice a krále | 7 z 8 žen (chybí `suitor_panovnik_3_female`), 0 z 8 mužů | námluvy ve vyšších stupních |
 | ✅ | R7 | Další ženy na výběr (všechny stupně) | 7 | galerie žen v listu postavy |
 | ✅ | R8 | Dospělé děti a sourozenci (od 17 let) | 8 | Rodina, Dvůr, list postavy |
 
