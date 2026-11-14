@@ -15,7 +15,8 @@ import {
 
 // Painted art that has arrived (see docs/gemini-prompts.md, section 16).
 // Add a key here once assets/buildings/<key>.jpg or assets/towns/<kind>.jpg exists.
-const BUILDING_ART = new Set([]);
+// painted art in assets/buildings/<key>.jpg (docs/obrazky-stavby.md); the others keep their drawn icon
+const BUILDING_ART = new Set(['stodola', 'mlynek', 'chlev', 'staj', 'chlivek', 'kolna', 'vcelin', 'sad', 'kaplicka', 'kostel']);
 const TOWN_ART = new Set([]);
 
 const PW = 1000;
@@ -395,7 +396,7 @@ function catalogList(state, id, slot) {
     .sort((a, b) => rank(a[2]) - rank(b[2]))
     .map(([key, b, why]) => `
       <button class="decree build-option" data-build="${key}" data-slot="${slot}"${why ? ' disabled' : ''}>
-        <span class="build-thumb"><svg viewBox="-64 -100 128 124">${(ICONS[key] || ICONS.stodola)()}</svg></span>
+        <span class="build-thumb">${BUILDING_ART.has(key) ? `<img src="assets/buildings/${key}.jpg" alt="">` : `<svg viewBox="-64 -100 128 124">${(ICONS[key] || ICONS.stodola)()}</svg>`}</span>
         <span class="build-body"><b>${esc(b.name)} <small>${esc(costText(state, b.cost))} · ${b.turns} obd.</small></b>
         <span>${esc(b.text)}</span><em>${effectChips(state, b, key)}</em>${why ? `<em class="build-why">${esc(why)}</em>` : ''}</span>
       </button>`).join('')}</div>`;
