@@ -15,6 +15,7 @@ import {
 import { gearMods } from './gear.js';
 import { readyToOffer, startAmbition, skipAmbition, settleAmbition, dropAmbition, FAILURE } from './ambitions.js';
 import { processWar, applyWarEffects, warTokens } from './war.js';
+import { processPrivileges, applyPrivilegeEffects, flushPrivilegeNews, privilegeTokens } from './privileges.js';
 
 const TRAIT_MIN = 1;
 const TRAIT_MAX = 10;
@@ -59,6 +60,7 @@ export function interpolate(state, text) {
   Object.assign(dict, cargoTokens(state));
   Object.assign(dict, injuryTokens(state));
   Object.assign(dict, warTokens(state));
+  Object.assign(dict, privilegeTokens(state)); // {privilege.name} the right a lord is taking back
   const town = ctx.town && settlementDef(ctx.town);
   if (town) {
     // {town.name} Brod, {town.loc} v Brodu, {town.Loc} V Brodu
@@ -519,6 +521,7 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
   applyTownEffects(state, state.eventContext?.town, branch.town, notes);
   applyFarmEffects(state, branch.farm, notes); // grain and animals of the peasant's farm
   applyInjuryEffects(state, branch, notes); // wounds, cures and wooden legs
+  applyPrivilegeEffects(state, branch, notes); // rights granted, lost or kept (privileges.js)
   if (branch.ambition) {
     const a = startAmbition(state, branch.ambition);
     if (a) notes.push({ text: `Ambice: ${a.name} (do ${a.years} let)`, tone: 'pos' });
@@ -936,6 +939,7 @@ export function resolveChoice(state, event, choiceIndex, decided = null) {
   }
   const text = branch.chronicle ? interpolate(state, branch.chronicle) : '';
   if (text) state.chronicle.push(makeChronicleEntry(state, text));
+  flushPrivilegeNews(state); // a privilege granted or lost follows the story's own line
   markEventSeen(state, event);
   if (state.pendingPromotion) {
     const type = state.pendingPromotion;
@@ -957,6 +961,7 @@ export function resolveRouteChoice(state, event, terrainKey) {
   const notes = applyBranch(state, branch, { event, label: TERRAIN_DEFS[terrainKey]?.label || terrainKey }, danger ? 'danger' : 'safe');
   const text = branch.chronicle ? interpolate(state, branch.chronicle) : '';
   if (text) state.chronicle.push(makeChronicleEntry(state, text));
+  flushPrivilegeNews(state);
   markEventSeen(state, event);
   return { outcome: danger ? 'danger' : 'safe', effects: branch.effects || {}, traitGained: null, text, notes, terrainKey };
 }
@@ -1441,10 +1446,12 @@ export function advanceTurn(state) {
   const economy = processTurnEconomy(state);
   const built = processBuilding(state); // finished work and what the towns' buildings yield
   const farm = processFarm(state); // the peasant's grain and animals (farm.js)
+  const priv = processPrivileges(state); // rights and offices: what they give and what they cost (privileges.js)
+  if (priv.event) queueEvent(state, priv.event);
   const crowns = state.scenario === 'panovnik' ? realmIncome(state) : 0; // foreign crowns held by the king pay their dues
   if (crowns) state.resources.gold = clampRes('gold', state.resources.gold + crowns);
-  const goldIncome = economy.goldIncome + built.gold + crowns + farm.gold;
-  const foodIncome = economy.foodIncome + built.food + farm.food;
+  const goldIncome = economy.goldIncome + built.gold + crowns + farm.gold + priv.gold;
+  const foodIncome = economy.foodIncome + built.food + farm.food + priv.food;
   let successionOccurred = false;
   let deathCheckText = '';
 
@@ -1474,7 +1481,7 @@ export function advanceTurn(state) {
   if (!isPeasant(state) && state.resources.stability < 28 && state.resources.stability >= 20) worldNews.push('V zemi se bouří nevole. Bez pevné ruky se kraje začnou vymykat z moci.');
   const ambitionNews = processAmbition(state);
   updateGoldenAgeStreak(state);
-  const tradeNews = [...familyNews, ...wounds.news, ...worldNews, ...ambitionNews, ...built.news, ...farm.news, ...processTrade(state)];
+  const tradeNews = [...familyNews, ...wounds.news, ...worldNews, ...ambitionNews, ...built.news, ...farm.news, ...priv.news, ...processTrade(state)];
 
   const seasonLabel = SEASONS[state.seasonIndex];
   const [goldWord, foodWord] = isPeasant(state) ? ['grošů', 'zásob'] : ['zlata', 'jídla'];
