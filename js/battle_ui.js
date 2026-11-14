@@ -13,6 +13,13 @@ import {
 import { esc } from './ui.js';
 
 const panel = () => document.getElementById('choice-list');
+
+// The picture of the battlefield (assets/battle) carries the slots as clickable zones: [left, top, width, height] in %.
+// field and ambush: left wing, centre, right wing; siege: walls, gate, breach; the reserve is the strip in front.
+const SCENES = { field: 'assets/battle/bt_field.jpg', ambush: 'assets/battle/bt_ambush.jpg', siege: 'assets/battle/bt_siege.jpg' };
+const THIRDS = [[0, 0, 33.4, 76], [33.4, 0, 33.3, 76], [66.7, 0, 33.3, 76]];
+const RESERVE_ZONE = [3, 79, 94, 18];
+const zoneRect = (kind, i, reserve) => (reserve ? RESERVE_ZONE : THIRDS[i]);
 const num = (g, k) => (g && g[k]) || 0;
 
 function hideCouncil() {
@@ -40,6 +47,8 @@ export function openBattle(state, choice, onDone, host = panel()) {
   const autoDep = () => autoDeploy(state, battle);
   let dep = normalizeDeployment(kind, corps, autoDep());
   let step = 5;
+  const fronts0 = slotsOf(kind).filter((s) => !s.reserve);
+  let sel = (fronts0[1] || fronts0[0]).key; // the centre is open first
   const slotName = (s) => (s.reserve && battle.stance === 'flank' ? 'Obchvat' : s.name);
 
   const present = TROOP_KEYS.filter((k) => num(corps, k) > 0);
@@ -62,11 +71,26 @@ export function openBattle(state, choice, onDone, host = panel()) {
     </section>`;
   };
 
+  // one clickable zone of the picture: name, who stands there, how the front looks
+  const zoneButton = (s, i, fronts) => {
+    const g = dep[s.key] || {};
+    const men = troopsTotal(g);
+    const f = fronts.find((x) => x.key === s.key);
+    const [word, tone] = s.reserve ? ['', 'neutral'] : f && (men || troopsTotal(f.theirs)) ? FRONT_WORD(f.m) : ['Prázdno', 'neutral'];
+    const [l, t, w, h] = zoneRect(kind, i, s.reserve);
+    return `<button type="button" class="bt-zone${s.reserve ? ' reserve' : ''}${s.key === sel ? ' on' : ''} ${tone}" data-bt-zone="${s.key}" style="left:${l}%;top:${t}%;width:${w}%;height:${h}%" aria-pressed="${s.key === sel}" aria-label="${esc(slotName(s))}: ${men} mužů">
+      <span class="bt-zname">${esc(slotName(s))}</span>
+      <span class="bt-ztok">${men ? compIcons(g) : '<span class="bt-none">nikdo</span>'}${word ? `<b class="bt-zstate ${tone}">${word}${view.exact ? '' : '?'}</b>` : ''}</span>
+    </button>`;
+  };
+
   const drawBody = () => {
     const pv = previewDeployment(state, battle, dep);
     const [tw, tt] = TOTAL_WORD(pv.S);
     const slots = host.querySelector('.bt-slots');
-    slots.innerHTML = slotsOf(kind).map((s) => slotCard(s, pv.fronts)).join('');
+    const def = slotsOf(kind).find((s) => s.key === sel) || slotsOf(kind)[0];
+    slots.innerHTML = slotCard(def, pv.fronts);
+    host.querySelector('.bt-zones').innerHTML = slotsOf(kind).map((s, i) => zoneButton(s, fronts0.indexOf(s), pv.fronts)).join('');
     host.querySelector('.bt-total').innerHTML = `Odhad podle toho, co víš: <b class="${tt}">${tw}</b>${view.exact ? '' : ' <small>(zvědové se mohou plést)</small>'}`;
     host.querySelectorAll('[data-bt-step]').forEach((b) => b.classList.toggle('on', Number(b.dataset.btStep) === step));
   };
@@ -81,6 +105,8 @@ export function openBattle(state, choice, onDone, host = panel()) {
         <button class="trade-mini" data-bt-auto>Automaticky</button>
         <button class="trade-mini" data-bt-reset>Všichni do zálohy</button>
       </div>
+      <div class="bt-scene" style="background-image:url('${SCENES[kind]}')"><div class="bt-zones"></div></div>
+      <p class="bt-hint">Klikni na místo v obraze a otevře se jeho nabídka.</p>
       <div class="bt-slots"></div>
       <p class="bt-total"></p>
       <p class="bt-note">${battle.stance === 'flank' ? 'Záloha jde obchvatem: když se vydaří, udeří nepříteli do zad, jinak přijde pozdě. ' : ''}${kind === 'ambush' ? 'Přepadená kolona je nepřipravená, záloha u vozů dorazí jen napůl. ' : ''}Nerozdělení muži zůstanou v záloze.</p>
@@ -91,6 +117,8 @@ export function openBattle(state, choice, onDone, host = panel()) {
   const root = host.querySelector('.bt-panel');
   root.addEventListener('click', (e) => {
     const t = e.target;
+    const zoneBtn = t.closest('[data-bt-zone]');
+    if (zoneBtn) { sel = zoneBtn.dataset.btZone; drawBody(); return; }
     const stepBtn = t.closest('[data-bt-step]');
     if (stepBtn) { step = Number(stepBtn.dataset.btStep); drawBody(); return; }
     const mv = t.closest('[data-bt-move]');
