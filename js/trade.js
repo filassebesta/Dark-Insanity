@@ -196,6 +196,44 @@ export function priceMult(state, dest, good) {
   return mult;
 }
 
+// ---------- price history (for the chart in the trade panel) ----------
+
+const HISTORY_MAX = 80; // twenty years of seasons
+
+/** Remembers what every market pays this season (base × mood, to a tenth of a coin). */
+export function recordPrices(state) {
+  const t = ensureTrade(state);
+  t.history = t.history || [];
+  const p = {};
+  for (const [dest, m] of Object.entries(MARKETS)) {
+    p[dest] = {};
+    for (const good of Object.keys(m.sell)) p[dest][good] = Math.round(m.sell[good] * priceMult(state, dest, good) * 10) / 10;
+  }
+  const last = t.history[t.history.length - 1];
+  if (last && last.turn === state.turn) { last.p = p; return; }
+  t.history.push({ turn: state.turn, year: state.year, season: state.seasonIndex, p });
+  if (t.history.length > HISTORY_MAX) t.history.splice(0, t.history.length - HISTORY_MAX);
+}
+
+/**
+ * The price of one good over the last `span` seasons in every market the player can reach:
+ * { entries: [{ turn, year, season }], series: [{ dest, name, values: [..], now, min, max, avg, delta }] }.
+ */
+export function priceSeries(state, good, span) {
+  const t = ensureTrade(state);
+  if (!t.history || !t.history.length) recordPrices(state); // an old save starts its book now
+  const entries = t.history.slice(-Math.max(2, span));
+  const series = [];
+  for (const [dest, m] of Object.entries(MARKETS)) {
+    if (!m.sell[good] || marketAccess(state, dest)) continue;
+    const values = entries.map((e) => (e.p[dest] && e.p[dest][good]) ?? m.sell[good]);
+    const now = values[values.length - 1];
+    const avg = values.reduce((a, b) => a + b, 0) / values.length;
+    series.push({ dest, name: m.name, short: m.short, values, now, min: Math.min(...values), max: Math.max(...values), avg, delta: now - avg });
+  }
+  return { entries: entries.map(({ turn, year, season }) => ({ turn, year, season })), series };
+}
+
 /** Trend of a selling price against its base: { pct, arrow: '↑' | '↓' | '→', cls }. */
 export function trendOf(state, dest, good) {
   const pct = Math.round((priceMult(state, dest, good) - 1) * 100);
@@ -569,6 +607,7 @@ export function processTrade(state) {
   const news = [];
   produce(state);
   driftPrices(state);
+  recordPrices(state);
   // contracts: new ones in spring, broken obligations cost favour
   for (const c of [...t.contracts]) {
     if (c.until <= state.turn && !c.taken) {
