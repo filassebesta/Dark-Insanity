@@ -42,6 +42,8 @@ import { FAMILY_EVENTS } from './events_family.js';
 import { FOREIGN_EVENTS } from './events_foreign.js';
 import { FREEDOM_EVENTS } from './events_freedom.js';
 import { PRIVILEGE_EVENTS } from './events_privileges.js';
+import { EMPIRE_EVENTS } from './events_empire.js';
+import { REGENCY_EVENTS } from './events_regency.js';
 import { PEASANT_EVENTS, PEASANT_CRISES, PEASANT_ECHOES, PEASANT_QUIET_EVENT } from './events_peasant.js';
 
 const BASE_EVENTS = [
@@ -853,7 +855,7 @@ const BASE_EVENTS = [
   },
 ];
 
-export const EVENTS = attachEchoHooks([...BASE_EVENTS, ...MORE_EVENTS, ...NOBLE_EVENTS, ...COURT_EVENTS, ...TRADE_EVENTS, ...BUILD_EVENTS, ...INJURY_EVENTS, ...AMBITION_EVENTS, ...WAR_EVENTS, ...BANDIT_EVENTS, ...PEASANT_EVENTS, ...CRISIS_EVENTS, ...PEASANT_CRISES, ...ECHO_EVENTS, ...PEASANT_ECHOES, ...CAREER_EVENTS, ...FARM_EVENTS, ...THRONE_EVENTS, ...PROLOGUE_EVENTS, ...STAGE_EVENTS, ...FAMILY_EVENTS, ...FOREIGN_EVENTS, ...FREEDOM_EVENTS, ...PRIVILEGE_EVENTS]);
+export const EVENTS = attachEchoHooks([...BASE_EVENTS, ...MORE_EVENTS, ...NOBLE_EVENTS, ...COURT_EVENTS, ...TRADE_EVENTS, ...BUILD_EVENTS, ...INJURY_EVENTS, ...AMBITION_EVENTS, ...WAR_EVENTS, ...BANDIT_EVENTS, ...PEASANT_EVENTS, ...CRISIS_EVENTS, ...PEASANT_CRISES, ...ECHO_EVENTS, ...PEASANT_ECHOES, ...CAREER_EVENTS, ...FARM_EVENTS, ...THRONE_EVENTS, ...PROLOGUE_EVENTS, ...STAGE_EVENTS, ...FAMILY_EVENTS, ...FOREIGN_EVENTS, ...FREEDOM_EVENTS, ...PRIVILEGE_EVENTS, ...EMPIRE_EVENTS, ...REGENCY_EVENTS]);
 
 // Picked when no other event is due (or now and then by chance): a calm season
 // still lets the ruler spend it on something.

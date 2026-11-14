@@ -157,6 +157,13 @@ function tierLabel(r, state) {
   return tierTitle(r.statusTier, r.gender);
 }
 
+/** " · pod regentstvím (matka Ludmila)" while a child rules */
+function regentNote(state) {
+  const c = state.regency;
+  const who = c && !c.ended && c.regent ? (c.regent === 'council' ? c.name : `${c.rel} ${c.name}`) : '';
+  return who ? ` · pod regentstvím (${esc(who)})` : '';
+}
+
 export function renderCharacterPlaque(state, bumpedTrait = null) {
   const r = state.ruler;
   const initial = esc(r.name ? r.name[0] : '?');
@@ -166,7 +173,7 @@ export function renderCharacterPlaque(state, bumpedTrait = null) {
     <div class="plaque-portrait" data-action="open-character" title="Zobrazit postavu">${initial}${portraitImg(rulerPortraitCandidates(r), r.name)}</div>
     <div class="plaque-id">
       <span class="plaque-name">${esc(r.name)}</span>
-      <span class="plaque-sub">${esc(tierLabel(r, state))}${state.cadetBranch ? ' · vedlejší větev' : ''} · ${r.age} let${state.war && state.war.leader === 'ruler' ? ' · <em class="plaque-hurt">v poli</em>' : ''}${hurt.length ? ` · <em class="plaque-hurt">${esc(hurt.join(', '))}</em>` : ''}</span>
+      <span class="plaque-sub">${esc(tierLabel(r, state))}${state.cadetBranch ? ' · vedlejší větev' : ''} · ${esc(yearsLabel(r.age))}${regentNote(state)}${state.war && state.war.leader === 'ruler' ? ' · <em class="plaque-hurt">v poli</em>' : ''}${hurt.length ? ` · <em class="plaque-hurt">${esc(hurt.join(', '))}</em>` : ''}</span>
     </div>
     <div class="plaque-traits">
       ${TRAIT_DEFS.map((t) => {
@@ -550,6 +557,8 @@ const ENDING_TITLES = {
   ennobled: 'Erb a tvrz',
   expelled: 'Vyhnání z gruntu',
   ruined: 'Zpustlý grunt',
+  empire_peak: 'Říše na vrcholu',
+  empire_fall: 'Rozpad říše',
 };
 
 // endings after which the same save carries on one step higher

@@ -984,7 +984,7 @@ function showWarOverview() {
       <h4 class="map-sub">Kdo povede</h4>
       <div class="trade-goods">
         <button class="trade-chip${warForm.leader === 'marshal' ? ' on' : ''}" data-war-leader="marshal">${esc(state.marshal.name)} <small>${esc(leaderLabel('marshal', state))}</small></button>
-        <button class="trade-chip${warForm.leader === 'ruler' ? ' on' : ''}" data-war-leader="ruler">${esc(state.ruler.name)} <small>osobně</small></button>
+        ${state.ruler.age >= 16 ? `<button class="trade-chip${warForm.leader === 'ruler' ? ' on' : ''}" data-war-leader="ruler">${esc(state.ruler.name)} <small>osobně</small></button>` : ''}
       </div>
       <p class="map-desc war-note">${warForm.leader === 'ruler' ? (state.ruler.gender === 'female' ? 'Vládkyně v čele zvedá morálku i šance, ale může být zraněna a doma bude chybět.' : 'Vládce v čele zvedá morálku i šance, ale může být zraněn a doma bude chybět.') : `${state.marshal.name} vede bez rizika pro ${state.ruler.gender === 'female' ? 'vládkyni' : 'vládce'}, muži ale bojují s menším zápalem.`}</p>
       <div class="trade-estimate">

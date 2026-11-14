@@ -139,6 +139,7 @@ export function warBlock(state, key, size) {
 }
 
 export function startWar(state, key, size, leader = 'marshal') {
+  if (state.ruler.age < 16) leader = 'marshal'; // a child does not lead an army
   const why = warBlock(state, key, size);
   if (why) return { error: why };
   const t = warTargets(state)[key];
