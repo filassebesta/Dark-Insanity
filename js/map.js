@@ -191,6 +191,7 @@ export function openMap(gameState, opts = {}) {
   realmSel = null;
   render();
   host.classList.add('open');
+  document.body.classList.add('map-open'); // notices move to the bottom so they never cover the map's names
   host.setAttribute('aria-hidden', 'false');
   selected = null;
   town = null;
@@ -222,6 +223,7 @@ export function closeMap() {
     host.classList.remove('open');
     host.setAttribute('aria-hidden', 'true');
   }
+  document.body.classList.remove('map-open');
   hideTooltip();
 }
 

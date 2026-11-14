@@ -52,19 +52,19 @@ export const MARKETS = {
     name: 'Východní marky', short: 'Marky', to: 'do Východních marek', from: 'z Východních marek', at: [1222, 440], days: 2, risk: 0.22,
     danger: 'lapkové v Sokolím hvozdu', route: [HUB, [700, 402], [780, 414], [860, 424], [985, 398], [1100, 420], [1222, 440]],
     text: 'Bojovní markrabata za hvozdem. Platí dobře za železo a sukno, obilí mají vlastní.',
-    sell: { grain: 1, iron: 6, furs: 2, salt: 3, cloth: 4, wine: 4 },
+    sell: { grain: 1, iron: 7, furs: 2, salt: 3, cloth: 5, wine: 4 },
   },
   south: {
     name: 'Jižní říše', short: 'Jih', to: 'do Jižní říše', from: 'z Jižní říše', at: [262, 812], days: 2, risk: 0.18, sea: true,
     danger: 'piráti a bouře', route: [PORT, [230, 430], [150, 520], [140, 650], [190, 760], [262, 812]],
     text: 'Bohatá říše za mořem. Kupí kožešiny a železo a prodává víno, které se jinde zlatem vyvažuje.',
-    sell: { grain: 2, iron: 4, furs: 6, salt: 2, cloth: 3 }, buy: { wine: 2 },
+    sell: { grain: 2, iron: 4, furs: 7, salt: 2, cloth: 3 }, buy: { wine: 2 },
   },
   north: {
     name: 'Severní pustiny', short: 'Sever', to: 'do Severních pustin', from: 'ze Severních pustin', at: [820, 34], days: 3, risk: 0.3,
     danger: 'horalé v průsmyku a mráz', route: [HUB, [612, 300], [602, 238], [626, 172], [632, 138], [720, 90], [820, 34]],
     text: 'Chladná země za horami. Obilí tam má cenu stříbra, cesta přes průsmyk ale bere životy.',
-    sell: { grain: 4, iron: 3, furs: 1, salt: 4, cloth: 4, wine: 5 },
+    sell: { grain: 5, iron: 3, furs: 1, salt: 5, cloth: 5, wine: 5 },
   },
 };
 

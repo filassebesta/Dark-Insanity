@@ -13,7 +13,7 @@ for (let r = 0; r < runs; r++) {
     const res = E.advanceTurn(st);
     if (res.event) res.event = settleFree(E, st, res.event);
     if (res.tradeNews) stats.delivered += res.tradeNews.filter((n) => n.includes('vrátila')).length;
-    if (res.gameOver) { ends[res.gameOver.type] = (ends[res.gameOver.type] || 0) + 1; break; }
+    if (res.gameOver) { const k = res.gameOver.type + (res.gameOver.reason ? ':' + res.gameOver.reason : ''); ends[k] = (ends[k] || 0) + 1; break; }
     const e = res.event;
     if (/^o_(prepadeni|pirati)$/.test(e.id)) stats.incidents++;
     try {

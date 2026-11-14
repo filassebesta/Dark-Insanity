@@ -1910,3 +1910,6 @@ body.has-contract-bar .toast-container { top: 14.5rem; }
 #person-sheet .talk-topic.armed { background: rgba(168,69,47,.14); border-color: #a8452f; }
 #person-sheet .talk-topic.armed span { color: #a8452f; }
 .cs-section.cs-sub { margin-top: 1.8rem; }
+/* while the map is open, notices sit at its bottom edge instead of covering the place names */
+body.map-open .toast-container { top: auto; bottom: 1.2rem; left: 38%; }
+@media (max-width: 900px) { body.map-open .toast-container { left: 50%; } }
