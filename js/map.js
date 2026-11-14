@@ -14,7 +14,7 @@ import { esc } from './ui.js';
 import {
   PEASANT_VILLAGE, townIdFor, townOf, levelName, currentProject, ownsTown, startBuilding, startUpgrade, cancelProject, demolish,
 } from './build.js';
-import { renderTownPlan, townSidebar, farmIcon } from './town.js';
+import { renderTownPlan, townSidebar, farmIcon, fitPlaques, fitScene } from './town.js';
 import { buyStock, sellStock, grindGrain, millGrain, ensureFarm, roomFor, countOf, eatFood, STOCK, ANIMALS, plural } from './farm.js';
 import { worldSvg, worldSidebar, WORLD_IMAGE } from './world.js';
 import {
@@ -1468,8 +1468,16 @@ function closeTown() {
 
 function drawTown() {
   const stage = host.querySelector('.town-stage');
+  // keep the sideways scroll of the picture (on a phone it is wider than the screen) when it is redrawn
+  const old = stage.querySelector('.town-scroll');
+  const kept = old && !stage.hidden ? old.scrollLeft : null;
   stage.innerHTML = renderTownPlan(state, town.id, town.slot);
   stage.hidden = false;
+  const scroll = stage.querySelector('.town-scroll');
+  fitScene(stage);
+  if (scroll && kept !== null) { scroll.scrollLeft = kept; stage.querySelector('.town-scene').dataset.panned = '1'; }
+  fitPlaques(stage);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (stage.isConnected) fitPlaques(stage); });
   sidebar(townSidebar(state, town.id, town.slot));
 }
 

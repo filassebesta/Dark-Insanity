@@ -13,42 +13,25 @@ import {
   ensureFarm, roomFor, countOf, STOCK, ANIMALS, buyBlock, sellBlock, sellPrice, millBlock, eatBlock, eatFood, farmOutlook, farmChain, worksChips, plural,
 } from './farm.js';
 
-// Painted art that has arrived (see docs/gemini-prompts.md, section 16).
-// Add a key here once assets/buildings/<key>.jpg or assets/towns/<kind>.jpg exists.
-// painted art in assets/buildings/<key>.jpg (docs/obrazky-stavby.md); the others keep their drawn icon
+import { C, rect, poly, gable, hip, door, win, cross, crenels, tree, pine, smoke, flag, house } from './town_kit.js';
+import { CUTOUTS } from './town_art.js';
+import { sceneContext, groundMarkup, defsMarkup, centreItems, lifeMarkup, houseSmokers, weatherMarkup, TOWN_BACKDROPS } from './town_scene.js';
+
+// Painted art that has arrived (see docs/obrazky-stavby.md). BUILDING_ART: assets/buildings/<key>.jpg is the card
+// picture in the build menu and the detail panel; for the keys in CUTOUTS (town_art.js, made by tools/images/make_cutouts.py)
+// assets/buildings/<key>.webp is the same building cut out of its background, standing right on the scene.
+// The rest keep their drawn icon.
+// The painted cut-outs on the SCENE are switched off by default: next to the painted maps the drawn buildings read crisper.
+// Set USE_PAINTED_BUILDINGS to true to show every cut-out, or put single keys into PAINTED_ALLOW to show just those
+// (build menu thumbnails and the detail picture always use the painted art).
+export const USE_PAINTED_BUILDINGS = false;
+const PAINTED_ALLOW = new Set([]);
+const paintedOnScene = (key) => !!CUTOUTS[key] && (USE_PAINTED_BUILDINGS || PAINTED_ALLOW.has(key));
 const BUILDING_ART = new Set(['stodola', 'mlynek', 'chlev', 'staj', 'chlivek', 'kolna', 'vcelin', 'sad', 'kaplicka', 'kostel']);
 const TOWN_ART = new Set([]);
 
-const PW = 1000;
-const PH = 620;
-// plot centres, in the order the plots open with each level
-const PLOTS = [
-  [420, 195], [580, 195], [420, 470], [580, 470],
-  [270, 195], [730, 195], [270, 470], [730, 470],
-  [120, 195], [880, 195], [120, 470], [880, 470],
-];
-const PLOT_W = 128;
-const PLOT_H = 112;
-
-// ---------- small drawing kit (all centred on 0,0, about 110 × 90) ----------
-
-const C = { wall: '#e6d6b0', wall2: '#d2bf93', stone: '#b7aa92', stone2: '#9d907a', roof: '#8e3f2b', roof2: '#6b4a35', slate: '#5e6670', wood: '#8a6440', wood2: '#6e4e30', green: '#6f8a4a', gold: '#d8a650', ink: '#3a2a1a', water: '#7f98a3' };
-const rect = (x, y, w, h, fill, extra = '') => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" ${extra}/>`;
-const poly = (pts, fill, extra = '') => `<polygon points="${pts}" fill="${fill}" ${extra}/>`;
-const gable = (x, y, w, h, fill) => poly(`${x - 4},${y} ${x + w / 2},${y - h} ${x + w + 4},${y}`, fill);
-const hip = (x, y, w, h, fill) => poly(`${x - 4},${y} ${x + 8},${y - h} ${x + w - 8},${y - h} ${x + w + 4},${y}`, fill);
-const door = (cx, y, w = 9, h = 13) => `<path d="M${cx - w / 2} ${y}v-${h - w / 2}a${w / 2} ${w / 2} 0 0 1 ${w} 0v${h - w / 2}z" fill="${C.wood2}"/>`;
-const win = (x, y, w = 6, h = 8) => rect(x, y, w, h, '#3d3326');
-const cross = (x, y, s = 7) => `<path d="M${x} ${y}v-${s * 2}M${x - s * 0.7} ${y - s * 1.35}h${s * 1.4}" stroke="${C.ink}" stroke-width="2.4" fill="none"/>`;
-const crenels = (x, y, w, n, fill) => Array.from({ length: n }, (_, i) => rect(x + (i * w) / n, y - 6, w / n / 2, 6, fill)).join('');
-const tree = (x, y, r = 12, fill = C.green) => `${rect(x - 2, y, 4, 9, C.wood2)}<circle cx="${x}" cy="${y - 2}" r="${r}" fill="${fill}"/>`;
-const pine = (x, y, s = 1) => poly(`${x},${y - 30 * s} ${x - 12 * s},${y} ${x + 12 * s},${y}`, '#4d6440') + rect(x - 2 * s, y, 4 * s, 6 * s, C.wood2);
-const smoke = (x, y) => `<g class="b-smoke"><circle cx="${x}" cy="${y}" r="4"/><circle cx="${x + 4}" cy="${y - 8}" r="5"/><circle cx="${x + 1}" cy="${y - 17}" r="6"/></g>`;
-const flag = (x, y, fill = C.roof) => `<path d="M${x} ${y}v-26" stroke="${C.ink}" stroke-width="2"/><path class="b-flag" d="M${x} ${y - 26}h16l-5 5 5 5h-16z" fill="${fill}"/>`;
-
-function house(x, y, w, h, roofH, roofFill = C.roof, wall = C.wall) {
-  return `${rect(x, y - h, w, h, wall)}${gable(x, y - h, w, roofH, roofFill)}${door(x + w / 2, y)}`;
-}
+// rough height of the drawn icons above their base line (for scaling them into a clearing)
+const ICON_H = { kostel: 112, mlyn: 98, radnice: 122, katedrala: 136, hradby: 70, skola: 84, sachta: 76, spital: 90, lovci: 62, trziste: 46, kasarna: 66, lodenice: 62, sypka: 70, stodola: 62, kolna: 54, sad: 54, kaplicka: 70, vcelin: 50, chlivek: 40, chlev: 50, staj: 44, krcma: 66, kovarna: 68, cech: 68, sklad: 52, dilna: 60, celednik: 74, rybnik: 30, mlynek: 82 };
 
 const ICONS = {
   kostel: () => `${rect(-48, -28, 62, 42, C.wall)}${gable(-48, -28, 62, 24, C.roof)}${win(-38, -16)}${win(-22, -16)}
@@ -147,22 +130,32 @@ function beast(key) {
     <path d="M-4 0l4 4l4 -4M0 -4v10" stroke="#a08550" stroke-width="1.4" fill="none"/>`;
 }
 
-/** The animals in their pens on the farm plan: a paddock for cows and horses, a sty for pigs. */
-function farmYard(state) {
+/** The animals in their pens and the sacks by the door; the pens stand where the layout puts them (town_layouts.js, grunt). */
+function farmYard(state, c) {
   const f = ensureFarm(state);
   if (!f) return '';
+  const lay = c.lay;
   const parts = [];
+  const sc = c.backdrop ? 0.56 : 0.62;
+  const row = (rc, n, key, size, i0 = 0) => {
+    const [x0, y0, x1, y1] = rc;
+    const step = Math.min(size * 56, (x1 - x0 - 36) / Math.max(1, n));
+    return Array.from({ length: n }, (_, i) => {
+      const k = Array.isArray(key) ? key[i] : key;
+      const flip = (i + i0) % 2 ? -1 : 1;
+      return `<g class="tp-beast" style="--bd:${-(i * 0.7).toFixed(1)}s" transform="translate(${(x0 + 26 + i * step).toFixed(1)} ${(y0 + (y1 - y0) * 0.66 + ((i + i0) % 2) * 5).toFixed(1)}) scale(${flip * size} ${size})">${beast(k)}</g>`;
+    }).join('');
+  };
   const big = [...Array(Math.min(f.cows, 4)).fill('cows'), ...Array(Math.min(f.horses, 4)).fill('horses')];
-  if (big.length || roomFor(state, 'cows') || roomFor(state, 'horses')) {
-    parts.push('<rect class="tp-pen" x="640" y="358" width="270" height="50" rx="6"/>');
-    big.forEach((k, i) => parts.push(`<g class="tp-beast" transform="translate(${670 + i * 34} ${380 + (i % 2) * 8}) scale(${i % 2 ? -0.62 : 0.62} .62)">${beast(k)}</g>`));
+  if (lay.paddock && (big.length || roomFor(state, 'cows') || roomFor(state, 'horses'))) {
+    parts.push(row(lay.paddock, big.length, big, sc));
   }
-  if (f.pigs || roomFor(state, 'pigs')) {
-    parts.push('<rect class="tp-pen" x="236" y="358" width="170" height="50" rx="6"/>');
-    for (let i = 0; i < Math.min(f.pigs, 5); i++) parts.push(`<g class="tp-beast" transform="translate(${260 + i * 30} ${382 + (i % 2) * 6}) scale(${i % 2 ? -0.6 : 0.6} .6)">${beast('pigs')}</g>`);
+  if (lay.sty && (f.pigs || roomFor(state, 'pigs'))) {
+    parts.push(row(lay.sty, Math.min(f.pigs, 5), 'pigs', sc * 0.97, 1));
   }
   // a few sacks by the house door once there is grain
-  for (let i = 0; i < Math.min(countOf(state, 'grain'), 5); i++) parts.push(`<g transform="translate(${556 + (i % 3) * 13} ${392 - Math.floor(i / 3) * 14}) scale(.5)">${beast('grain')}</g>`);
+  const [sx, sy] = lay.sacks;
+  for (let i = 0; i < Math.min(countOf(state, 'grain'), 5); i++) parts.push(`<g transform="translate(${(sx + (i % 3) * 13).toFixed(1)} ${(sy - Math.floor(i / 3) * 12).toFixed(1)}) scale(.46)">${beast('grain')}</g>`);
   return `<g class="tp-yard">${parts.join('')}</g>`;
 }
 
@@ -172,99 +165,164 @@ function scaffold() {
     <path d="M-6 14v-86M-6 -72h44M34 -72v18" stroke="${C.wood2}" stroke-width="3" fill="none"/>${rect(28, -54, 12, 8, C.stone)}</g>`;
 }
 
-// ---------- the scene around the plots ----------
-
-function sceneDecor(kind, level, town) {
-  const parts = [];
-  const cobble = level >= 3 && kind !== 'farm';
-  const road = cobble ? '#b6a786' : '#c2a878';
-  // roads cross at the square
-  parts.push(`<path class="tp-road" d="M-20 ${PH / 2 + 22}H${PW + 20}M${PW / 2} -20V${PH + 20}" stroke="${road}" stroke-width="${cobble ? 46 : 34}"/>`);
-  if (cobble) parts.push(`<path d="M-20 ${PH / 2 + 22}H${PW + 20}M${PW / 2} -20V${PH + 20}" stroke="#a09272" stroke-width="46" stroke-dasharray="3 9" opacity=".5"/>`);
-  // what lies around: sea, mountains, forest, fields
-  if (kind === 'port' || kind === 'abbey') {
-    parts.push(`<path d="M0 0H44Q20 160 50 300Q24 470 40 ${PH}H0z" fill="${C.water}"/><path d="M10 120q10 -6 20 0M14 380q10 -6 20 0M8 520q10 -6 20 0" stroke="#c9d6da" stroke-width="2" fill="none"/>`);
-    if (kind === 'port') parts.push(`<path d="M-10 ${PH / 2 + 22}H60" stroke="${C.wood}" stroke-width="18"/><path d="M8 ${PH / 2 - 10}l10 -14h30l-6 14z" fill="${C.wood2}"/><path d="M28 ${PH / 2 - 24}v-30l16 26z" fill="${C.wall}"/>`);
-  }
-  if (kind === 'mine') parts.push(`<path d="M0 70L60 18 120 64 190 6 260 60 330 20 380 64H620L680 14 750 58 820 2 900 56 960 18 1000 50V0H0z" fill="${C.stone2}"/>`);
-  if (kind === 'lodge') {
-    for (let i = 0; i < 14; i++) parts.push(pine(30 + i * 72, 64 + (i % 2) * 12, 1.3));
-    for (let i = 0; i < 14; i++) parts.push(pine(20 + i * 72, PH - 6 - (i % 2) * 10, 1.2));
-  }
-  if (kind === 'village' || kind === 'farm' || kind === 'town') {
-    parts.push(`<g class="tp-fields">${[[20, 560, 140], [180, 575, 120], [700, 565, 130], [850, 575, 140], [30, 20, 140], [830, 18, 150]].map(([x, y, w], i) =>
-      `<rect x="${x}" y="${y}" width="${w}" height="44" fill="${i % 2 ? '#c8b06a' : '#9fa565'}" opacity=".7"/>`).join('')}</g>`);
-  }
-  // little houses that come with each level
-  const spots = [[200, 300], [800, 300], [60, 320], [940, 330], [330, 560], [650, 560], [320, 70], [690, 70], [180, 580], [820, 590], [470, 580], [530, 60]];
-  const n = kind === 'farm' ? 1 : Math.min(spots.length, level * 2 + 1);
-  for (let i = 0; i < n; i++) {
-    const [x, y] = spots[i];
-    parts.push(`<g transform="translate(${x} ${y}) scale(.7)">${house(-24, 20, 48, 28, 20, i % 3 ? C.roof : C.roof2)}</g>`);
-  }
-  // walls around the whole place once they stand
-  if (readyBuildings(town).some((b) => b.key === 'hradby')) {
-    parts.push(`<rect class="tp-wall" x="34" y="104" width="${PW - 68}" height="${PH - 168}" rx="28"/>`);
-  }
-  return parts.join('');
-}
-
-function centrepiece(kind, level) {
-  const at = (inner) => `<g class="tp-centre" transform="translate(${PW / 2} ${PH / 2 + 22})">${inner}</g>`;
-  if (kind === 'castle') {
-    return at(`<g transform="translate(0 30) scale(.95)">${rect(-50, -60, 100, 70, C.stone)}${crenels(-50, -60, 100, 8, C.stone)}${rect(-18, -110, 36, 120, C.stone2)}${crenels(-18, -110, 36, 4, C.stone2)}
-      ${[-56, 44].map((x) => `${rect(x, -76, 14, 86, C.stone2)}${poly(`${x - 3},-76 ${x + 7},-100 ${x + 17},-76`, C.slate)}`).join('')}<path d="M-10 10v-24a10 10 0 0 1 20 0v24z" fill="${C.ink}"/>${flag(0, -110, C.roof)}</g>`);
-  }
-  if (kind === 'farm') {
-    return at(`<g transform="translate(0 22)">${house(-46, 12, 92, 40, 30, C.roof2)}${win(-34, -14)}${win(22, -14)}${rect(18, -66, 9, 18, C.stone2)}${smoke(22, -72)}</g>`);
-  }
-  if (kind === 'abbey') {
-    return at(`<rect x="-62" y="-50" width="124" height="100" rx="6" fill="${C.stone}"/><rect x="-46" y="-34" width="92" height="68" fill="#8ea463"/>${tree(0, 6, 14)}
-      ${Array.from({ length: 8 }, (_, i) => `<path d="M${-44 + i * 12} -34v-6" stroke="${C.ink}" stroke-width="1"/>`).join('')}`);
-  }
-  // the square: a well in a village, a fountain and a market cross in a town
-  const square = `<circle r="${level >= 3 ? 68 : 52}" fill="${level >= 3 ? '#cbbd99' : '#c9b384'}" stroke="#a89670" stroke-width="3"/>`;
-  if (level >= 3) {
-    return at(`${square}<circle r="22" fill="${C.stone}" stroke="${C.ink}" stroke-width="2"/><circle r="15" fill="${C.water}"/><path d="M0 -4v-34" stroke="${C.stone2}" stroke-width="5"/>${cross(0, -38, 6)}`);
-  }
-  return at(`${square}<circle r="14" fill="${C.stone}" stroke="${C.ink}" stroke-width="2"/><circle r="8" fill="#3d3326"/><path d="M-14 -2v-26M14 -2v-26M-18 -28h36" stroke="${C.wood}" stroke-width="3"/>${tree(-30, 26, 16)}`);
-}
-
 // ---------- plots ----------
 
-function plotMarkup(state, id, town, slot, selectedSlot) {
-  const [x, y] = PLOTS[slot];
+/** How wide a plaque has to be for a text (an estimate; fitPlaques() measures the real text once it is on the page). */
+const plaqueW = (text, em = 12.5) => Math.round(text.length * em * 0.66 + 16);
+
+function plaque(text, y, cls = '') {
+  const w = plaqueW(text);
+  return `<g class="plot-label ${cls}" transform="translate(0 ${y.toFixed(1)})"><g class="pl-in"><rect class="pl-bg" x="${-w / 2}" y="-9.5" width="${w}" height="19" rx="9.5"/><text class="pl-text" y="4">${esc(text)}</text></g></g>`;
+}
+
+/** One plot: a clearing with a building cut out of its painting (or a drawn icon, or a building site) standing in it. */
+function plotMarkup(state, id, town, slot, selectedSlot, c, tags) {
+  const [x, y, wu, freeLawn] = c.lay.feet[slot];
+  const target = wu * c.lay.grow; // width of a painted cut-out (its ground patch included)
+  const iconW = target * 0.74;    // width of a drawn building: about the clearing
   const open = slot < slotCount(id, town.level);
   const b = town.buildings.find((q) => q.slot === slot);
   const own = ownsTown(state, id);
   const sel = selectedSlot === slot ? ' selected' : '';
-  const ground = `<rect class="plot-ground" x="${-PLOT_W / 2}" y="${-PLOT_H / 2}" width="${PLOT_W}" height="${PLOT_H}" rx="10"/>`;
+  const ringRx = iconW * 0.52, ringRy = iconW * 0.2;
+  const ring = `<ellipse class="plot-ring" rx="${ringRx.toFixed(1)}" ry="${ringRy.toFixed(1)}" cy="2"/>`;
+  // a plot on open lawn or beach (not on a painted clearing) gets a patch of trodden earth so it still reads as a plot
+  const soil = freeLawn ? `<ellipse class="plot-soil" rx="${(iconW * 0.62).toFixed(1)}" ry="${(iconW * 0.24).toFixed(1)}" cy="2"/>` : '';
+  const at = `transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"`;
+  const hitW = Math.max(iconW * 0.58, 40);
+  const lbl = wu * 0.2 + 8;
   if (!open) {
-    return `<g class="plot locked" transform="translate(${x} ${y})">${ground}<text class="plot-note" y="4">s vyšší úrovní</text></g>`;
+    return `<g class="plot locked" ${at}><title>s vyšší úrovní</title>${soil}${ring}<g class="plot-lock" transform="translate(0 -2)"><rect x="-6" y="-2" width="12" height="9" rx="2"/><path d="M-3.4 -2v-3.4a3.4 3.4 0 0 1 6.8 0v3.4"/></g></g>`;
   }
   if (!b && !own) {
-    return `<g class="plot empty foreign" transform="translate(${x} ${y})">${ground}<text class="plot-note" y="4">volná parcela</text></g>`;
+    return `<g class="plot empty foreign" ${at}>${soil}${ring}<g class="plot-plus"><circle r="9"/><path d="M-4.5 0h9M0 -4.5v9"/></g></g>`;
   }
   if (!b) {
-    return `<g class="plot empty${sel}" data-town-slot="${slot}" transform="translate(${x} ${y})" tabindex="0" role="button" aria-label="Volná parcela">
-      ${ground}<path class="plot-plus" d="M0 -14v28M-14 0h28"/><text class="plot-note" y="38">volná parcela</text></g>`;
+    return `<g class="plot empty${sel}" data-town-slot="${slot}" ${at} tabindex="0" role="button" aria-label="Volná parcela">
+      <rect class="plot-hit" x="${-hitW}" y="${-hitW * 0.5}" width="${hitW * 2}" height="${hitW * 0.9}"/>${soil}${ring}
+      <title>Volná parcela</title><g class="plot-plus"><circle r="11"/><path d="M-5.5 0h11M0 -5.5v11"/></g></g>`;
   }
   const def = buildingDef(b.key);
-  const art = BUILDING_ART.has(b.key)
-    ? `<clipPath id="clip-${slot}"><rect x="${-PLOT_W / 2 + 4}" y="${-PLOT_H / 2 + 4}" width="${PLOT_W - 8}" height="${PLOT_H - 26}" rx="8"/></clipPath>
-       <image href="assets/buildings/${b.key}.jpg" x="${-PLOT_W / 2 + 4}" y="${-PLOT_H / 2 + 4}" width="${PLOT_W - 8}" height="${PLOT_H - 26}" preserveAspectRatio="xMidYMid slice" clip-path="url(#clip-${slot})"/>`
-    : `<g class="b-icon" transform="translate(0 ${b.ready ? 24 : 26}) scale(.8)">${b.ready ? (ICONS[b.key] || ICONS.stodola)() : scaffold()}</g>`;
-  const building = !b.ready ? ' building' : '';
-  const progress = !b.ready ? progressBar(state, b.start, b.done) : '';
-  return `<g class="plot built${building}${sel}" data-town-slot="${slot}" transform="translate(${x} ${y})" tabindex="0" role="button" aria-label="${esc(def.name)}">
-    ${ground}${art}${progress}<text class="plot-name" y="${PLOT_H / 2 + 16}">${esc(def.name)}</text></g>`;
+  const cut = paintedOnScene(b.key) ? CUTOUTS[b.key] : null;
+  const k = !b.ready ? buildProgress(state, b.start, b.done) : 1;
+  let art, topY, pad = '';
+  if (cut) {
+    const s = target / 500;
+    const w = cut.w * s, h = cut.h * s, ax = -cut.fx * s, ay = -cut.fy * s;
+    topY = ay;
+    const img = (extra = '') => `<image class="b-art${extra}" href="assets/buildings/${b.key}.webp" x="${ax.toFixed(1)}" y="${ay.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" mask="url(#tw-patch)"/>`;
+    if (b.ready) art = img();
+    else {
+      // the site: the future building as a ghost, rising out of the ground as the work goes on, with scaffolding around it
+      const cy = ay + h * (1 - k);
+      art = `${img(' ghost')}<clipPath id="rv-${slot}"><rect x="${ax.toFixed(1)}" y="${cy.toFixed(1)}" width="${w.toFixed(1)}" height="${(h * k + 4).toFixed(1)}"/></clipPath><g clip-path="url(#rv-${slot})">${img()}</g>
+        <g class="b-site" transform="translate(0 ${(-h * 0.1).toFixed(1)}) scale(${(w / 100).toFixed(2)})">${scaffold()}</g>`;
+    }
+  } else {
+    // a drawn building: scaled to the clearing (and so to the perspective of its row); tall ones are kept from towering over it
+    const hh = ICON_H[b.key] || 84;
+    const is = Math.min(iconW / 108, (iconW * 0.95) / hh);
+    topY = -hh * is;
+    pad = `<ellipse class="b-pad" cx="${(iconW * 0.03).toFixed(1)}" cy="1" rx="${(iconW * 0.56).toFixed(1)}" ry="${(iconW * 0.17).toFixed(1)}"/>`;
+    art = `<g class="b-icon${b.ready ? '' : ' site'}" transform="translate(0 ${(-9 * is).toFixed(1)}) scale(${is.toFixed(3)})">${b.ready ? (ICONS[b.key] || ICONS.stodola)() : scaffold()}</g>`;
+  }
+  const shadow = `<ellipse class="b-shadow" cx="${(iconW * 0.1).toFixed(1)}" cy="3" rx="${(iconW * 0.5).toFixed(1)}" ry="${(iconW * 0.12).toFixed(1)}"/>`;
+  const progress = !b.ready ? `<g class="plot-progress" transform="translate(-28 ${(lbl + 7).toFixed(1)})"><rect width="56" height="5" rx="2.5"/><rect class="fill" width="${(56 * k).toFixed(0)}" height="5" rx="2.5"/></g>` : '';
+  const top = Math.min(topY, -iconW * 0.3);
+  const body = `<g class="plot built${b.ready ? '' : ' building'}${sel}" data-town-slot="${slot}" ${at} tabindex="0" role="button" aria-label="${esc(def.name)}">
+    <rect class="plot-hit" x="${-hitW}" y="${(top - 4).toFixed(1)}" width="${hitW * 2}" height="${(-top + 4 + lbl * 0.6).toFixed(1)}"/>${soil}${ring}${pad}${shadow}${art}</g>`;
+  // the plaque and the progress bar go on top of everything, so a building in front never hides the name of the one behind it
+  tags.push(`<g class="plot-tag" data-town-slot="${slot}" ${at}>${plaque(def.name, lbl, b.ready ? '' : 'site')}${progress}</g>`);
+  return body;
 }
 
-function progressBar(state, start, done) {
+function buildProgress(state, start, done) {
   const total = Math.max(1, done - (start ?? done - 1));
-  const k = Math.max(0.08, Math.min(1, (state.turn - (start ?? state.turn)) / total));
-  return `<g class="plot-progress" transform="translate(${-PLOT_W / 2 + 12} ${PLOT_H / 2 - 12})"><rect width="${PLOT_W - 24}" height="6" rx="3"/><rect class="fill" width="${((PLOT_W - 24) * k).toFixed(0)}" height="6" rx="3"/></g>`;
+  return Math.max(0.1, Math.min(1, (state.turn - (start ?? state.turn)) / total));
 }
+
+/**
+ * Measures the plaque texts, sizes their backgrounds (the font is known only on the page) and moves a plaque
+ * down when it would sit on its neighbour's, so names never overlap.
+ */
+export function fitPlaques(root) {
+  const sc = root.querySelector('.town-scene');
+  const k = sc && sc.clientHeight && sc.clientWidth / sc.clientHeight < 1.1 ? 1.3 : 1; // plaques are drawn larger when the picture is dragged sideways
+  const placed = [];
+  const tags = [...root.querySelectorAll('.plot-tag')].map((g) => {
+    const t = g.querySelector('.pl-text');
+    const bg = g.querySelector('.pl-bg');
+    if (t && bg) {
+      const w = t.getComputedTextLength() + 18;
+      if (w > 20) { bg.setAttribute('width', w.toFixed(1)); bg.setAttribute('x', (-w / 2).toFixed(1)); }
+    }
+    const m = /translate\(([-\d.]+)[ ,]+([-\d.]+)\)/.exec(g.getAttribute('transform') || '');
+    const lab = g.querySelector('.plot-label');
+    const ly = lab ? Number((/translate\(0 ([-\d.]+)\)/.exec(lab.getAttribute('transform')) || [0, 0])[1]) : 0;
+    return { lab, x: m ? Number(m[1]) : 0, y: m ? Number(m[2]) : 0, ly, w: (bg ? Number(bg.getAttribute('width')) : 60) * k };
+  }).sort((a, b) => a.y - b.y || a.x - b.x);
+  for (const t of tags) {
+    let dy = 0;
+    for (let tries = 0; tries < 4; tries++) {
+      const top = t.y + t.ly + dy - 11 * k, bot = top + 22 * k;
+      const hit = placed.find((p) => Math.abs(p.x - t.x) < (p.w + t.w) / 2 + 3 && p.top < bot && p.bot > top);
+      if (!hit) break;
+      dy += hit.bot - top + 2;
+    }
+    if (dy && t.lab) t.lab.setAttribute('transform', `translate(0 ${(t.ly + dy).toFixed(1)})`);
+    const top = t.y + t.ly + dy - 11 * k;
+    placed.push({ x: t.x, w: t.w, top, bot: top + 22 * k });
+  }
+}
+
+/** The part of the picture the plots occupy, as fractions u0, u1, v0, v1 (with room for the buildings and their names). */
+function bbox(c, total) {
+  const f = c.lay.feet.slice(0, total);
+  const half = (p) => p[2] * c.lay.grow * 0.42;
+  const u0 = Math.min(...f.map((p) => p[0] - half(p))) / c.lay.W, u1 = Math.max(...f.map((p) => p[0] + half(p))) / c.lay.W;
+  const v0 = Math.min(...f.map((p) => p[1] - p[2] * 0.7)) / c.lay.H, v1 = Math.max(...f.map((p) => p[1] + p[2] * 0.3)) / c.lay.H;
+  return [u0, u1, v0, v1].map((n) => n.toFixed(3)).join(',');
+}
+
+let sceneWatch = null;
+
+/**
+ * Crops the picture to the shape of the stage (like "cover") but keeps the plots in view: the visible window is moved
+ * to the middle of the plot area. On a stage much narrower than the picture (a phone) nothing is cropped; the picture
+ * is as tall as the stage and can be dragged sideways (CSS), starting from the middle of the plots.
+ */
+export function fitScene(stage) {
+  const sc = stage.querySelector('.town-scene');
+  if (!sc) return;
+  const apply = () => {
+    const W = Number(sc.dataset.w), H = Number(sc.dataset.h);
+    const cw = sc.clientWidth, ch = sc.clientHeight;
+    if (!cw || !ch) return;
+    const A = cw / ch;
+    const [u0, u1, v0, v1] = sc.dataset.bbox.split(',').map(Number);
+    let box = [0, 0, W, H];
+    if (A >= 1.1) {
+      // never narrower than the plot area: a stage too narrow for it shows a little more than the picture (the glow fills the rim)
+      const need = (u1 - u0) * W;
+      const vw = A < W / H ? Math.min(W, Math.max(H * A, need)) : W;
+      const vh = A < W / H ? vw / A : W / A;
+      const x = Math.max(0, Math.min(W - vw, ((u0 + u1) / 2) * W - vw / 2));
+      const y = vh >= H ? (H - vh) / 2 : Math.max(0, Math.min(H - vh, ((v0 + v1) / 2) * H - vh / 2));
+      box = [x, y, vw, vh];
+    }
+    for (const s of sc.querySelectorAll('svg.town-ground, svg.town-svg')) s.setAttribute('viewBox', box.map((n) => n.toFixed(1)).join(' '));
+    const scroll = sc.querySelector('.town-scroll');
+    if (A < 1.1 && scroll && !sc.dataset.panned) {
+      scroll.scrollLeft = Math.max(0, ((u0 + u1) / 2) * scroll.scrollWidth - scroll.clientWidth / 2);
+      sc.dataset.panned = '1';
+    }
+  };
+  apply();
+  if (sceneWatch) sceneWatch.disconnect();
+  if (typeof ResizeObserver === 'function') { sceneWatch = new ResizeObserver(apply); sceneWatch.observe(sc); }
+}
+
+const reducedMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** The town plan (SVG) shown in place of the map. */
 export function renderTownPlan(state, id, selectedSlot) {
@@ -272,15 +330,38 @@ export function renderTownPlan(state, id, selectedSlot) {
   const town = townOf(state, id);
   const total = isFarm(id) ? 7 : 10;
   const p = currentProject(town);
+  const painted = TOWN_BACKDROPS.has(id);
+  const slots = slotCount(id, town.level);
+  const c = sceneContext({
+    id, kind: def.kind, level: town.level, season: state.seasonIndex || 0, walls: readyBuildings(town).some((b) => b.key === 'hradby'),
+    painted, reduced: reducedMotion(), open: [],
+  });
+  c.open = c.lay.feet.slice(0, Math.min(slots, total));
+  const ground = groundMarkup(c);
+  const houses = painted ? null : houseSmokers(c);
+  const tags = [];
+  const front = [
+    ...centreItems(c),
+    ...Array.from({ length: total }, (_, i) => ({ y: c.lay.feet[i][1] + 1, svg: plotMarkup(state, id, town, i, selectedSlot, c, tags) })),
+  ].sort((a, b) => a.y - b.y).map((q) => q.svg).join('');
+  const { W, H } = c.lay;
   return `
-    <svg class="town-svg kind-${def.kind}" viewBox="0 0 ${PW} ${PH}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${esc(def.name)}">
-      <rect class="tp-ground" width="${PW}" height="${PH}"/>
-      ${sceneDecor(def.kind, town.level, town)}
-      ${centrepiece(def.kind, town.level)}
-      ${isFarm(id) ? farmYard(state) : ''}
-      ${Array.from({ length: total }, (_, i) => plotMarkup(state, id, town, i, selectedSlot)).join('')}
-      ${p && p.type === 'upgrade' ? `<g class="tp-upgrade" transform="translate(${PW / 2} 40)"><rect x="-150" y="-20" width="300" height="34" rx="17"/><text y="3">Rozšiřuje se na ${esc(levelName(id, p.to).toLowerCase())} · ${esc(eta(state, p.done))}</text></g>` : ''}
-    </svg>
+    <div class="town-scene season-${c.season} kind-${def.kind} ${painted ? 'painted' : 'drawn'}" style="--tw-w:${W};--tw-h:${H}" data-w="${W}" data-h="${H}" data-bbox="${bbox(c, total)}">
+      <svg class="town-defs" width="0" height="0" aria-hidden="true" focusable="false">${defsMarkup(c)}</svg>
+      ${painted ? `<div class="town-glow" style="background-image:url(assets/towns/${id}.jpg)"></div>` : ''}
+      <div class="town-scroll"><div class="town-pan">
+        <svg class="town-ground" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${ground}</svg>
+        <svg class="town-svg kind-${def.kind}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${esc(def.name)}">
+          ${front}
+          ${isFarm(id) ? farmYard(state, c) : ''}
+          ${lifeMarkup(c, houses)}
+          ${tags.join('')}
+          ${p && p.type === 'upgrade' ? `<g class="tp-upgrade" transform="translate(${W / 2} 30)"><rect x="-150" y="-16" width="300" height="30" rx="15"/><text y="4">Rozšiřuje se na ${esc(levelName(id, p.to).toLowerCase())} · ${esc(eta(state, p.done))}</text></g>` : ''}
+        </svg>
+      </div></div>
+      <div class="town-vignette"></div>
+      <div class="town-wx" aria-hidden="true">${weatherMarkup(c)}</div>
+    </div>
     <div class="town-bar">
       <button class="seal-button ghost light town-back" data-close-town>← Zpět na mapu</button>
       <div class="town-heading"><span class="panel-overline light">${esc(def.kindLabel)}</span><strong>${esc(def.name)}</strong></div>
