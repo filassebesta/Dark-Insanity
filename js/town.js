@@ -25,7 +25,7 @@ import { sceneContext, groundMarkup, defsMarkup, centreItems, lifeMarkup, houseS
 // Set USE_PAINTED_BUILDINGS to true to show every cut-out, or put single keys into PAINTED_ALLOW to show just those
 // (build menu thumbnails and the detail picture always use the painted art).
 export const USE_PAINTED_BUILDINGS = false;
-const PAINTED_ALLOW = new Set([]);
+const PAINTED_ALLOW = new Set(['mlynek', 'vcelin', 'staj', 'kolna']); // painted cut-outs that beat the drawn icon on the maps
 const paintedOnScene = (key) => !!CUTOUTS[key] && (USE_PAINTED_BUILDINGS || PAINTED_ALLOW.has(key));
 const BUILDING_ART = new Set(['stodola', 'mlynek', 'chlev', 'staj', 'chlivek', 'kolna', 'vcelin', 'sad', 'kaplicka', 'kostel']);
 const TOWN_ART = new Set([]);
