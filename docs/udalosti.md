@@ -2,7 +2,7 @@
 
 Vygenerováno z `js/events*.js`. Jména v hranatých závorkách hra doplní podle aktuálního stavu.
 
-Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí · Scénář **Sedlák**: 33 událostí (+ 3 krize, 2 ozvěny) · Krize: 7 · Ozvěny rozhodnutí: 17 · Povahy rádců a výchova: 5 · Obchod: 6 · Stavby: 16 (12 království, 4 grunt) · Zranění: 3 · Ambice: 1 (nabídka cílů) · Válka: 10 · Zbojníci: 3. Volby označené ⚔ se bojují po kolech s k6, ostatní riskantní volby se hází k%.
+Scénář **Panovník**: 82 událostí · Scénář **Šlechtic**: 32 událostí · Scénář **Sedlák**: 33 událostí (+ 3 krize, 2 ozvěny) · Krize: 7 · Ozvěny rozhodnutí: 17 · Povahy rádců a výchova: 5 · Obchod: 6 · Stavby: 16 (12 království, 4 grunt) · Zranění: 3 · Ambice: 1 (nabídka cílů) · Válka: 10 · Zbojníci: 3 · Velké rody a vazalové: 17 (11 pro Šlechtice, 15 pro Panovníka). Volby označené ⚔ se bojují po kolech s k6, ostatní riskantní volby se hází k%.
 
 ## Scénář Panovník
 
@@ -2027,3 +2027,146 @@ Události jen pro dva stupně, které dřív žily z cizí zásoby: **svobodník
 1. Svést vinu jinam listinou z truhly *(jen někdy)*
 2. Podplatit královského vyšetřovatele *(jen někdy)*
 3. Zapírat před radou *(riskantní volba)*
+
+## Velké rody a vazalové
+
+Události ze souboru `js/events_houses.js` o rodech mezi sebou, o pěti novějších rodech (Jelenové z Doubravy, páni z Kamenného Kříže, Říční páni z Přívozu, Jezdci z Pustého Pole, páni z Právova) a o vztahu koruny k vazalům. Události o dvou rodech (`h_spor_o_hranici`, `h_svatba_rodu`, `h_rodova_valka`, `h_v_rody_pred_korunou`) vybírají dvojici podle vztahu mezi rody (`house.rel`). Za titulkem je scénář, v němž událost přichází.
+
+### 1. Spor o hraniční potok  `h_spor_o_hranici` *(Šlechtic)*
+
+> Rod [rod] a rod [druhý rod] se přou o hraniční potok a o louky na jeho březích. Včera se tam střetly dvě družiny, dnes už padly první rány a oba rody posílají posly k tobě. Pán/Paní [hlava rodu] žádá, abys potvrdil jeho právo. Pán/Paní [hlava druhého rodu] žádá úplně totéž.
+
+1. Svolat oba rody k jednomu stolu *(riskantní volba)*
+2. Podpořit rod [rod]
+3. Podpořit rod [druhý rod]
+4. Dolít oleje do ohně a dívat se z povzdálí *(riskantní volba)*
+
+### 2. Svatba dvou rodů  `h_svatba_rodu` *(Šlechtic + Panovník)*
+
+> Rod [rod] a rod [druhý rod] se po letech smluv a výhrůžek chystají k sňatku. Nevěsta už má věno, ženich koně, hostina je objednaná na tři dny a pozvání dorazilo i k tobě. Všichni vědí, že tahle svatba není jen o lásce: z obou rodů bude jedna strana a kdo u ní nebude stát, bude proti ní.
+
+1. Přijet s dary a požehnat svatbě *(jen někdy)*
+2. Poslat jen posla s pozdravem
+3. Využít svatby k vlastním jednáním *(riskantní volba)*
+
+### 3. Krev na hranici rodů  `h_rodova_valka` *(Šlechtic + Panovník)*
+
+> Mezi rodem [rod] a rodem [druhý rod] došlo ke krveprolití. Kdo přežil, tvrdí, že druhá strana začala. Vypálená stodola, zabitý pacholek, ukradený dobytek, a teď už i dva mrtví rytíři. Pán/Paní [hlava rodu] i pán/paní [hlava druhého rodu] žádají o pomoc. Píší zdvořile a každý o jiném viníkovi, jak se to na urozené sluší.
+
+1. Poslat muže na pomoc rodu [rod] *(jen někdy)*
+2. Vyhlásit příměří a postavit na hranici stráže *(jen někdy)*
+3. Nechat je vykrvácet
+
+### 4. Rod se vzbouřil proti králi  `h_rod_proti_koruna` *(Šlechtic)*
+
+> Rod [rod] odmítl poslat berni i muže a zavřel brány svého sídla [sídlo rodu]. [king.Title] [king.name] svolává šlechtu a pozvedá korouhev. Pán/Paní [hlava rodu] posílá posla i k tobě: „Postav se při nás, nebo budeš příště na řadě sám.“ Za zdmi se hlídky střídají každou hodinu, v krčmách se vsází, kdo to vyhraje, a dvůr se dívá na tebe.
+
+1. Přidat se ke vzbouřencům
+2. Postavit se na stranu koruny *(jen někdy)*
+3. Zprostředkovat smír mezi králem a rodem *(riskantní volba)*
+4. Zůstat stranou a prodávat obilí oběma táborům *(jen někdy)*
+
+### 5. Stará hlava rodu  `h_nova_hlava` *(Šlechtic + Panovník)*
+
+> Pán/Paní [hlava rodu] z rodu [rod] je starý a nemocný. Lékaři kroutí hlavami a v sídle [sídlo rodu] se šeptá, kdo ho nahradí: starší syn, který je rozvážný a šetrný, nebo mladší, který se rád hádá a ještě radši bojuje. Oba už rozeslali posly k sousedům. Kdo tuhle chvíli dobře využije, získá rodu přítele nebo nepřítele na celé generace.
+
+1. Poslat poselstvo s dary a účastí *(jen někdy)*
+2. Tajně podpořit rozvážného staršího syna *(riskantní volba)*
+3. Nevměšovat se
+
+### 6. Hájenky v hvozdu  `h_les_hajenky` *(Šlechtic + Panovník)*
+
+> Pán/Paní [hlava rodu] z rodu [rod] posílá posla z Doubravy: v hvozdu je dřevo, které zbaví sýpky hniloby a postaví stodoly pro půl kraje, a rod je ochoten ho prodat. Chce za to dvě věci: právo honu na tvých pozemcích a slib, že tvoji lidé nebudou v jejich lese klást oka na zvěř. Lesníci rodu se na tvé poddané dívají s nedůvěrou, a to oboustranně.
+
+1. Přistoupit na dohodu o dřevě a honu *(jen někdy)*
+2. Pozvat rod na velký hon *(riskantní volba)*
+3. Odmítnout. Les patří tomu, kdo ho kácí
+
+### 7. Opat z Kamenného Kříže  `h_kriz_desatek` *(Šlechtic + Panovník)*
+
+> Opat kláštera na panství rodu [rod] přijel osobně. Kostel prý hnije, odpustky se prodávají špatně a víra v kraji chladne. Žádá, abys podepsal listinu o nových desátcích: každý desátý snop klášteru a každý desátý pytel chudým. Pán/Paní [hlava rodu] z rodu [rod] stojí vedle opata a mlčí tak, jak se mlčí, když se čeká na správnou odpověď.
+
+1. Podepsat a požádat o požehnání
+2. Smlouvat o menším desátku *(riskantní volba)*
+3. Odmítnout. Poddaní už platí dost
+
+### 8. Mýto na řece  `h_ricane_myto` *(Šlechtic + Panovník)*
+
+> Říční páni z Přívozu zvýšili mýto na přívozech i pod věží. Každý vůz, který přejede Brodnici, platí o třetinu víc, kupci nadávají a na trhu v Brodu se prodává hůř. Pán/Paní [hlava rodu] z rodu [rod] tvrdí, že řeku je třeba hlídat, že stráže se musí platit a že mýto nikdy nebylo tak nízké jako teď. U věže vždy najdeš dva lidi: jednoho, který se hádá, a druhého, který platí.
+
+1. Vyjednat dělené mýto *(riskantní volba)*
+2. Zaplatit si výjimku pro vlastní vozy *(jen někdy)*
+3. Postavit vlastní brod níž po proudu *(jen někdy)*
+
+### 9. Koně z Pustého Pole  `h_pustopolci_kone` *(Šlechtic + Panovník)*
+
+> Jezdci z Pustého Pole přihnali k tvým ohradám stádo hřebců, jaké se v zemi dávno neviděly: šedých, vraných i plavých, jako by je stepní vítr nakreslil. Pán/Paní [hlava rodu] z rodu [rod] nabízí prodej. Chce ale víc než zlato: pár mladých chlapců z tvé družiny, aby se u nich naučili jezdit po jejich způsobu. Prý je to otázka vzájemné důvěry. Prý.
+
+1. Koupit stádo za hotové *(jen někdy)*
+2. Poslat jim chlapce na výcvik
+3. Odmítnout. Cizí koně patří na cizí pole
+
+### 10. Listina starého práva  `h_soudci_listina` *(Šlechtic + Panovník)*
+
+> Písaři z Právova našli ve zdech soudního dvora listinu, která tvrdí, že při sporech má platit právo starší než kterýkoli dnešní titul. Pán/Paní [hlava rodu] z rodu [rod] nabízí, že soud zapíše tvůj rod do listiny jako ten, kdo právo drží zákonně. „Samozřejmě,“ dodává, „právo není zadarmo. Ani listina.“
+
+1. Zaplatit písařům za rozsudek *(jen někdy)*
+2. Nechat listinu ověřit u soudu *(riskantní volba)*
+3. Listinu zabavit a soud zakázat
+
+### 11. Turnaj rodů  `h_turnaj_rodu` *(Šlechtic + Panovník)*
+
+> Rod [rod] pořádá na svém sídle [sídlo rodu] velký turnaj. Přijedou rytíři z půl země a pán/paní [hlava rodu] vzkazuje, že místo v čestné lóži je pro tebe připravené. Kdo se turnaje zúčastní, ukáže se. Kdo nepřijede, ukáže se také.
+
+1. Přijet a sám se utkat v klání *(riskantní volba)*
+2. Sedět v lóži a vsadit na favorita *(jen někdy)*
+3. Omluvit se a poslat dar
+
+### 12. Rod, který příliš zesílil  `h_v_mocny_rod` *(Panovník)*
+
+> Zprávy se ke dvoru sbíhají šeptem: rod [rod] drží víc zbrojných než koruna dokáže zaplatit. Pán/Paní [hlava rodu] se na sněmu usmívá a nikdy neřekne nic, co by šlo vyložit jako hrozbu. [chancellor.Title] [chancellor.name] ten klid nesnáší: „Kdo nic nežádá,“ praví, „ten buď nic nechce, nebo chce všechno.“
+
+1. Zkrotit rod právem: zabavit část lén *(riskantní volba)*
+2. Udělit rodu nové léno a přízeň *(jen někdy)*
+3. Svolat sněm a rozdělit jeho půdu mezi jiné *(riskantní volba)*
+4. Nechat být. Zatím
+
+### 13. Rod vypověděl poslušnost  `h_v_vzpoura_rodu` *(Panovník, vynucená)*
+
+> Sídlo [sídlo rodu] zavřelo brány a z věže se dívá cizí korouhev. Rod [rod] vypověděl poslušnost. Pán/Paní [hlava rodu] posílá herolda s listinou stížností: koruna prý nectí staré právo, zapomíná na věrné, prý je čas vyměnit toho, kdo sedí na trůně. V krajích se zvedá prach. Lidé nevědí, komu přísahat, a [marshal.title] [marshal.name] žádá rozkaz.
+
+1. Vytáhnout proti rodu *(riskantní volba)*
+2. Jednat s rodem a splnit část požadavků *(jen někdy)*
+3. Svolat věrné rody *(jen někdy)*
+
+### 14. Žádost o léno  `h_v_zadost_o_leno` *(Panovník)*
+
+> Pán/Paní [hlava rodu] z rodu [rod] klečí před trůnem s listinou v ruce. Rod koruně sloužil věrně a jeho synové padli pod královskou korouhví. Žádá o pusté léno u hranice, které leží ladem od posledního moru. „Není to dar,“ říká, „je to odměna. A pojistka, aby koruna věděla, kde stojím.“
+
+1. Léno udělit a přijmout slib věrnosti
+2. Léno prodat za zlato
+3. Odmítnout. Půda patří koruně
+
+### 15. Rod nabízí sňatek s korunou  `h_v_snatek_koruny` *(Panovník)*
+
+> Rod [rod] nabízí sňatek: dědic/dědička [heir.name] a nejmladší potomek rodu. Věno by bylo štědré, pouto mezi korunou a rodem pevné a nikdo by se pak nedivil, že pán/paní [hlava rodu] sedí na sněmu po pravici. Dvůr se dělí: jedni to vítají, druzí vědí, co taková svatba znamená, a kdo bude po ní silnější.
+
+1. Přijmout a oslavit svatbu
+2. Poděkovat a odmítnout
+
+### 16. Hotovost se opozdila  `h_v_hotovost_opozdena` *(Panovník)*
+
+> Koruna svolala hotovost a rod [rod] poslal sotva polovinu mužů. Druhou polovinu omluvil: sklizeň, mor mezi dobytkem, rozbité cesty. Pán/Paní [hlava rodu] píše se vznešenou zdvořilostí a bez jediné pravdy. [marshal.Title] [marshal.name] ukazuje na mapu a říká: „Tohle je ten rod, který by měl být první.“
+
+1. Uložit rodu pokutu
+2. Přimhouřit oko
+3. Poslat komisaře, ať muže spočítá *(riskantní volba)*
+
+### 17. Rody před trůnem  `h_v_rody_pred_korunou` *(Panovník)*
+
+> Rod [rod] a rod [druhý rod] předstoupily před trůn se svým sporem. Jde o dluh, o louku, o dávný zápis na hraniční kámen, o urážku na hostině, a jak to bývá, o všechno najednou. Pán/Paní [hlava rodu] mluví hlasitě, pán/paní [hlava druhého rodu] ještě hlasitěji. Dvůr čeká a každý ví, že rozsudek nikdo nezapomene.
+
+1. Rozhodnout ve prospěch rodu [rod]
+2. Rozhodnout ve prospěch rodu [druhý rod]
+3. Nařídit smír pod hrozbou pokuty *(riskantní volba)*
+4. Nechat rozhodnout božím soudem
