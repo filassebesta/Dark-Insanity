@@ -309,6 +309,7 @@ function effectChips(state, b, key) {
   for (const [k, v] of Object.entries(b.income || {})) if (usable(state, k)) out.push(chip(`${resName(state, k)} ${sign(v)}${season}`, v > 0));
   for (const [k, v] of Object.entries(b.yearly || {})) if (usable(state, k)) out.push(chip(`${resName(state, k)} ${sign(v)} / rok`, v > 0));
   for (const [g, n] of Object.entries(b.stock || {})) out.push(chip(`${GOODS[g].name.toLowerCase()} +${n} vůz / rok`));
+  if (b.warehouse) out.push(chip(`sklad +${b.warehouse} vozů od každého zboží`));
   for (const [k, v] of Object.entries(b.drift || {})) out.push(chip(`${DRIFT_LABEL[k]} +${v}`));
   for (const [k, v] of Object.entries(b.onProv || {})) out.push(chip(`${PROV_LABEL[k]} ${sign(v)} jednou`, k === 'unrest' ? v < 0 : v > 0));
   for (const [k, v] of Object.entries(b.onBuild || {})) if (usable(state, k)) out.push(chip(`${resName(state, k)} ${sign(v)} jednou`, v > 0));
@@ -338,6 +339,7 @@ function yieldSummary(state, id) {
     ...Object.entries(y.income).filter(([k, v]) => v && usable(state, k)).map(([k, v]) => chip(`${resName(state, k)} ${sign(v)} / období`, v > 0)),
     ...Object.entries(y.yearly).filter(([k, v]) => v && usable(state, k)).map(([k, v]) => chip(`${resName(state, k)} ${sign(v)} / rok`, v > 0)),
     ...Object.entries(y.stock).map(([g, n]) => chip(`${GOODS[g].name.toLowerCase()} +${n} / rok`)),
+    ...(y.warehouse ? [chip(`sklad +${y.warehouse} vozů od každého zboží`)] : []),
     ...Object.entries(y.drift).filter(([, v]) => v).map(([k, v]) => chip(`${DRIFT_LABEL[k]} +${v}`)),
   ];
   return rows.length ? `<div class="build-chips">${rows.join('')}</div>` : '<p class="map-desc">Zatím tu nestojí nic, co by ti něco dávalo.</p>';
