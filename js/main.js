@@ -14,6 +14,7 @@ import { openCharacter, closeCharacter, isCharacterOpen, openPerson, closePerson
 import { playMusic, setMusicVolume } from './audio.js';
 import { checkAchievements } from './achievements.js';
 import { openRoll, openCombat } from './dice_ui.js';
+import { openBattle } from './battle_ui.js';
 import { wireTalk } from './talk_ui.js';
 import { makeHeir } from './family.js';
 import { renderContractBar } from './contract_bar.js';
@@ -123,6 +124,11 @@ function handleChoiceSelected(index) {
   awaitingChoice = false;
   skipTypewriter();
   const event = activeEvent;
+  if (choice.deploy && currentState.war) {
+    // a battle: the player places the men, the result goes to the engine (battle.js)
+    openBattle(currentState, choice, (res) => showOutcome(resolveChoice(currentState, event, index, res)));
+    return;
+  }
   if (choice.combat) {
     openCombat(currentState, choice, (fought) => {
       const result = resolveChoice(currentState, event, index, fought);
