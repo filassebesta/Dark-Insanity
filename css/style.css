@@ -1930,3 +1930,5 @@ body.map-open .toast-container { top: auto; bottom: 1.2rem; left: 38%; }
 .pc-legend li em { font-style: normal; font-size: .78rem; }
 .pc-legend li em.up { color: #3f6b2a; } .pc-legend li em.down { color: #a8452f; } .pc-legend li em.flat { color: #7a6a52; }
 .pc-note { font-size: .78rem; color: #6a5238; margin: 0 0 .6rem; }
+.trade-sub { margin: .5rem 0 .2rem; font-family: var(--font-caps); font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: #6a5238; font-weight: 400; }
+.trade-sub small { text-transform: none; letter-spacing: 0; opacity: .8; }

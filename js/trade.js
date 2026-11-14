@@ -52,19 +52,19 @@ export const MARKETS = {
     name: 'Východní marky', short: 'Marky', to: 'do Východních marek', from: 'z Východních marek', at: [1222, 440], days: 2, risk: 0.22,
     danger: 'lapkové v Sokolím hvozdu', route: [HUB, [700, 402], [780, 414], [860, 424], [985, 398], [1100, 420], [1222, 440]],
     text: 'Bojovní markrabata za hvozdem. Platí dobře za železo a sukno, obilí mají vlastní.',
-    sell: { grain: 1, iron: 7, furs: 2, salt: 3, cloth: 5, wine: 4 },
+    sell: { grain: 1, iron: 7, furs: 2, salt: 3, cloth: 5, wine: 4 }, buy: { furs: 3 },
   },
   south: {
     name: 'Jižní říše', short: 'Jih', to: 'do Jižní říše', from: 'z Jižní říše', at: [262, 812], days: 2, risk: 0.18, sea: true,
     danger: 'piráti a bouře', route: [PORT, [230, 430], [150, 520], [140, 650], [190, 760], [262, 812]],
     text: 'Bohatá říše za mořem. Kupí kožešiny a železo a prodává víno, které se jinde zlatem vyvažuje.',
-    sell: { grain: 2, iron: 4, furs: 7, salt: 2, cloth: 3 }, buy: { wine: 2 },
+    sell: { grain: 2, iron: 4, furs: 7, salt: 2, cloth: 3 }, buy: { wine: 2, salt: 3 },
   },
   north: {
     name: 'Severní pustiny', short: 'Sever', to: 'do Severních pustin', from: 'ze Severních pustin', at: [820, 34], days: 3, risk: 0.3,
     danger: 'horalé v průsmyku a mráz', route: [HUB, [612, 300], [602, 238], [626, 172], [632, 138], [720, 90], [820, 34]],
     text: 'Chladná země za horami. Obilí tam má cenu stříbra, cesta přes průsmyk ale bere životy.',
-    sell: { grain: 5, iron: 3, furs: 1, salt: 5, cloth: 5, wine: 5 },
+    sell: { grain: 5, iron: 3, furs: 1, salt: 5, cloth: 5, wine: 5 }, buy: { furs: 2 },
   },
 };
 
@@ -141,7 +141,8 @@ export function price(state, dest, good, mode = 'sell') {
   const m = MARKETS[dest];
   const base = (mode === 'buy' ? m.buy : m.sell)?.[good];
   if (!base) return 0;
-  return Math.max(1, Math.round(base * (mode === 'buy' ? 1 : priceMult(state, dest, good))));
+  // what the player pays at home is fixed; abroad the asking price moves with the market's mood like what it pays
+  return Math.max(1, Math.round(base * (mode === 'buy' && m.home ? 1 : priceMult(state, dest, good))));
 }
 
 export function riskOf(state, dest, escort) {
@@ -280,6 +281,30 @@ export function planEstimate(state, dest, good, qty, escort) {
   return { contract, revenue, fee, risk, net: revenue - fee, expectedNet };
 }
 
+/**
+ * What a planned return load costs abroad and what it should fetch where it sells best (not counting the trip):
+ * { unit, qty, cost, bestDest, bestPrice, worth, gain } or null.
+ */
+export function backEstimate(state, dest, back) {
+  const m = MARKETS[dest];
+  if (!back || !m.buy || !m.buy[back.good]) return null;
+  const unit = price(state, dest, back.good, 'buy');
+  let best = null;
+  for (const [d, mk] of Object.entries(MARKETS)) {
+    if (d === dest || !mk.sell[back.good] || marketAccess(state, d)) continue;
+    const p = price(state, d, back.good);
+    if (!best || p > best.price) best = { dest: d, price: p };
+  }
+  if (!best) return { unit, qty: back.qty, cost: unit * back.qty, bestDest: null, bestPrice: 0, worth: 0, gain: -unit * back.qty };
+  const worth = best.price * back.qty;
+  return { unit, qty: back.qty, cost: unit * back.qty, bestDest: best.dest, bestPrice: best.price, worth, gain: worth - unit * back.qty };
+}
+
+/** "4 groše" for a peasant, "4 zlata" for everybody else. */
+function money(state, n) {
+  return state.scenario === 'sedlak' ? grosLabel(n) : `${n} zlata`;
+}
+
 function log(state, text) {
   const t = ensureTrade(state);
   t.log.unshift({ year: state.year, season: state.seasonIndex, text });
@@ -363,9 +388,11 @@ export function canSend(state, dest, good, qty, escort) {
   return null;
 }
 
-export function sendCaravan(state, dest, good, qty, escort) {
+export function sendCaravan(state, dest, good, qty, escort, back = null) {
   const why = canSend(state, dest, good, qty, escort);
   if (why) return { error: why };
+  if (back && (!MARKETS[dest].buy || !MARKETS[dest].buy[back.good])) back = null; // that market sells no such thing
+  if (back) back = { good: back.good, qty: Math.max(1, Math.min(10, back.qty | 0)) };
   const t = ensureTrade(state);
   const m = MARKETS[dest];
   const fee = caravanFee(state, dest, qty) + (escort ? 1 : 0);
@@ -376,12 +403,12 @@ export function sendCaravan(state, dest, good, qty, escort) {
   if (contract) contract.taken = true;
   const caravan = {
     id: t.nextId++, dest, good, qty, escort: !!escort, sea: !!m.sea,
-    depart: state.turn, arrive: state.turn + m.days, contract: contract ? contract.id : null,
+    depart: state.turn, arrive: state.turn + m.days, contract: contract ? contract.id : null, back,
   };
   t.caravans.push(caravan);
   t.sent += 1;
-  t.last = { dest, good, escort: !!escort };
-  log(state, `${m.sea ? 'Loď' : 'Karavana'} s nákladem ${loadText(qty, good)} vyrazila ${m.to}.`);
+  t.last = { dest, good, escort: !!escort, back: back ? back.good : null };
+  log(state, `${m.sea ? 'Loď' : 'Karavana'} s nákladem ${loadText(qty, good)} vyrazila ${m.to}${back ? ` a ${m.sea ? 'přiveze' : 'přiveze'} zpět ${GOODS[back.good].gen}` : ''}.`);
   return { caravan };
 }
 
@@ -420,12 +447,26 @@ function deliver(state, caravan, news) {
     state.resources.prestige = clamp(state.resources.prestige + 1);
   }
   state.resources.gold = clampRes('gold', state.resources.gold + gold);
+  // the return load: bought with the takings (and the treasury), as many wagons as there is money and room for
+  let bought = '';
+  if (caravan.back && m.buy && m.buy[caravan.back.good]) {
+    const unit = price(state, caravan.dest, caravan.back.good, 'buy');
+    const room = Math.max(0, maxStock(state) - t.stock[caravan.back.good]);
+    const n = Math.max(0, Math.min(caravan.back.qty, room, Math.floor(state.resources.gold / unit)));
+    if (n > 0) {
+      const cost = n * unit;
+      state.resources.gold = clampRes('gold', state.resources.gold - cost);
+      t.stock[caravan.back.good] += n;
+      bumpStat(state, 'tradeBought', n);
+      bought = ` Zpět přivezla ${loadText(n, caravan.back.good)}, nakoupeno za ${money(state, cost)}${n < caravan.back.qty ? ` (víc se nevešlo, nebo nebyly peníze)` : ''}.`;
+    } else bought = ' Nákup na cestu zpět nevyšel — chyběly peníze nebo místo ve skladu.';
+  }
   bumpStat(state, 'delivered');
   bumpStat(state, 'tradeGold', gold);
   if (caravan.escort) state.resources.army = clampRes('army', state.resources.army + ESCORT_ARMY);
   t.caravans = t.caravans.filter((c) => c.id !== caravan.id);
   const coin = state.scenario === 'sedlak' ? 'grošů' : 'zlata';
-  const text = `${caravan.sea ? 'Loď' : 'Karavana'} se vrátila ${m.from}: ${loadText(caravan.qty, caravan.good)}${contract ? ' (zakázka)' : ''} vyneslo ${gold} ${coin}${extras.length ? `, ${extras.join(', ')}` : ''}.`;
+  const text = `${caravan.sea ? 'Loď' : 'Karavana'} se vrátila ${m.from}: ${loadText(caravan.qty, caravan.good)}${contract ? ' (zakázka)' : ''} vyneslo ${money(state, gold)}${extras.length ? `, ${extras.join(', ')}` : ''}.${bought}`;
   log(state, text);
   news.push(text);
 }
@@ -562,7 +603,8 @@ function driftPrices(state) {
   const t = state.trade;
   for (const [dest, m] of Object.entries(MARKETS)) {
     t.drift[dest] = t.drift[dest] || {};
-    for (const good of Object.keys(m.sell)) {
+    for (const good of new Set([...Object.keys(m.sell), ...Object.keys(m.buy || {})])) {
+      if (m.home) continue;
       const v = t.drift[dest][good] || 1;
       const next = v + (1 - v) * 0.25 + (Math.random() - 0.5) * 0.3;
       t.drift[dest][good] = Math.round(Math.max(0.7, Math.min(1.4, next)) * 100) / 100;
