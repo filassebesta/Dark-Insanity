@@ -1892,3 +1892,4 @@ body.has-contract-bar .toast-container { top: 14.5rem; }
 .talk-topic.armed { border-color: #a8452f; background: rgba(168,69,47,.16); } .talk-topic.armed span { color: #a8452f; font-weight: 600; }
 #person-sheet .talk-topic.armed { background: rgba(168,69,47,.14); border-color: #a8452f; }
 #person-sheet .talk-topic.armed span { color: #a8452f; }
+.cs-section.cs-sub { margin-top: 1.8rem; }
