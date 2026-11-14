@@ -8,7 +8,7 @@ import {
   GOODS, MARKETS, maxStock, ESCORT_ARMY, ensureTrade, routeFor, originPoint, marketAccess, price, riskOf,
   caravanFee, canSend, sendCaravan, sellAtHome, buyAtHome, convertFood, loadText, trendOf, bestMarket, marketWants,
   buyMargin, planEstimate, sortedContracts, contractStatus, seasonsLeftText, fulfillContract, sellAllAtHome, coinName,
-  reservedFor, priceSeries,
+  reservedFor, priceSeries, backEstimate,
 } from './trade.js';
 import { esc } from './ui.js';
 import {
@@ -168,7 +168,7 @@ let selected = null;
 const layers = { loyalty: false, unrest: true, garrison: false, routes: false, trade: false, war: false };
 const modeOf = () => (world ? 'world' : layers.war ? 'war' : layers.trade ? 'trade' : 'lands');
 let warForm = { target: null, size: 'medium', leader: 'marshal' };
-let tradeForm = { dest: null, good: null, qty: 1, escort: false };
+let tradeForm = { dest: null, good: null, qty: 1, escort: false, back: null };
 let drag = null;
 let suppressClick = false;
 let town = null; // { id, slot } while a settlement is open instead of the map
@@ -635,6 +635,17 @@ function wantsLine(dest) {
   return parts.length ? `<p class="trade-wants">${parts.join(' · ')} <span class="trade-hint">(základní cena za vůz)</span></p>` : '';
 }
 
+/** The return load: what the caravan buys abroad and brings home. */
+function backBlock(dest, f) {
+  const m = MARKETS[dest];
+  const goods = Object.keys(m.buy || {});
+  if (!goods.length) return '<p class="trade-hint">Tenhle trh nic zvláštního neprodává, na zpáteční cestu není co koupit.</p>';
+  const chips = [`<button class="trade-chip${f.back ? '' : ' on'}" data-trade="back-good" data-good="">Nic</button>`]
+    .concat(goods.map((g) => `<button class="trade-chip${f.back && f.back.good === g ? ' on' : ''}" data-trade="back-good" data-good="${g}">${esc(GOODS[g].name)} <small>${price(state, dest, g, 'buy')}</small></button>`)).join('');
+  const qty = f.back ? `<div class="trade-qty"><button class="trade-mini" data-trade="back-qty" data-n="-1">−</button><b>${esc(loadText(f.back.qty, f.back.good))}</b><button class="trade-mini" data-trade="back-qty" data-n="1">+</button></div>` : '';
+  return `<h5 class="trade-sub">Vézt zpět <small>· koupí se za utržené peníze, až karavana dorazí</small></h5><div class="trade-goods">${chips}</div>${qty}`;
+}
+
 function showMarket(dest) {
   const t = ensureTrade(state);
   const m = MARKETS[dest];
@@ -649,7 +660,7 @@ function showMarket(dest) {
     const margin = m.home ? null : buyMargin(state, dest, g);
     const marginCell = m.home ? '' : `<td class="margin ${margin > 0 ? 'pos' : margin < 0 ? 'neg' : ''}" title="Zisk na voz, když zboží koupíš v Brodu a prodáš tady (bez poplatků)">${margin === null ? '–' : signed(margin)}</td>`;
     const canBuy = state.resources.gold >= buy && t.stock[g] < cap;
-    const buyBtn = buy && !blocked ? `<button class="trade-mini" data-trade="buy" data-good="${g}" data-dest="${dest}"${canBuy ? '' : ' disabled'}>Koupit</button>` : '';
+    const buyBtn = buy && !blocked && m.home ? `<button class="trade-mini" data-trade="buy" data-good="${g}" data-dest="${dest}"${canBuy ? '' : ' disabled'}>Koupit</button>` : '';
     const actions = m.home && !blocked ? `
       <button class="trade-mini" data-trade="sell" data-good="${g}" data-n="1"${t.stock[g] && sell ? '' : ' disabled'}>Prodat 1</button>
       <button class="trade-mini" data-trade="sell" data-good="${g}" data-n="${t.stock[g]}"${t.stock[g] > 1 && sell ? '' : ' disabled'}>Vše</button>
@@ -663,14 +674,15 @@ function showMarket(dest) {
       // the last choice is remembered: the same good and escort as the previous caravan
       const last = t.last || {};
       const good = goods.includes(last.good) ? last.good : goods[0] || null;
-      tradeForm = { dest, good, qty: Math.min(3, t.stock[good] || 1), escort: !!last.escort };
+      tradeForm = { dest, good, qty: Math.min(3, t.stock[good] || 1), escort: !!last.escort, back: last.back && m.buy && m.buy[last.back] ? { good: last.back, qty: 3 } : null };
     }
     const f = tradeForm;
     if (!goods.length) {
-      form = `<p class="map-desc">Ve skladu nemáš nic, co by se tu dalo prodat.</p>`;
+      form = `<p class="map-desc">Ve skladu nemáš nic, co by se tu dalo prodat. Karavana musí vézt aspoň jeden vůz zboží; ${m.buy && Object.keys(m.buy).length ? 'cestou zpět pak může něco nakoupit.' : ''}</p>`;
     } else {
       f.qty = Math.max(1, Math.min(f.qty, t.stock[f.good]));
       const est = planEstimate(state, dest, f.good, f.qty, f.escort);
+      const backEst = f.back ? backEstimate(state, dest, f.back) : null;
       const why = canSend(state, dest, f.good, f.qty, f.escort);
       const better = bestMarket(state, f.good);
       const betterNote = better && better.dest !== dest && better.price > price(state, dest, f.good)
@@ -687,11 +699,13 @@ function showMarket(dest) {
             <button class="trade-mini" data-trade="qty-max" title="Celý sklad tohoto zboží">Vše</button>
           </div>
           <label class="trade-escort"><button class="trade-chip${f.escort ? ' on' : ''}" data-trade="escort">${f.escort ? '✓ ' : ''}Ozbrojený doprovod</button><span>${ESCORT_ARMY} muži na cestu, poloviční riziko</span></label>
+          ${backBlock(dest, f)}
           <div class="trade-estimate">
             <span>Výnos <b>${est.revenue} ${coin}</b>${est.contract ? ' (zakázka)' : ''}${favorNote}</span>
             <span>Poplatky <b>${est.fee}</b> · riziko přepadení <b>${Math.round(est.risk * 100)} %</b> · návrat <b>${etaText(state.turn + m.days)}</b></span>
             <span>Čistý zisk <b class="${est.net >= 0 ? 'net-good' : 'net-bad'}">${signed(est.net)} ${coin}</b> · s rizikem v průměru <b class="${est.expectedNet >= 0 ? 'net-good' : 'net-bad'}">${signed(est.expectedNet)}</b></span>
             ${betterNote}
+            ${backEst ? `<span>Cestou zpět koupíš <b>${esc(loadText(backEst.qty, f.back.good))}</b> za <b>${backEst.cost}</b> · ${backEst.bestDest ? `nejlépe prodáš ${esc(MARKETS[backEst.bestDest].short)} za ${backEst.bestPrice} (≈ <b class="${backEst.gain >= 0 ? 'net-good' : 'net-bad'}">${signed(backEst.gain)}</b>)` : 'nikde ho teď neprodáš'}</span>` : ''}
           </div>
           ${why ? `<p class="map-warning">${esc(why)}</p>` : ''}
           <button class="seal-button primary map-choose" data-trade="send"${why ? ' disabled' : ''}>Vyslat ${m.sea ? 'loď' : 'karavanu'}</button>
@@ -745,6 +759,8 @@ function handleTrade(btn) {
   else if (kind === 'qty') tradeForm.qty = Math.max(1, Math.min(10, tradeForm.qty + Number(btn.dataset.n)));
   else if (kind === 'qty-max') tradeForm.qty = Math.min(10, t.stock[tradeForm.good]) || 1;
   else if (kind === 'escort') tradeForm.escort = !tradeForm.escort;
+  else if (kind === 'back-good') tradeForm.back = btn.dataset.good ? { good: btn.dataset.good, qty: (tradeForm.back && tradeForm.back.qty) || Math.min(3, tradeForm.qty) } : null;
+  else if (kind === 'back-qty') tradeForm.back = tradeForm.back ? { ...tradeForm.back, qty: Math.max(1, Math.min(10, tradeForm.back.qty + Number(btn.dataset.n))) } : null;
   else if (kind === 'chart-good') { t.chart = { ...(t.chart || { span: 8 }), good: btn.dataset.good }; showTradeOverview(); return; }
   else if (kind === 'chart-span') { t.chart = { ...(t.chart || { good: 'grain' }), span: Number(btn.dataset.n) }; showTradeOverview(); return; }
   else if (kind === 'sell-all') message = sellAllAtHome(state) || 'Není co prodat.';
@@ -765,11 +781,11 @@ function handleTrade(btn) {
     }
   }
   else if (kind === 'send') {
-    const res = sendCaravan(state, tradeForm.dest, tradeForm.good, tradeForm.qty, tradeForm.escort);
+    const res = sendCaravan(state, tradeForm.dest, tradeForm.good, tradeForm.qty, tradeForm.escort, tradeForm.back);
     message = res.error || `${MARKETS[tradeForm.dest].sea ? 'Loď vyplula' : 'Karavana vyrazila'} ${MARKETS[tradeForm.dest].to}.`;
     tradeForm.dest = null;
   }
-  if (['good', 'qty', 'qty-max', 'escort'].includes(kind)) { showMarket(tradeForm.dest); return; }
+  if (['good', 'qty', 'qty-max', 'escort', 'back-good', 'back-qty'].includes(kind)) { showMarket(tradeForm.dest); return; }
   refreshTradeView(message);
 }
 
