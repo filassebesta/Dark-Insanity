@@ -187,7 +187,7 @@ export function warBlock(state, key, size) {
   if (state.turn < (state.warNext || 0)) return 'Vojsko se ještě zotavuje z minulého tažení.';
   const t = warTargets(state)[key];
   if (!t) return 'Tenhle cíl teď není.';
-  ensureTroops(state);
+  syncTroops(state);
   const named = typeof size === 'string';
   const want = named ? SIZES[size] : troopsTotal(corpsOf(state, size));
   if (!want) return 'Vyber, kolik mužů vytáhne.';
@@ -210,7 +210,6 @@ export function startWar(state, key, size, leader = 'marshal') {
   const t = warTargets(state)[key];
   const corps = corpsOf(state, size);
   const men = troopsTotal(corps);
-  ensureTroops(state);
   for (const k of TROOP_KEYS) state.troops[k] -= corps[k];
   state.resources.army = clampRes('army', state.resources.army - men);
   state.war = {

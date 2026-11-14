@@ -18,8 +18,10 @@ import { renderTownPlan, townSidebar, farmIcon, fitPlaques, fitScene } from './t
 import { buyStock, sellStock, grindGrain, millGrain, ensureFarm, roomFor, countOf, eatFood, STOCK, ANIMALS, plural } from './farm.js';
 import { worldSvg, worldSidebar, WORLD_IMAGE } from './world.js';
 import {
-  warTargets, warBlock, startWar, recallWar, warTarget, marchShare, warOrigin, oddsLabel, leaderLabel, SIZES,
+  warTargets, warBlock, startWar, recallWar, warTarget, marchShare, warOrigin, oddsLabel, leaderLabel,
 } from './war.js';
+import { warTabsHtml, armyTabHtml, garrisonTabHtml, corpsPickerHtml, clampCorps, handleWarUi } from './war_ui.js';
+import { troopsTotal, garrisonMen, garrisonLabel, syncTroops } from './troops.js';
 
 const W = 1264;
 const H = 848;
@@ -167,7 +169,7 @@ let animFrame = null;
 let selected = null;
 const layers = { loyalty: false, unrest: true, garrison: false, routes: false, trade: false, war: false };
 const modeOf = () => (world ? 'world' : layers.war ? 'war' : layers.trade ? 'trade' : 'lands');
-let warForm = { target: null, size: 'medium', leader: 'marshal' };
+let warForm = { target: null, leader: 'marshal', tab: 'campaign', corps: null, rec: {}, garProv: null };
 let tradeForm = { dest: null, good: null, qty: 1, escort: false, back: null };
 let drag = null;
 let suppressClick = false;
@@ -235,6 +237,7 @@ function render() {
     .filter((m) => !(m.noPeasant && peasant))
     .map((m) => `<button class="map-mode${modeOf() === m.key ? ' on' : ''}" role="tab" aria-selected="${modeOf() === m.key}" data-mode="${m.key}">${peasant && m.peasantLabel ? m.peasantLabel : m.label}</button>`).join('')}</div>`;
   host.querySelector('.map-title').textContent = world ? 'Mapa světa' : 'Mapa království';
+  host.classList.toggle('mode-war', modeOf() === 'war'); // on a phone the army pages get more room than the map
   if (world) return renderWorld();
 
   const canvas = host.querySelector('.map-canvas');
@@ -472,6 +475,7 @@ function pointAlong(pts, f) {
 
 // 'loc' = "v zimě roku 3" (when it comes back), 'gen' = "zimy roku 3" (until when)
 const SEASON_LOC = ['na jaře', 'v létě', 'na podzim', 'v zimě'];
+const TROOP_NAMES = { spear: 'kopiníků', archer: 'lučištníků', horse: 'jezdců', siege: 'strojů', merc: 'žoldnéřů' };
 const SEASON_GEN = ['jara', 'léta', 'podzimu', 'zimy'];
 function etaText(turn, form = 'loc') {
   const ahead = turn - state.turn;
@@ -1020,6 +1024,8 @@ function showProvince(id) {
       ${bar('Věrnost', prov.loyalty, 'loyalty')}${bar('Nepokoje', prov.unrest, 'unrest')}
       ${bar('Bohatství', prov.wealth, 'wealth')}${bar('Posádka', prov.garrison, 'garrison')}
     </div>
+    ${state.scenario !== 'sedlak' ? `<p class="rc-meta rc-prov-line">Vojáci v posádce: <b>${garrisonMen(prov)}</b> · ${garrisonLabel(prov)[0]}
+      <button class="trade-mini" data-war-garrison="${id}">Spravovat posádku</button></p>` : ''}
     ${settlementCards(id)}
     <button class="map-back" data-overview>← Celá země</button>
   `);
@@ -1100,23 +1106,27 @@ function warLayer() {
   return marks + army;
 }
 
-const SIZE_LABEL = { small: 'Oddíl', medium: 'Vojsko', large: 'Celá hotovost' };
-
 function showWarOverview() {
+  warForm.tab = warForm.tab || 'campaign';
+  syncTroops(state); // the army number may have moved (a caravan's escort); the troops follow
+  if (warForm.tab === 'army') return sidebar(warTabsHtml(warForm) + armyTabHtml(state, warForm));
+  if (warForm.tab === 'garrison') return sidebar(warTabsHtml(warForm) + garrisonTabHtml(state, warForm));
   if (state.war) return showWarStatus();
   const targets = warTargets(state);
   const keys = Object.keys(targets);
   if (!warForm.target || !targets[warForm.target]) warForm.target = keys[0] || null;
   const rest = state.turn < (state.warNext || 0) ? `<p class="map-warning">Vojsko se zotavuje z minulého tažení. Další můžeš vypravit ${etaText(state.warNext)}.</p>` : '';
   const t = targets[warForm.target];
-  const men = SIZES[warForm.size];
-  const why = t ? warBlock(state, warForm.target, warForm.size) : 'Není proti komu táhnout.';
-  const [odds, tone] = t ? oddsLabel(state, warForm.target, men) : ['', ''];
+  clampCorps(state, warForm);
+  const men = troopsTotal(warForm.corps);
+  const why = t ? warBlock(state, warForm.target, warForm.corps) : 'Není proti komu táhnout.';
+  const [odds, tone] = t && men ? oddsLabel(state, warForm.target, warForm.corps) : ['—', ''];
   const tributes = (state.tributes || []).map((x) => `<li>${esc(x.from[0].toUpperCase() + x.from.slice(1))}: ${x.gold} zlata za období, do ${etaText(x.until, 'gen')}</li>`).join('');
   sidebar(`
+    ${warTabsHtml(warForm)}
     <span class="panel-overline">Válka</span>
     <h3 class="panel-title">Tažení</h3>
-    <p class="map-desc">Vypravit vojsko je velké rozhodnutí. Tažení trvá několik období, vojsko jí ze sýpek a každé období v poli přinese bitvu, obléhání nebo jiné zkoušky. Klikni na cíl na mapě.</p>
+    <p class="map-desc">Vypravit vojsko je velké rozhodnutí. Tažení trvá několik období, vojsko jí ze sýpek a každé období v poli přinese bitvu, obléhání nebo jiné zkoušky. V bitvě sám rozestavíš muže. Klikni na cíl na mapě.</p>
     ${rest}
     <h4 class="map-sub">Cíle</h4>
     <div class="map-chip-list">${keys.map((k) => `<button class="map-chip${k === warForm.target ? ' on' : ''}" data-war-target="${k}"><span>${esc(targets[k].name)}</span><em>${targets[k].march} obd. pochodu</em></button>`).join('') || '<p class="map-desc">Žádný cíl.</p>'}</div>
@@ -1124,8 +1134,7 @@ function showWarOverview() {
       <h4 class="map-sub">${esc(t.name)}</h4>
       <p class="map-desc">${esc(t.text)}</p>
       <p class="map-desc war-reward"><b>Vítězství přinese:</b> ${esc(t.reward)}.</p>
-      <h4 class="map-sub">Kolik mužů</h4>
-      <div class="trade-goods">${Object.entries(SIZES).map(([k, n]) => `<button class="trade-chip${k === warForm.size ? ' on' : ''}" data-war-size="${k}">${SIZE_LABEL[k]} <small>${n}</small></button>`).join('')}</div>
+      ${corpsPickerHtml(state, warForm, t)}
       <h4 class="map-sub">Kdo povede</h4>
       <div class="trade-goods">
         <button class="trade-chip${warForm.leader === 'marshal' ? ' on' : ''}" data-war-leader="marshal">${esc(state.marshal.name)} <small>${esc(leaderLabel('marshal', state))}</small></button>
@@ -1133,8 +1142,8 @@ function showWarOverview() {
       </div>
       <p class="map-desc war-note">${warForm.leader === 'ruler' ? (state.ruler.gender === 'female' ? 'Vládkyně v čele zvedá morálku i šance, ale může být zraněna a doma bude chybět.' : 'Vládce v čele zvedá morálku i šance, ale může být zraněn a doma bude chybět.') : `${state.marshal.name} vede bez rizika pro ${state.ruler.gender === 'female' ? 'vládkyni' : 'vládce'}, muži ale bojují s menším zápalem.`}</p>
       <div class="trade-estimate">
-        <span>Síly: <b class="${tone}">${odds}</b> · doma zůstane ${Math.max(0, state.resources.army - men)} vojska</span>
-        <span>Zásoby: ${Math.ceil(men / 8)} jídla za období · v sýpkách ${state.resources.food}</span>
+        <span>Síly: <b class="${tone}">${odds}</b> · ${esc(t.enemy)}</span>
+        <span>Zásoby: ${Math.ceil((men - (warForm.corps.merc || 0)) / 8)} jídla za období · v sýpkách ${state.resources.food}</span>
       </div>
       ${why ? `<p class="map-warning">${esc(why)}</p>` : ''}
       <button class="seal-button primary map-choose" data-war-start${why ? ' disabled' : ''}>Vytáhnout do pole</button>` : ''}
@@ -1147,8 +1156,10 @@ function showWarStatus() {
   const t = warTarget(state);
   const leader = w.leader === 'ruler' ? state.ruler.name : state.marshal.name;
   const marching = state.turn < w.arrive;
-  const [odds, tone] = oddsLabel(state, w.target, w.power);
+  const [odds, tone] = oddsLabel(state, w.target, w.troops || w.power);
+  const corpsLine = Object.entries(w.troops || {}).filter(([, n]) => n > 0).map(([k, n]) => `${n} ${TROOP_NAMES[k]}`).join(' · ');
   sidebar(`
+    ${warTabsHtml(warForm)}
     <span class="panel-overline">Vojsko v poli</span>
     <h3 class="panel-title">${esc(t.name)}</h3>
     <span class="map-verdict ${marching ? 'warn' : 'good'}">${marching ? `Na pochodu · na místě ${etaText(w.arrive)}` : `V poli ${w.seasons} ${w.seasons === 1 ? 'období' : 'období'}`}</span>
@@ -1157,24 +1168,43 @@ function showWarStatus() {
     ${statRow('Morálka', w.morale, 'loyalty')}
     <div class="trade-estimate">
       <span>Mužů v poli: <b>${w.power}</b> · <b class="${tone}">${odds}</b></span>
-      <span>Spotřeba: ${Math.ceil(w.power / 8)} jídla za období · v sýpkách ${state.resources.food}</span>
+      <span>${esc(corpsLine)}</span>
+      <span>Spotřeba: ${Math.ceil((w.power - ((w.troops && w.troops.merc) || 0)) / 8)} jídla za období · v sýpkách ${state.resources.food}</span>
     </div>
     <p class="map-desc war-note">Tažení vyhraješ při plném postupu. Když morálka klesne na nulu nebo padnou skoro všichni muži, je prohráno.</p>
     <button class="trade-mini war-recall" data-war-recall>Odvolat vojsko domů</button>
   `);
 }
 
+/** Redraws the sidebar of the war pages without jumping to its top (steppers and tabs). */
+function redrawWar() {
+  const el = host.querySelector('.map-sidebar');
+  const top = el.scrollTop;
+  showOverview();
+  el.scrollTop = top;
+}
+
 function handleWar(t) {
+  if (layers.war && !world) {
+    const res = handleWarUi(t, state, warForm);
+    if (res) {
+      if (res.changed) document.dispatchEvent(new CustomEvent('kingdom:war', { detail: { message: res.quiet ? '' : res.message } }));
+      else if (res.error) document.dispatchEvent(new CustomEvent('kingdom:war', { detail: { message: res.error, noSave: true } }));
+      redrawWar();
+      return true;
+    }
+  }
+  const goGar = t.closest('[data-war-garrison]');
+  if (goGar) { warForm.tab = 'garrison'; warForm.garProv = goGar.dataset.warGarrison; refreshWar(); return true; }
   const target = t.closest('[data-war-target]');
-  if (target) { warForm.target = target.dataset.warTarget; refreshWar(); return true; }
-  const size = t.closest('[data-war-size]');
-  if (size) { warForm.size = size.dataset.warSize; showWarOverview(); return true; }
+  if (target) { warForm.target = target.dataset.warTarget; warForm.tab = 'campaign'; refreshWar(); return true; }
   const leader = t.closest('[data-war-leader]');
-  if (leader) { warForm.leader = leader.dataset.warLeader; showWarOverview(); return true; }
+  if (leader) { warForm.leader = leader.dataset.warLeader; redrawWar(); return true; }
   const start = t.closest('[data-war-start]');
   if (start) {
     if (!start.disabled) {
-      const res = startWar(state, warForm.target, warForm.size, warForm.leader);
+      const res = startWar(state, warForm.target, warForm.corps, warForm.leader);
+      warForm.corps = null;
       refreshWar();
       document.dispatchEvent(new CustomEvent('kingdom:war', { detail: { message: res.error || res.message } }));
     }

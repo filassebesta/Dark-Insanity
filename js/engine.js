@@ -994,6 +994,7 @@ export function resolveChoice(state, event, choiceIndex, decided = null) {
     const type = state.pendingPromotion;
     delete state.pendingPromotion;
     promote(state, type);
+    syncTroops(state); // a crown brings men of its own (state.js crownNoble)
   }
 
   const effects = { ...(branch.effects || {}) };

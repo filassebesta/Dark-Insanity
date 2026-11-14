@@ -184,11 +184,15 @@ export function evaluate(kind, ctx, mine, theirs, mods = {}) {
     return f;
   });
   const tot = out.reduce((s, f) => s + f.A + f.B, 0);
-  let S = tot > 0 ? out.reduce((s, f) => s + f.A - f.B, 0) / tot : 0;
+  // half the total weight of metal, half how each front fares: a neglected wing cannot be paid for by a heavy centre
+  const contested = out.filter((f) => f.A + f.B > 0);
+  const agg = tot > 0 ? out.reduce((s, f) => s + f.A - f.B, 0) / tot : 0;
+  const avg = contested.length ? contested.reduce((s, f) => s + f.m, 0) / contested.length : 0;
+  let S = 0.5 * agg + 0.5 * avg;
   // a front that breaks lets the enemy round the rest
   const broken = out.filter((f) => f.m <= -0.4 && f.B > 0).length;
   const theirBroken = out.filter((f) => f.m >= 0.4 && f.A > 0).length;
-  S += 0.07 * (theirBroken - broken);
+  S += 0.05 * (theirBroken - broken);
   return { fronts: out, S, myReserveAt: myAt, theirReserveAt: theirAt };
 }
 
@@ -632,15 +636,17 @@ function tellBattle(state, battle, r) {
   const rs = r.slots.find((s) => s.reserve);
   if (rs && battle.stance !== 'flank') {
     const to = slotDef(kind, rs.key).to;
-    out.push(rs.savedByReserve ? `Záloha dorazila ${to} právě ve chvíli, kdy se řady lámaly, a zabránila zhroucení.` : r.win ? `Záloha zasáhla ${to} a rozhodla věc.` : `Záloha přišla ${to} pozdě, aby věc obrátila.`);
+    out.push(rs.savedByReserve ? `Záloha dorazila ${to} právě ve chvíli, kdy se řady lámaly, a zabránila zhroucení.` : r.win ? `Záloha zasáhla ${slotDef(kind, rs.key).loc} a rozhodla věc.` : `Záloha přišla ${to} pozdě, aby věc obrátila.`);
   }
   // 4: how it ended and what it cost
   const cost = r.lost ? `${fell(r.lost)}${r.lost >= 3 ? ` (nejvíc ${nounOfMost(r.losses)})` : ''}` : 'Padl sotva někdo';
+  const siege = kind === 'siege';
   out.push({
-    decisive: `Nepřítel se rozpadl a prchal přes pole; {war.leader} ho ${lead(state, 'nechal', 'nechala')} pronásledovat. ${cost}.`,
-    win: `Nepřítel ustoupil a pole zůstalo nám. ${cost}.`,
+    decisive: siege ? `Obránci shodili zbraně a brána se otevřela; {war.leader} ${lead(state, 'vjel', 'vjela')} do pevnosti. ${cost}.`
+      : `Nepřítel se rozpadl a prchal přes pole; {war.leader} ho ${lead(state, 'nechal', 'nechala')} pronásledovat. ${cost}.`,
+    win: siege ? `Obránci ustoupili z hradeb a pevnost je v našich rukou. ${cost}.` : `Nepřítel ustoupil a pole zůstalo nám. ${cost}.`,
     draw: `K večeru obě strany ustoupily, aniž se cokoli rozhodlo. ${cost}.`,
-    loss: `Řady povolily a vojsko se stáhlo z bojiště. ${cost}.`,
+    loss: siege ? `Útok se zadrhl v příkopu a vojsko se stáhlo od hradeb. ${cost}.` : `Řady povolily a vojsko se stáhlo z bojiště. ${cost}.`,
     rout: `Vojsko se rozpadlo a běželo, co mu síly stačily. ${cost}.`,
   }[r.grade]);
   return out.slice(0, 5).join(' ');
