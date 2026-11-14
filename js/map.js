@@ -5,8 +5,10 @@
 import { TERRAIN_DEFS, NOBLE_HOUSES, SEASONS } from './data.js';
 import { attitudeLabel, interpolate } from './engine.js';
 import {
-  GOODS, MARKETS, MAX_STOCK, ESCORT_ARMY, ensureTrade, routeFor, originPoint, marketAccess, price, riskOf,
-  caravanFee, canSend, sendCaravan, sellAtHome, buyAtHome, convertFood, loadText,
+  GOODS, MARKETS, maxStock, ESCORT_ARMY, ensureTrade, routeFor, originPoint, marketAccess, price, riskOf,
+  caravanFee, canSend, sendCaravan, sellAtHome, buyAtHome, convertFood, loadText, trendOf, bestMarket, marketWants,
+  buyMargin, planEstimate, sortedContracts, contractStatus, seasonsLeftText, fulfillContract, sellAllAtHome, coinName,
+  reservedFor,
 } from './trade.js';
 import { esc } from './ui.js';
 import {
@@ -198,6 +200,9 @@ export function openMap(gameState, opts = {}) {
   if (opts.focusRoutes) {
     selectThing({ type: 'feature', id: 'vassal' });
     animateTo(fitBox(VASSAL_VIEW));
+  } else if (opts.market && layers.trade) {
+    showOverview();
+    selectThing({ type: 'market', id: opts.market });
   } else {
     showOverview();
   }
@@ -505,21 +510,40 @@ function marketMarkers() {
 
 function stockRows() {
   const t = ensureTrade(state);
-  return Object.entries(GOODS).map(([g, def]) =>
-    `<div class="trade-stock-row${t.stock[g] ? '' : ' empty'}"><span>${esc(def.name)}</span><div class="stat-bar"><div class="stat-bar-fill wealth" style="width:${(t.stock[g] / MAX_STOCK) * 100}%"></div></div><b>${t.stock[g]}</b></div>`).join('');
+  const cap = maxStock(state);
+  return Object.entries(GOODS).map(([g, def]) => {
+    const n = t.stock[g];
+    let best = '';
+    if (n) {
+      const b = bestMarket(state, g);
+      const home = price(state, 'brod', g);
+      if (b) {
+        const tr = trendOf(state, b.dest, g);
+        const keep = reservedFor(state, g);
+        best = `<span class="ts-best">Brod ${home} · nejlépe <b>${esc(MARKETS[b.dest].short)}</b> ${b.price} <em class="tr ${tr.cls}">${tr.arrow} ${tr.pct > 0 ? '+' : ''}${tr.pct} %</em>
+          <button class="trade-mini" data-trade="best" data-good="${g}" title="${b.home ? 'Prodá vše hned v Brodu' : 'Otevře vypravení karavany na nejlepší trh'}${keep ? `, ${keep} vozů zůstane pro zakázky` : ''}">Prodat za nejlepší cenu</button></span>`;
+      }
+    }
+    return `<div class="trade-stock-row${n ? '' : ' empty'}"><span>${esc(def.name)}</span><div class="stat-bar"><div class="stat-bar-fill wealth" style="width:${(n / cap) * 100}%"></div></div><b>${n}</b>${best}</div>`;
+  }).join('');
 }
 
 function contractList(filterDest) {
-  const t = ensureTrade(state);
-  const list = t.contracts.filter((c) => !filterDest || c.dest === filterDest);
+  const list = sortedContracts(state).filter((c) => !filterDest || c.dest === filterDest);
   if (!list.length) return '';
-  const coin = state.scenario === 'sedlak' ? 'grošů' : 'zlata';
-  return `<h4 class="map-sub">Zakázky</h4><ul class="trade-contracts">${list.map((c) => `
+  const coin = coinName(state);
+  return `<h4 class="map-sub">Zakázky <small>· povinné nahoře, podle termínu</small></h4><ul class="trade-contracts">${list.map((c) => {
+    const st = contractStatus(state, c);
+    const left = c.taken ? '' : `<span class="tc-left ${st.urgency === 'crit' ? 'crit' : st.urgency === 'warn' ? 'warn' : ''}">${esc(seasonsLeftText(st.left))}</span>`;
+    const go = !c.taken && st.enough ? `<button class="trade-mini" data-trade="fulfill" data-id="${c.id}">Splnit hned</button>` : '';
+    return `
     <li class="${c.obligation ? 'obligation' : ''}">
-      <b>${esc(interpolate(state, c.giver))} ${esc(loadText(c.qty, c.good))}</b>
-      <span>${esc(MARKETS[c.dest].to)} do ${etaText(c.until, 'gen')} · odměna ${c.reward} ${coin}${c.favor ? ` a přízeň +${c.favor}` : ''}${c.prestige ? ` a prestiž +${c.prestige}` : ''}</span>
-      <em>${c.taken ? 'Náklad je na cestě.' : c.obligation ? 'Nesplnění stojí přízeň.' : 'Nabídka bez závazku.'}</em>
-    </li>`).join('')}</ul>`;
+      <div class="tc-row"><b>${esc(interpolate(state, c.giver))} ${esc(loadText(c.qty, c.good))}</b>${go}</div>
+      <span>${esc(MARKETS[c.dest].to)} do ${esc(st.date)} · odměna ${c.reward} ${coin}${c.favor ? `, přízeň +${c.favor}` : ''}${c.prestige ? `, prestiž +${c.prestige}` : ''}</span>
+      <span>${left}${left ? ' · ' : ''}ve skladu ${st.have}/${st.need}${c.taken ? '' : st.enough ? '' : `, chybí ${st.missing}`}</span>
+      <em>${c.taken ? 'Náklad je na cestě.' : c.obligation ? 'Povinná: nesplnění stojí přízeň −3 a odměnu.' : 'Nabídka bez závazku.'}</em>
+    </li>`;
+  }).join('')}</ul>`;
 }
 
 function showTradeOverview() {
@@ -528,8 +552,9 @@ function showTradeOverview() {
     <span class="panel-overline">Obchod</span>
     <h3 class="panel-title">Sklad a karavany</h3>
     <p class="map-desc">${state.scenario === 'sedlak' ? 'Co grunt vypěstuje navíc, můžeš prodat v Brodu nebo odvézt na panský dvůr. Svobodný sedlák si může koupit místo v kupecké karavaně do ciziny.' : 'Tvé země plní sklad zbožím. Prodej ho hned v Brodu, nebo ho pošli karavanou či lodí do ciziny, kde platí víc, ale cesta trvá a hrozí přepadení.'} Klikni na trh na mapě.</p>
-    <h4 class="map-sub">Sklad <small>· nejvýš ${MAX_STOCK} vozů od každého</small></h4>
+    <h4 class="map-sub">Sklad <small>· nejvýš ${maxStock(state)} vozů od každého${maxStock(state) > 20 ? ` (stavby +${maxStock(state) - 20})` : ''}</small></h4>
     <div class="trade-stock">${stockRows()}</div>
+    <div class="trade-bulk"><button class="trade-mini" data-trade="sell-all"${Object.keys(GOODS).some((g) => ensureTrade(state).stock[g] > reservedFor(state, g)) ? '' : ' disabled'} title="V Brodu, ale zboží slíbené povinným zakázkám zůstane ve skladu">Prodat vše v Brodu</button></div>
     <h4 class="map-sub">Na cestě</h4>
     ${t.caravans.length ? `<ul class="trade-caravans">${t.caravans.map((c) => `
       <li data-goto-market="${c.dest}"><b>${c.sea ? 'Loď' : 'Karavana'} · ${esc(loadText(c.qty, c.good))}</b><span>${esc(MARKETS[c.dest].to)}${c.escort ? ' · s doprovodem' : ''} · ${c.held ? '<em class="bad">přepadena!</em>' : `návrat ${etaText(c.arrive)}`}</span></li>`).join('')}</ul>`
@@ -538,43 +563,70 @@ function showTradeOverview() {
     <h4 class="map-sub">Trhy</h4>
     <div class="map-chip-list">${marketsShown().map(([id, m]) => {
       const blocked = marketAccess(state, id);
-      return `<button class="map-chip" data-goto-market="${id}"><span>${esc(m.name)}</span><em class="${blocked ? 'bad' : 'good'}">${m.home ? 'prodej hned' : blocked ? 'nedostupné' : `${m.days} obd. · riziko ${Math.round(riskOf(state, id, false) * 100)} %`}</em></button>`;
+      return `<button class="map-chip" data-goto-market="${id}"><span>${esc(m.name)}</span><em class="${blocked ? 'bad' : 'good'}">${m.home ? 'prodej hned' : blocked ? 'nedostupné' : `${m.days} obd. · riziko ${Math.round(riskOf(state, id, false) * 100)} %${t.last && t.last.dest === id ? ' · naposledy' : ''}`}</em></button>`;
     }).join('')}</div>
     ${t.log.length ? `<h4 class="map-sub">Z obchodní knihy</h4><ul class="trade-log">${t.log.slice(0, 4).map((l) => `<li>${esc(l.text)}</li>`).join('')}</ul>` : ''}
     <p class="map-desc trade-coin">V pokladně: <b>${state.resources.gold}</b> ${state.scenario === 'sedlak' ? 'grošů' : 'zlata'}</p>
   `);
 }
 
+const signed = (n) => `${n > 0 ? '+' : ''}${n}`;
+
+/** One line on what a market wants: the goods it pays most for and those it hardly takes. */
+function wantsLine(dest) {
+  const m = MARKETS[dest];
+  const w = marketWants(dest);
+  const top = w.filter((x) => x.base >= 4).map((x) => `${GOODS[x.good].name.toLowerCase()} ${x.base}`);
+  const low = w.filter((x) => x.base <= 1).map((x) => GOODS[x.good].name.toLowerCase());
+  const none = Object.keys(GOODS).filter((g) => !m.sell[g]).map((g) => GOODS[g].name.toLowerCase());
+  const parts = [];
+  if (top.length) parts.push(`Nejvíc platí za <b>${esc(top.join(', '))}</b>`);
+  if (low.length) parts.push(`skoro nebere ${esc(low.join(', '))}`);
+  if (none.length) parts.push(`nechce ${esc(none.join(', '))}`);
+  return parts.length ? `<p class="trade-wants">${parts.join(' · ')} <span class="trade-hint">(základní cena za vůz)</span></p>` : '';
+}
+
 function showMarket(dest) {
   const t = ensureTrade(state);
   const m = MARKETS[dest];
   const blocked = marketAccess(state, dest);
-  const coin = state.scenario === 'sedlak' ? 'grošů' : 'zlata';
+  const coin = coinName(state);
+  const cap = maxStock(state);
   const rows = Object.keys(GOODS).filter((g) => m.sell[g] || m.buy?.[g]).map((g) => {
     const sell = m.sell[g] ? price(state, dest, g) : null;
     const buy = m.buy?.[g] ? price(state, dest, g, 'buy') : null;
-    const trend = m.sell[g] ? (t.drift[dest]?.[g] || 1) : 1;
-    const arrow = trend > 1.1 ? '<i class="up">▲</i>' : trend < 0.9 ? '<i class="down">▼</i>' : '';
+    const tr = sell ? trendOf(state, dest, g) : null;
+    const trendCell = tr ? `${sell} <em class="tr ${tr.cls}" title="Cena proti základní (${m.sell[g]}): ${signed(tr.pct)} %">${tr.arrow} ${signed(tr.pct)} %</em>` : '–';
+    const margin = m.home ? null : buyMargin(state, dest, g);
+    const marginCell = m.home ? '' : `<td class="margin ${margin > 0 ? 'pos' : margin < 0 ? 'neg' : ''}" title="Zisk na voz, když zboží koupíš v Brodu a prodáš tady (bez poplatků)">${margin === null ? '–' : signed(margin)}</td>`;
+    const canBuy = state.resources.gold >= buy && t.stock[g] < cap;
+    const buyBtn = buy && !blocked ? `<button class="trade-mini" data-trade="buy" data-good="${g}" data-dest="${dest}"${canBuy ? '' : ' disabled'}>Koupit</button>` : '';
     const actions = m.home && !blocked ? `
       <button class="trade-mini" data-trade="sell" data-good="${g}" data-n="1"${t.stock[g] && sell ? '' : ' disabled'}>Prodat 1</button>
       <button class="trade-mini" data-trade="sell" data-good="${g}" data-n="${t.stock[g]}"${t.stock[g] > 1 && sell ? '' : ' disabled'}>Vše</button>
-      ${buy ? `<button class="trade-mini" data-trade="buy" data-good="${g}" data-dest="${dest}"${state.resources.gold >= buy && t.stock[g] < MAX_STOCK ? '' : ' disabled'}>Koupit</button>` : ''}`
-      : buy && !blocked ? `<button class="trade-mini" data-trade="buy" data-good="${g}" data-dest="${dest}"${state.resources.gold >= buy && t.stock[g] < MAX_STOCK ? '' : ' disabled'}>Koupit</button>` : '';
-    return `<tr><td>${esc(GOODS[g].name)}</td><td>${sell ? `${sell}${arrow}` : '–'}</td><td>${buy || '–'}</td><td>${t.stock[g]}</td><td class="trade-act">${actions}</td></tr>`;
+      ${buyBtn}` : buyBtn;
+    return `<tr><td>${esc(GOODS[g].name)}<small class="trade-have" title="Ve skladu">${t.stock[g] ? `${t.stock[g]} ve skladu` : ''}</small></td><td>${trendCell}</td><td>${buy || '–'}</td>${marginCell}<td class="trade-act"><div class="trade-btns">${actions}</div></td></tr>`;
   }).join('');
   let form = '';
   if (!m.home && !blocked) {
     const goods = Object.keys(GOODS).filter((g) => m.sell[g] && t.stock[g] > 0);
-    if (tradeForm.dest !== dest || !goods.includes(tradeForm.good)) tradeForm = { dest, good: goods[0] || null, qty: Math.min(3, t.stock[goods[0]] || 1), escort: false };
+    if (tradeForm.dest !== dest || !goods.includes(tradeForm.good)) {
+      // the last choice is remembered: the same good and escort as the previous caravan
+      const last = t.last || {};
+      const good = goods.includes(last.good) ? last.good : goods[0] || null;
+      tradeForm = { dest, good, qty: Math.min(3, t.stock[good] || 1), escort: !!last.escort };
+    }
     const f = tradeForm;
     if (!goods.length) {
       form = `<p class="map-desc">Ve skladu nemáš nic, co by se tu dalo prodat.</p>`;
     } else {
       f.qty = Math.max(1, Math.min(f.qty, t.stock[f.good]));
-      const value = f.qty * price(state, dest, f.good);
-      const fee = caravanFee(state, dest, f.qty) + (f.escort ? 1 : 0);
-      const contract = t.contracts.find((c) => c.dest === dest && c.good === f.good && c.qty <= f.qty && !c.taken);
+      const est = planEstimate(state, dest, f.good, f.qty, f.escort);
       const why = canSend(state, dest, f.good, f.qty, f.escort);
+      const better = bestMarket(state, f.good);
+      const betterNote = better && better.dest !== dest && better.price > price(state, dest, f.good)
+        ? `<span class="trade-hint">Lépe platí ${esc(MARKETS[better.dest].short)}: ${better.price} za vůz (tady ${price(state, dest, f.good)}).</span>` : '';
+      const favorNote = m.favor && !est.contract ? (f.qty >= 3 ? ` a přízeň +${Math.min(6, Math.floor(f.qty / 2))}` : ' · přízeň až od 3 vozů') : '';
       form = `
         <h4 class="map-sub">Vypravit ${m.sea ? 'loď' : 'karavanu'}</h4>
         <div class="trade-form">
@@ -583,11 +635,14 @@ function showMarket(dest) {
             <button class="trade-mini" data-trade="qty" data-n="-1">−</button>
             <b>${esc(loadText(f.qty, f.good))}</b>
             <button class="trade-mini" data-trade="qty" data-n="1">+</button>
+            <button class="trade-mini" data-trade="qty-max" title="Celý sklad tohoto zboží">Vše</button>
           </div>
           <label class="trade-escort"><button class="trade-chip${f.escort ? ' on' : ''}" data-trade="escort">${f.escort ? '✓ ' : ''}Ozbrojený doprovod</button><span>${ESCORT_ARMY} muži na cestu, poloviční riziko</span></label>
           <div class="trade-estimate">
-            <span>Odhad výnosu <b>${contract ? contract.reward : value} ${coin}</b>${contract ? ' (zakázka)' : ''}${m.favor && !contract ? (f.qty >= 3 ? ` a přízeň +${Math.min(6, Math.floor(f.qty / 2))}` : ' · přízeň až od 3 vozů') : ''}</span>
-            <span>Poplatky <b>${fee}</b> · riziko <b>${Math.round(riskOf(state, dest, f.escort) * 100)} %</b> · návrat <b>${etaText(state.turn + m.days)}</b></span>
+            <span>Výnos <b>${est.revenue} ${coin}</b>${est.contract ? ' (zakázka)' : ''}${favorNote}</span>
+            <span>Poplatky <b>${est.fee}</b> · riziko přepadení <b>${Math.round(est.risk * 100)} %</b> · návrat <b>${etaText(state.turn + m.days)}</b></span>
+            <span>Čistý zisk <b class="${est.net >= 0 ? 'net-good' : 'net-bad'}">${signed(est.net)} ${coin}</b> · s rizikem v průměru <b class="${est.expectedNet >= 0 ? 'net-good' : 'net-bad'}">${signed(est.expectedNet)}</b></span>
+            ${betterNote}
           </div>
           ${why ? `<p class="map-warning">${esc(why)}</p>` : ''}
           <button class="seal-button primary map-choose" data-trade="send"${why ? ' disabled' : ''}>Vyslat ${m.sea ? 'loď' : 'karavanu'}</button>
@@ -597,16 +652,19 @@ function showMarket(dest) {
   const convert = m.home ? `
     <h4 class="map-sub">Sýpky a sklad</h4>
     <div class="trade-convert">
-      <button class="trade-mini" data-trade="convert-in"${state.resources.food >= 6 && t.stock.grain < MAX_STOCK ? '' : ' disabled'}>Vymlátit vůz obilí ze zásob (−6 jídla)</button>
+      <button class="trade-mini" data-trade="convert-in"${state.resources.food >= 6 && t.stock.grain < cap ? '' : ' disabled'}>Vymlátit vůz obilí ze zásob (−6 jídla)</button>
       <button class="trade-mini" data-trade="convert-out"${t.stock.grain ? '' : ' disabled'}>Vrátit vůz do sýpek (+4 jídla)</button>
     </div>` : '';
+  const bulk = m.home && !blocked ? `<div class="trade-bulk"><button class="trade-mini" data-trade="sell-all"${Object.keys(GOODS).some((g) => t.stock[g] > reservedFor(state, g)) ? '' : ' disabled'} title="Zboží slíbené povinným zakázkám zůstane ve skladu">Prodat vše (mimo zakázky)</button></div>` : '';
   sidebar(`
     <span class="panel-overline">${m.home ? 'Domácí trh' : `${m.sea ? 'Přes moře' : 'Po souši'} · ${m.days} ${m.days === 1 ? 'období' : 'období'} cesty`}</span>
     <h3 class="panel-title">${esc(m.name)}</h3>
     ${!m.home ? `<span class="map-verdict ${m.risk > 0.2 ? 'bad' : m.risk > 0.1 ? 'warn' : 'good'}">Nebezpečí: ${esc(m.danger)} · ${Math.round(riskOf(state, dest, false) * 100)} %</span>` : ''}
     <p class="map-desc">${esc(m.text)}</p>
+    ${m.home ? '' : wantsLine(dest)}
     ${blocked ? `<p class="map-warning">${esc(blocked)}</p>` : ''}
-    <table class="trade-table"><thead><tr><th>Zboží</th><th title="Kolik tu zaplatí za vůz">Platí</th><th title="Kolik tu stojí vůz">Stojí</th><th>Sklad</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+    <table class="trade-table"><thead><tr><th>Zboží</th><th title="Kolik tu zaplatí za vůz a jak se cena liší od základní">Platí</th><th title="Kolik tu stojí vůz">Stojí</th>${m.home ? '' : '<th title="Zisk na voz, když zboží koupíš v Brodu a prodáš tady">Zisk</th>'}<th></th></tr></thead><tbody>${rows}</tbody></table>
+    ${bulk}
     ${convert}
     ${form}
     ${contractList(dest)}
@@ -636,13 +694,31 @@ function handleTrade(btn) {
   else if (kind === 'convert-out') message = convertFood(state, false);
   else if (kind === 'good') { tradeForm.good = btn.dataset.good; tradeForm.qty = Math.min(tradeForm.qty, t.stock[tradeForm.good]) || 1; }
   else if (kind === 'qty') tradeForm.qty = Math.max(1, Math.min(10, tradeForm.qty + Number(btn.dataset.n)));
+  else if (kind === 'qty-max') tradeForm.qty = Math.min(10, t.stock[tradeForm.good]) || 1;
   else if (kind === 'escort') tradeForm.escort = !tradeForm.escort;
+  else if (kind === 'sell-all') message = sellAllAtHome(state) || 'Není co prodat.';
+  else if (kind === 'fulfill') {
+    const res = fulfillContract(state, Number(btn.dataset.id));
+    message = res.error || res.message;
+  } else if (kind === 'best') {
+    const good = btn.dataset.good;
+    const best = bestMarket(state, good);
+    if (best && best.home) {
+      const keep = reservedFor(state, good);
+      message = sellAtHome(state, good, t.stock[good] - keep) || 'Zboží je slíbené povinným zakázkám.';
+    } else if (best) {
+      const last = t.last || {};
+      tradeForm = { dest: best.dest, good, qty: Math.min(10, t.stock[good]), escort: !!last.escort };
+      selectThing({ type: 'market', id: best.dest });
+      return;
+    }
+  }
   else if (kind === 'send') {
     const res = sendCaravan(state, tradeForm.dest, tradeForm.good, tradeForm.qty, tradeForm.escort);
     message = res.error || `${MARKETS[tradeForm.dest].sea ? 'Loď vyplula' : 'Karavana vyrazila'} ${MARKETS[tradeForm.dest].to}.`;
     tradeForm.dest = null;
   }
-  if (['good', 'qty', 'escort'].includes(kind)) { showMarket(tradeForm.dest); return; }
+  if (['good', 'qty', 'qty-max', 'escort'].includes(kind)) { showMarket(tradeForm.dest); return; }
   refreshTradeView(message);
 }
 

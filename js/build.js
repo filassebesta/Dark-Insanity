@@ -14,7 +14,7 @@
 
 import { clamp, bumpStat, clampRes } from './data.js';
 import { makeChronicleEntry } from './state.js';
-import { ensureTrade, MAX_STOCK } from './trade.js';
+import { ensureTrade, maxStock, WAREHOUSE } from './trade.js';
 import { farmBuildingDone } from './farm.js';
 
 // ---------- settlements ----------
@@ -152,6 +152,11 @@ export const BUILDINGS = {
     income: { gold: 1 }, drift: { order: 2, loyalty: 2 },
     text: 'Konšelé, městská kniha a pečeť. Město si začne vládnout samo — a platit za to.',
   },
+  sklad: {
+    name: 'Skladiště', cost: { gold: 14 }, turns: 2, minLevel: 2, requires: 'trziste',
+    warehouse: WAREHOUSE.sklad,
+    text: 'Kamenné sklepy a zastřešené kůlny u tržiště. Do skladu se vejde o šest vozů od každého zboží víc.',
+  },
   cech: {
     name: 'Cechovní dům', cost: { gold: 20 }, turns: 3, minLevel: 3, requires: 'trziste',
     yearly: { gold: 2 }, stock: { cloth: 1 }, onProv: { wealth: 6 },
@@ -210,6 +215,11 @@ export const FARM_BUILDINGS = {
   chlivek: {
     name: 'Chlívek', cost: { gold: 4 }, turns: 1, minLevel: 1,
     text: 'Chlívek pro prasata. Prasnice na jaře vrhne selata a v zimě je zabijačka.',
+  },
+  kolna: {
+    name: 'Kolna na vozy', cost: { gold: 6 }, turns: 1, minLevel: 1,
+    warehouse: WAREHOUSE.kolna,
+    text: 'Přístřešek pro vozy a pytle s obilím. Do skladu se vejdou o čtyři vozy od každého zboží víc.',
   },
   vcelin: {
     name: 'Včelín', cost: { gold: 4 }, turns: 1, minLevel: 1,
@@ -524,7 +534,7 @@ export function processBuilding(state) {
       }
       if (spring && def.stock) {
         const t = ensureTrade(state);
-        for (const [g, n] of Object.entries(def.stock)) t.stock[g] = Math.min(MAX_STOCK, (t.stock[g] || 0) + n);
+        for (const [g, n] of Object.entries(def.stock)) t.stock[g] = Math.min(maxStock(state), (t.stock[g] || 0) + n);
       }
     }
   }
@@ -618,7 +628,7 @@ export function buildingDrift(state, provinceId) {
 
 /** Everything the finished buildings of a town give, summed for display. */
 export function townYield(state, id) {
-  const sum = { income: {}, yearly: {}, stock: {}, drift: {} };
+  const sum = { income: {}, yearly: {}, stock: {}, drift: {}, warehouse: 0 };
   const add = (bucket, obj, seasons) => {
     for (const [k, v] of Object.entries(obj || {})) {
       // seasonal income (a granary in winter) counts once a year
@@ -632,6 +642,7 @@ export function townYield(state, id) {
     add(sum.yearly, def.yearly);
     add(sum.stock, def.stock);
     add(sum.drift, def.drift);
+    sum.warehouse += def.warehouse || 0;
   }
   return sum;
 }

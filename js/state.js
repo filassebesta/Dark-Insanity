@@ -309,7 +309,7 @@ function bringCaravansHome(state, dest) {
   const t = state.trade;
   if (!t || !t.caravans) return;
   for (const c of t.caravans.filter((x) => x.dest === dest)) {
-    t.stock[c.good] = Math.min(20, (t.stock[c.good] || 0) + c.qty); // the warehouse holds 20 loads (trade.js MAX_STOCK)
+    t.stock[c.good] = Math.min(60, (t.stock[c.good] || 0) + c.qty); // goods that were already paid for are never lost to the warehouse limit
   }
   t.caravans = t.caravans.filter((x) => x.dest !== dest);
 }
