@@ -1,4 +1,4 @@
-import { RESOURCE_DEFS, TRAIT_DEFS, TERRAIN_DEFS, SEASONS, NOBLE_HOUSES, resourceLabel, activeResourceDefs, tierTitle, yearsLabel } from './data.js';
+import { RESOURCE_DEFS, RESOURCE_HELP, RESOURCE_CAP, TRAIT_DEFS, TERRAIN_DEFS, SEASONS, NOBLE_HOUSES, resourceLabel, activeResourceDefs, tierTitle, yearsLabel } from './data.js';
 import { interpolate, computeSuccessChance, attitudeLabel, ownProvinces, reignEpithet } from './engine.js';
 import { ICONS } from './icons.js';
 import { crestSvg } from './crests.js';
@@ -105,8 +105,60 @@ export function resetResourceMemory() {
   previousResourceValues = null;
 }
 
+// ---- the hover bubble of the gauges: what is it, how much, what happens at the bottom ----
+let resTip = null;
+let resTipState = null;
+
+function showResTip(chip) {
+  const state = resTipState;
+  if (!state || !chip) return;
+  const def = RESOURCE_DEFS.find((d) => d.key === chip.dataset.res);
+  if (!def) return;
+  const help = RESOURCE_HELP[def.key] || {};
+  const text = (help.by && help.by[state.scenario]) || help.text || '';
+  const cap = RESOURCE_CAP[def.key] ?? 100;
+  const value = state.resources[def.key];
+  if (!resTip) {
+    resTip = document.createElement('div');
+    resTip.className = 'res-tip';
+    resTip.id = 'res-tip';
+    resTip.setAttribute('role', 'tooltip');
+    document.body.appendChild(resTip);
+  }
+  resTip.innerHTML = `<b>${esc(resourceLabel(def, state.scenario))}</b> <span class="rt-val">${value} / ${cap}</span><p>${esc(text)}</p>${value <= def.critical ? '<p class="rt-warn">Nebezpečně málo.</p>' : ''}`;
+  resTip.hidden = false;
+  resTip.dataset.res = def.key;
+  const r = chip.getBoundingClientRect();
+  const w = resTip.offsetWidth;
+  const left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2));
+  resTip.style.left = `${left}px`;
+  resTip.style.top = `${r.bottom + 8}px`;
+}
+
+function hideResTip() { if (resTip) resTip.hidden = true; }
+
+function wireResTips(bar) {
+  if (bar.dataset.tips) return;
+  bar.dataset.tips = '1';
+  const chipOf = (e) => e.target.closest && e.target.closest('.resource-chip');
+  bar.addEventListener('mouseover', (e) => { const c = chipOf(e); if (c) showResTip(c); });
+  // on a touch screen the browser fakes mouse moves after a tap: the bubble then stays until the next tap elsewhere
+  let touched = false;
+  document.addEventListener('pointerdown', (e) => { touched = e.pointerType === 'touch'; }, true);
+  bar.addEventListener('mouseout', (e) => { if (!touched && chipOf(e) && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.resource-chip'))) hideResTip(); });
+  bar.addEventListener('focusin', (e) => { const c = chipOf(e); if (c) showResTip(c); });
+  bar.addEventListener('focusout', hideResTip);
+  // a tap on a phone: the bubble stays until the next tap elsewhere
+  bar.addEventListener('click', (e) => { const c = chipOf(e); if (c) showResTip(c); });
+  document.addEventListener('click', (e) => { if (!e.target.closest || !e.target.closest('#resource-chips')) hideResTip(); });
+  // only the page itself scrolling moves the chips away from the bubble (the story text scrolling inside does not)
+  window.addEventListener('scroll', (e) => { if (e.target === document) hideResTip(); }, true);
+}
+
 export function renderResourceBar(state) {
   const bar = document.getElementById('resource-chips');
+  resTipState = state;
+  wireResTips(bar);
   bar.innerHTML = '';
   for (const def of activeResourceDefs(state)) {
     const value = state.resources[def.key];
@@ -115,12 +167,17 @@ export function renderResourceBar(state) {
     let flashClass = '';
     if (value !== previous) flashClass = value > previous ? ' flash-pos' : ' flash-neg';
     chip.className = 'resource-chip' + (value <= def.critical ? ' critical' : '') + flashClass;
-    chip.title = resourceLabel(def, state.scenario);
+    chip.dataset.res = def.key;
+    chip.tabIndex = 0;
+    chip.setAttribute('aria-label', `${resourceLabel(def, state.scenario)}: ${value}`);
     chip.style.setProperty('--chip-color', `var(--res-${def.key})`);
     chip.innerHTML = `<span class="icon">${def.icon}</span><span class="value">${value}</span>`;
     bar.appendChild(chip);
   }
   previousResourceValues = { ...state.resources };
+  // the chips were rebuilt: a bubble over a chip the pointer still rests on follows the new numbers
+  const over = bar.querySelector('.resource-chip:hover');
+  if (over && resTip && !resTip.hidden) showResTip(over); else if (resTip && !bar.querySelector('.resource-chip:focus')) hideResTip();
 }
 
 export function renderReignInfo(state) {

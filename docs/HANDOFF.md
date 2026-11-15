@@ -388,6 +388,9 @@ Cizí vládci: `{realm.east}` („král Ctibor“), `{realm.east.Ruler}` (toté�
 - Větev události `town: { at: '<sídlo>', start: '<budova>' }` zahájí stavbu zdarma (`applyTownEffects` v `build.js`), peníze strhne sama událost. Volba i událost si před tím ověří `canRaise(state, id, key)` (sídlo je hráčovo, budova tam patří a ještě nestojí, nic jiného se nestaví, je volná parcela), jinak by hráč zaplatil a nedostal nic.
 - Takhle fungují „Postavit malou výheň na vlastním gruntu“ (`p_kovar_vyhen`, nová selská budova `vyhen`: +1 groš ročně a stabilita při dostavbě) a „Postavit mlýn“ (`n_mlyn`, mlýn v Přístavu Mark). Ostatní „postavit“ (kamenný hrad, chrám, kaple, mosty) jsou vyprávěné jen v kraji a žádnou budovu na mapě nemají.
 
+### Bublina u surovin v horní liště (`js/ui.js`, `RESOURCE_HELP` v `js/data.js`)
+- Po najetí myší, klepnutí (telefon) nebo přejití klávesnicí na surovinu se hned ukáže bublina: název podle fáze života (Zlato / Groše, Jídlo / Zásoby…), hodnota z maxima a krátké vysvětlení, co to je a co se stane při nule; při kritické hodnotě „Nebezpečně málo“. Popisy jsou v `RESOURCE_HELP` (`by` = jiný text pro sedláka nebo šlechtice). Na telefonu zůstane bublina do dalšího klepnutí jinam.
+
 ### Posun postranního panelu mapy (`sidebar()` v `map.js`)
 - Panel se při překreslení téhož pohledu (nákup krávy, prodej obilí, stavba, počet nákladu, záložky války) už nevrací nahoru: `sidebar()` porovná nadpis a nadpisek nového obsahu se starým a při shodě obnoví `scrollTop` panelu (na telefonu i `.map-body`). Jiný pohled začíná nahoře.
 
