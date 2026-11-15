@@ -2341,3 +2341,17 @@ body.map-open .toast-container { top: auto; bottom: 1.2rem; left: 38%; }
   .bt-zstate { display: block; width: 100%; text-align: center; }
   .bt-zone { padding: .25rem .15rem .3rem; }
 }
+
+/* the strip of mandatory contracts can be folded: the title is a button with an arrow */
+button.ctb-title { appearance: none; background: transparent; border: 0; padding: 0; margin: 0; color: inherit; text-align: left; cursor: pointer; position: relative; }
+button.ctb-title:hover b { color: var(--gold-bright); }
+button.ctb-title:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+button.ctb-title.crit b { color: #f0a08c; }
+.ctb-chev { display: inline-block; width: .55rem; height: .55rem; margin-top: .1rem; border-right: 2px solid var(--gold); border-bottom: 2px solid var(--gold); transform: rotate(-135deg); transition: transform .2s ease; align-self: flex-start; }
+.contract-bar.folded .ctb-chev { transform: rotate(45deg); }
+.contract-bar.folded { align-items: center; padding-top: .3rem; gap: .8rem; }
+.contract-bar.folded .ctb-title { width: auto; flex-direction: row; align-items: center; gap: .5rem; }
+.contract-bar.folded .ctb-title b { display: inline; }
+.ctb-sum { font-size: .82rem; color: var(--paper-3); }
+.ctb-sum.crit { color: #f0a08c; font-weight: 600; }
+@media (max-width: 900px) { .contract-bar.folded { flex-direction: row; flex-wrap: wrap; } }

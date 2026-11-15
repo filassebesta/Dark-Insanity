@@ -9,6 +9,18 @@ import {
   MARKETS, sortedContracts, contractStatus, seasonsLeftText, loadText, coinName, canSend, caravanFee,
 } from './trade.js';
 
+// the strip can be folded away (the choice is remembered in this browser)
+const KEY = 'insanityKingdom.contractBarFolded';
+let folded = false;
+try { folded = localStorage.getItem(KEY) === '1'; } catch { /* private window: the strip simply starts open */ }
+
+/** Folds or unfolds the strip; returns the new state. */
+export function toggleContractBar() {
+  folded = !folded;
+  try { localStorage.setItem(KEY, folded ? '1' : '0'); } catch { /* not remembered */ }
+  return folded;
+}
+
 const wagons = (n) => `${n} ${n === 1 ? 'vůz' : n < 5 ? 'vozy' : 'vozů'}`;
 
 function giverLabel(state, c) {
@@ -62,9 +74,14 @@ export function renderContractBar(state) {
   if (!el) return;
   const list = state && state.trade ? sortedContracts(state).filter((c) => c.obligation) : [];
   el.hidden = !list.length;
-  document.body.classList.toggle('has-contract-bar', !!list.length);
+  // a folded strip is short, so the toasts only move down for the open one
+  document.body.classList.toggle('has-contract-bar', !!list.length && !folded);
   if (!list.length) { el.innerHTML = ''; return; }
   const focus = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.ctbOpen : null;
-  el.innerHTML = `<span class="ctb-title">${ICONS.favor}<b>Povinné zakázky</b><small>${list.length}</small></span><div class="ctb-list">${list.map((c) => card(state, c)).join('')}</div>`;
+  const worst = list.map((c) => ({ c, st: contractStatus(state, c) })).sort((a, b) => a.st.left - b.st.left)[0];
+  const urgent = list.some((c) => !c.taken && contractStatus(state, c).urgency === 'crit');
+  const sum = folded ? `<span class="ctb-sum${urgent ? ' crit' : ''}">${worst.c.taken ? 'náklad na cestě' : `nejdřív ${esc(seasonsLeftText(worst.st.left))}, do ${esc(worst.st.date)}`}</span>` : '';
+  el.classList.toggle('folded', folded);
+  el.innerHTML = `<button type="button" class="ctb-title${urgent ? ' crit' : ''}" data-ctb-toggle aria-expanded="${!folded}" title="${folded ? 'Zobrazit povinné zakázky' : 'Skrýt povinné zakázky'}">${ICONS.favor}<b>Povinné zakázky</b><small>${list.length}</small><i class="ctb-chev" aria-hidden="true"></i></button>${sum}${folded ? '' : `<div class="ctb-list">${list.map((c) => card(state, c)).join('')}</div>`}`;
   if (focus) el.querySelector(`[data-ctb-open="${focus}"]`)?.focus();
 }
