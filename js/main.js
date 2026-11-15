@@ -3,7 +3,7 @@ import { advanceTurn, resolveChoice, resolveRouteChoice, checkEndConditions, pic
 import { doHouseAction } from './houses.js';
 import { EVENTS, QUIET_EVENTS } from './events.js';
 import {
-  showScreen, renderResourceBar, updateBookTabFlags, renderTurnSummary, renderEventCard,
+  showScreen, renderResourceBar, updateBookTabFlags, initBookTabs, renderTurnSummary, renderEventCard,
   renderCourtPanel, renderChroniclePanel, openPanel, closePanels, isPanelOpen,
   renderEndingScreen, toast, setTypewriterEnabled, skipTypewriter, setMusicMuted,
   renderReignInfo, renderCharacterPlaque, renderOutcome, renderStaticIcons,
@@ -640,6 +640,7 @@ document.addEventListener('kingdom:talk', (e) => {
   renderPersonSheet(currentState, e.detail.role);
 });
 
+initBookTabs();
 wireActions();
 wireMapChrome();
 wireContractBar();

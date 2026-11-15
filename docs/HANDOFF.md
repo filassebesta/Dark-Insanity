@@ -388,6 +388,9 @@ Cizí vládci: `{realm.east}` („král Ctibor“), `{realm.east.Ruler}` (toté�
 - Větev události `town: { at: '<sídlo>', start: '<budova>' }` zahájí stavbu zdarma (`applyTownEffects` v `build.js`), peníze strhne sama událost. Volba i událost si před tím ověří `canRaise(state, id, key)` (sídlo je hráčovo, budova tam patří a ještě nestojí, nic jiného se nestaví, je volná parcela), jinak by hráč zaplatil a nedostal nic.
 - Takhle fungují „Postavit malou výheň na vlastním gruntu“ (`p_kovar_vyhen`, nová selská budova `vyhen`: +1 groš ročně a stabilita při dostavbě) a „Postavit mlýn“ (`n_mlyn`, mlýn v Přístavu Mark). Ostatní „postavit“ (kamenný hrad, chrám, kaple, mosty) jsou vyprávěné jen v kraji a žádnou budovu na mapě nemají.
 
+### Záložky jako ikony (`js/tab_icons.js`, `initBookTabs` v `ui.js`)
+- Záložky horní lišty (Postava, Mapa, Obchod, Válka, Dvůr / Rodina, Rody / Vazalové, Kronika) jsou ikonová tlačítka; jméno je vidět v bublině po najetí myší nebo přejití klávesnicí (na dotykovém displeji se neukazuje, ikony jsou po klepnutí hned panel) a čte ho čtečka (`aria-label`). Ikona je nakreslená linková, dokud klíč není v `TAB_ART` a nedorazí malovaný `assets/ui/tab_<klíč>.webp` (prompt a zpracování: `docs/obrazky-ikony.md`). Název záložky se mění podle fáze života (`retitleTab`).
+
 ### Název pod číslem u surovin
 - Každá surovina v horní liště má pod číslem malý název (Zlato / Groše, Jídlo / Zásoby, Víra, Přízeň …; `chipName` v `ui.js`), takže je poznat na první pohled bez najíždění. Bublina s vysvětlením (níž) zůstává pro podrobnosti. Styl pozná surovinu podle `data-res`, ne podle `title`.
 
