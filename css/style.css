@@ -338,6 +338,12 @@ kbd {
 }
 .resource-chip .icon { color: var(--chip-color, var(--gold)); display: inline-flex; }
 .resource-chip .value { font-weight: 600; min-width: 2.4em; font-variant-numeric: tabular-nums; }
+/* the name under the number: money, faith, food… readable at a glance */
+.resource-chip { display: grid; grid-template-columns: auto auto; grid-template-areas: "icon value" "name name"; align-items: center; justify-items: center; row-gap: 0; }
+.resource-chip .icon { grid-area: icon; }
+.resource-chip .value { grid-area: value; min-width: 2.2em; }
+.resource-chip .name { grid-area: name; font-family: var(--font-caps); font-size: .6rem; letter-spacing: .12em; text-transform: uppercase; color: var(--paper-3, #b9ad92); white-space: nowrap; line-height: 1.1; }
+.resource-chip.critical .name { color: #f0a08c; }
 .resource-chip.flash-pos { animation: flashPos .9s ease; }
 .resource-chip.flash-neg { animation: flashNeg .9s ease; }
 @keyframes flashPos { 0% { color: #b9dc8f; transform: translateY(-2px) scale(1.15); } 100% { color: var(--paper); transform: none; } }
@@ -1151,7 +1157,7 @@ kbd {
 .plot-steps i.on { background: var(--blood); }
 .secrets { flex: 1; color: #8a6a2c; letter-spacing: .2em; }
 .ending-actions { justify-content: center; gap: 1rem; margin-top: 1rem; }
-.mood-slechtic .resource-chip[title="Přízeň krále"] .icon { color: var(--gold-bright); }
+.mood-slechtic .resource-chip[data-res="favor"] .icon { color: var(--gold-bright); }
 
 /* ---------- court member detail ---------- */
 .person-view {
