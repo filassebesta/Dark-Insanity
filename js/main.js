@@ -19,7 +19,7 @@ import { openCrestEditor, closeCrestEditor } from './crest_ui.js';
 import { hasOwnCrest } from './heraldry.js';
 import { wireTalk } from './talk_ui.js';
 import { makeHeir } from './family.js';
-import { renderContractBar } from './contract_bar.js';
+import { renderContractBar, toggleContractBar } from './contract_bar.js';
 import { fulfillContract, takeTradeAlerts } from './trade.js';
 import { renderAmbitionBar, renderWarBar, renderHall, renderEndingAchievements, announceAchievement } from './fame.js';
 
@@ -574,6 +574,7 @@ function wireContractBar() {
   const open = (market) => { if (currentState) openMap(currentState, { layer: 'trade', market }); };
   bar.addEventListener('click', (e) => {
     if (!currentState) return;
+    if (e.target.closest('[data-ctb-toggle]')) { toggleContractBar(); renderContractBar(currentState); return; }
     const go = e.target.closest('[data-ctb-fulfill]');
     if (go) {
       e.stopPropagation();
