@@ -626,7 +626,8 @@ function hsHouseCard(state, h) {
         ${crestSvg(h.id, 'hs-crest-lg')}
         <div class="hs-id"><span class="role">${esc(place)}</span><strong>${esc(def.name)}</strong>
           <em>${esc(def.trait)}</em>
-          <small>${h.head.gender === 'female' ? 'Paní' : 'Pán'} ${esc(h.head.name)}, ${h.head.age} let</small></div>
+          <small>${h.head.gender === 'female' ? 'Paní' : 'Pán'} ${esc(h.head.name)}, ${h.head.age} let</small>
+          <small class="hs-heirs">${(h.heirs || []).length ? `Dědici: ${(h.heirs || []).map((x) => `${esc(x.name)} (${x.age})`).join(', ')}${h.hostages ? ' · na tvém dvoře' : ''}` : 'Bez dědiců'}</small></div>
       </div>
       <p class="hs-text">${esc(def.text)}</p>
       ${hsBar('Vztah', h.attitude, 'loyalty', `<span class="hs-att ${attTone(h.attitude)}">${attitudeLabel(h.attitude)}</span>`)}
@@ -717,6 +718,8 @@ export function renderHousesPanel(state) {
       <div class="hs-head">${crestSvgOf(crest, 'hs-crest-lg')}
         <div class="hs-id"><span class="role">${king ? 'Dynastie' : 'Tvůj rod'}</span><strong>${esc(state.dynastyName)}</strong>
         <small>${hasOwnCrest(state) ? esc(blazon(crest)) : 'Rod zatím nemá vlastní erb.'}</small></div></div>
+      ${(state.seized || []).length ? `<p class="hs-text">Zabrané državy po vyhubených rodech: ${(state.seized || []).map((x) => esc(x.name)).join(', ')} (každá ročně +1 groš).</p>` : ''}
+      ${(state.deadHouses || []).length ? `<p class="hs-text">Vyhubené rody: ${(state.deadHouses || []).map((d) => esc((NOBLE_HOUSES.find((n) => n.id === d.id) || {}).short || d.id)).join(', ')}.</p>` : ''}
       <button class="trade-mini" data-action="edit-crest">${hasOwnCrest(state) ? 'Změnit erb' : 'Navrhnout erb'}</button>
     </div>`;
   host.innerHTML = own + top + state.houses.map((h) => hsHouseCard(state, h)).join('') + hsRelations(state) + tail;

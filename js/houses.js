@@ -1,6 +1,8 @@
 // The great houses: who they are, how they stand to one another and what the player can do with them.
 //
-// state.houses = [{ id, power, attitude, ally, married, head, rel, cd?, fief?, rebelPending? }]
+// state.houses = [{ id, power, attitude, ally, married, head, heirs, rel, cd?, fief?, rebelPending? }]
+//   heirs     [{ name, gender, age }] — the children of the head; when none is left and the head falls, the line is out
+// state.deadHouses = [{ ...the house as it was, turn }] — lines that were wiped out (applyHouseFate); state.seized = [{ id, name, turn }] holds taken from them
 //   attitude  how the house stands to the player (the noble, later the king)
 //   power     its weight in the realm (0-100)
 //   rel       { <otherHouseId>: -100…100 } — how the houses stand to one another, drifting in the background
@@ -9,7 +11,7 @@
 // Definitions (name, seat, retinue, boon) live in data.js NOBLE_HOUSES; the coats of arms in crests.js.
 // No DOM here and no import of state.js or engine.js (they import this module).
 
-import { NOBLE_HOUSES, clamp, clampRes, randInt, randomName } from './data.js';
+import { NOBLE_HOUSES, clamp, clampRes, randInt, randomName, bumpStat } from './data.js';
 
 export const houseDef = (id) => NOBLE_HOUSES.find((d) => d.id === id);
 
@@ -34,14 +36,29 @@ export function boonText(def) {
 
 // ---------- creating and mending the houses ----------
 
+/** One to three children of a head of that age: the heirs of a house. */
+function makeHeirs(headAge) {
+  const out = [];
+  const used = new Set();
+  for (let i = randInt(1, 3); i > 0; i--) {
+    const g = Math.random() < 0.55 ? 'male' : 'female';
+    let name = randomName(g);
+    for (let k = 0; k < 40 && used.has(name); k++) name = randomName(g);
+    used.add(name);
+    out.push({ name, gender: g, age: Math.max(1, Math.min(randInt(2, 32), headAge - 20)) });
+  }
+  return out;
+}
+
 /** A new house with a head whose name nobody else at the heads of the houses already bears. */
 function newHouse(def, taken = []) {
   const g = Math.random() < 0.75 ? 'male' : 'female';
   let name = randomName(g);
   for (let i = 0; i < 60 && taken.includes(name); i++) name = randomName(g);
+  const age = randInt(38, 62);
   return {
     id: def.id, power: randInt(50, 70), attitude: randInt(40, 55), ally: false, married: false,
-    head: { name, gender: g, age: randInt(38, 62) }, rel: {},
+    head: { name, gender: g, age }, heirs: makeHeirs(age), rel: {},
   };
 }
 
@@ -84,12 +101,79 @@ export function ensureHouses(state) {
     if (state.scenario !== 'panovnik') return state;
     state.houses = [];
   }
-  for (const def of NOBLE_HOUSES) if (!state.houses.some((h) => h.id === def.id)) state.houses.push(newHouse(def, state.houses.map((h) => h.head.name)));
+  const dead = new Set((state.deadHouses || []).map((d) => d.id)); // a wiped-out line does not come back
+  for (const def of NOBLE_HOUSES) if (!dead.has(def.id) && !state.houses.some((h) => h.id === def.id)) state.houses.push(newHouse(def, state.houses.map((h) => h.head.name)));
+  for (const h of state.houses) if (!h.heirs) h.heirs = makeHeirs(h.head.age); // houses from before the heirs
   seedRelations(state.houses);
   return state;
 }
 
-export const housesNeedMending = (state) => !!state.houses && (state.houses.length < NOBLE_HOUSES.length || !state.houses[0].rel);
+export const housesNeedMending = (state) => !!state.houses
+  && (state.houses.length + (state.deadHouses || []).length < NOBLE_HOUSES.length || (state.houses.length > 0 && !state.houses[0].rel) || state.houses.some((h) => !h.heirs));
+
+// ---------- the line of a house: heirs, succession, and the end of a line ----------
+
+/** The heirs in words, for the story and the panel: "Rodu zbývají dědicové: Ctibor, Zdislava a Bořek." */
+export function heirsLine(h) {
+  const names = (h.heirs || []).map((x) => x.name);
+  if (!names.length) return 'Rod už nemá žádné dědice.';
+  if (names.length === 1) return `Rodu zbývá jediný dědic: ${names[0]}.`;
+  return `Rodu zbývají dědicové: ${names.slice(0, -1).join(', ')} a ${names[names.length - 1]}.`;
+}
+
+/** Every year the heirs grow older; a head who is not too old now and then has another child. */
+export function ageHeirs(h) {
+  if (!h.heirs) h.heirs = makeHeirs(h.head.age);
+  for (const x of h.heirs) x.age += 1;
+  if (h.heirs.length < 2 && h.head.age <= 50 && Math.random() < 0.08) {
+    const g = Math.random() < 0.5 ? 'male' : 'female';
+    h.heirs.push({ name: randomName(g), gender: g, age: 0 });
+  }
+}
+
+/** The oldest grown heir takes over when the head dies (and leaves the list of heirs); null if there is none of age. */
+export function takeNextHead(h) {
+  const grown = (h.heirs || []).filter((x) => x.age >= 16).sort((a, b) => b.age - a.age)[0];
+  if (!grown) return null;
+  h.heirs = h.heirs.filter((x) => x !== grown);
+  return { name: grown.name, gender: grown.gender, age: grown.age };
+}
+
+/**
+ * What the victor does with a beaten house (event w_rod_osud, branch extra `houseFate`):
+ *   'hostages'  the heirs are taken to the victor's court: the house stays, weakened and quiet
+ *   'extinct'   the head and every heir fall: the line ends, its lands pass to the victor. Returns { text }.
+ */
+export function applyHouseFate(state, id, fate) {
+  const h = (state.houses || []).find((x) => x.id === id);
+  const def = houseDef(id);
+  if (!h || !def) return null;
+  if (fate === 'hostages') {
+    h.power = clamp(h.power - 8);
+    h.attitude = clamp(h.attitude + 12);
+    h.hostages = true;
+    return { text: `Dědicové rodu ${def.gen} žijí na tvém dvoře jako hosté, kteří nesmějí odejít.` };
+  }
+  if (fate !== 'extinct') return null;
+  const gained = [];
+  // the lands of the house: its seat and whatever else is written under its name
+  for (const p of state.provinces) {
+    if (p.owner === id) {
+      Object.assign(p, { owner: 'player', loyalty: 35, unrest: 50, garrison: 25 });
+      gained.push(p.name.replace(/ \(.*\)$/, ''));
+    }
+  }
+  if (def.hold) {
+    (state.seized = state.seized || []).push({ id, name: def.hold.name, turn: state.turn });
+    gained.push(def.hold.name);
+  }
+  bumpStat(state, 'seized');
+  // the line is wiped out: the house leaves the realm and the others forget its quarrels
+  state.houses = state.houses.filter((x) => x !== h);
+  for (const o of state.houses) if (o.rel) delete o.rel[id];
+  (state.deadHouses = state.deadHouses || []).push({ ...h, heirs: [], turn: state.turn });
+  return { text: `Rod ${def.gen} vyhasl. ${gained.length ? `Jeho pozemky (${gained.join(', ')}) teď patří rodu ${state.dynastyName}.` : 'Jeho pozemky zůstaly bez pána a zabral je rod ' + state.dynastyName + '.'}` };
+}
 
 // ---------- relations ----------
 

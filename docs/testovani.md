@@ -157,3 +157,9 @@ nerozvinutých tokenů) a ostatní simulace z HANDOFF.md kap. 2 (`errors` musí 
 1. Při bitvě v poli, obléhání a přepadení je nahoře malovaný obraz; klik na zónu (levé křídlo / střed / pravé křídlo, u obléhání hradby / brána / průlom) otevře její nabídku pod obrazem a zóna se zvýrazní. Pruh dole je záloha.
 2. Steppery v nabídce mění počty a čísla v zóně se hned přepočítají; „Automaticky“ a „Všichni do zálohy“ fungují jako dřív.
 3. Telefon (390 px): obraz přes celou šířku, popisky zón se zmenší, nabídka vybrané zóny je pod obrazem; bez vodorovného posunu.
+
+## Vyhubení rodu po válce
+
+1. Jako šlechtic (úroveň 3+) vytáhni v panelu Válka na „Soukromá válka“ proti rodu a vyhraj. Po návratu vojska (událost „Vítězné vojsko se vrací“) přijde „Osud poraženého rodu“ s popisem dědiců.
+2. Třetí volba „Vyhubit rod a zabrat jeho pozemky“: rod zmizí z panelu Rody, jeho kraj (u starých rodů Brodná, Hřeben nebo Sokolí Hvozd) je tvůj, u nových rodů přibude „Zabraná država“ v kartě „Tvůj rod“ (+1 groš ročně) a u starých rodů se objeví „Vyhubené rody“. Rod se už nevrátí.
+3. „Zajmout dědice jako rukojmí“: rod zůstane, u dědiců je „na tvém dvoře“. Automaticky: `node tools/sim/test_extinct.mjs`.

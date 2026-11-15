@@ -2390,3 +2390,5 @@ button.ctb-title.crit b { color: #f0a08c; }
   .bt-icon { width: 1.8rem; height: 1.8rem; }
   .book-tabs { gap: .05rem; }
 }
+
+.hs-heirs { display: block; margin-top: .1rem; color: var(--ink-faint, #7a6a52); }
