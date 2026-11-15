@@ -5,6 +5,7 @@
 // Choices may carry requires(state) (shown only when it holds) and chanceBonus(state).
 
 import { houseLanded } from './houses.js';
+import { canRaise } from './build.js';
 
 const S = 'slechtic';
 const allies = (s) => s.houses.filter((h) => h.ally).length;
@@ -880,16 +881,19 @@ export const NOBLE_EVENTS = [
     oneTime: true, // once the mill stands, it stands
     scenario: S,
     cooldown: 20,
+    requires: (s) => canRaise(s, 'port', 'mlyn'), // the mill really rises at the port: no free plot, no offer
     title: 'Mlýn na potoce',
     text: 'Sedláci musí vozit obilí k mlýnu Bílé Brány a platit mlynářovi třetinu. Tvůj purkrabí navrhuje postavit vlastní mlýn na potoce pod tvrzí.',
     choices: [
       {
         label: 'Postavit mlýn',
+        requires: (s) => s.resources.gold >= 12,
         hintType: 'resource', hintKey: 'gold',
         effects: { gold: -12, food: 4 },
+        town: { at: 'port', start: 'mlyn' },
         provinceEffects: { own: { wealth: 8, loyalty: 4 } },
         houseEffects: { brana: { attitude: -5 } },
-        chronicle: 'Pod tvrzí klape nový mlýn. Bílá Brána přišla o třetinu z obilí celého pobřeží.',
+        chronicle: 'Pod tvrzí se začal stavět nový mlýn. Bílá Brána brzy přijde o třetinu z obilí celého pobřeží.',
       },
       {
         label: 'Pronajmout stavbu mlynáři',

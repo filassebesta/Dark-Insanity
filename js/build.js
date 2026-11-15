@@ -236,6 +236,11 @@ export const FARM_BUILDINGS = {
     yearly: { faith: 2 }, onBuild: { prestige: 2 },
     text: 'Kamenný sloupek s obrázkem svatého na mezi. Ves ví, že tady bydlí zbožný hospodář.',
   },
+  vyhen: {
+    name: 'Výheň', cost: { gold: 6 }, turns: 2, minLevel: 1,
+    yearly: { gold: 1 }, onBuild: { stability: 3 },
+    text: 'Malá kovářská výheň za chalupou. Radlice a podkovy se opraví doma a ušetřené groše se vrátí.',
+  },
   dilna: {
     name: 'Dílna', cost: { gold: 8 }, turns: 2, minLevel: 3,
     yearly: { gold: 3 },
@@ -380,6 +385,21 @@ export function buildBlock(state, id, key) {
   if (crews) return crews;
   if (!canAfford(state, def.cost)) return 'Na tohle nemáš.';
   return null;
+}
+
+/**
+ * Can an event start this building for free right now? (an event that takes the money must also really build:
+ * the settlement is the player's, the building belongs there and does not stand yet, nothing else is being built,
+ * there is a free plot). Money is not checked, the event's own cost is.
+ */
+export function canRaise(state, id, key) {
+  if (!settlementDef(id) || !catalogFor(id)[key] || !ownsTown(state, id)) return false;
+  const town = townOf(state, id);
+  const def = buildingDef(key);
+  if (town.buildings.some((b) => b.key === key) || currentProject(town) || town.level < def.minLevel) return false;
+  const slots = slotCount(id, town.level);
+  for (let i = 0; i < slots; i++) if (!town.buildings.some((b) => b.slot === i)) return true;
+  return false;
 }
 
 export function freeSlot(state, id, slot) {
