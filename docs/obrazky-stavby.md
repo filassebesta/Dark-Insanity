@@ -1,5 +1,7 @@
 # Malované budovy — stav a objednávka
 
+**Nová dávka na purpurovém pozadí (B3):** budovy se malují na jednobarevné purpurové pozadí (#FF00FF) bez země a stínu. `python3 -I tools/images/make_cutouts_key.py` je vyklíčuje (měkká alfa, odstranění černého stínu pod budovou, odstranění purpurového lemu a kouře), uloží `assets/buildings/<klíč>.webp` (výřez pro mapy) a `<klíč>.jpg` (karta 560 × 400 pro nabídku staveb) a doplní `js/town_art.js` (`clean: 1` = bez měkké masky na mapě). Originály jsou v `assets/_source/gemini/stavby_b3/`. Prompt pro dalších 16 městských budov je v historii konverzace (stejný úvod s purpurovým pozadím).
+
 Každá budova má kreslenou vektorovou ikonu (`js/town.js`, `ICONS`). Malovaný obrázek `assets/buildings/<klíč>.jpg`
 ji nahradí na parcele, v nabídce staveb i v detailu, jakmile je klíč v `BUILDING_ART` (`js/town.js`). Hotové obrázky
 se zpracují skriptem pro ořez (viz historie: ořez kolem budovy, poměr 1,4 : 1, 560 × 400 bodů); originály jsou
@@ -9,7 +11,7 @@ v `assets/_source/gemini/`.
 |---|---|---|
 | ✅ | stodola, mlynek, chlev, staj, chlivek, kolna, vcelin, sad, kaplicka | grunt (9 z 12) |
 | ✅ | kostel | město |
-| ⏳ | celednik, dilna, rybnik | grunt |
+| ✅ | celednik, dilna, rybnik, vyhen | grunt (dávka B3, vyříznuto z purpurového pozadí) |
 | ⏳ | trziste, mlyn, krcma, sypka, kovarna, kasarna, hradby, spital, radnice, sklad, cech, skola, katedrala, lodenice, sachta, lovci | města (16) |
 
 Poznámka k Gemini: názvy souborů občas zamíchá a jednou vrátí náhledovou sestavu s šachovnicí místo budovy; zpracování

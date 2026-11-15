@@ -25,9 +25,9 @@ import { sceneContext, groundMarkup, defsMarkup, centreItems, lifeMarkup, houseS
 // Set USE_PAINTED_BUILDINGS to true to show every cut-out, or put single keys into PAINTED_ALLOW to show just those
 // (build menu thumbnails and the detail picture always use the painted art).
 export const USE_PAINTED_BUILDINGS = false;
-const PAINTED_ALLOW = new Set(['mlynek', 'vcelin', 'staj', 'kolna']); // painted cut-outs that beat the drawn icon on the maps
+const PAINTED_ALLOW = new Set(['mlynek', 'vcelin', 'staj', 'kolna', 'vyhen', 'dilna', 'celednik', 'rybnik']); // painted cut-outs that beat the drawn icon on the maps
 const paintedOnScene = (key) => !!CUTOUTS[key] && (USE_PAINTED_BUILDINGS || PAINTED_ALLOW.has(key));
-const BUILDING_ART = new Set(['stodola', 'mlynek', 'chlev', 'staj', 'chlivek', 'kolna', 'vcelin', 'sad', 'kaplicka', 'kostel']);
+const BUILDING_ART = new Set(['stodola', 'mlynek', 'chlev', 'staj', 'chlivek', 'kolna', 'vcelin', 'sad', 'kaplicka', 'kostel', 'vyhen', 'dilna', 'celednik', 'rybnik']);
 const TOWN_ART = new Set([]);
 
 // rough height of the drawn icons above their base line (for scaling them into a clearing)
@@ -211,7 +211,7 @@ function plotMarkup(state, id, town, slot, selectedSlot, c, tags) {
     const s = target / 500;
     const w = cut.w * s, h = cut.h * s, ax = -cut.fx * s, ay = -cut.fy * s;
     topY = ay;
-    const img = (extra = '') => `<image class="b-art${extra}" href="assets/buildings/${b.key}.webp" x="${ax.toFixed(1)}" y="${ay.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" mask="url(#tw-patch)"/>`;
+    const img = (extra = '') => `<image class="b-art${extra}" href="assets/buildings/${b.key}.webp" x="${ax.toFixed(1)}" y="${ay.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}"${cut.clean ? '' : ' mask="url(#tw-patch)"'}/>`; // a cut-out from a flat background has no ground patch to fade
     if (b.ready) art = img();
     else {
       // the site: the future building as a ghost, rising out of the ground as the work goes on, with scaffolding around it
