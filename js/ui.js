@@ -155,6 +155,10 @@ function wireResTips(bar) {
   window.addEventListener('scroll', (e) => { if (e.target === document) hideResTip(); }, true);
 }
 
+// the short name written under every gauge, so nobody has to guess what an icon means
+const CHIP_SHORT = { 'Přízeň vrchnosti': 'Přízeň', 'Přízeň koruny': 'Přízeň', 'Přízeň krále': 'Přízeň', 'Nárok na trůn': 'Nárok', Legitimita: 'Legitimita' };
+const chipName = (def, scenario) => { const n = resourceLabel(def, scenario); return CHIP_SHORT[n] || n; };
+
 export function renderResourceBar(state) {
   const bar = document.getElementById('resource-chips');
   resTipState = state;
@@ -171,7 +175,7 @@ export function renderResourceBar(state) {
     chip.tabIndex = 0;
     chip.setAttribute('aria-label', `${resourceLabel(def, state.scenario)}: ${value}`);
     chip.style.setProperty('--chip-color', `var(--res-${def.key})`);
-    chip.innerHTML = `<span class="icon">${def.icon}</span><span class="value">${value}</span>`;
+    chip.innerHTML = `<span class="icon">${def.icon}</span><span class="value">${value}</span><span class="name">${esc(chipName(def, state.scenario))}</span>`;
     bar.appendChild(chip);
   }
   previousResourceValues = { ...state.resources };
