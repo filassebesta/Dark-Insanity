@@ -3,16 +3,16 @@
 Záložky jsou ikonová tlačítka (`js/tab_icons.js`). Nakreslená linková ikona se nahradí malovanou, jakmile je klíč v `TAB_ART`
 a soubor `assets/ui/tab_<klíč>.webp` leží ve složce. Název záložky je vidět v bublině po najetí myší.
 
-| Klíč | Záložka | Motiv |
-|---|---|---|
-| character | Postava | poprsí šlechtice v plášti se sponou |
-| map | Mapa | rozložená pergamenová mapa s kompasem |
-| trade | Obchod | vůz naložený pytli a měšec s mincemi |
-| war | Válka | zkřížený meč a sekera za štítem |
-| court | Dvůr | zlatá koruna na polštáři |
-| family | Rodina (sedlák) | chalupa s kouřem z komína |
-| houses | Rody / Vazalové | tři erbovní štíty zavěšené na trámu |
-| chronicle | Kronika | otevřená kniha s brkem a kalamářem |
+| Klíč | Záložka | Motiv | Stav |
+|---|---|---|---|
+| character | Postava | poprsí šlechtice v plášti se sponou | ✅ |
+| map | Mapa | rozložená pergamenová mapa s kompasem | ✅ |
+| trade | Obchod | vůz naložený pytli a měšec s mincemi | ✅ |
+| war | Válka | zkřížený meč a sekera za štítem | ✅ |
+| court | Dvůr | zlatá koruna na polštáři | ⏳ |
+| family | Rodina (sedlák) | chalupa s kouřem z komína | ⏳ |
+| houses | Rody / Vazalové | tři erbovní štíty zavěšené na trámu | ⏳ |
+| chronicle | Kronika | otevřená kniha s brkem a kalamářem | ✅ (obraz s vlastním pozadím, použit jako zaoblená dlaždice) |
 
 ## Prompt (purpurové pozadí, vyklíčuje se skriptem)
 
@@ -59,6 +59,10 @@ tab_chronicle.jpg — An open old book with a red ribbon bookmark, a white goose
 ```
 
 ## Zpracování
+
+`python3 -I tools/images/make_icons_key.py` vyklíčuje obrázky z `assets/_source/gemini/ikony/<klíč>.jpg` do `assets/ui/tab_<klíč>.webp` (192 × 192) a klíč se přidá do `TAB_ART`. Režimy: `cut` (vyklíčování, ořez, čtverec), `frame` (malba na dřevěné desce: sundá se rám desky; Postava) a `tile` (malba s vlastním pozadím se ořízne na zaoblenou dlaždici; Kronika). Chybí ještě `court`, `family` a `houses`.
+
+(původní popis níže)
 
 Skript podobný `tools/images/make_cutouts_key.py` (klíčování purpurové, odstranění černého stínu a lemu) uloží ikony do
 `assets/ui/tab_<klíč>.webp`; pak se klíče přidají do `TAB_ART` v `js/tab_icons.js`. Gemini občas zamíchá názvy souborů:
