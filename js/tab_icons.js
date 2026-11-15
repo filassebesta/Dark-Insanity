@@ -8,7 +8,7 @@ import { ICONS } from './icons.js';
 const line = (paths) => `<svg class="bt-line" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
 
 // keys with a painted icon in assets/ui/ (the lead adds a key when the file arrives)
-export const TAB_ART = new Set([]);
+export const TAB_ART = new Set(['character', 'map', 'trade', 'war', 'chronicle']);
 
 /** What each tab shows: label, a one-line hint for the bubble, and the drawn icon used until the art exists. */
 export const TABS = {
