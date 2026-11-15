@@ -384,6 +384,10 @@ Cizí vládci: `{realm.east}` („král Ctibor“), `{realm.east.Ruler}` (toté�
 - Zobrazení: hlavička hry (jen šířka nad 560 px), karta v panelu Rody, řádek rodu v panelu Postava. Na mapě je vlastní erb nad sídlem (šlechtic: Pobřežní marka, král: hlavní město; `ownSeatMarker` v `map.js`), na praporu vojska v poli a v záhlaví panelu Válka. Znamení je 25 (vlk, medvěd, orel, věž, meč, koruna, hvězda, půlměsíc, slunce, dub, snop, pluh, kladivo, roh, klíč, lilie, kolo, lev, kůň, ryba, loď, kanec, křídlo, zvon, kotva, kříž).
 - Každý nakreslený štít má vlastní `clipPath` s unikátním `id` (klip ve skrytém `<svg>` jinak nefunguje pro ostatní štíty).
 
+### Událost, která bere peníze za stavbu, musí stavbu opravdu začít
+- Větev události `town: { at: '<sídlo>', start: '<budova>' }` zahájí stavbu zdarma (`applyTownEffects` v `build.js`), peníze strhne sama událost. Volba i událost si před tím ověří `canRaise(state, id, key)` (sídlo je hráčovo, budova tam patří a ještě nestojí, nic jiného se nestaví, je volná parcela), jinak by hráč zaplatil a nedostal nic.
+- Takhle fungují „Postavit malou výheň na vlastním gruntu“ (`p_kovar_vyhen`, nová selská budova `vyhen`: +1 groš ročně a stabilita při dostavbě) a „Postavit mlýn“ (`n_mlyn`, mlýn v Přístavu Mark). Ostatní „postavit“ (kamenný hrad, chrám, kaple, mosty) jsou vyprávěné jen v kraji a žádnou budovu na mapě nemají.
+
 ### Obraz bojiště s klikacími zónami (`js/battle_ui.js`, `assets/battle/`)
 - Rozestavění má nahoře malovaný obraz bojiště (`bt_field.jpg`, `bt_siege.jpg`, `bt_ambush.jpg`, 1376 × 768) a přes něj tři klikací zóny po třetinách (levé křídlo / střed / pravé křídlo; u obléhání hradby / brána / průlom) a pruh zálohy dole (`THIRDS`, `RESERVE_ZONE` v `battle_ui.js`). Zóna ukazuje jméno, kdo v ní stojí a stav fronty; klik ji otevře a pod obrazem se objeví její nabídka (steppery typů vojáků). Střed je otevřený hned.
 - Siege: slot `B` se jmenuje „Průlom“ (rozbořená hradba vpravo na obraze); pravidla ve `battle.js` jsou beze změny.

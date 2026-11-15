@@ -31,7 +31,7 @@ const BUILDING_ART = new Set(['stodola', 'mlynek', 'chlev', 'staj', 'chlivek', '
 const TOWN_ART = new Set([]);
 
 // rough height of the drawn icons above their base line (for scaling them into a clearing)
-const ICON_H = { kostel: 112, mlyn: 98, radnice: 122, katedrala: 136, hradby: 70, skola: 84, sachta: 76, spital: 90, lovci: 62, trziste: 46, kasarna: 66, lodenice: 62, sypka: 70, stodola: 62, kolna: 54, sad: 54, kaplicka: 70, vcelin: 50, chlivek: 40, chlev: 50, staj: 44, krcma: 66, kovarna: 68, cech: 68, sklad: 52, dilna: 60, celednik: 74, rybnik: 30, mlynek: 82 };
+const ICON_H = { kostel: 112, mlyn: 98, radnice: 122, katedrala: 136, hradby: 70, skola: 84, sachta: 76, spital: 90, lovci: 62, trziste: 46, kasarna: 66, lodenice: 62, sypka: 70, stodola: 62, kolna: 54, sad: 54, kaplicka: 70, vcelin: 50, chlivek: 40, chlev: 50, staj: 44, krcma: 66, kovarna: 68, vyhen: 60, cech: 68, sklad: 52, dilna: 60, celednik: 74, rybnik: 30, mlynek: 82 };
 
 const ICONS = {
   kostel: () => `${rect(-48, -28, 62, 42, C.wall)}${gable(-48, -28, 62, 24, C.roof)}${win(-38, -16)}${win(-22, -16)}
@@ -101,6 +101,7 @@ const ICONS = {
     <path d="M-34 -10q2 -10 9 -12l3 4q-3 2 -4 8z" fill="#7a5232" stroke="${C.ink}" stroke-width="1"/><path d="M42 14v-22h10" stroke="${C.wood2}" stroke-width="2.5" fill="none"/>`,
   chlivek: () => `${rect(-44, -14, 50, 28, C.stone)}${gable(-44, -14, 50, 16, '#a08550')}${door(-19, 14, 10, 14)}<path d="M10 14v-14M24 14v-14M38 14v-14M10 2h28M10 9h28" stroke="${C.wood2}" stroke-width="2.2"/>
     <g transform="translate(25 20) scale(.8)">${beast('pigs')}</g>`,
+  vyhen: () => ICONS.kovarna(), // the farm's small forge looks like the smithy of the towns
 };
 
 // ---------- farm animals and grain (farm.js), drawn about 60 × 36 around 0,0 ----------
