@@ -235,7 +235,7 @@ export function applyEffects(state, effects) {
   if (!effects) return;
   for (const key of Object.keys(effects)) {
     if (state.resources[key] === undefined) continue;
-    state.resources[key] = clampRes(key, state.resources[key] + effects[key]);
+    state.resources[key] = clampRes(key, state.resources[key] + effects[key], state.scenario);
   }
 }
 
@@ -1159,9 +1159,9 @@ function processPeasantEconomy(state) {
   }
   r.gold = clampRes('gold', r.gold + goldIncome);
   r.food = clampRes('food', r.food + foodIncome);
-  if (r.army < 15 && state.turn % 2 === 0) r.stability = clamp(r.stability - 1); // too few hands for the fields
-  else if (r.food >= 20 && r.favor >= 40 && r.stability < 65 && state.turn % 2 === 1) r.stability = clamp(r.stability + 1);
-  if (r.food <= 5) r.stability = clamp(r.stability - 3);
+  if (r.army < 15 && state.turn % 2 === 0) r.stability = clampRes('stability', r.stability - 1, state.scenario); // too few hands for the fields
+  else if (r.food >= 20 && r.favor >= 40 && r.stability < 65 && state.turn % 2 === 1) r.stability = clampRes('stability', r.stability + 1, state.scenario);
+  if (r.food <= 5) r.stability = clampRes('stability', r.stability - 3, state.scenario);
   if (r.prestige > 50 && state.turn % 2 === 1) r.prestige -= 1;
   if (r.faith !== 50 && state.turn % 3 === 0) r.faith += r.faith > 50 ? -1 : 1;
   // a lord forgets good service quickly and remembers nothing else (a cruel one twice as fast, a fair one half)
