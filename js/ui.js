@@ -3,6 +3,7 @@ import { interpolate, computeSuccessChance, attitudeLabel, ownProvinces, reignEp
 import { ICONS } from './icons.js';
 import { crestSvg } from './crests.js';
 import { crestSvgOf, ensureCrest, hasOwnCrest, blazon } from './heraldry.js';
+import { TABS, paintTab } from './tab_icons.js';
 import { houseMuster, musterText, boonText, relLabel, housePairs, houseActions } from './houses.js';
 import { playMusic, setAllMuted } from './audio.js';
 import { rulerPortraitCandidates, memberPortraitCandidates, portraitImg } from './character.js';
@@ -118,6 +119,14 @@ function showResTip(chip) {
   const text = (help.by && help.by[state.scenario]) || help.text || '';
   const cap = RESOURCE_CAP[def.key] ?? 100;
   const value = state.resources[def.key];
+  tipBox();
+  resTip.innerHTML = `<b>${esc(resourceLabel(def, state.scenario))}</b> <span class="rt-val">${value} / ${cap}</span><p>${esc(text)}</p>${value <= def.critical ? '<p class="rt-warn">Nebezpečně málo.</p>' : ''}`;
+  resTip.dataset.res = def.key;
+  placeTip(chip);
+}
+
+/** The bubble element (one for the gauges and the tabs): created on first use. */
+function tipBox() {
   if (!resTip) {
     resTip = document.createElement('div');
     resTip.className = 'res-tip';
@@ -125,10 +134,13 @@ function showResTip(chip) {
     resTip.setAttribute('role', 'tooltip');
     document.body.appendChild(resTip);
   }
-  resTip.innerHTML = `<b>${esc(resourceLabel(def, state.scenario))}</b> <span class="rt-val">${value} / ${cap}</span><p>${esc(text)}</p>${value <= def.critical ? '<p class="rt-warn">Nebezpečně málo.</p>' : ''}`;
+  return resTip;
+}
+
+/** Shows the bubble under an element, kept inside the window. */
+function placeTip(el) {
   resTip.hidden = false;
-  resTip.dataset.res = def.key;
-  const r = chip.getBoundingClientRect();
+  const r = el.getBoundingClientRect();
   const w = resTip.offsetWidth;
   const left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2));
   resTip.style.left = `${left}px`;
@@ -158,6 +170,33 @@ function wireResTips(bar) {
 // the short name written under every gauge, so nobody has to guess what an icon means
 const CHIP_SHORT = { 'Přízeň vrchnosti': 'Přízeň', 'Přízeň koruny': 'Přízeň', 'Přízeň krále': 'Přízeň', 'Nárok na trůn': 'Nárok', Legitimita: 'Legitimita' };
 const chipName = (def, scenario) => { const n = resourceLabel(def, scenario); return CHIP_SHORT[n] || n; };
+
+// ---- the tabs of the book: icon buttons, the name in a bubble ----
+export function initBookTabs() {
+  const nav = document.querySelector('.book-tabs');
+  if (!nav || nav.dataset.icons) return;
+  nav.dataset.icons = '1';
+  nav.querySelectorAll('.book-tab').forEach((tab) => paintTab(tab, tab.dataset.panel, TABS[tab.dataset.panel].label));
+  const tabOf = (e) => e.target.closest && e.target.closest('.book-tab');
+  const show = (tab) => {
+    tipBox().innerHTML = `<b>${esc(tab.dataset.tipTitle)}</b><p>${esc(tab.dataset.tipText)}</p>`;
+    delete resTip.dataset.res;
+    placeTip(tab);
+  };
+  let touch = false;
+  document.addEventListener('pointerdown', (e) => { touch = e.pointerType === 'touch'; }, true);
+  nav.addEventListener('mouseover', (e) => { const t = tabOf(e); if (t && !touch) show(t); });
+  nav.addEventListener('mouseout', (e) => { if (tabOf(e) && !touch) hideResTip(); });
+  nav.addEventListener('focusin', (e) => { const t = tabOf(e); if (t && !touch && e.target.matches(':focus-visible')) show(t); });
+  nav.addEventListener('focusout', hideResTip);
+  nav.addEventListener('click', hideResTip);
+}
+
+/** A tab changes its name with the stage of life (Rodina / Dvůr, Rody / Vazalové); the picture stays the same. */
+function retitleTab(tab, key, label, hint) {
+  if (tab.dataset.tabKey === key && tab.dataset.tipTitle === label) return;
+  paintTab(tab, key, label, hint);
+}
 
 export function renderResourceBar(state) {
   const bar = document.getElementById('resource-chips');
@@ -202,7 +241,7 @@ export function updateBookTabFlags(state) {
   const anyUnrest = ownProvinces(state).some((p) => p.unrest >= 70);
   const housesTab = document.querySelector('.book-tab[data-panel="houses"]');
   housesTab.hidden = state.scenario === 'sedlak' || !state.houses; // the noble's Rody, the king's Vazalové
-  housesTab.textContent = state.scenario === 'panovnik' ? 'Vazalové' : 'Rody';
+  retitleTab(housesTab, 'houses', state.scenario === 'panovnik' ? 'Vazalové' : 'Rody', state.scenario === 'panovnik' ? 'Velké rody pod korunou: hotovost, přízeň a léna.' : undefined);
   document.querySelector('.book-tab[data-panel="war"]').hidden = state.scenario === 'sedlak'; // a peasant wages no wars
   if (state.houses) housesTab.classList.toggle('flagged', (state.scenario === 'slechtic' && state.resources.favor <= 25) || state.houses.some((h) => h.attitude < 25 || h.rebelPending));
   const anyDisloyal = [state.heir, state.spouse, state.chancellor, state.marshal, state.spymaster]
@@ -213,7 +252,7 @@ export function updateBookTabFlags(state) {
   courtTab.classList.toggle('flagged', anyDisloyal);
   // a peasant has a family and neighbours, not a court
   const peasant = state.scenario === 'sedlak';
-  courtTab.textContent = peasant ? 'Rodina' : 'Dvůr';
+  retitleTab(courtTab, peasant ? 'family' : 'court', peasant ? 'Rodina' : 'Dvůr');
   document.getElementById('court-title').textContent = peasant ? 'Rodina a ves' : 'Dvůr';
   document.getElementById('court-overline').textContent = peasant ? 'Rod a sousedé' : 'Rod a rádci';
   document.getElementById('court-hint').textContent = peasant
