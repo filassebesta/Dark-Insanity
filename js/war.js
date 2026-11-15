@@ -473,7 +473,7 @@ function endWar(state, how, news) {
   const f = state.ruler.gender === 'female';
   const corps = fieldCorps(state);
   const back = Math.max(0, w.power);
-  state.lastWar = { ...warTokens(state), 'war.men': String(back) };
+  state.lastWar = { ...warTokens(state), 'war.men': String(back), house: (t && t.house) || null };
   if (ensureTroops(state)) for (const k of TROOP_KEYS) state.troops[k] += corps[k] || 0;
   state.resources.army = clampRes('army', state.resources.army + back);
   syncTroops(state);
@@ -482,6 +482,8 @@ function endWar(state, how, news) {
   if (t.rebellion && !t.gone) return endRebellion(state, how, back, news);
   // a won or lost campaign gets its own closing scene
   if ((how === 'win' || how === 'lose') && !t.gone) queueAfter(state, how === 'win' ? 'w_triumf' : 'w_porazka');
+  // a won private war: the victor decides the fate of the beaten house (events_war.js w_rod_osud), after the homecoming
+  if (how === 'win' && t.house && !t.gone) (state.eventQueue = state.eventQueue || []).push('w_rod_osud');
   if (key === 'crown') delete state.flags.rebellion; // the king died meanwhile: the revolt has no one left to fight
   let text;
   if (how === 'win') {

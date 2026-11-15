@@ -323,6 +323,42 @@ export const WAR_EVENTS = [
   },
 
   {
+    // after a won private war: the victor decides what becomes of the beaten house (war.js endWar queues it)
+    id: 'w_rod_osud',
+    scenarios: ['slechtic'], forced: true,
+    target: (s) => s.lastWar && s.lastWar.house,
+    dropIf: (s) => !(s.lastWar && s.lastWar.house && (s.houses || []).some((h) => h.id === s.lastWar.house)),
+    image: img('vojenska_prehlidka'),
+    title: 'Osud poraženého rodu',
+    text: 'Družina rodu {house.gen} složila zbraně a na nádvoří tvé tvrze stojí {house.headTitle} {house.head} v poutech. {house.heirs} Rod je na tvé milosti a celé okolí čeká, co s ním uděláš. Až se slovo rozletí, zapamatují si to všichni páni v zemi.',
+    choices: [
+      {
+        label: 'Nechat rod žít a vzít výkupné',
+        hintType: 'resource', hintKey: 'gold',
+        effects: { gold: 8, prestige: 1 },
+        houseEffects: { target: { attitude: 10 } },
+        chronicle: 'Rod {house.gen} zaplatil výkupné a zůstal stát. {house.HeadTitle} {house.head} ví, komu vděčí za život, a vděk je trpká věc.',
+      },
+      {
+        label: 'Zajmout dědice jako rukojmí',
+        requires: (s) => { const h = (s.houses || []).find((x) => x.id === s.eventContext?.house); return !!(h && h.heirs && h.heirs.length); },
+        hintType: 'resource', hintKey: 'prestige',
+        effects: { gold: 6, prestige: 2 },
+        houseFate: 'hostages',
+        chronicle: 'Dědicové rodu {house.gen} odešli na tvůj dvůr. Dokud tam budou, nezvedne se proti tobě ani jeden meč z jejich družiny.',
+      },
+      {
+        label: 'Vyhubit rod a zabrat jeho pozemky',
+        hintType: 'resource', hintKey: 'gold',
+        effects: { gold: 12, prestige: -3, favor: -6, legitimacy: -2 },
+        houseEffects: { '*': { attitude: -8 } },
+        houseFate: 'extinct',
+        chronicle: 'Rod {house.gen} přestal existovat. {house.HeadTitle} {house.head} i všichni dědicové padli a pozemky rodu zabral rod {dynastyName}. Ostatní rody od té doby zamykají brány a drží stráže i ve dne.',
+      },
+    ],
+  },
+
+  {
     id: 'w_porazka',
     scenarios: REALM, forced: true,
     image: img('stary_rytir_umira'),
