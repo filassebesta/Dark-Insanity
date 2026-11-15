@@ -7,6 +7,8 @@
 
 import { stat } from './data.js';
 
+const heldKeys = (s) => Object.keys(s.realms || {}).filter((k) => s.realms[k].owner === 'player');
+
 const REALM = ['panovnik', 'slechtic'];
 const ownProvinces = (s) => s.provinces.filter((p) => !p.lost && (!p.owner || p.owner === 'player'));
 const heirSum = (s) => (s.heir && s.heir.alive !== false && s.heir.traits ? Object.values(s.heir.traits).reduce((a, b) => a + b, 0) : 0);
@@ -121,12 +123,28 @@ export const AMBITIONS = {
     metric: (s) => s.ruler.statusTier,
     reward: { effects: { prestige: 6, stability: 3 } }, trait: 'patience',
   },
+  // the way to the empire: both neighbouring crowns on one head (tier 6), however many are already held
   cisarstvi: {
-    name: 'Říše', goal: 1, kind: 'gain', years: 10, scenarios: ['panovnik'], unit: 'cizích korun',
-    text: 'Získat korunu sousední země.',
-    available: (s) => !!s.realms && Object.values(s.realms).filter((r) => r.owner === 'player').length < 2,
-    metric: (s) => stat(s, 'crownsTaken'),
+    name: 'Říše', goal: 2, kind: 'reach', years: 14, scenarios: ['panovnik'], unit: 'cizích korun',
+    text: 'Nosit korunu Východních marek i Severních pustin a stát se císařem.',
+    available: (s) => heldKeys(s).length < 2,
+    metric: (s) => heldKeys(s).length,
     reward: { effects: { prestige: 8, legitimacy: 5 } }, trait: 'strength',
+  },
+  // the late game: an empire is held, not won
+  risa_pevna: {
+    name: 'Pevná říše', goal: 60, kind: 'reach', years: 6, scenarios: ['panovnik'], unit: 'věrnosti nejméně věrné země',
+    text: 'Dovést všechny dobyté země k věrnosti aspoň šedesát.',
+    available: (s) => heldKeys(s).length >= 1 && Math.min(...heldKeys(s).map((k) => s.realms[k].attitude)) < 60,
+    metric: (s) => (heldKeys(s).length ? Math.min(...heldKeys(s).map((k) => s.realms[k].attitude)) : 0),
+    reward: { effects: { prestige: 6, stability: 4, legitimacy: 3 } }, trait: 'patience',
+  },
+  risa_dedic: {
+    name: 'Místokrál z rodu', goal: 1, kind: 'gain', years: 6, scenarios: ['panovnik'], unit: 'místokrálů',
+    text: 'Poslat dědice vládnout jedné z dobytých zemí jako místokrále.',
+    available: (s) => heldKeys(s).length >= 1 && !!s.heir && s.heir.alive !== false && !s.heir.none && s.heir.age >= 13 && !heldKeys(s).some((k) => s.empire && s.empire.r && s.empire.r[k] && s.empire.r[k].viceroy),
+    metric: (s) => stat(s, 'viceroys'),
+    reward: { effects: { prestige: 5, legitimacy: 4 }, courtEffects: { heir: { loyalty: 10 } } }, trait: 'eloquence',
   },
   sypka: {
     name: 'Plná sýpka', goal: 60, kind: 'reach', years: 3, scenarios: ['sedlak'], unit: 'zásob',

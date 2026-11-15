@@ -4,9 +4,9 @@
 // rollParts); a cold relationship makes them harder. Talks change loyalty,
 // sometimes a trait, a resource or bring news. No DOM here — talk_ui.js draws it.
 
-import { clamp, bumpStat, TRAIT_DEFS } from './data.js';
+import { clamp, bumpStat, TRAIT_DEFS, clampRes } from './data.js';
 import { roleLabel, COURT_ROLES } from './court.js';
-import { personOf, marry, canConceive, conceiveChance, startPregnancy, isMarried, takeLover, loverCanConceive, loverConceiveChance, startLoverPregnancy } from './family.js';
+import { personOf, marry, canDivorce, divorce, canConceive, conceiveChance, startPregnancy, isMarried, takeLover, loverCanConceive, loverConceiveChance, startLoverPregnancy } from './family.js';
 
 // 'suitor:2' → 'suitor', 'spouse' → 'spouse'
 const kindOf = (role) => String(role).split(':')[0];
@@ -126,6 +126,12 @@ export const TOPICS = {
     win: { loyalty: 4, child: true }, lose: { loyalty: 2 },
     text: [(c) => `Noc patřila jen vám dvěma. Za pár týdnů ${g(c, 'jsi poznala, že čekáš dítě, a ' + c.name + ' tě nadšeně zvedl do náruče', c.name + ' ti s úsměvem oznámila, že čeká dítě')}.`,
       (c) => `Noc patřila jen vám dvěma. Dítě zatím nepřišlo — ale ${c.name} se usmívá a říká, že máte čas.`],
+  },
+  rozvod: {
+    label: 'Navrhnout rozvod', roles: ['spouse'], confirm: true, tag: 'má těžké následky',
+    available: (c, s) => isMarried(s),
+    win: { divorce: true },
+    text: [(c, s) => `${c.name} dlouho mlčel${g(c, '', 'a')}. Pak ${g(c, 'si sbalil', 'si sbalila')} věci a ${g(c, 'odešel', 'odešla')} z domu. Děti zůstávají s tebou a ve dvoře je najednou ticho.`],
   },
   nam_rec: {
     label: 'Dát se do řeči', roles: ['suitor'],
@@ -271,7 +277,7 @@ export function holdTalk(state, role, key, success) {
   const res = success ? t.win : t.lose || t.win;
   const notes = [];
   const cost = t.cost ? t.cost(state) : null;
-  for (const [k, v] of Object.entries(cost || {})) state.resources[k] = clamp(state.resources[k] - v);
+  for (const [k, v] of Object.entries(cost || {})) state.resources[k] = clampRes(k, state.resources[k] - v);
   // a suitor's heart, a court member's loyalty
   let delta = res.loyalty || res.affection || 0;
   if (kindOf(role) === 'suitor') {
@@ -281,7 +287,7 @@ export function holdTalk(state, role, key, success) {
     if (res.lover) takeLover(state, idx);
     if (res.bastard) startLoverPregnancy(state, idx);
     if (res.endLover) c.lover = false;
-    for (const [k, v] of Object.entries(res.effects || {})) if (state.resources[k] !== undefined) state.resources[k] = clamp(state.resources[k] + v);
+    for (const [k, v] of Object.entries(res.effects || {})) if (state.resources[k] !== undefined) state.resources[k] = clampRes(k, state.resources[k] + v);
     const text = (success ? t.text[0] : t.text[1] || t.text[0])(c, state, role);
     c.talkTurn = state.turn;
     if (t.yearly) { c.topicYear = c.topicYear || {}; c.topicYear[key] = state.year; }
@@ -294,15 +300,23 @@ export function holdTalk(state, role, key, success) {
     }
     return { text, delta, notes, role };
   }
+  if (res.divorce) {
+    const why = canDivorce(state);
+    if (why) return { text: why, delta: 0, notes, role };
+    const text = t.text[0](c, state, role);
+    divorce(state);
+    bumpStat(state, 'talks');
+    return { text, delta: 0, notes, role, closed: true };
+  }
   if (res.child) { startPregnancy(state); delete state.flags.no_more_children; }
   if (key === 'dar' && c.quirk === 'chamtivy') delta += 4;
   // a promise to the ambitious is paid in loyalty now and remembered
   if (res.promise) { c.promised = state.turn; }
   c.loyalty = clamp(c.loyalty + delta);
-  for (const [k, v] of Object.entries(res.effects || {})) if (state.resources[k] !== undefined) state.resources[k] = clamp(state.resources[k] + v);
+  for (const [k, v] of Object.entries(res.effects || {})) if (state.resources[k] !== undefined) state.resources[k] = clampRes(k, state.resources[k] + v);
   if (res.advice) {
     const a = (state.scenario === 'sedlak' ? ADVICE_PEASANT : ADVICE)[role];
-    for (const [k, v] of Object.entries(a.effects)) if (state.resources[k] !== undefined) state.resources[k] = clamp(state.resources[k] + v);
+    for (const [k, v] of Object.entries(a.effects)) if (state.resources[k] !== undefined) state.resources[k] = clampRes(k, state.resources[k] + v);
     notes.push(...Object.entries(a.effects).map(([k, v]) => `${k}:${v}`));
   }
   if (res.teach) state.ruler.traits[TEACHES[role]] = Math.min(10, state.ruler.traits[TEACHES[role]] + 1);

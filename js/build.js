@@ -12,9 +12,9 @@
 // only what the player builds pays off on top.
 // No DOM here — town.js draws it, engine.js runs it every season.
 
-import { clamp, bumpStat } from './data.js';
+import { clamp, bumpStat, clampRes } from './data.js';
 import { makeChronicleEntry } from './state.js';
-import { ensureTrade, MAX_STOCK } from './trade.js';
+import { ensureTrade, maxStock, WAREHOUSE } from './trade.js';
 import { farmBuildingDone } from './farm.js';
 
 // ---------- settlements ----------
@@ -114,8 +114,8 @@ export const BUILDINGS = {
   },
   mlyn: {
     name: 'Mlýn', cost: { gold: 10 }, turns: 2, minLevel: 1,
-    income: { food: 1 },
-    text: 'Mele obilí celého okolí a mlynář odvádí každý desátý pytel.',
+    income: { food: 1 }, stock: { flour: 1 },
+    text: 'Mele obilí celého okolí. Mlynář odvádí každý desátý pytel a každé jaro přibude ve skladu vůz mouky na prodej.',
   },
   krcma: {
     name: 'Krčma', cost: { gold: 6 }, turns: 1, minLevel: 1,
@@ -151,6 +151,11 @@ export const BUILDINGS = {
     name: 'Radnice', cost: { gold: 25 }, turns: 3, minLevel: 3,
     income: { gold: 1 }, drift: { order: 2, loyalty: 2 },
     text: 'Konšelé, městská kniha a pečeť. Město si začne vládnout samo — a platit za to.',
+  },
+  sklad: {
+    name: 'Skladiště', cost: { gold: 14 }, turns: 2, minLevel: 2, requires: 'trziste',
+    warehouse: WAREHOUSE.sklad,
+    text: 'Kamenné sklepy a zastřešené kůlny u tržiště. Do skladu se vejde o šest vozů od každého zboží víc.',
   },
   cech: {
     name: 'Cechovní dům', cost: { gold: 20 }, turns: 3, minLevel: 3, requires: 'trziste',
@@ -192,11 +197,11 @@ export const FARM_BUILDINGS = {
   stodola: {
     name: 'Stodola', cost: { gold: 5 }, turns: 2, minLevel: 1,
     income: { food: 2 }, seasons: [2], onBuild: { stability: 2 },
-    text: 'Místo pro úrodu a obilí v pytlích. Co se nevejde pod střechu, to sežerou myši a déšť.',
+    text: 'Místo pro úrodu: do stodoly se vejde dvanáct vozů obilí (bez ní jen čtyři na půdě chalupy). Co se nevejde pod střechu, to sežerou myši a déšť.',
   },
   mlynek: {
     name: 'Mlýn', cost: { gold: 12 }, turns: 3, minLevel: 2,
-    text: 'Vodní mlýnek na potoce za humny. Mele obilí celé vsi a z každého pytle si nechá mírku.',
+    text: 'Vodní mlýnek na potoce za humny. Každé období semele až dva vozy obilí na mouku, která se prodá dráž než zrno, a mlynářova mírka zůstane v komoře.',
   },
   chlev: {
     name: 'Chlév', cost: { gold: 6 }, turns: 2, minLevel: 1,
@@ -210,6 +215,11 @@ export const FARM_BUILDINGS = {
   chlivek: {
     name: 'Chlívek', cost: { gold: 4 }, turns: 1, minLevel: 1,
     text: 'Chlívek pro prasata. Prasnice na jaře vrhne selata a v zimě je zabijačka.',
+  },
+  kolna: {
+    name: 'Kolna na vozy', cost: { gold: 6 }, turns: 1, minLevel: 1,
+    warehouse: WAREHOUSE.kolna,
+    text: 'Přístřešek pro vozy a pytle s obilím. Do skladu i do stodoly se vejdou o čtyři vozy od každého zboží víc.',
   },
   vcelin: {
     name: 'Včelín', cost: { gold: 4 }, turns: 1, minLevel: 1,
@@ -225,6 +235,11 @@ export const FARM_BUILDINGS = {
     name: 'Boží muka', cost: { gold: 3 }, turns: 1, minLevel: 1,
     yearly: { faith: 2 }, onBuild: { prestige: 2 },
     text: 'Kamenný sloupek s obrázkem svatého na mezi. Ves ví, že tady bydlí zbožný hospodář.',
+  },
+  vyhen: {
+    name: 'Výheň', cost: { gold: 6 }, turns: 2, minLevel: 1,
+    yearly: { gold: 1 }, onBuild: { stability: 3 },
+    text: 'Malá kovářská výheň za chalupou. Radlice a podkovy se opraví doma a ušetřené groše se vrátí.',
   },
   dilna: {
     name: 'Dílna', cost: { gold: 8 }, turns: 2, minLevel: 3,
@@ -340,7 +355,7 @@ export function canAfford(state, cost) {
 
 function pay(state, cost, share = 1) {
   for (const [k, v] of Object.entries(cost || {})) {
-    if (state.resources[k] !== undefined) state.resources[k] = clamp(state.resources[k] - Math.round(v * share));
+    if (state.resources[k] !== undefined) state.resources[k] = clampRes(k, state.resources[k] - Math.round(v * share));
   }
 }
 
@@ -350,7 +365,7 @@ function addRes(state, key, value) {
   if (r[key] === undefined || !value) return 0;
   if (key === 'legitimacy' && state.scenario === 'slechtic') return 0;
   const before = r[key];
-  r[key] = clamp(before + value);
+  r[key] = clampRes(key, before + value);
   return r[key] - before;
 }
 
@@ -370,6 +385,21 @@ export function buildBlock(state, id, key) {
   if (crews) return crews;
   if (!canAfford(state, def.cost)) return 'Na tohle nemáš.';
   return null;
+}
+
+/**
+ * Can an event start this building for free right now? (an event that takes the money must also really build:
+ * the settlement is the player's, the building belongs there and does not stand yet, nothing else is being built,
+ * there is a free plot). Money is not checked, the event's own cost is.
+ */
+export function canRaise(state, id, key) {
+  if (!settlementDef(id) || !catalogFor(id)[key] || !ownsTown(state, id)) return false;
+  const town = townOf(state, id);
+  const def = buildingDef(key);
+  if (town.buildings.some((b) => b.key === key) || currentProject(town) || town.level < def.minLevel) return false;
+  const slots = slotCount(id, town.level);
+  for (let i = 0; i < slots; i++) if (!town.buildings.some((b) => b.slot === i)) return true;
+  return false;
 }
 
 export function freeSlot(state, id, slot) {
@@ -524,7 +554,7 @@ export function processBuilding(state) {
       }
       if (spring && def.stock) {
         const t = ensureTrade(state);
-        for (const [g, n] of Object.entries(def.stock)) t.stock[g] = Math.min(MAX_STOCK, (t.stock[g] || 0) + n);
+        for (const [g, n] of Object.entries(def.stock)) t.stock[g] = Math.min(maxStock(state), (t.stock[g] || 0) + n);
       }
     }
   }
@@ -618,7 +648,7 @@ export function buildingDrift(state, provinceId) {
 
 /** Everything the finished buildings of a town give, summed for display. */
 export function townYield(state, id) {
-  const sum = { income: {}, yearly: {}, stock: {}, drift: {} };
+  const sum = { income: {}, yearly: {}, stock: {}, drift: {}, warehouse: 0 };
   const add = (bucket, obj, seasons) => {
     for (const [k, v] of Object.entries(obj || {})) {
       // seasonal income (a granary in winter) counts once a year
@@ -632,6 +662,7 @@ export function townYield(state, id) {
     add(sum.yearly, def.yearly);
     add(sum.stock, def.stock);
     add(sum.drift, def.drift);
+    sum.warehouse += def.warehouse || 0;
   }
   return sum;
 }

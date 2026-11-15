@@ -1,6 +1,9 @@
 // War events (see war.js): raised by processWar as state.pendingEvent, one
 // each season the army stands in the field, and a closing one after a won or
 // lost campaign. Branch extra `war`: { progress, morale, power, won, wound, end }.
+// Choices with `deploy: 'field' | 'siege' | 'ambush'` open the deployment screen (battle_ui.js): the player
+// places the corps in slots and the result (battle.js) replaces the branch's own `war` effects; the
+// branches stay for the fallback (no army in the field) and for the council's reckoning.
 // Tokens: {war.target} {war.enemy} {war.loc} {war.leader} {war.men}.
 
 import { warBonus } from './war.js';
@@ -18,8 +21,9 @@ export const WAR_EVENTS = [
     text: 'Za úsvitu stojí na protějším návrší {war.enemy}. {war.leader} objíždí řady a {war.men} mužů čeká na rozkaz. Jedna bitva může rozhodnout celé tažení — nebo ho ukončit.',
     choices: [
       {
-        label: 'Udeřit čelně',
+        label: 'Seřadit vojsko a udeřit čelně',
         hintType: 'resource', hintKey: 'army',
+        deploy: 'field',
         isRoll: true, baseChance: 0.5, chanceBonus: warBonus, bonusLabel: 'Vojsko v poli', noInjury: true,
         onSuccess: { effects: { prestige: 2 }, war: { progress: 35, morale: 10, power: -2, won: true }, music: 'battle', chronicle: 'Útok prorazil nepřátelské řady a nepřítel prchl z bojiště. Do tábora se vojsko vracelo za zpěvu.' },
         onFailure: { war: { progress: -5, morale: -18, power: -6, wound: 0.35 }, music: 'battle', chronicle: 'Útok se zlomil o nepřátelské štíty. Na svahu zůstalo ležet mnoho dobrých mužů.' },
@@ -27,6 +31,7 @@ export const WAR_EVENTS = [
       {
         label: 'Obejít je lesem a vpadnout do boku',
         hintType: 'trait', hintKey: 'intelligence',
+        deploy: 'field', stance: 'flank',
         isRoll: true, baseChance: 0.3, traitKey: 'intelligence', traitScale: 0.03, chanceBonus: warBonus, bonusLabel: 'Vojsko v poli',
         onSuccess: { war: { progress: 45, morale: 12, power: -1, won: true }, traitGain: 'intelligence', music: 'battle', chronicle: 'Jízda se vynořila z lesa nepříteli v zádech. Bitva skončila dřív, než pořádně začala.' },
         onFailure: { war: { morale: -12, power: -4, wound: 0.2 }, music: 'battle', chronicle: 'Les byl hustší, než se zdálo. Oddíl zabloudil a přišel do bitvy pozdě a vyčerpaný.' },
@@ -50,6 +55,7 @@ export const WAR_EVENTS = [
       {
         label: 'Vzít hradby útokem',
         hintType: 'resource', hintKey: 'army',
+        deploy: 'siege',
         isRoll: true, baseChance: 0.4, chanceBonus: warBonus, bonusLabel: 'Vojsko v poli', noInjury: true,
         onSuccess: { effects: { prestige: 3 }, war: { progress: 45, morale: 10, power: -4, won: true }, music: 'battle', chronicle: 'Žebříky se opřely o hradby a první muži byli nahoře dřív, než obránci stačili shodit kameny. Pevnost padla.' },
         onFailure: { war: { progress: 5, morale: -15, power: -8, wound: 0.35 }, music: 'battle', chronicle: 'Útok na hradby skončil masakrem v příkopu. Obránci jásali až do noci.' },
@@ -67,6 +73,38 @@ export const WAR_EVENTS = [
         isRoll: true, baseChance: 0.3, traitKey: 'intelligence', traitScale: 0.03, chanceBonus: warBonus, bonusLabel: 'Vojsko v poli',
         onSuccess: { war: { progress: 40, power: -1, won: true }, chronicle: 'Horníci vykopali štolu pod nárožní věží a zapálili trámy. Věž se zřítila i s kusem hradby.' },
         onFailure: { war: { morale: -8, power: -3 }, chronicle: 'Obránci podkop objevili a zaplavili ho vodou. Horníci se už nevrátili.' },
+      },
+    ],
+  },
+
+  {
+    id: 'w_prepad',
+    scenarios: REALM, forced: true, music: 'battle',
+    image: img('lapkove_ve_hvozdu'),
+    title: 'Přepadení v soutěsce',
+    text: 'Kolona se táhla úžlabinou, když se na obou svazích ozvaly rohy: {war.enemy} čekali v lese a vozy jsou uprostřed. {war.leader} křičí rozkazy. Co se postaví do řady, má šanci; co zůstane na cestě, je ztraceno.',
+    choices: [
+      {
+        label: 'Rozvinout se do řady a bojovat',
+        hintType: 'resource', hintKey: 'army',
+        deploy: 'ambush',
+        isRoll: true, baseChance: 0.4, chanceBonus: warBonus, bonusLabel: 'Vojsko v poli', noInjury: true,
+        onSuccess: { war: { progress: 20, morale: 8, power: -3, won: true }, music: 'battle', chronicle: 'Vojsko se rozvinulo pod šípy a útočníky z lesa vyhnalo. Vozy zůstaly celé.' },
+        onFailure: { war: { progress: -8, morale: -18, power: -7, wound: 0.3 }, music: 'battle', chronicle: 'Kolona se v úžlabině rozpadla. Co nezahynulo, prchalo k vozům.' },
+      },
+      {
+        label: 'Prorazit kolonou dál a vozy obětovat',
+        hintType: 'trait', hintKey: 'strength',
+        isRoll: true, baseChance: 0.45, traitKey: 'strength', traitScale: 0.03, chanceBonus: warBonus, bonusLabel: 'Vojsko v poli',
+        onSuccess: { effects: { food: -4 }, war: { morale: -4, power: -2 }, chronicle: 'Vojsko se prorazilo úžlabinou za cenu poloviny vozů. Hlavní síly dorazily celé.' },
+        onFailure: { effects: { food: -6 }, war: { morale: -12, power: -6 }, chronicle: 'Kolona uvízla mezi svahy. Zadní voj byl vyvražděn a vozy shořely.' },
+      },
+      {
+        label: 'Odhodit vozy a ustoupit do lesa',
+        hintType: 'trait', hintKey: 'patience',
+        effects: { food: -6 },
+        war: { progress: -5, morale: -10, power: -2 },
+        chronicle: 'Vojsko odhodilo vozy a rozptýlilo se v lese. Zásoby byly pryč, ale lidé zůstali naživu.',
       },
     ],
   },
@@ -235,8 +273,8 @@ export const WAR_EVENTS = [
         requires: gold(5),
         hintType: 'resource', hintKey: 'gold',
         effects: { gold: -5 },
-        war: { progress: 15 },
-        chronicle: 'Zvěd dostal zlato a vojsko cestu, o které nepřítel nevěděl.',
+        war: { progress: 15, scout: true },
+        chronicle: 'Zvěd dostal zlato a vojsko cestu, o které nepřítel nevěděl. Zná teď i nepřátelské řady.',
       },
       {
         label: 'Vyslechnout ho na mučidlech',

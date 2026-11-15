@@ -29,3 +29,12 @@ export const ICONS = {
   sound: svg('<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>'),
   mute: svg('<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/>'),
 };
+
+// Troop types (troops.js): the same line style as the icons above.
+export const TROOP_ICONS = {
+  spear: svg('<path d="M14 22V8.5"/><path d="M14 2l3 6.5h-6z"/><path d="M11.5 11.5h5"/><path d="M6.8 12.6l4 1.6v3c0 2.4-1.9 4-4 4.8-2.1-.8-4-2.4-4-4.8v-3z"/>'),
+  archer: svg('<path d="M7 3c9 3.5 9 14.5 0 18"/><path d="M7 3v18"/><path d="M2.5 12H21"/><path d="M18 9l3 3-3 3"/><path d="M4.5 12l-1.6-2.2M4.5 12l-1.6 2.2"/>'),
+  horse: svg('<path d="M5.5 21h13"/><path d="M7.5 21c.2-3.2 1.2-5.2 3.2-7.2-2.1-.7-3.9-2.4-4.3-5l2.4-3.4.6 1.4 1.7-2.8c4.4.5 8 3.5 8 8.6 0 2.7-.5 5-.5 8.4"/><circle cx="11.2" cy="8.4" r=".5"/>'),
+  siege: svg('<circle cx="6.5" cy="19" r="2.3"/><circle cx="17.5" cy="19" r="2.3"/><path d="M3 16.5h18"/><path d="M7.5 16.5L15.5 6"/><path d="M11.8 16.5l2.5-5.3"/><path d="M14 4.5l3.6 1.2-1.2 3.5"/><circle cx="19.6" cy="3.8" r="1.5"/>'),
+  merc: svg('<circle cx="7.5" cy="16" r="4.3"/><circle cx="7.5" cy="16" r="1.6"/><path d="M16.5 2.5v12.5"/><path d="M13.5 13.5h6"/><path d="M16.5 15v5.5"/><path d="M15.2 4.5l1.3-2 1.3 2"/>'),
+};

@@ -8,7 +8,8 @@ const B = await import(root + 'build.js');
 const F = await import(root + 'farm.js');
 const { farmRule } = await import(new URL('./smart.mjs', import.meta.url).href);
 const runs = +(process.argv[2] || 400), AMB = +(process.argv[3] || 0.6);
-const ends = {}, seen = {}, lens = [], tiers = {}; let errors = 0, freedAt = [];
+const ends = {}, seen = {}, lens = [], tiers = {}, privGot = {}, privLost = {}; let errors = 0, freedAt = [];
+const heldNow = (st) => Object.keys(st.privileges || {});
 const WANT = ['Zaplatit plnou cenu', 'Smlouvat o cenu', 'Koupit tvrz a žádat o erb', 'Pokleknout a přijmout pás', 'Vrhnout se do první řady', 'Jít osobně', 'Koupit pole', 'Ucházet se o úřad'];
 for (let r = 0; r < runs; r++) {
   const st = createNewGame('A', 'B', 'male', 'sedlak');
@@ -24,7 +25,11 @@ for (let r = 0; r < runs; r++) {
       let pick = avail[Math.floor(Math.random() * avail.length)][1];
       const amb = avail.find(([c]) => WANT.includes(c.label));
       if (amb && Math.random() < AMB) pick = amb[1];
+      const before = heldNow(st);
       E.resolveChoice(st, e, pick);
+      const after = heldNow(st);
+      for (const k of after) if (!before.includes(k)) privGot[k] = (privGot[k] || 0) + 1;
+      for (const k of before) if (!after.includes(k) && st.scenario === 'sedlak') privLost[k] = (privLost[k] || 0) + 1;
       if (!freed && st.ruler.statusTier >= 2) { freed = true; freedAt.push(st.turn); }
       // spend the yearly decree sensibly: market when rich in food, otherwise cattle
       if (FARM) farmRule(B, F, st);
@@ -43,3 +48,4 @@ console.log('years median', (lens[runs >> 1] / 4).toFixed(1), 'p10', (lens[runs 
 console.log('endings', JSON.stringify(ends), 'tiers', tiers, 'errors', errors, 'freed', freedAt.length, 'median freed year', freedAt.length ? (freedAt[freedAt.length >> 1] / 4).toFixed(1) : '-');
 console.log('top', Object.entries(seen).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, v]) => k + ':' + v).join(' '));
 console.log('never', Object.keys(seen).length);
+console.log('privileges granted', JSON.stringify(privGot), 'lost', JSON.stringify(privLost), 'pv events', Object.entries(seen).filter(([k]) => k.startsWith('pv_')).map(([k, v]) => k + ':' + v).join(' '));

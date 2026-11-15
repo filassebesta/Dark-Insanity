@@ -41,7 +41,7 @@ export function renderWarBar(state) {
   const t = warTarget(state);
   const leader = w.leader === 'ruler' ? state.ruler.name : state.marshal.name;
   const marching = state.turn < w.arrive;
-  const [odds] = oddsLabel(state, w.target, w.power);
+  const [odds] = oddsLabel(state, w.target, w.troops || w.power);
   el.classList.toggle('urgent', w.morale < 30);
   el.innerHTML = `
     <span class="amb-over">Tažení</span>

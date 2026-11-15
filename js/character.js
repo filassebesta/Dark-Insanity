@@ -5,12 +5,14 @@ import { TRAIT_DEFS, STATUS_TIERS, SEASONS, tierTitle, yearsLabel } from './data
 import { traitBonuses, reignEpithet } from './engine.js';
 import { biography, loyaltyLabel, roleLabel, quirkLabel, quirkText } from './court.js';
 import { esc } from './ui.js';
+import { crestSvgOf, ensureCrest } from './heraldry.js';
 import { effectiveTraits, injuriesOf, injuryFx, INJURIES } from './injuries.js';
 import { ambitionSection } from './fame.js';
 import { talkSection } from './talk_ui.js';
 import { personOf, maleFirst } from './family.js';
 import { ensureGear, shopFor, ITEMS, SLOTS } from './gear.js';
 import { fighterOf } from './combat.js';
+import { privilegeOverview, MAX_PRIVILEGES } from './privileges.js';
 
 const TIER_SLUGS = [null, 'peasant', 'freeman', 'minor_noble', 'noble', 'king', 'emperor'];
 const OLD_AGE = 55;
@@ -62,8 +64,23 @@ export function memberPortraitCandidates(c, role, scenario) {
   const small = (role === 'heir' || role === 'child') && c.age < 7 ? [`assets/portraits/child_${g}.jpg`] : [];
   // a peasant's household has its own faces (s_<role>_<gender>), never the royal court's
   const base = `assets/portraits/${scenario === 'sedlak' ? 's_' : ''}${role === 'child' ? 'heir' : role}_${g}`;
+  // children, brothers, sisters and bastards grow up: from 17 on they get a grown-up face (adult_<s|n>_<gender>_<0|1>,
+  // docs/obrazky-rodina.md R8) — until those are painted, a fitting adult portrait stands in
+  if ((role === 'heir' || role === 'child') && !c.portrait && c.age >= ADULT_AGE) {
+    const stage = scenario === 'sedlak' ? 's' : 'n';
+    let h = 0;
+    for (const ch of String(c.name || '')) h = (h * 31 + ch.charCodeAt(0)) % 997;
+    const v = h % 2;
+    const stand = g === 'male'
+      ? `assets/portraits/${scenario === 'sedlak' ? 's_spouse' : 'spouse'}_male.jpg`
+      : `assets/portraits/ruler_${scenario === 'sedlak' ? 'peasant' : scenario === 'slechtic' ? 'noble' : 'king'}_female.jpg`;
+    return [...own, `assets/portraits/adult_${stage}_${g}_${v}.jpg`, `assets/portraits/adult_${stage}_${g}_${1 - v}.jpg`, stand, `${base}.jpg`, `${base}.png`];
+  }
   return [...own, ...small, `${base}.jpg`, `${base}.png`];
 }
+
+// the age at which a child's portrait gives way to a grown-up one
+const ADULT_AGE = 17;
 
 function reignYears(state) {
   return Math.floor((state.turn - (state.ruler.reignStartTurn || 0)) / 4);
@@ -77,6 +94,7 @@ function yearsWord(n) {
 
 const TRAIT_NAME = { strength: 'síla', eloquence: 'výřečnost', intelligence: 'inteligence', patience: 'trpělivost' };
 const SEASON_LOC = ['na jaře', 'v létě', 'na podzim', 'v zimě'];
+const SEASON_FROM = ['jara', 'léta', 'podzimu', 'zimy'];
 
 /** Gear: what the ruler carries into a fight, and what can be bought (gear.js). */
 function gearBlock(state) {
@@ -98,6 +116,26 @@ function gearBlock(state) {
     <ul class="cs-gear">${worn}</ul>
     <h4 class="cs-section cs-sub">${state.scenario === 'sedlak' ? 'U kováře' : 'Zbrojíř a koňský trh'} <small>· v pokladně ${state.resources.gold} ${coin}</small></h4>
     <div class="gear-shop">${shop}</div>`;
+}
+
+/** Privileges and offices (privileges.js): what the house holds, what it gives and asks, and what could still be had. */
+function privilegeBlock(state) {
+  if (state.ruler.statusTier > 3 || state.scenario === 'panovnik') return '';
+  const ov = privilegeOverview(state);
+  if (!ov.held.length && !ov.open.length) return '';
+  const items = ov.held.map((p) => `
+    <li class="${p.danger ? 'danger' : ''}">
+      <b>${esc(p.name)}</b><small>od ${SEASON_FROM[p.season]} roku ${p.year}${p.danger ? ' · pán je nespokojený' : ''}</small>
+      <span>${esc(p.text)}</span>
+      ${p.idle ? `<span class="cs-priv-idle">${esc(p.idle)}</span>` : ''}
+      ${p.grants.length ? `<div class="cs-priv-row give"><em>Dává</em>${p.grants.map((g) => `<i>${esc(g)}</i>`).join('')}</div>` : ''}
+      ${p.duties.length ? `<div class="cs-priv-row ask"><em>Žádá</em>${p.duties.map((g) => `<i>${esc(g)}</i>`).join('')}</div>` : ''}
+      ${p.risks.length ? `<div class="cs-priv-risk">${p.risks.map(esc).join(' ')}</div>` : ''}
+    </li>`).join('');
+  const more = ov.open.length
+    ? `<p class="cs-priv-more">${ov.full ? `Víc než ${MAX_PRIVILEGES} práva ti pán nedá, dokud nějaké nevrátíš. ` : ''}Ještě by šlo získat: ${ov.open.map((o) => `${esc(o.name)} <small>(${esc(o.hint)})</small>`).join(' · ')}.</p>` : '';
+  return `<h4 class="cs-section">Privilegia a úřady</h4>
+    ${items ? `<ul class="cs-priv">${items}</ul>` : '<p class="cs-priv-more">Zatím nemáš žádné privilegium ani úřad.</p>'}${more}`;
 }
 
 /** The ruler's wounds: what they take away and when (if ever) they heal. */
@@ -231,7 +269,7 @@ export function renderCharacterSheet(state) {
     <div class="cs-info">
       <span class="panel-overline">${esc(title)} · ${state.generation}. generace</span>
       <h2 class="cs-name">${esc(r.name)}</h2>
-      <div class="cs-dynasty">${state.scenario === 'panovnik' ? 'z dynastie' : 'z rodu'} ${esc(state.dynastyName)}</div>
+      <div class="cs-dynasty">${state.scenario === 'sedlak' ? '' : crestSvgOf(ensureCrest(state), 'hs-crest-sm cs-crest')}${state.scenario === 'panovnik' ? 'z dynastie' : 'z rodu'} ${esc(state.dynastyName)}</div>
       ${epithetLine}
       <div class="cs-facts">
         <div><span>Věk</span><strong>${r.age}</strong></div>
@@ -243,6 +281,7 @@ export function renderCharacterSheet(state) {
       <h4 class="cs-section">Vlastnosti</h4>
       <div class="cs-traits">${traits}</div>
       ${ambitionSection(state)}
+      ${privilegeBlock(state)}
       ${injuryBlock(state)}
       ${gearBlock(state)}
       <h4 class="cs-section">Vliv na vládu</h4>

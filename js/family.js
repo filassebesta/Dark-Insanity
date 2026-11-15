@@ -14,7 +14,7 @@
 // state.children = [{ role: 'child', name, gender, age, traits, loyalty, alive }]
 // state.pregnancy = { due }   ·   No DOM here.
 
-import { clamp, randInt, randomName, NOBLE_HOUSES, pickRandom } from './data.js';
+import { clamp, randInt, randomName, NOBLE_HOUSES, pickRandom, clampRes } from './data.js';
 import { randomQuirk } from './court.js';
 import { makeChronicleEntry, inheritTraits } from './state.js';
 
@@ -94,13 +94,17 @@ function newSuitor(state) {
   const g = gender === 'female' ? 0 : 1;
   let house = null;
   if (k.house && state.houses && state.houses.length) house = pickRandom(state.houses).id;
-  const houseGen = house ? NOBLE_HOUSES.find((d) => d.id === house).gen : '';
+  const houseDef = house ? NOBLE_HOUSES.find((d) => d.id === house) : null;
+  const houseGen = houseDef ? houseDef.gen : '';
+  // a bride or groom of a great house brings what the house is good at on top of the usual dowry (data.js boon, doubled)
+  const dowry = { ...k.dowry };
+  if (houseDef) for (const [res, v] of Object.entries(houseDef.boon || {})) dowry[res] = (dowry[res] || 0) + 2 * v;
   return {
     name: freshName(state, gender), gender,
     age: clamp(state.ruler.age + randInt(-6, 3), k.minAge || 17, 45),
     kindKey: i, kindLabel: k.kind[g].replace('{house}', houseGen), bio: k.text[g],
     affection: randInt(10, 30), loyalty: randInt(35, 55), quirk: randomQuirk(), traits: inheritTraits(),
-    dowry: { ...k.dowry }, house, realm: k.realm || null, alive: true,
+    dowry, house, realm: k.realm || null, alive: true,
     portrait: `suitor_${state.scenario}_${i}_${gender}`, // assets/portraits, see docs/obrazky-rodina.md
   };
 }
@@ -138,9 +142,10 @@ export function marry(state, i, { arranged = false } = {}) {
   state.spouse = {
     role: 'spouse', name: s.name, gender: s.gender, age: s.age, alive: true,
     loyalty: clamp(55 + Math.round(s.affection / 4)), quirk: s.quirk, traits: s.traits, portrait: s.portrait,
+    house: s.house || null, realm: s.realm || null, kindLabel: s.kindLabel,
     bio: `${s.kindLabel[0].toUpperCase()}${s.kindLabel.slice(1)}. ${s.bio} ${arranged ? 'Sňatek domluvil dohazovač; láska se teprve ukáže.' : 'Svatba z lásky, ne z povinnosti.'}`,
   };
-  for (const [k, v] of Object.entries(s.dowry || {})) if (state.resources[k] !== undefined) state.resources[k] = clamp(state.resources[k] + v);
+  for (const [k, v] of Object.entries(s.dowry || {})) if (state.resources[k] !== undefined) state.resources[k] = clampRes(k, state.resources[k] + v);
   if (s.house) {
     const h = state.houses.find((x) => x.id === s.house);
     if (h) { h.attitude = clamp(h.attitude + 20); h.married = true; }
@@ -151,6 +156,41 @@ export function marry(state, i, { arranged = false } = {}) {
   refreshSuitors(state);
   if (!arranged) state.flags.married_for_love = true;
   const text = `Svatba: ${state.ruler.name} a ${s.name}, ${s.kindLabel}. Svatba se slavila tři dny.`;
+  state.chronicle.push(makeChronicleEntry(state, text));
+  return text;
+}
+
+/** Why a divorce is not possible now (null = it is). */
+export function canDivorce(state) {
+  if (!isMarried(state)) return 'Nejsi ženat' + (f(state.ruler) ? 'á.' : '.');
+  if (state.pregnancy) return 'Čeká dítě. Teď se rozvést nejde.';
+  if (state.gameOver) return 'Kronika skončila.';
+  return null;
+}
+
+/**
+ * A divorce: the spouse leaves the house, the children stay. The church, the court and the spouse's family
+ * do not forgive it (faith, prestige, legitimacy; the spouse's house or realm cools toward the ruler).
+ * Returns the chronicle text.
+ */
+export function divorce(state) {
+  if (canDivorce(state)) return '';
+  const ex = state.spouse;
+  const stage = state.scenario;
+  const hit = stage === 'sedlak' ? { faith: -4, prestige: -3 } : stage === 'slechtic' ? { faith: -6, prestige: -5, legitimacy: -4 } : { faith: -8, prestige: -6, legitimacy: -5 };
+  for (const [k, v] of Object.entries(hit)) if (state.resources[k] !== undefined) state.resources[k] = clamp(state.resources[k] + v);
+  if (ex.house && state.houses) {
+    const h = state.houses.find((x) => x.id === ex.house);
+    if (h) { h.attitude = clamp(h.attitude - 30); h.married = false; }
+  }
+  if (ex.realm && state.realms && state.realms[ex.realm]) state.realms[ex.realm].attitude = clamp(state.realms[ex.realm].attitude - 30);
+  if (state.heir && state.heir.alive !== false) state.heir.loyalty = clamp((state.heir.loyalty || 60) - 6);
+  state.exSpouses = (state.exSpouses || []).concat({ name: ex.name, gender: ex.gender, kind: ex.kindLabel || '', year: state.year });
+  state.divorces = (state.divorces || 0) + 1;
+  state.spouse = { role: 'spouse', name: '', gender: ex.gender, age: 0, loyalty: 0, alive: false, none: true, divorced: true };
+  delete state.flags.married_for_love;
+  refreshSuitors(state);
+  const text = `${state.ruler.name} se rozvedl${f(state.ruler) ? 'a' : ''} s ${f(ex) ? 'manželkou' : 'manželem'} jménem ${ex.name}. Církev se mračí a ve vsi i u dvora se o tom mluví dlouho.`;
   state.chronicle.push(makeChronicleEntry(state, text));
   return text;
 }

@@ -1,5 +1,6 @@
 import { createNewGame, promote, saveGame, listSaves, loadGame, loadMostRecentSave, deleteSave, loadSettings, saveSettings } from './state.js';
-import { advanceTurn, resolveChoice, resolveRouteChoice, checkEndConditions, pickNextEvent } from './engine.js';
+import { advanceTurn, resolveChoice, resolveRouteChoice, checkEndConditions, pickNextEvent, queueEvent } from './engine.js';
+import { doHouseAction } from './houses.js';
 import { EVENTS, QUIET_EVENTS } from './events.js';
 import {
   showScreen, renderResourceBar, updateBookTabFlags, renderTurnSummary, renderEventCard,
@@ -13,8 +14,13 @@ import { openCharacter, closeCharacter, isCharacterOpen, openPerson, closePerson
 import { playMusic, setMusicVolume } from './audio.js';
 import { checkAchievements } from './achievements.js';
 import { openRoll, openCombat } from './dice_ui.js';
+import { openBattle } from './battle_ui.js';
+import { openCrestEditor, closeCrestEditor } from './crest_ui.js';
+import { hasOwnCrest } from './heraldry.js';
 import { wireTalk } from './talk_ui.js';
 import { makeHeir } from './family.js';
+import { renderContractBar, toggleContractBar } from './contract_bar.js';
+import { fulfillContract, takeTradeAlerts } from './trade.js';
 import { renderAmbitionBar, renderWarBar, renderHall, renderEndingAchievements, announceAchievement } from './fame.js';
 
 let currentState = null;
@@ -38,6 +44,7 @@ function refreshAllPanels(bumpedTrait = null) {
   renderHousesPanel(currentState);
   renderAmbitionBar(currentState);
   renderWarBar(currentState);
+  renderContractBar(currentState);
 }
 
 // achievements earned by what just happened go to the Hall of Fame
@@ -49,6 +56,7 @@ function award() {
 let hallReturn = 'screen-menu';
 
 function closeOverlays() {
+  closeCrestEditor();
   closePanels();
   closeMap();
   closeCharacter();
@@ -89,6 +97,13 @@ function presentEvent(event) {
     onChoiceSelected: handleChoiceSelected,
     onRouteSelected: handleRouteSelected,
   });
+  // the new noble designs the house's coat of arms before anything else (the chapter card waits behind the window)
+  if (event.id === 'kapitola_erb' && !hasOwnCrest(currentState)) {
+    setTimeout(() => {
+      if (activeEvent !== event || hasOwnCrest(currentState)) return;
+      openCrestEditor(currentState, { first: true, onDone: () => { saveGame(currentState); refreshAllPanels(); toast('Rod má svůj erb'); } });
+    }, 450);
+  }
 }
 
 const TRAIT_LABELS = { strength: 'Síla', eloquence: 'Výřečnost', intelligence: 'Inteligence', patience: 'Trpělivost' };
@@ -119,6 +134,11 @@ function handleChoiceSelected(index) {
   awaitingChoice = false;
   skipTypewriter();
   const event = activeEvent;
+  if (choice.deploy && currentState.war) {
+    // a battle: the player places the men, the result goes to the engine (battle.js)
+    openBattle(currentState, choice, (res) => showOutcome(resolveChoice(currentState, event, index, res)));
+    return;
+  }
   if (choice.combat) {
     openCombat(currentState, choice, (fought) => {
       const result = resolveChoice(currentState, event, index, fought);
@@ -153,6 +173,7 @@ function runNextTurn() {
 
   renderTurnSummary(result.turnSummary);
   renderTradeNews(result.tradeNews);
+  takeTradeAlerts(currentState).forEach((line, i) => setTimeout(() => toast(line), 600 + i * 700));
 
   // the season is saved with its open event, so "Pokračovat" brings back the same card
   if (result.event && result.event.type !== 'route') {
@@ -281,6 +302,10 @@ function wireActions() {
       case 'close-panel':
         closePanels();
         break;
+      case 'edit-crest':
+        closePanels();
+        openCrestEditor(currentState, { onDone: () => { saveGame(currentState); refreshAllPanels(); toast('Erb rodu je změněn'); } });
+        break;
       case 'make-heir': {
         // the ruler names a younger child heir (family.js)
         const line = makeHeir(currentState, Number(actionEl.dataset.i));
@@ -349,6 +374,17 @@ function wireActions() {
       if (panel === 'chronicle') renderChroniclePanel(currentState);
       openPanel(panel);
     });
+  });
+
+  // the houses panel (Rody / Vazalové): a gift, the call of the levy, a fief, a marriage, taming a house
+  document.getElementById('houses-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-house-act]');
+    if (!btn || btn.disabled || !currentState) return;
+    const res = doHouseAction(currentState, btn.dataset.house, btn.dataset.houseAct);
+    if (res.pending) queueEvent(currentState, 'h_v_vzpoura_rodu'); // a failed taming: the house is about to rise
+    if (res.ok) saveGame(currentState);
+    refreshAllPanels();
+    toast(res.text);
   });
 
   // court cards (Dvůr) and family in the character sheet open the person detail
@@ -531,6 +567,39 @@ document.addEventListener('kingdom:trade', (e) => {
   if (e.detail.message) toast(e.detail.message);
 });
 
+// the strip of mandatory contracts: a card opens the trade map on its market, "Splnit" sends the wagons
+function wireContractBar() {
+  const bar = document.getElementById('contract-bar');
+  if (!bar) return;
+  const open = (market) => { if (currentState) openMap(currentState, { layer: 'trade', market }); };
+  bar.addEventListener('click', (e) => {
+    if (!currentState) return;
+    if (e.target.closest('[data-ctb-toggle]')) { toggleContractBar(); renderContractBar(currentState); return; }
+    const go = e.target.closest('[data-ctb-fulfill]');
+    if (go) {
+      e.stopPropagation();
+      const res = fulfillContract(currentState, Number(go.dataset.ctbFulfill));
+      if (!res.error) saveGame(currentState);
+      refreshAllPanels();
+      toast(res.error || res.message);
+      return;
+    }
+    if (e.target.closest('[data-ctb-brod]')) { open('brod'); return; }
+    const card = e.target.closest('[data-ctb-open]');
+    if (card) {
+      const c = (currentState.trade?.contracts || []).find((x) => String(x.id) === card.dataset.ctbOpen);
+      if (c) open(c.dest);
+    }
+  });
+  bar.addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-ctb-open]')) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.target.click();
+    }
+  });
+}
+
 // a campaign started or recalled on the map
 document.addEventListener('kingdom:war', (e) => {
   if (!currentState) return;
@@ -567,11 +636,13 @@ document.addEventListener('kingdom:talk', (e) => {
   if (!currentState) return;
   saveGame(currentState);
   refreshAllPanels();
+  if (e.detail.closed) { closePerson(); openCharacter(currentState); toast(e.detail.text); return; }
   renderPersonSheet(currentState, e.detail.role);
 });
 
 wireActions();
 wireMapChrome();
+wireContractBar();
 wireTalk();
 wireKeyboard();
 wireMenuAmbience();

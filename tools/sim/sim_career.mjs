@@ -26,6 +26,7 @@ const WANT = /Zaplatit plnou cenu|Smlouvat o cenu|Koupit tvrz a žádat o erb|Po
 
 const ends = {}, reached = { svobodnik: [], erb: [], velmoz: [], koruna: [], cisar: [] }, stageEnds = {}, unresolved = new Set();
 let errors = 0, rebellions = 0;
+const privGot = {}, privLost = {}, heldNow = (st) => Object.keys(st.privileges || {}); // privileges (privileges.js) taken and lost while a peasant
 const check = (st, t, id) => { const o = E.interpolate(st, t || ''); if (/[{}]|\(a\)/.test(o)) unresolved.add(id + ': ' + o.slice(0, 100)); };
 
 for (let r = 0; r < runs; r++) {
@@ -55,7 +56,10 @@ for (let r = 0; r < runs; r++) {
       let pick = SMART !== null ? smartPick(E, st, e, SMART) : avail[Math.floor(Math.random() * avail.length)][1];
       const amb = avail.find(([c]) => WANT.test(c.label));
       if (amb && Math.random() < AMB) pick = amb[1];
+      const before = heldNow(st), stageBefore = st.scenario;
       const out = E.resolveChoice(st, e, pick);
+      for (const k of heldNow(st)) if (!before.includes(k)) privGot[k] = (privGot[k] || 0) + 1;
+      if (stageBefore === 'sedlak') for (const k of before) if (!heldNow(st).includes(k) && st.scenario === 'sedlak') privLost[k] = (privLost[k] || 0) + 1;
       check(st, out.text, e.id + '/out');
       if (FARM) farmRule(B, F, st);
       if (SMART === null && E.decreeAvailable(st) && st.scenario === 'sedlak') E.issueDecree(st, st.resources.food > 45 ? 'market' : st.resources.favor < 35 ? 'lord' : 'clear');
@@ -80,4 +84,5 @@ const med = (a) => (a.length ? a.sort((x, y) => x - y)[a.length >> 1].toFixed(0)
 console.log('reached (share · median year):', Object.entries(reached).map(([k, a]) => `${k} ${(100 * a.length / runs).toFixed(0)} % · r. ${med(a)}`).join(' | '));
 console.log('endings', ends);
 console.log('stage at the end', stageEnds, '| rebellions started', rebellions, '| errors', errors);
+console.log('privileges granted', JSON.stringify(privGot), 'lost', JSON.stringify(privLost));
 console.log('unresolved', [...unresolved].slice(0, 10));

@@ -31,6 +31,8 @@ export const ACHIEVEMENTS = [
   { key: 'od_pluhu', group: 'Cíle', name: 'Od pluhu ke koruně', text: 'V jedné kronice dojít od sedláka až na královský trůn.', test: (s) => s.origin === 'sedlak' && s.scenario === 'panovnik' },
   { key: 'cizi_koruna', group: 'Cíle', name: 'Cizí koruna', text: 'Dobýt korunu sousední země.', test: (s) => stat(s, 'crownsTaken') >= 1 },
   { key: 'tri_koruny', group: 'Cíle', name: 'Tři koruny', text: 'Stát se císařem nebo císařovnou.', test: (s) => (s.ruler && s.ruler.statusTier >= 6) || !!(s.milestones && s.milestones.empire !== undefined) },
+  { key: 'risa_sprava', group: 'Cíle', name: 'Správce říše', text: 'Vydat deset výnosů o správě dobytých zemí.', test: (s) => stat(s, 'empireDecrees') >= 10 },
+  { key: 'risa_vrchol', group: 'Cíle', name: 'Říše na vrcholu', text: 'Udržet dvě dobyté koruny osm let v klidu a věrnosti.', test: (s) => ending(s, 'empire_peak') || (s.usedEvents || []).includes('risa_vrchol') },
   // building
   { key: 'stavitel', group: 'Stavby', name: 'Stavitel', text: 'Dokončit v jedné kronice deset staveb.', test: (s) => stat(s, 'built') >= 10 },
   { key: 'kralovske_mesto', group: 'Stavby', name: 'Královské město', text: 'Rozšířit sídlo na královské město.', test: (s) => towns(s).some(([id, t]) => id !== 'grunt' && t.level >= 5) },
@@ -55,6 +57,7 @@ export const ACHIEVEMENTS = [
   // dark ones, hidden until they happen
   { key: 'poprava', group: 'Temné konce', name: 'Hlava na kůlu', text: 'Skončit na popravišti.', secret: true, test: (s) => ending(s, 'executed') },
   { key: 'vyhnani', group: 'Temné konce', name: 'Bez střechy', text: 'Být vyhnán z gruntu.', secret: true, test: (s) => ending(s, 'expelled') },
+  { key: 'risa_rozpad', group: 'Temné konce', name: 'Říše z písku', text: 'Přijít o dobytou korunu po vzpouře.', secret: true, test: (s) => ending(s, 'empire_fall') || (s.usedEvents || []).includes('risa_rozpad') },
   { key: 'kolaps', group: 'Temné konce', name: 'Popel říše', text: 'Nechat království rozpadnout.', secret: true, test: (s) => ending(s, 'collapse') },
 ];
 

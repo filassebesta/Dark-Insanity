@@ -1,8 +1,9 @@
-import { RESOURCE_DEFS, PROVINCE_TEMPLATES, NOBLE_HOUSES, NOBLE_HOME, PEASANT_HOME, randInt, randomName, clamp } from './data.js';
+import { RESOURCE_DEFS, PROVINCE_TEMPLATES, NOBLE_HOUSES, NOBLE_HOME, PEASANT_HOME, randInt, randomName, clamp, clampRes } from './data.js';
 import { QUIRK_ROLES, randomQuirk, biography } from './court.js';
 import { ensureRealms } from './realms.js';
 import { dropAmbition } from './ambitions.js';
 import { farmWorth } from './farm.js';
+import { createHouses, ensureHouses } from './houses.js';
 
 const SAVE_PREFIX = 'insanityKingdom.save.';
 const SAVE_INDEX_KEY = 'insanityKingdom.saveIndex';
@@ -150,11 +151,11 @@ function createNobleGame(rulerName, dynastyName, gender) {
   return state;
 }
 
-/** The realm around a noble or a peasant: the king, the three great houses and who holds which land. */
+/** The realm around a noble or a peasant: the king, the great houses and who holds which land. */
 function createWorld(state, homeOwner) {
   // every province exists on the map, but only the home estate is the player's
   const owners = { capital: 'crown', [NOBLE_HOME]: homeOwner };
-  for (const h of NOBLE_HOUSES) owners[h.seat] = h.id;
+  for (const h of NOBLE_HOUSES) if (!h.hold) owners[h.seat] = h.id; // the newer houses only hold a držba inside these lands
   for (const p of state.provinces) {
     p.owner = owners[p.id];
     if (p.owner === 'player') Object.assign(p, { loyalty: 62, unrest: 22, wealth: 45, garrison: 35 });
@@ -167,13 +168,7 @@ function createWorld(state, homeOwner) {
     heir: { name: randomName(kingHeirGender), gender: kingHeirGender, age: randInt(7, 11), alive: true },
     reign: 1,
   };
-  state.houses = NOBLE_HOUSES.map((h) => {
-    const g = Math.random() < 0.75 ? 'male' : 'female';
-    return {
-      id: h.id, power: randInt(50, 70), attitude: randInt(40, 55), ally: false, married: false,
-      head: { name: randomName(g), gender: g, age: randInt(38, 62) },
-    };
-  });
+  state.houses = createHouses(); // the great houses with their relations to one another (houses.js)
 }
 
 // ---------- Sedlák: a peasant farm in Lipnice, under the lords of Bílá Brána ----------
@@ -223,6 +218,8 @@ export function ennoblePeasant(state) {
   state.noble = { province: NOBLE_HOME, plot: 0, secrets: 0 };
   for (const h of state.houses) h.attitude = clamp(h.attitude - 8); // the old houses look down on an upstart
   delete state.peasant;
+  delete state.troops; // a peasant's farmhands become soldiers only when the house recruits (troops.js)
+  delete state.recruitQueue;
   // the reeve, the smith and the innkeeper stay in Lipnice; a lord's household needs a steward, a captain and an ear at court
   const neighbours = ['chancellor', 'marshal', 'spymaster'].map((r) => state[r].name).join(', ');
   state.chancellor = newCharacter('chancellor', { minAge: 38, maxAge: 55, loyalty: 58 });
@@ -236,7 +233,7 @@ export function ennoblePeasant(state) {
   if (farm) {
     const stock = farmWorth(state); // grain and animals go with it; the riding horse stays with its rider
     const worth = 5 + 3 * farm.buildings.filter((b) => b.ready && !b.base).length + 4 * Math.max(0, farm.level - 1) + stock;
-    state.resources.gold = clamp(state.resources.gold + worth);
+    state.resources.gold = clampRes('gold', state.resources.gold + worth);
     delete state.towns.grunt;
     farewell.push(`Grunt v Lipnici${stock ? ' i s dobytkem a obilím' : ''} koupil soused za ${worth} zlatých.`);
   }
@@ -244,7 +241,7 @@ export function ennoblePeasant(state) {
   // the usurer in Brodná does not forget a debtor just because he now has a coat of arms
   if (state.flags.s_dluh) {
     delete state.flags.s_dluh;
-    state.resources.gold = clamp(state.resources.gold - 20);
+    state.resources.gold = clampRes('gold', state.resources.gold - 20);
     farewell.push('Lichvář z Brodné si dluh vybral hned při podpisu listiny.');
   }
   state.gameOver = null;
@@ -260,8 +257,8 @@ export function crownNoble(state) {
   state.ruler.reignStartTurn = state.turn;
   delete state.resources.favor;
   state.resources.legitimacy = Math.max(state.resources.legitimacy, 55);
-  state.resources.army = clamp(state.resources.army + 25);
-  state.resources.gold = clamp(state.resources.gold + 20);
+  state.resources.army = clampRes('army', state.resources.army + 25);
+  state.resources.gold = clampRes('gold', state.resources.gold + 20);
   for (const p of state.provinces) {
     const house = (state.houses || []).find((h) => h.id === p.owner);
     if (p.owner !== 'player') {
@@ -309,7 +306,7 @@ function bringCaravansHome(state, dest) {
   const t = state.trade;
   if (!t || !t.caravans) return;
   for (const c of t.caravans.filter((x) => x.dest === dest)) {
-    t.stock[c.good] = Math.min(20, (t.stock[c.good] || 0) + c.qty); // the warehouse holds 20 loads (trade.js MAX_STOCK)
+    t.stock[c.good] = Math.min(60, (t.stock[c.good] || 0) + c.qty); // goods that were already paid for are never lost to the warehouse limit
   }
   t.caravans = t.caravans.filter((x) => x.dest !== dest);
 }
@@ -385,7 +382,7 @@ export function listSaves() {
 
 export function loadGame(slotId) {
   const raw = localStorage.getItem(SAVE_PREFIX + slotId);
-  return raw ? JSON.parse(raw) : null;
+  return raw ? ensureHouses(JSON.parse(raw)) : null; // houses added since the save was made join the realm
 }
 
 export function loadMostRecentSave() {

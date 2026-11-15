@@ -2,22 +2,29 @@
 // with clickable SVG overlays. Coordinates are pixels of the original
 // 1264x848 painting; zoom/pan works by animating the SVG viewBox.
 
-import { TERRAIN_DEFS, NOBLE_HOUSES, SEASONS } from './data.js';
+import { TERRAIN_DEFS, NOBLE_HOUSES, SEASONS, RESOURCE_DEFS, resourceLabel } from './data.js';
 import { attitudeLabel, interpolate } from './engine.js';
+import { crestInner, crestSvg } from './crests.js';
+import { crestInnerOf, crestSvgOf, ensureCrest } from './heraldry.js';
+import { houseMuster, musterText, boonText, relLabel } from './houses.js';
 import {
-  GOODS, MARKETS, MAX_STOCK, ESCORT_ARMY, ensureTrade, routeFor, originPoint, marketAccess, price, riskOf,
-  caravanFee, canSend, sendCaravan, sellAtHome, buyAtHome, convertFood, loadText,
+  GOODS, MARKETS, maxStock, ESCORT_ARMY, ensureTrade, routeFor, originPoint, marketAccess, price, riskOf,
+  caravanFee, canSend, sendCaravan, sellAtHome, buyAtHome, convertFood, loadText, trendOf, bestMarket, marketWants,
+  buyMargin, planEstimate, sortedContracts, contractStatus, seasonsLeftText, fulfillContract, sellAllAtHome, coinName, THRESH_FOOD,
+  reservedFor, priceSeries, backEstimate, stockCap,
 } from './trade.js';
 import { esc } from './ui.js';
 import {
   PEASANT_VILLAGE, townIdFor, townOf, levelName, currentProject, ownsTown, startBuilding, startUpgrade, cancelProject, demolish,
 } from './build.js';
-import { renderTownPlan, townSidebar } from './town.js';
-import { buyStock, sellStock, grindGrain } from './farm.js';
+import { renderTownPlan, townSidebar, farmIcon, fitPlaques, fitScene } from './town.js';
+import { buyStock, sellStock, grindGrain, millGrain, ensureFarm, roomFor, countOf, eatFood, STOCK, ANIMALS, plural } from './farm.js';
 import { worldSvg, worldSidebar, WORLD_IMAGE } from './world.js';
 import {
-  warTargets, warBlock, startWar, recallWar, warTarget, marchShare, warOrigin, oddsLabel, leaderLabel, SIZES,
+  warTargets, warBlock, startWar, recallWar, warTarget, marchShare, warOrigin, oddsLabel, leaderLabel,
 } from './war.js';
+import { warTabsHtml, armyTabHtml, garrisonTabHtml, corpsPickerHtml, clampCorps, handleWarUi } from './war_ui.js';
+import { troopsTotal, garrisonMen, garrisonLabel, syncTroops } from './troops.js';
 
 const W = 1264;
 const H = 848;
@@ -64,7 +71,7 @@ const PROVINCES = {
     subtitle: 'Obilnice království',
     color: '#a7a86a',
     points: [[360, 520], [430, 470], [470, 470], [560, 500], [660, 510], [740, 500], [800, 470], [845, 440], [850, 560], [900, 602], [1000, 612], [1080, 600], [1095, 627], [1000, 650], [900, 647], [850, 665], [820, 685], [795, 725], [770, 725], [725, 700], [712, 745], [640, 760], [575, 770], [525, 790], [480, 760], [465, 730], [380, 735], [330, 715], [340, 640], [345, 560]],
-    labelAt: [505, 588], smokeAt: [700, 622], garrisonAt: [600, 650],
+    labelAt: [455, 700], smokeAt: [700, 622], garrisonAt: [600, 650],
     text: 'Obilnice království. Řeka Brodnice tu tvoří jediný bezpečný brod a trhové město Brod žije z obchodu se zrnem.',
   },
 };
@@ -165,8 +172,8 @@ let animFrame = null;
 let selected = null;
 const layers = { loyalty: false, unrest: true, garrison: false, routes: false, trade: false, war: false };
 const modeOf = () => (world ? 'world' : layers.war ? 'war' : layers.trade ? 'trade' : 'lands');
-let warForm = { target: null, size: 'medium', leader: 'marshal' };
-let tradeForm = { dest: null, good: null, qty: 1, escort: false };
+let warForm = { target: null, leader: 'marshal', tab: 'campaign', corps: null, rec: {}, garProv: null };
+let tradeForm = { dest: null, good: null, qty: 1, escort: false, back: null };
 let drag = null;
 let suppressClick = false;
 let town = null; // { id, slot } while a settlement is open instead of the map
@@ -189,6 +196,7 @@ export function openMap(gameState, opts = {}) {
   realmSel = null;
   render();
   host.classList.add('open');
+  document.body.classList.add('map-open'); // notices move to the bottom so they never cover the map's names
   host.setAttribute('aria-hidden', 'false');
   selected = null;
   town = null;
@@ -198,6 +206,9 @@ export function openMap(gameState, opts = {}) {
   if (opts.focusRoutes) {
     selectThing({ type: 'feature', id: 'vassal' });
     animateTo(fitBox(VASSAL_VIEW));
+  } else if (opts.market && layers.trade) {
+    showOverview();
+    selectThing({ type: 'market', id: opts.market });
   } else {
     showOverview();
   }
@@ -217,6 +228,7 @@ export function closeMap() {
     host.classList.remove('open');
     host.setAttribute('aria-hidden', 'true');
   }
+  document.body.classList.remove('map-open');
   hideTooltip();
 }
 
@@ -228,6 +240,7 @@ function render() {
     .filter((m) => !(m.noPeasant && peasant))
     .map((m) => `<button class="map-mode${modeOf() === m.key ? ' on' : ''}" role="tab" aria-selected="${modeOf() === m.key}" data-mode="${m.key}">${peasant && m.peasantLabel ? m.peasantLabel : m.label}</button>`).join('')}</div>`;
   host.querySelector('.map-title').textContent = world ? 'Mapa světa' : 'Mapa království';
+  host.classList.toggle('mode-war', modeOf() === 'war'); // on a phone the army pages get more room than the map
   if (world) return renderWorld();
 
   const canvas = host.querySelector('.map-canvas');
@@ -247,6 +260,8 @@ function render() {
       <g class="map-overlays">${overlays()}</g>
       <g class="map-labels">${Object.entries(PROVINCES).map(([id, p]) => provinceLabel(id, p)).join('')}</g>
       <g class="map-features">${Object.entries(FEATURES).map(([id, f]) => featureMarker(id, f)).join('')}</g>
+      <g class="map-holds">${holdDefs().map(holdMarker).join('')}</g>
+      ${ownSeatMarker()}
       <g class="map-markets${layers.trade ? ' show' : ''}">${marketMarkers()}</g>
       <g class="map-war${layers.war ? ' show' : ''}${state.war ? ' active' : ''}">${warLayer()}</g>
 
@@ -401,6 +416,33 @@ function featureMarker(id, f) {
   </g>`;
 }
 
+/** The seats the newer houses hold inside somebody else's land: a small coat of arms on the painted map. */
+function holdDefs() {
+  return NOBLE_HOUSES.filter((d) => d.hold && (state.houses || []).some((h) => h.id === d.id));
+}
+
+/** The player's own coat of arms over the family seat: the manor on the coast, or the royal castle. Not for a peasant. */
+function ownSeatMarker() {
+  if (state.scenario === 'sedlak') return '';
+  const [x, y] = state.scenario === 'panovnik' ? [633, 306] : [330, 336];
+  return `<g class="map-own" transform="translate(${x} ${y})" pointer-events="none">
+    <ellipse class="h-shadow" cx="1" cy="16" rx="10" ry="3"/>
+    <g class="h-crest" transform="translate(-12 -15) scale(.6)">${crestInnerOf(ensureCrest(state))}</g>
+    <text class="f-label" y="31">${esc(state.scenario === 'panovnik' ? `Dynastie ${state.dynastyName}` : `Sídlo rodu ${state.dynastyName}`)}</text>
+  </g>`;
+}
+
+function holdMarker(def) {
+  const [x, y] = def.hold.at;
+  const active = selected && selected.type === 'hold' && selected.id === def.id;
+  return `<g class="map-hold${active ? ' active' : ''}" data-hold="${def.id}" transform="translate(${x} ${y})">
+    <circle class="f-hit" r="22"/>
+    <ellipse class="h-shadow" cx="1" cy="15" rx="9" ry="3"/>
+    <g class="h-crest" transform="translate(-10.5 -13) scale(.52)">${crestInner(def.id)}</g>
+    <text class="f-label" y="30">${esc(def.hold.name)}</text>
+  </g>`;
+}
+
 function overlays() {
   return state.provinces.map((prov) => {
     const p = PROVINCES[prov.id];
@@ -465,6 +507,7 @@ function pointAlong(pts, f) {
 
 // 'loc' = "v zimě roku 3" (when it comes back), 'gen' = "zimy roku 3" (until when)
 const SEASON_LOC = ['na jaře', 'v létě', 'na podzim', 'v zimě'];
+const TROOP_NAMES = { spear: 'kopiníků', archer: 'lučištníků', horse: 'jezdců', siege: 'strojů', merc: 'žoldnéřů' };
 const SEASON_GEN = ['jara', 'léta', 'podzimu', 'zimy'];
 function etaText(turn, form = 'loc') {
   const ahead = turn - state.turn;
@@ -505,21 +548,160 @@ function marketMarkers() {
 
 function stockRows() {
   const t = ensureTrade(state);
-  return Object.entries(GOODS).map(([g, def]) =>
-    `<div class="trade-stock-row${t.stock[g] ? '' : ' empty'}"><span>${esc(def.name)}</span><div class="stat-bar"><div class="stat-bar-fill wealth" style="width:${(t.stock[g] / MAX_STOCK) * 100}%"></div></div><b>${t.stock[g]}</b></div>`).join('');
+  const cap = maxStock(state);
+  return Object.entries(GOODS).map(([g, def]) => {
+    const n = t.stock[g];
+    let best = '';
+    if (n) {
+      const b = bestMarket(state, g);
+      const home = price(state, 'brod', g);
+      if (b) {
+        const tr = trendOf(state, b.dest, g);
+        const keep = reservedFor(state, g);
+        best = `<span class="ts-best">Brod ${home} · nejlépe <b>${esc(MARKETS[b.dest].short)}</b> ${b.price} <em class="tr ${tr.cls}">${tr.arrow} ${tr.pct > 0 ? '+' : ''}${tr.pct} %</em>
+          <button class="trade-mini" data-trade="best" data-good="${g}" title="${b.home ? 'Prodá vše hned v Brodu' : 'Otevře vypravení karavany na nejlepší trh'}${keep ? `, ${keep} vozů zůstane pro zakázky` : ''}">Prodat za nejlepší cenu</button></span>`;
+      }
+    }
+    return `<div class="trade-stock-row${n ? '' : ' empty'}"><span>${esc(def.name)}</span><div class="stat-bar"><div class="stat-bar-fill wealth" style="width:${Math.min(100, (n / stockCap(state, g)) * 100)}%"></div></div><b>${n}</b>${best}</div>`;
+  }).join('');
 }
 
 function contractList(filterDest) {
-  const t = ensureTrade(state);
-  const list = t.contracts.filter((c) => !filterDest || c.dest === filterDest);
+  const list = sortedContracts(state).filter((c) => !filterDest || c.dest === filterDest);
   if (!list.length) return '';
-  const coin = state.scenario === 'sedlak' ? 'grošů' : 'zlata';
-  return `<h4 class="map-sub">Zakázky</h4><ul class="trade-contracts">${list.map((c) => `
+  const coin = coinName(state);
+  return `<h4 class="map-sub">Zakázky <small>· povinné nahoře, podle termínu</small></h4><ul class="trade-contracts">${list.map((c) => {
+    const st = contractStatus(state, c);
+    const left = c.taken ? '' : `<span class="tc-left ${st.urgency === 'crit' ? 'crit' : st.urgency === 'warn' ? 'warn' : ''}">${esc(seasonsLeftText(st.left))}</span>`;
+    const go = !c.taken && st.enough ? `<button class="trade-mini" data-trade="fulfill" data-id="${c.id}">Splnit hned</button>` : '';
+    return `
     <li class="${c.obligation ? 'obligation' : ''}">
-      <b>${esc(interpolate(state, c.giver))} ${esc(loadText(c.qty, c.good))}</b>
-      <span>${esc(MARKETS[c.dest].to)} do ${etaText(c.until, 'gen')} · odměna ${c.reward} ${coin}${c.favor ? ` a přízeň +${c.favor}` : ''}${c.prestige ? ` a prestiž +${c.prestige}` : ''}</span>
-      <em>${c.taken ? 'Náklad je na cestě.' : c.obligation ? 'Nesplnění stojí přízeň.' : 'Nabídka bez závazku.'}</em>
-    </li>`).join('')}</ul>`;
+      <div class="tc-row"><b>${esc(interpolate(state, c.giver))} ${esc(loadText(c.qty, c.good))}</b>${go}</div>
+      <span>${esc(MARKETS[c.dest].to)} do ${esc(st.date)} · odměna ${c.reward} ${coin}${c.favor ? `, přízeň +${c.favor}` : ''}${c.prestige ? `, prestiž +${c.prestige}` : ''}</span>
+      <span>${left}${left ? ' · ' : ''}ve skladu ${st.have}/${st.need}${c.taken ? '' : st.enough ? '' : `, chybí ${st.missing}`}</span>
+      <em>${c.taken ? 'Náklad je na cestě.' : c.obligation ? 'Povinná: nesplnění stojí přízeň −3 a odměnu.' : 'Nabídka bez závazku.'}</em>
+    </li>`;
+  }).join('')}</ul>`;
+}
+
+const CHART_SPANS = [{ n: 4, label: '1 rok' }, { n: 8, label: '2 roky' }, { n: 20, label: '5 let' }, { n: 40, label: '10 let' }];
+const CHART_COLORS = { brod: '#7a5a2b', court: '#7a2418', manor: '#7a2418', east: '#2f5d8a', south: '#4f7d3a', north: '#6a4a8a' };
+
+/** Price chart: pick the good and the period; one line per market that buys it. */
+function priceChart() {
+  const t = ensureTrade(state);
+  t.chart = t.chart || { good: 'grain', span: 8 };
+  if (!GOODS[t.chart.good]) t.chart.good = 'grain';
+  const { entries, series } = priceSeries(state, t.chart.good, t.chart.span);
+  const goodChips = Object.entries(GOODS).map(([g, def]) => `<button class="trade-chip${g === t.chart.good ? ' on' : ''}" data-trade="chart-good" data-good="${g}">${esc(def.name)}</button>`).join('');
+  const spanChips = CHART_SPANS.map((s) => `<button class="trade-chip${s.n === t.chart.span ? ' on' : ''}" data-trade="chart-span" data-n="${s.n}">${s.label}</button>`).join('');
+  const have = entries.length;
+  let body;
+  if (have < 2 || !series.length) {
+    body = `<p class="map-desc">${series.length ? 'Obchodní kniha se teprve plní — graf se objeví po příštím období.' : 'Tohle zboží teď nemá kam prodat.'}</p>`;
+  } else {
+    const W = 296, H = 138, L = 30, R = 8, T = 10, B = 24;
+    const all = series.flatMap((s) => s.values);
+    let lo = Math.floor(Math.min(...all)), hi = Math.ceil(Math.max(...all));
+    if (hi - lo < 2) hi = lo + 2;
+    const xs = (i) => L + (i * (W - L - R)) / (have - 1);
+    const ys = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+    const grid = [lo, Math.round((lo + hi) / 2), hi].map((v) => `<line class="pc-grid" x1="${L}" x2="${W - R}" y1="${ys(v)}" y2="${ys(v)}"/><text class="pc-ytick" x="${L - 4}" y="${ys(v) + 3}">${v}</text>`).join('');
+    // a tick at every spring (the year changes), or every few seasons when the view is short
+    const ticks = entries.map((e, i) => (e.season === 0 || i === 0 ? `<line class="pc-tick" x1="${xs(i)}" x2="${xs(i)}" y1="${H - B}" y2="${H - B + 4}"/><text class="pc-xtick" x="${xs(i)}" y="${H - 6}">rok ${e.year}</text>` : '')).join('');
+    const lines = series.map((s) => {
+      const c = CHART_COLORS[s.dest] || '#555';
+      const pts = s.values.map((v, i) => `${xs(i).toFixed(1)},${ys(v).toFixed(1)}`).join(' ');
+      return `<polyline class="pc-line" points="${pts}" stroke="${c}"/><circle class="pc-dot" cx="${xs(have - 1).toFixed(1)}" cy="${ys(s.now).toFixed(1)}" r="3.2" fill="${c}"/>`;
+    }).join('');
+    const legend = series.map((s) => {
+      const c = CHART_COLORS[s.dest] || '#555';
+      const d = Math.round(s.delta * 10) / 10;
+      const cls = d >= 0.5 ? 'up' : d <= -0.5 ? 'down' : 'flat';
+      return `<li data-goto-market="${s.dest}"><i style="background:${c}"></i><b>${esc(s.short)}</b><span>${s.now.toFixed(1)}</span><em class="tr ${cls}">${d >= 0.5 ? '↑' : d <= -0.5 ? '↓' : '→'} ${d > 0 ? '+' : ''}${d.toFixed(1)} proti průměru</em><small>${s.min.toFixed(1)}–${s.max.toFixed(1)}</small></li>`;
+    }).join('');
+    body = `<svg class="price-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Vývoj ceny za posledních ${have} období">${grid}${ticks}${lines}</svg>
+      <ul class="pc-legend">${legend}</ul>
+      <p class="pc-note">Cena za vůz v ${esc(coinName(state))}, ${have < t.chart.span ? `zatím za ${have} období` : `posledních ${have} období`}. Čísla vpravo: rozpětí v období.</p>`;
+  }
+  return `<h4 class="map-sub">Vývoj cen <small>· za poslední dobu</small></h4>
+    <div class="trade-goods pc-chips">${goodChips}</div>
+    <div class="trade-goods pc-chips">${spanChips}</div>
+    ${body}`;
+}
+
+// ---------- "Přehled majetku": what the player owns, at the top of the trade panel ----------
+
+const OWN_RES = ['gold', 'food', 'army'];
+const FARM_HOME = { cows: 'chlév', horses: 'stáj', pigs: 'chlívek' };
+const farmHome = (k) => FARM_HOME[k] || '';
+
+/** A card of the overview: icon or none, name, "n / room" with a bar, a short note. */
+function ownCard({ name, n, room, ico = '', note = '', missing = false, pips = false, wide = false }) {
+  const bar = room
+    ? (pips
+      ? `<span class="farm-pips">${Array.from({ length: Math.max(room, n) }, (_, i) => `<i class="${i < n ? 'on' : ''}${i >= room ? ' over' : ''}"></i>`).join('')}</span>`
+      : `<span class="own-bar"><i style="width:${Math.min(100, Math.round((n / room) * 100))}%"></i></span>`)
+    : '';
+  return `<div class="own-card${missing ? ' missing' : ''}${wide ? ' wide' : ''}">
+    ${ico ? `<span class="own-ico"><svg viewBox="-30 -24 62 44">${ico}</svg></span>` : ''}
+    <div class="own-body"><b>${esc(name)}</b>
+      ${missing ? '' : `<span class="own-n"><em>${n}</em>${room ? ` / ${room}` : ''}</span>${bar}`}
+      ${note ? `<small>${esc(note)}</small>` : ''}</div>
+  </div>`;
+}
+
+function holdingsBlock() {
+  const t = ensureTrade(state);
+  const peasant = state.scenario === 'sedlak';
+  const cards = [];
+  // treasury and stores, in the owner's own words (groše, zásoby, čeleď for a peasant)
+  for (const key of OWN_RES) {
+    const def = RESOURCE_DEFS.find((d) => d.key === key);
+    const n = state.resources[key];
+    if (n === undefined) continue;
+    cards.push(`<div class="own-card res res-${key}"><div class="own-body"><b>${esc(resourceLabel(def, state.scenario))}</b><span class="own-n"><em>${n}</em></span></div></div>`);
+  }
+  // the farm: animals with their buildings, then the barn and the mill's flour
+  const farm = peasant ? ensureFarm(state) : null;
+  const farmCards = [];
+  if (farm) {
+    const cap = maxStock(state);
+    for (const k of ['grain', 'flour', ...ANIMALS]) {
+      const s = STOCK[k];
+      const n = countOf(state, k);
+      const room = roomFor(state, k);
+      const wagons = !!s.trade;
+      const hasMill = state.towns && state.towns.grunt && state.towns.grunt.buildings.some((b) => b.key === 'mlynek' && b.ready);
+      const missing = k === 'flour' ? !n && !hasMill : !wagons && !room && !n;
+      const note = missing ? (k === 'flour' ? 'Mouka potřebuje mlýn.' : s.none) : wagons ? `${plural(n, s.forms)}${k === 'grain' ? ' · stodola' : ' · mlýn'}` : farmHome(k);
+      farmCards.push(ownCard({ name: s.name, n, room: k === 'flour' ? cap : room, ico: farmIcon(k), note, missing, pips: !wagons }));
+    }
+  }
+  // the other goods in wagons (a noble or a king: all of them, grain and flour too)
+  const goodCards = [];
+  for (const [g, def] of Object.entries(GOODS)) {
+    if (farm && (g === 'grain' || g === 'flour')) continue;
+    if (!t.stock[g]) continue;
+    goodCards.push(ownCard({ name: def.name, n: t.stock[g], room: stockCap(state, g), note: 'vozů' }));
+  }
+  // caravans on the road and the nearest mandatory contract
+  const road = t.caravans.length
+    ? `${t.caravans.length} ${t.caravans.length === 1 ? 'cesta' : t.caravans.length < 5 ? 'cesty' : 'cest'}: ${t.caravans.map((c) => MARKETS[c.dest].short).join(', ')}`
+    : 'nic na cestě';
+  const duty = sortedContracts(state).filter((c) => c.obligation);
+  const dutyLine = duty.length
+    ? `${duty.length === 1 ? '1 povinná zakázka' : `${duty.length} povinné zakázky`}, nejbližší do ${etaText(duty[0].until, 'gen')} (${seasonsLeftText(Math.max(0, duty[0].until - state.turn))})`
+    : 'žádná povinná zakázka';
+  return `<h4 class="map-sub">Přehled majetku</h4>
+    <div class="own-grid">
+      ${cards.join('')}
+      ${farmCards.length ? `<p class="own-label">Hospodářství</p>${farmCards.join('')}` : ''}
+      <p class="own-label">${farm ? 'Další zboží ve skladu' : 'Zboží ve skladu'}</p>
+      ${goodCards.length ? goodCards.join('') : `<p class="own-empty">${farm ? 'Nic dalšího.' : 'Sklad je prázdný.'}</p>`}
+      <p class="own-label">Na cestě</p>
+      <div class="own-line"><span>Karavany: <b>${esc(road)}</b></span><span>Zakázky: <b>${esc(dutyLine)}</b>${duty.length ? ' <button class="trade-mini" data-trade="to-contracts">Zobrazit</button>' : ''}</span></div>
+    </div>`;
 }
 
 function showTradeOverview() {
@@ -528,8 +710,11 @@ function showTradeOverview() {
     <span class="panel-overline">Obchod</span>
     <h3 class="panel-title">Sklad a karavany</h3>
     <p class="map-desc">${state.scenario === 'sedlak' ? 'Co grunt vypěstuje navíc, můžeš prodat v Brodu nebo odvézt na panský dvůr. Svobodný sedlák si může koupit místo v kupecké karavaně do ciziny.' : 'Tvé země plní sklad zbožím. Prodej ho hned v Brodu, nebo ho pošli karavanou či lodí do ciziny, kde platí víc, ale cesta trvá a hrozí přepadení.'} Klikni na trh na mapě.</p>
-    <h4 class="map-sub">Sklad <small>· nejvýš ${MAX_STOCK} vozů od každého</small></h4>
+    ${holdingsBlock()}
+    <h4 class="map-sub">Sklad <small>· nejvýš ${maxStock(state)} vozů od každého${maxStock(state) > 20 ? ` (stavby +${maxStock(state) - 20})` : ''}</small></h4>
     <div class="trade-stock">${stockRows()}</div>
+    <div class="trade-bulk"><button class="trade-mini" data-trade="sell-all"${Object.keys(GOODS).some((g) => ensureTrade(state).stock[g] > reservedFor(state, g)) ? '' : ' disabled'} title="V Brodu, ale zboží slíbené povinným zakázkám zůstane ve skladu">Prodat vše v Brodu</button></div>
+    ${priceChart()}
     <h4 class="map-sub">Na cestě</h4>
     ${t.caravans.length ? `<ul class="trade-caravans">${t.caravans.map((c) => `
       <li data-goto-market="${c.dest}"><b>${c.sea ? 'Loď' : 'Karavana'} · ${esc(loadText(c.qty, c.good))}</b><span>${esc(MARKETS[c.dest].to)}${c.escort ? ' · s doprovodem' : ''} · ${c.held ? '<em class="bad">přepadena!</em>' : `návrat ${etaText(c.arrive)}`}</span></li>`).join('')}</ul>`
@@ -538,43 +723,82 @@ function showTradeOverview() {
     <h4 class="map-sub">Trhy</h4>
     <div class="map-chip-list">${marketsShown().map(([id, m]) => {
       const blocked = marketAccess(state, id);
-      return `<button class="map-chip" data-goto-market="${id}"><span>${esc(m.name)}</span><em class="${blocked ? 'bad' : 'good'}">${m.home ? 'prodej hned' : blocked ? 'nedostupné' : `${m.days} obd. · riziko ${Math.round(riskOf(state, id, false) * 100)} %`}</em></button>`;
+      return `<button class="map-chip" data-goto-market="${id}"><span>${esc(m.name)}</span><em class="${blocked ? 'bad' : 'good'}">${m.home ? 'prodej hned' : blocked ? 'nedostupné' : `${m.days} obd. · riziko ${Math.round(riskOf(state, id, false) * 100)} %${t.last && t.last.dest === id ? ' · naposledy' : ''}`}</em></button>`;
     }).join('')}</div>
     ${t.log.length ? `<h4 class="map-sub">Z obchodní knihy</h4><ul class="trade-log">${t.log.slice(0, 4).map((l) => `<li>${esc(l.text)}</li>`).join('')}</ul>` : ''}
     <p class="map-desc trade-coin">V pokladně: <b>${state.resources.gold}</b> ${state.scenario === 'sedlak' ? 'grošů' : 'zlata'}</p>
   `);
 }
 
+const signed = (n) => `${n > 0 ? '+' : ''}${n}`;
+
+/** One line on what a market wants: the goods it pays most for and those it hardly takes. */
+function wantsLine(dest) {
+  const m = MARKETS[dest];
+  const w = marketWants(dest);
+  const top = w.filter((x) => x.base >= 4).map((x) => `${GOODS[x.good].name.toLowerCase()} ${x.base}`);
+  const low = w.filter((x) => x.base <= 1).map((x) => GOODS[x.good].name.toLowerCase());
+  const none = Object.keys(GOODS).filter((g) => !m.sell[g]).map((g) => GOODS[g].name.toLowerCase());
+  const parts = [];
+  if (top.length) parts.push(`Nejvíc platí za <b>${esc(top.join(', '))}</b>`);
+  if (low.length) parts.push(`skoro nebere ${esc(low.join(', '))}`);
+  if (none.length) parts.push(`nechce ${esc(none.join(', '))}`);
+  return parts.length ? `<p class="trade-wants">${parts.join(' · ')} <span class="trade-hint">(základní cena za vůz)</span></p>` : '';
+}
+
+/** The return load: what the caravan buys abroad and brings home. */
+function backBlock(dest, f) {
+  const m = MARKETS[dest];
+  const goods = Object.keys(m.buy || {});
+  if (!goods.length) return '<p class="trade-hint">Tenhle trh nic zvláštního neprodává, na zpáteční cestu není co koupit.</p>';
+  const chips = [`<button class="trade-chip${f.back ? '' : ' on'}" data-trade="back-good" data-good="">Nic</button>`]
+    .concat(goods.map((g) => `<button class="trade-chip${f.back && f.back.good === g ? ' on' : ''}" data-trade="back-good" data-good="${g}">${esc(GOODS[g].name)} <small>${price(state, dest, g, 'buy')}</small></button>`)).join('');
+  const qty = f.back ? `<div class="trade-qty"><button class="trade-mini" data-trade="back-qty" data-n="-1">−</button><b>${esc(loadText(f.back.qty, f.back.good))}</b><button class="trade-mini" data-trade="back-qty" data-n="1">+</button></div>` : '';
+  return `<h5 class="trade-sub">Vézt zpět <small>· koupí se za utržené peníze, až karavana dorazí</small></h5><div class="trade-goods">${chips}</div>${qty}`;
+}
+
 function showMarket(dest) {
   const t = ensureTrade(state);
   const m = MARKETS[dest];
   const blocked = marketAccess(state, dest);
-  const coin = state.scenario === 'sedlak' ? 'grošů' : 'zlata';
+  const coin = coinName(state);
+  const foodWord = state.scenario === 'sedlak' ? 'zásob' : 'jídla';
   const rows = Object.keys(GOODS).filter((g) => m.sell[g] || m.buy?.[g]).map((g) => {
     const sell = m.sell[g] ? price(state, dest, g) : null;
     const buy = m.buy?.[g] ? price(state, dest, g, 'buy') : null;
-    const trend = m.sell[g] ? (t.drift[dest]?.[g] || 1) : 1;
-    const arrow = trend > 1.1 ? '<i class="up">▲</i>' : trend < 0.9 ? '<i class="down">▼</i>' : '';
+    const tr = sell ? trendOf(state, dest, g) : null;
+    const trendCell = tr ? `${sell} <em class="tr ${tr.cls}" title="Cena proti základní (${m.sell[g]}): ${signed(tr.pct)} %">${tr.arrow} ${signed(tr.pct)} %</em>` : '–';
+    const margin = m.home ? null : buyMargin(state, dest, g);
+    const marginCell = m.home ? '' : `<td class="margin ${margin > 0 ? 'pos' : margin < 0 ? 'neg' : ''}" title="Zisk na voz, když zboží koupíš v Brodu a prodáš tady (bez poplatků)">${margin === null ? '–' : signed(margin)}</td>`;
+    const canBuy = state.resources.gold >= buy && t.stock[g] < stockCap(state, g);
+    const buyBtn = buy && !blocked && m.home ? `<button class="trade-mini" data-trade="buy" data-good="${g}" data-dest="${dest}"${canBuy ? '' : ' disabled'}>Koupit</button>` : '';
     const actions = m.home && !blocked ? `
       <button class="trade-mini" data-trade="sell" data-good="${g}" data-n="1"${t.stock[g] && sell ? '' : ' disabled'}>Prodat 1</button>
       <button class="trade-mini" data-trade="sell" data-good="${g}" data-n="${t.stock[g]}"${t.stock[g] > 1 && sell ? '' : ' disabled'}>Vše</button>
-      ${buy ? `<button class="trade-mini" data-trade="buy" data-good="${g}" data-dest="${dest}"${state.resources.gold >= buy && t.stock[g] < MAX_STOCK ? '' : ' disabled'}>Koupit</button>` : ''}`
-      : buy && !blocked ? `<button class="trade-mini" data-trade="buy" data-good="${g}" data-dest="${dest}"${state.resources.gold >= buy && t.stock[g] < MAX_STOCK ? '' : ' disabled'}>Koupit</button>` : '';
-    return `<tr><td>${esc(GOODS[g].name)}</td><td>${sell ? `${sell}${arrow}` : '–'}</td><td>${buy || '–'}</td><td>${t.stock[g]}</td><td class="trade-act">${actions}</td></tr>`;
+      ${buyBtn}` : buyBtn;
+    return `<tr><td>${esc(GOODS[g].name)}<small class="trade-have" title="Ve skladu">${t.stock[g] ? `${t.stock[g]} ve skladu` : ''}</small></td><td>${trendCell}</td><td>${buy || '–'}</td>${marginCell}<td class="trade-act"><div class="trade-btns">${actions}</div></td></tr>`;
   }).join('');
   let form = '';
   if (!m.home && !blocked) {
     const goods = Object.keys(GOODS).filter((g) => m.sell[g] && t.stock[g] > 0);
-    if (tradeForm.dest !== dest || !goods.includes(tradeForm.good)) tradeForm = { dest, good: goods[0] || null, qty: Math.min(3, t.stock[goods[0]] || 1), escort: false };
+    if (tradeForm.dest !== dest || !goods.includes(tradeForm.good)) {
+      // the last choice is remembered: the same good and escort as the previous caravan
+      const last = t.last || {};
+      const good = goods.includes(last.good) ? last.good : goods[0] || null;
+      tradeForm = { dest, good, qty: Math.min(3, t.stock[good] || 1), escort: !!last.escort, back: last.back && m.buy && m.buy[last.back] ? { good: last.back, qty: 3 } : null };
+    }
     const f = tradeForm;
     if (!goods.length) {
-      form = `<p class="map-desc">Ve skladu nemáš nic, co by se tu dalo prodat.</p>`;
+      form = `<p class="map-desc">Ve skladu nemáš nic, co by se tu dalo prodat. Karavana musí vézt aspoň jeden vůz zboží; ${m.buy && Object.keys(m.buy).length ? 'cestou zpět pak může něco nakoupit.' : ''}</p>`;
     } else {
       f.qty = Math.max(1, Math.min(f.qty, t.stock[f.good]));
-      const value = f.qty * price(state, dest, f.good);
-      const fee = caravanFee(state, dest, f.qty) + (f.escort ? 1 : 0);
-      const contract = t.contracts.find((c) => c.dest === dest && c.good === f.good && c.qty <= f.qty && !c.taken);
+      const est = planEstimate(state, dest, f.good, f.qty, f.escort);
+      const backEst = f.back ? backEstimate(state, dest, f.back) : null;
       const why = canSend(state, dest, f.good, f.qty, f.escort);
+      const better = bestMarket(state, f.good);
+      const betterNote = better && better.dest !== dest && better.price > price(state, dest, f.good)
+        ? `<span class="trade-hint">Lépe platí ${esc(MARKETS[better.dest].short)}: ${better.price} za vůz (tady ${price(state, dest, f.good)}).</span>` : '';
+      const favorNote = m.favor && !est.contract ? (f.qty >= 3 ? ` a přízeň +${Math.min(6, Math.floor(f.qty / 2))}` : ' · přízeň až od 3 vozů') : '';
       form = `
         <h4 class="map-sub">Vypravit ${m.sea ? 'loď' : 'karavanu'}</h4>
         <div class="trade-form">
@@ -583,11 +807,16 @@ function showMarket(dest) {
             <button class="trade-mini" data-trade="qty" data-n="-1">−</button>
             <b>${esc(loadText(f.qty, f.good))}</b>
             <button class="trade-mini" data-trade="qty" data-n="1">+</button>
+            <button class="trade-mini" data-trade="qty-max" title="Celý sklad tohoto zboží">Vše</button>
           </div>
           <label class="trade-escort"><button class="trade-chip${f.escort ? ' on' : ''}" data-trade="escort">${f.escort ? '✓ ' : ''}Ozbrojený doprovod</button><span>${ESCORT_ARMY} muži na cestu, poloviční riziko</span></label>
+          ${backBlock(dest, f)}
           <div class="trade-estimate">
-            <span>Odhad výnosu <b>${contract ? contract.reward : value} ${coin}</b>${contract ? ' (zakázka)' : ''}${m.favor && !contract ? (f.qty >= 3 ? ` a přízeň +${Math.min(6, Math.floor(f.qty / 2))}` : ' · přízeň až od 3 vozů') : ''}</span>
-            <span>Poplatky <b>${fee}</b> · riziko <b>${Math.round(riskOf(state, dest, f.escort) * 100)} %</b> · návrat <b>${etaText(state.turn + m.days)}</b></span>
+            <span>Výnos <b>${est.revenue} ${coin}</b>${est.contract ? ' (zakázka)' : ''}${favorNote}</span>
+            <span>Poplatky <b>${est.fee}</b> · riziko přepadení <b>${Math.round(est.risk * 100)} %</b> · návrat <b>${etaText(state.turn + m.days)}</b></span>
+            <span>Čistý zisk <b class="${est.net >= 0 ? 'net-good' : 'net-bad'}">${signed(est.net)} ${coin}</b> · s rizikem v průměru <b class="${est.expectedNet >= 0 ? 'net-good' : 'net-bad'}">${signed(est.expectedNet)}</b></span>
+            ${betterNote}
+            ${backEst ? `<span>Cestou zpět koupíš <b>${esc(loadText(backEst.qty, f.back.good))}</b> za <b>${backEst.cost}</b> · ${backEst.bestDest ? `nejlépe prodáš ${esc(MARKETS[backEst.bestDest].short)} za ${backEst.bestPrice} (≈ <b class="${backEst.gain >= 0 ? 'net-good' : 'net-bad'}">${signed(backEst.gain)}</b>)` : 'nikde ho teď neprodáš'}</span>` : ''}
           </div>
           ${why ? `<p class="map-warning">${esc(why)}</p>` : ''}
           <button class="seal-button primary map-choose" data-trade="send"${why ? ' disabled' : ''}>Vyslat ${m.sea ? 'loď' : 'karavanu'}</button>
@@ -597,16 +826,20 @@ function showMarket(dest) {
   const convert = m.home ? `
     <h4 class="map-sub">Sýpky a sklad</h4>
     <div class="trade-convert">
-      <button class="trade-mini" data-trade="convert-in"${state.resources.food >= 6 && t.stock.grain < MAX_STOCK ? '' : ' disabled'}>Vymlátit vůz obilí ze zásob (−6 jídla)</button>
-      <button class="trade-mini" data-trade="convert-out"${t.stock.grain ? '' : ' disabled'}>Vrátit vůz do sýpek (+4 jídla)</button>
+      <button class="trade-mini" data-trade="convert-in"${state.resources.food >= THRESH_FOOD && t.stock.grain < stockCap(state, 'grain') ? '' : ' disabled'}>Vymlátit vůz obilí ze zásob (−${THRESH_FOOD} ${foodWord})</button>
+      <button class="trade-mini" data-trade="convert-out"${t.stock.grain ? '' : ' disabled'}>Semlít vůz obilí pro domácnost (+${eatFood(state, 'grain')} ${foodWord})</button>
+      <button class="trade-mini" data-trade="convert-flour"${t.stock.flour ? '' : ' disabled'}>Upéct chleba z vozu mouky (+${eatFood(state, 'flour')} ${foodWord})</button>
     </div>` : '';
+  const bulk = m.home && !blocked ? `<div class="trade-bulk"><button class="trade-mini" data-trade="sell-all"${Object.keys(GOODS).some((g) => t.stock[g] > reservedFor(state, g)) ? '' : ' disabled'} title="Zboží slíbené povinným zakázkám zůstane ve skladu">Prodat vše (mimo zakázky)</button></div>` : '';
   sidebar(`
     <span class="panel-overline">${m.home ? 'Domácí trh' : `${m.sea ? 'Přes moře' : 'Po souši'} · ${m.days} ${m.days === 1 ? 'období' : 'období'} cesty`}</span>
     <h3 class="panel-title">${esc(m.name)}</h3>
     ${!m.home ? `<span class="map-verdict ${m.risk > 0.2 ? 'bad' : m.risk > 0.1 ? 'warn' : 'good'}">Nebezpečí: ${esc(m.danger)} · ${Math.round(riskOf(state, dest, false) * 100)} %</span>` : ''}
     <p class="map-desc">${esc(m.text)}</p>
+    ${m.home ? '' : wantsLine(dest)}
     ${blocked ? `<p class="map-warning">${esc(blocked)}</p>` : ''}
-    <table class="trade-table"><thead><tr><th>Zboží</th><th title="Kolik tu zaplatí za vůz">Platí</th><th title="Kolik tu stojí vůz">Stojí</th><th>Sklad</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+    <table class="trade-table"><thead><tr><th>Zboží</th><th title="Kolik tu zaplatí za vůz a jak se cena liší od základní">Platí</th><th title="Kolik tu stojí vůz">Stojí</th>${m.home ? '' : '<th title="Zisk na voz, když zboží koupíš v Brodu a prodáš tady">Zisk</th>'}<th></th></tr></thead><tbody>${rows}</tbody></table>
+    ${bulk}
     ${convert}
     ${form}
     ${contractList(dest)}
@@ -634,24 +867,57 @@ function handleTrade(btn) {
   else if (kind === 'buy') message = buyAtHome(state, btn.dataset.good, 1, btn.dataset.dest || 'brod');
   else if (kind === 'convert-in') message = convertFood(state, true);
   else if (kind === 'convert-out') message = convertFood(state, false);
+  else if (kind === 'convert-flour') message = convertFood(state, false, 'flour');
   else if (kind === 'good') { tradeForm.good = btn.dataset.good; tradeForm.qty = Math.min(tradeForm.qty, t.stock[tradeForm.good]) || 1; }
   else if (kind === 'qty') tradeForm.qty = Math.max(1, Math.min(10, tradeForm.qty + Number(btn.dataset.n)));
+  else if (kind === 'qty-max') tradeForm.qty = Math.min(10, t.stock[tradeForm.good]) || 1;
   else if (kind === 'escort') tradeForm.escort = !tradeForm.escort;
+  else if (kind === 'back-good') tradeForm.back = btn.dataset.good ? { good: btn.dataset.good, qty: (tradeForm.back && tradeForm.back.qty) || Math.min(3, tradeForm.qty) } : null;
+  else if (kind === 'back-qty') tradeForm.back = tradeForm.back ? { ...tradeForm.back, qty: Math.max(1, Math.min(10, tradeForm.back.qty + Number(btn.dataset.n))) } : null;
+  else if (kind === 'chart-good') { t.chart = { ...(t.chart || { span: 8 }), good: btn.dataset.good }; showTradeOverview(); return; }
+  else if (kind === 'chart-span') { t.chart = { ...(t.chart || { good: 'grain' }), span: Number(btn.dataset.n) }; showTradeOverview(); return; }
+  else if (kind === 'to-contracts') { host.querySelector('.map-sidebar .trade-contracts')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  else if (kind === 'sell-all') message = sellAllAtHome(state) || 'Není co prodat.';
+  else if (kind === 'fulfill') {
+    const res = fulfillContract(state, Number(btn.dataset.id));
+    message = res.error || res.message;
+  } else if (kind === 'best') {
+    const good = btn.dataset.good;
+    const best = bestMarket(state, good);
+    if (best && best.home) {
+      const keep = reservedFor(state, good);
+      message = sellAtHome(state, good, t.stock[good] - keep) || 'Zboží je slíbené povinným zakázkám.';
+    } else if (best) {
+      const last = t.last || {};
+      tradeForm = { dest: best.dest, good, qty: Math.min(10, t.stock[good]), escort: !!last.escort };
+      selectThing({ type: 'market', id: best.dest });
+      return;
+    }
+  }
   else if (kind === 'send') {
-    const res = sendCaravan(state, tradeForm.dest, tradeForm.good, tradeForm.qty, tradeForm.escort);
+    const res = sendCaravan(state, tradeForm.dest, tradeForm.good, tradeForm.qty, tradeForm.escort, tradeForm.back);
     message = res.error || `${MARKETS[tradeForm.dest].sea ? 'Loď vyplula' : 'Karavana vyrazila'} ${MARKETS[tradeForm.dest].to}.`;
     tradeForm.dest = null;
   }
-  if (['good', 'qty', 'escort'].includes(kind)) { showMarket(tradeForm.dest); return; }
+  if (['good', 'qty', 'qty-max', 'escort', 'back-good', 'back-qty'].includes(kind)) { showMarket(tradeForm.dest); return; }
   refreshTradeView(message);
 }
 
 // ---------- sidebar ----------
 
+// The same page redrawn (a stepper, a buy or sell button, a tab) keeps its scroll position; another page starts at the top.
+const sidebarSig = (el) => `${el.querySelector('.panel-overline')?.textContent || ''}|${el.querySelector('.panel-title')?.textContent || ''}`;
+
 function sidebar(html) {
   const el = host.querySelector('.map-sidebar');
+  const body = host.querySelector('.map-body'); // on a phone the picture and the sidebar scroll together in this one
+  const before = sidebarSig(el);
+  const top = el.scrollTop;
+  const bodyTop = body ? body.scrollTop : 0;
   el.innerHTML = html;
-  el.scrollTop = 0;
+  const same = before !== '|' && before === sidebarSig(el);
+  el.scrollTop = same ? top : 0;
+  if (body && same) body.scrollTop = bodyTop;
 }
 
 function statRow(label, value, cls) {
@@ -698,6 +964,45 @@ function settlementCards(provinceId) {
   }).join('')}</div>`;
 }
 
+/** The seats of the newer houses inside a province, as cards that lead to the crest on the map. */
+function holdCards(provinceId) {
+  const list = holdDefs().filter((d) => !provinceId || d.seat === provinceId); // no province = all of them
+  if (!list.length) return '';
+  return `<h4 class="map-sub">Državy rodů</h4><div class="mc-places">${list.map((d) => {
+    const h = (state.houses || []).find((x) => x.id === d.id);
+    return `<button class="mc-place" data-goto-hold="${d.id}">
+      <span class="mc-crest">${crestSvg(d.id, 'hs-crest-sm')}</span>
+      <span class="mc-place-name"><b>${esc(d.hold.name)}</b><small>${esc(d.short)} · ${esc(d.hold.kind)}${h && state.scenario !== 'sedlak' ? ` · ${attitudeLabel(h.attitude).toLowerCase()}` : ''}</small></span>
+    </button>`;
+  }).join('')}</div>`;
+}
+
+/** The sidebar for one of those seats. */
+function showHold(id) {
+  const d = NOBLE_HOUSES.find((x) => x.id === id);
+  const h = (state.houses || []).find((x) => x.id === id);
+  if (!d || !h) return showOverview();
+  const prov = state.provinces.find((p) => p.id === d.seat);
+  const peasant = state.scenario === 'sedlak';
+  const m = houseMuster(h);
+  const owner = foreignOwner(d.seat);
+  sidebar(`
+    <span class="panel-overline">Država rodu · ${esc(PROVINCES[d.seat].label)}</span>
+    <h3 class="panel-title">${esc(d.hold.name)}</h3>
+    <div class="mc-owner mc-owner-crest">
+      ${crestSvg(d.id, 'hs-crest-lg')}
+      <div><b>${esc(d.name)}</b>
+      <span>${h.head.gender === 'female' ? 'Paní' : 'Pán'} ${esc(h.head.name)}, ${h.head.age} let${!peasant && h.ally ? ' · spojenec' : ''}${!peasant && h.married ? ' · spřízněni sňatkem' : ''}</span>
+      <span>${esc(d.hold.kind)} v kraji ${esc(PROVINCES[d.seat].label)}${owner && owner.kind === 'house' ? `, kde vládne ${esc(owner.label)}` : owner && owner.kind === 'crown' ? ', na korunní zemi' : ''}</span></div>
+    </div>
+    <p class="map-desc">${esc(d.text)}</p>
+    <div class="mc-summary">${peasant ? '' : bar('Vztah k tobě', h.attitude, 'loyalty')}${bar('Moc rodu', h.power, 'garrison')}</div>
+    <p class="map-note"><b>${esc(d.trait)}.</b> Družina: ${m.total} mužů (${esc(musterText(m))}). Přítel rodu přináší ${esc(boonText(d))}.</p>
+    ${prov ? `<button class="mc-place" data-goto-province="${d.seat}"><span class="mc-level dot"></span><span class="mc-place-name"><b>${esc(PROVINCES[d.seat].label)}</b><small>kraj</small></span></button>` : ''}
+    <button class="map-back" data-overview>← Celá země</button>
+  `);
+}
+
 /** One land as a card: who holds it, how it stands. */
 function landCard(prov) {
   const def = PROVINCES[prov.id];
@@ -739,6 +1044,7 @@ function showLandsOverview() {
     <h4 class="map-sub">${king ? 'Kraje koruny' : 'Tvá země'}</h4>
     <div class="mc-lands">${own.map(landCard).join('')}</div>
     ${others.length ? `<h4 class="map-sub">${king ? 'Ztracené kraje' : 'Kdo drží zbytek země'}</h4><div class="mc-lands">${others.map(landCard).join('')}</div>` : ''}
+    ${holdCards(null)}
     ${LEGEND(false)}
   `);
 }
@@ -779,6 +1085,7 @@ function showForeignProvince(id, f) {
     ${!peasant && h ? `<div class="mc-summary">${bar('Vztah k tobě', h.attitude, 'loyalty')}${bar('Moc rodu', h.power, 'garrison')}</div>` : ''}
     ${!peasant && !h ? `<div class="mc-summary">${bar('Přízeň krále', state.resources.favor ?? 0, 'loyalty')}</div>` : ''}
     ${peasant && home && id === home.province ? `<p class="map-note">Tady, ve vsi ${esc(home.village)}, stojí tvůj grunt.</p>` : ''}
+    ${holdCards(id)}
     ${settlementCards(id)}
     <button class="map-back" data-overview>← Celá země</button>
   `);
@@ -799,6 +1106,9 @@ function showProvince(id) {
       ${bar('Věrnost', prov.loyalty, 'loyalty')}${bar('Nepokoje', prov.unrest, 'unrest')}
       ${bar('Bohatství', prov.wealth, 'wealth')}${bar('Posádka', prov.garrison, 'garrison')}
     </div>
+    ${holdCards(id)}
+    ${state.scenario !== 'sedlak' ? `<p class="rc-meta rc-prov-line">Vojáci v posádce: <b>${garrisonMen(prov)}</b> · ${garrisonLabel(prov)[0]}
+      <button class="trade-mini" data-war-garrison="${id}">Spravovat posádku</button></p>` : ''}
     ${settlementCards(id)}
     <button class="map-back" data-overview>← Celá země</button>
   `);
@@ -839,6 +1149,9 @@ function showRoute(key) {
 
 function targetPoint(t) {
   if (t.at) return t.at;
+  // a private war on a house that holds a držba: the marker stands beside its crest, not on top of the other houses of the province
+  const held = t.house && NOBLE_HOUSES.find((d) => d.id === t.house && d.hold);
+  if (held) return [held.hold.at[0] + 28, held.hold.at[1] - 6];
   const p = t.province && PROVINCES[t.province];
   // away from the province's own name and from its towns
   if (t.province === 'brodna') return [455, 705];
@@ -872,30 +1185,34 @@ function warLayer() {
     army = `<path class="war-route" d="${smoothPath(pts)}"/>
       <g class="war-army" data-war-army transform="translate(${x.toFixed(0)} ${y.toFixed(0)})">
         <circle class="wa-hit" r="26"/>
-        <path class="wa-pole" d="M0 12V-26"/><path class="wa-flag" d="M0 -26h22l-6 7 6 7H0z"/>
+        <path class="wa-pole" d="M0 12V-46"/><g class="wa-crest" transform="translate(2 -46) scale(.72)">${crestInnerOf(ensureCrest(state))}</g>
         <circle class="wa-base" r="9" cy="12"/><text class="wa-men" y="16">${state.war.power}</text>
       </g>`;
   }
   return marks + army;
 }
 
-const SIZE_LABEL = { small: 'Oddíl', medium: 'Vojsko', large: 'Celá hotovost' };
-
 function showWarOverview() {
+  warForm.tab = warForm.tab || 'campaign';
+  syncTroops(state); // the army number may have moved (a caravan's escort); the troops follow
+  if (warForm.tab === 'army') return sidebar(warTabsHtml(warForm) + armyTabHtml(state, warForm));
+  if (warForm.tab === 'garrison') return sidebar(warTabsHtml(warForm) + garrisonTabHtml(state, warForm));
   if (state.war) return showWarStatus();
   const targets = warTargets(state);
   const keys = Object.keys(targets);
   if (!warForm.target || !targets[warForm.target]) warForm.target = keys[0] || null;
   const rest = state.turn < (state.warNext || 0) ? `<p class="map-warning">Vojsko se zotavuje z minulého tažení. Další můžeš vypravit ${etaText(state.warNext)}.</p>` : '';
   const t = targets[warForm.target];
-  const men = SIZES[warForm.size];
-  const why = t ? warBlock(state, warForm.target, warForm.size) : 'Není proti komu táhnout.';
-  const [odds, tone] = t ? oddsLabel(state, warForm.target, men) : ['', ''];
+  clampCorps(state, warForm);
+  const men = troopsTotal(warForm.corps);
+  const why = t ? warBlock(state, warForm.target, warForm.corps) : 'Není proti komu táhnout.';
+  const [odds, tone] = t && men ? oddsLabel(state, warForm.target, warForm.corps) : ['—', ''];
   const tributes = (state.tributes || []).map((x) => `<li>${esc(x.from[0].toUpperCase() + x.from.slice(1))}: ${x.gold} zlata za období, do ${etaText(x.until, 'gen')}</li>`).join('');
   sidebar(`
-    <span class="panel-overline">Válka</span>
+    ${warTabsHtml(warForm)}
+    <span class="panel-overline rc-banner">${crestSvgOf(ensureCrest(state), 'hs-crest-xs')}Válka</span>
     <h3 class="panel-title">Tažení</h3>
-    <p class="map-desc">Vypravit vojsko je velké rozhodnutí. Tažení trvá několik období, vojsko jí ze sýpek a každé období v poli přinese bitvu, obléhání nebo jiné zkoušky. Klikni na cíl na mapě.</p>
+    <p class="map-desc">Vypravit vojsko je velké rozhodnutí. Tažení trvá několik období, vojsko jí ze sýpek a každé období v poli přinese bitvu, obléhání nebo jiné zkoušky. V bitvě sám rozestavíš muže. Klikni na cíl na mapě.</p>
     ${rest}
     <h4 class="map-sub">Cíle</h4>
     <div class="map-chip-list">${keys.map((k) => `<button class="map-chip${k === warForm.target ? ' on' : ''}" data-war-target="${k}"><span>${esc(targets[k].name)}</span><em>${targets[k].march} obd. pochodu</em></button>`).join('') || '<p class="map-desc">Žádný cíl.</p>'}</div>
@@ -903,17 +1220,16 @@ function showWarOverview() {
       <h4 class="map-sub">${esc(t.name)}</h4>
       <p class="map-desc">${esc(t.text)}</p>
       <p class="map-desc war-reward"><b>Vítězství přinese:</b> ${esc(t.reward)}.</p>
-      <h4 class="map-sub">Kolik mužů</h4>
-      <div class="trade-goods">${Object.entries(SIZES).map(([k, n]) => `<button class="trade-chip${k === warForm.size ? ' on' : ''}" data-war-size="${k}">${SIZE_LABEL[k]} <small>${n}</small></button>`).join('')}</div>
+      ${corpsPickerHtml(state, warForm, t)}
       <h4 class="map-sub">Kdo povede</h4>
       <div class="trade-goods">
         <button class="trade-chip${warForm.leader === 'marshal' ? ' on' : ''}" data-war-leader="marshal">${esc(state.marshal.name)} <small>${esc(leaderLabel('marshal', state))}</small></button>
-        <button class="trade-chip${warForm.leader === 'ruler' ? ' on' : ''}" data-war-leader="ruler">${esc(state.ruler.name)} <small>osobně</small></button>
+        ${state.ruler.age >= 16 ? `<button class="trade-chip${warForm.leader === 'ruler' ? ' on' : ''}" data-war-leader="ruler">${esc(state.ruler.name)} <small>osobně</small></button>` : ''}
       </div>
       <p class="map-desc war-note">${warForm.leader === 'ruler' ? (state.ruler.gender === 'female' ? 'Vládkyně v čele zvedá morálku i šance, ale může být zraněna a doma bude chybět.' : 'Vládce v čele zvedá morálku i šance, ale může být zraněn a doma bude chybět.') : `${state.marshal.name} vede bez rizika pro ${state.ruler.gender === 'female' ? 'vládkyni' : 'vládce'}, muži ale bojují s menším zápalem.`}</p>
       <div class="trade-estimate">
-        <span>Síly: <b class="${tone}">${odds}</b> · doma zůstane ${Math.max(0, state.resources.army - men)} vojska</span>
-        <span>Zásoby: ${Math.ceil(men / 8)} jídla za období · v sýpkách ${state.resources.food}</span>
+        <span>Síly: <b class="${tone}">${odds}</b> · ${esc(t.enemy)}</span>
+        <span>Zásoby: ${Math.ceil((men - (warForm.corps.merc || 0)) / 8)} jídla za období · v sýpkách ${state.resources.food}</span>
       </div>
       ${why ? `<p class="map-warning">${esc(why)}</p>` : ''}
       <button class="seal-button primary map-choose" data-war-start${why ? ' disabled' : ''}>Vytáhnout do pole</button>` : ''}
@@ -926,9 +1242,11 @@ function showWarStatus() {
   const t = warTarget(state);
   const leader = w.leader === 'ruler' ? state.ruler.name : state.marshal.name;
   const marching = state.turn < w.arrive;
-  const [odds, tone] = oddsLabel(state, w.target, w.power);
+  const [odds, tone] = oddsLabel(state, w.target, w.troops || w.power);
+  const corpsLine = Object.entries(w.troops || {}).filter(([, n]) => n > 0).map(([k, n]) => `${n} ${TROOP_NAMES[k]}`).join(' · ');
   sidebar(`
-    <span class="panel-overline">Vojsko v poli</span>
+    ${warTabsHtml(warForm)}
+    <span class="panel-overline rc-banner">${crestSvgOf(ensureCrest(state), 'hs-crest-xs')}Vojsko v poli</span>
     <h3 class="panel-title">${esc(t.name)}</h3>
     <span class="map-verdict ${marching ? 'warn' : 'good'}">${marching ? `Na pochodu · na místě ${etaText(w.arrive)}` : `V poli ${w.seasons} ${w.seasons === 1 ? 'období' : 'období'}`}</span>
     <p class="map-desc">Velí ${esc(leader)} (${leaderLabel(w.leader, state)}). ${esc(t.text)}</p>
@@ -936,24 +1254,43 @@ function showWarStatus() {
     ${statRow('Morálka', w.morale, 'loyalty')}
     <div class="trade-estimate">
       <span>Mužů v poli: <b>${w.power}</b> · <b class="${tone}">${odds}</b></span>
-      <span>Spotřeba: ${Math.ceil(w.power / 8)} jídla za období · v sýpkách ${state.resources.food}</span>
+      <span>${esc(corpsLine)}</span>
+      <span>Spotřeba: ${Math.ceil((w.power - ((w.troops && w.troops.merc) || 0)) / 8)} jídla za období · v sýpkách ${state.resources.food}</span>
     </div>
     <p class="map-desc war-note">Tažení vyhraješ při plném postupu. Když morálka klesne na nulu nebo padnou skoro všichni muži, je prohráno.</p>
     <button class="trade-mini war-recall" data-war-recall>Odvolat vojsko domů</button>
   `);
 }
 
+/** Redraws the sidebar of the war pages without jumping to its top (steppers and tabs). */
+function redrawWar() {
+  const el = host.querySelector('.map-sidebar');
+  const top = el.scrollTop;
+  showOverview();
+  el.scrollTop = top;
+}
+
 function handleWar(t) {
+  if (layers.war && !world) {
+    const res = handleWarUi(t, state, warForm);
+    if (res) {
+      if (res.changed) document.dispatchEvent(new CustomEvent('kingdom:war', { detail: { message: res.quiet ? '' : res.message } }));
+      else if (res.error) document.dispatchEvent(new CustomEvent('kingdom:war', { detail: { message: res.error, noSave: true } }));
+      redrawWar();
+      return true;
+    }
+  }
+  const goGar = t.closest('[data-war-garrison]');
+  if (goGar) { warForm.tab = 'garrison'; warForm.garProv = goGar.dataset.warGarrison; refreshWar(); return true; }
   const target = t.closest('[data-war-target]');
-  if (target) { warForm.target = target.dataset.warTarget; refreshWar(); return true; }
-  const size = t.closest('[data-war-size]');
-  if (size) { warForm.size = size.dataset.warSize; showWarOverview(); return true; }
+  if (target) { warForm.target = target.dataset.warTarget; warForm.tab = 'campaign'; refreshWar(); return true; }
   const leader = t.closest('[data-war-leader]');
-  if (leader) { warForm.leader = leader.dataset.warLeader; showWarOverview(); return true; }
+  if (leader) { warForm.leader = leader.dataset.warLeader; redrawWar(); return true; }
   const start = t.closest('[data-war-start]');
   if (start) {
     if (!start.disabled) {
-      const res = startWar(state, warForm.target, warForm.size, warForm.leader);
+      const res = startWar(state, warForm.target, warForm.corps, warForm.leader);
+      warForm.corps = null;
       refreshWar();
       document.dispatchEvent(new CustomEvent('kingdom:war', { detail: { message: res.error || res.message } }));
     }
@@ -985,7 +1322,7 @@ function refreshWar() {
 
 function selectThing(sel) {
   selected = sel;
-  svg.querySelectorAll('.map-province.selected, .map-feature.active, .map-route.active, .map-market.active').forEach((el) => el.classList.remove('selected', 'active'));
+  svg.querySelectorAll('.map-province.selected, .map-feature.active, .map-hold.active, .map-route.active, .map-market.active').forEach((el) => el.classList.remove('selected', 'active'));
   if (!sel) {
     showOverview();
     return;
@@ -997,6 +1334,9 @@ function selectThing(sel) {
     svg.querySelector(`.map-feature[data-feature="${sel.id}"]`).classList.add('active');
     if (sel.id === 'vassal') svg.querySelector('.map-routes').classList.add('show');
     showFeature(sel.id);
+  } else if (sel.type === 'hold') {
+    svg.querySelector(`.map-hold[data-hold="${sel.id}"]`)?.classList.add('active');
+    showHold(sel.id);
   } else if (sel.type === 'market') {
     svg.querySelector(`.map-market[data-market="${sel.id}"]`)?.classList.add('active');
     showMarket(sel.id);
@@ -1104,6 +1444,11 @@ function tooltipFor(target) {
   const provEl = target.closest('[data-province]');
   const featEl = target.closest('[data-feature]');
   const routeEl = target.closest('[data-route]');
+  const holdEl = target.closest('[data-hold]');
+  if (holdEl) {
+    const d = NOBLE_HOUSES.find((x) => x.id === holdEl.dataset.hold);
+    return `<strong>${esc(d.hold.name)}</strong><span>${esc(d.name)}</span><span>${esc(d.trait)}</span>`;
+  }
   if (featEl) {
     const f = FEATURES[featEl.dataset.feature];
     const tid = townIdFor(state, featEl.dataset.feature);
@@ -1187,6 +1532,8 @@ function wireInteractions(canvas) {
     const featEl = e.target.closest('[data-feature]');
     const routeEl = e.target.closest('[data-route]');
     const provEl = e.target.closest('[data-province]');
+    const holdEl = e.target.closest('[data-hold]');
+    if (holdEl) return focusHold(holdEl.dataset.hold);
     if (featEl) return focusFeature(featEl.dataset.feature);
     if (routeEl) return focusRoute(routeEl.dataset.route);
     if (provEl) return focusProvince(provEl.dataset.province);
@@ -1247,8 +1594,16 @@ function closeTown() {
 
 function drawTown() {
   const stage = host.querySelector('.town-stage');
+  // keep the sideways scroll of the picture (on a phone it is wider than the screen) when it is redrawn
+  const old = stage.querySelector('.town-scroll');
+  const kept = old && !stage.hidden ? old.scrollLeft : null;
   stage.innerHTML = renderTownPlan(state, town.id, town.slot);
   stage.hidden = false;
+  const scroll = stage.querySelector('.town-scroll');
+  fitScene(stage);
+  if (scroll && kept !== null) { scroll.scrollLeft = kept; stage.querySelector('.town-scene').dataset.panned = '1'; }
+  fitPlaques(stage);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (stage.isConnected) fitPlaques(stage); });
   sidebar(townSidebar(state, town.id, town.slot));
 }
 
@@ -1284,11 +1639,22 @@ function handleTownClick(t) {
   }
   if (t.closest('[data-cancel-project]')) { townAction(cancelProject(state, town.id)); return true; }
   // the farm stock: animals and grain (farm.js)
-  const farmBtn = t.closest('[data-farm-buy], [data-farm-sell], [data-farm-grind]');
+  if (t.closest('[data-open-trade]')) { setMode('trade'); return true; }
+  const farmBtn = t.closest('[data-farm-buy], [data-farm-sell], [data-farm-grind], [data-farm-mill], [data-farm-sell-all]');
   if (farmBtn) {
     if (farmBtn.disabled) return true;
     const d = farmBtn.dataset;
-    townAction(d.farmBuy ? buyStock(state, d.farmBuy) : d.farmSell ? sellStock(state, d.farmSell) : grindGrain(state));
+    let res;
+    if (d.farmBuy) res = buyStock(state, d.farmBuy);
+    else if (d.farmSell) res = sellStock(state, d.farmSell);
+    else if (d.farmGrind) res = grindGrain(state, d.farmGrind);
+    else if (d.farmSellAll) {
+      // everything of the good except what a mandatory contract waits for, at the Brod price
+      const key = d.farmSellAll;
+      const qty = ensureTrade(state).stock[key] - reservedFor(state, key);
+      res = qty > 0 ? { message: sellAtHome(state, key, qty) } : { error: 'Tenhle náklad je slíbený povinné zakázce.' };
+    } else res = millGrain(state);
+    townAction(res);
     return true;
   }
   const demo = t.closest('[data-demolish]');
@@ -1308,6 +1674,12 @@ function focusFeature(id) {
   selectThing({ type: 'feature', id });
   const [x, y] = FEATURES[id].at;
   animateTo(id === 'vassal' ? fitBox(VASSAL_VIEW) : fitBox({ x: x - 210, y: y - 150, w: 420, h: 300 }));
+}
+
+function focusHold(id) {
+  selectThing({ type: 'hold', id });
+  const [x, y] = NOBLE_HOUSES.find((d) => d.id === id).hold.at;
+  animateTo(fitBox({ x: x - 150, y: y - 105, w: 300, h: 210 }));
 }
 
 function focusRoute(key) {
@@ -1340,6 +1712,8 @@ export function wireMapChrome() {
     if (prov) return focusProvince(prov.dataset.gotoProvince);
     const feat = t.closest('[data-goto-feature]');
     if (feat) return focusFeature(feat.dataset.gotoFeature);
+    const hold = t.closest('[data-goto-hold]');
+    if (hold) return focusHold(hold.dataset.gotoHold);
     const route = t.closest('[data-goto-route]');
     if (route) return focusRoute(route.dataset.gotoRoute);
     if (t.closest('[data-overview]')) {

@@ -9,6 +9,7 @@
 
 import { clamp, randInt, randomName } from './data.js';
 import { makeChronicleEntry } from './state.js';
+import { realmRec, incomeFactor, empireLost } from './empire.js';
 
 // kind: what sort of land it is · title: the ruler's title [male, female]
 // conquerable: a crown that can be taken; the southern empire is too big to swallow
@@ -117,9 +118,16 @@ export function ageRealms(state) {
   for (const [key, r] of Object.entries(realms)) {
     const def = REALMS[key];
     if (r.owner === 'player') {
-      // a conquered crown: pays every season (processRealms), simmers every year
-      r.attitude = clamp(r.attitude + (r.attitude < 45 ? 2 : 0) + ((state.resources.legitimacy || 50) >= 60 ? 1 : -1));
-      if (r.attitude < 25 && Math.random() < 0.25) {
+      // a conquered crown: pays every season (processRealms), simmers every year. What keeps it loyal is
+      // the yearly decree (events_empire.js risa_sprava): neglect, a heavy hand and a weak legitimacy let it slip.
+      const rec = realmRec(state, key);
+      const neglected = rec.decreed < state.year - 1; // no decree last year
+      r.attitude = clamp(r.attitude + (r.attitude < 45 ? 1 : 0) + ((state.resources.legitimacy || 50) >= 60 ? 1 : -1)
+        - (r.power > 60 ? 1 : 0) - (neglected ? 2 : 0));
+      // the grip loosens when the crown does nothing
+      if (neglected) r.power = clamp(r.power - 3);
+      if (r.attitude < 25 && Math.random() < Math.max(0.05, Math.min(0.6, 0.25 + (25 - r.attitude) / 100 - (r.power - 25) / 400))) {
+        const wasEmpire = state.ruler.statusTier >= 6;
         r.owner = null;
         r.power = 45;
         r.attitude = 15;
@@ -129,6 +137,7 @@ export function ageRealms(state) {
         news.push(t);
         state.chronicle.push(makeChronicleEntry(state, t));
         if (state.ruler.statusTier === 6 && ownedRealms(state).length < 2) state.ruler.statusTier = 5;
+        empireLost(state, key, wasEmpire);
       }
       continue;
     }
@@ -155,5 +164,11 @@ export function ageRealms(state) {
 
 /** Every season: what the foreign crowns held by the player pay. Returns the gold. */
 export function realmIncome(state) {
-  return ownedRealms(state).reduce((sum, k) => sum + REALMS[k].income, 0);
+  return ownedRealms(state).reduce((sum, k) => sum + realmYield(state, k), 0);
+}
+
+/** What one held crown pays a season: more when the land is loyal, less when it sulks. */
+export function realmYield(state, key) {
+  const base = REALMS[key].income;
+  return Math.max(base ? 1 : 0, Math.round(base * incomeFactor(ensureRealms(state)[key].attitude)));
 }

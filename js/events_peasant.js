@@ -208,8 +208,8 @@ export const PEASANT_EVENTS = [
         hintType: 'trait', hintKey: 'eloquence',
         isRoll: true, baseChance: 0.3, traitKey: 'eloquence', traitScale: 0.04,
         chanceBonus: (s) => (s.resources.prestige - 35) / 120,
-        // the player holds the seal now; the chancellor's seat becomes the alderman (court.js)
-        onSuccess: { effects: { prestige: 10, favor: 6 }, hiddenEffects: { setFlag: 's_rychtar' }, replaceCourt: { loyalty: 60, minAge: 35, maxAge: 55 }, traitGain: 'eloquence', chronicle: '{ruler.name} {R:byl zvolen rychtářem|byla zvolena rychtářkou}. Pečetidlo vsi teď leží na tvém stole a {target.name} {T:usedl|usedla} vedle tebe v obecní radě jako {T:konšel|konšelka}.' },
+        // the player holds the seal now (grantPrivilege sets flags.s_rychtar, privileges.js); the chancellor's seat becomes the alderman (court.js)
+        onSuccess: { effects: { prestige: 10, favor: 6 }, grantPrivilege: 'rychtar', replaceCourt: { loyalty: 60, minAge: 35, maxAge: 55 }, traitGain: 'eloquence', chronicle: '{ruler.name} {R:byl zvolen rychtářem|byla zvolena rychtářkou}. Pečetidlo vsi teď leží na tvém stole a {target.name} {T:usedl|usedla} vedle tebe v obecní radě jako {T:konšel|konšelka}.' },
         onFailure: { effects: { prestige: -3 }, replaceCourt: { loyalty: 50, minAge: 35, maxAge: 55 }, chronicle: 'Rychtář{T:em|kou} se stal{T:|a} {T:soused|sousedka} {target.name}. Prý jsi na rychtáře ještě moc mlad{R:ý|á}.' },
       },
       {

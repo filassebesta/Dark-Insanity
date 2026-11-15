@@ -6,6 +6,8 @@
 // LORD_NATURES), which shapes the autumn dues and how fast he forgets service.
 // Branch extra: traits: { strength: 2, patience: -1 } moves several traits at once.
 
+import { canRaise } from './build.js';
+
 const S = 'sedlak';
 const img = (id) => `assets/events/${id}.jpg`;
 
@@ -178,10 +180,11 @@ export const PROLOGUE_EVENTS = [
     choices: [
       {
         label: 'Postavit malou výheň na vlastním gruntu',
-        requires: (s) => s.resources.gold >= 6,
+        requires: (s) => s.resources.gold >= 6 && canRaise(s, 'grunt', 'vyhen'),
         hintType: 'resource', hintKey: 'stability',
-        effects: { gold: -6, stability: 6, army: 2 },
-        chronicle: 'Na gruntu se rozhořela výheň. Nové radlice a podkovy ušetří víc, než stály.',
+        effects: { gold: -6, stability: 3, army: 1 },
+        town: { at: 'grunt', start: 'vyhen' }, // the money buys a real building: it rises in two seasons
+        chronicle: 'Na gruntu se začala stavět výheň. Nové radlice a podkovy ušetří víc, než stály.',
       },
       {
         label: 'Dát všechno dědovu učni',

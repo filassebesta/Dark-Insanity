@@ -3,7 +3,7 @@
 // map to "Svět"; clicking the home kingdom goes back to the painted map.
 // Exports the SVG and the sidebar HTML; map.js wires the clicks.
 
-import { REALMS, HOME_REALM, ensureRealms, realmRulerLabel, ownsRealm } from './realms.js';
+import { REALMS, HOME_REALM, ensureRealms, realmRulerLabel, ownsRealm, realmYield } from './realms.js';
 import { attitudeLabel } from './engine.js';
 import { warTargets, warTarget } from './war.js';
 import { SEASONS } from './data.js';
@@ -163,8 +163,9 @@ export function worldSidebar(state, key) {
     <span class="map-verdict ${tone}">${esc(status)}${esc(since)}</span>
     <p class="map-desc">${esc(def.text)}</p>
     ${own
-      ? `<p class="map-desc">Korunu ${esc(def.gen)} nosíš ty. Platí ${def.income} zlata za období — dokud ji udržíš. Nespokojená země se může vzbouřit a zvolit si vlastního vládce.</p>
-         ${bar('Věrnost', r.attitude, 'loyalty')}`
+      ? `<p class="map-desc">Korunu ${esc(def.gen)} nosíš ty. Platí ${realmYield(state, key)} zlata za období — dokud ji udržíš. Nespokojená země se může vzbouřit a zvolit si vlastního vládce; každý rok o ní rozhoduješ výnosem.</p>
+         ${bar('Věrnost', r.attitude, 'loyalty')}
+         ${bar('Moc koruny', r.power, 'garrison')}`
       : `<div class="w-ruler">${portraitImg([`assets/portraits/realm_${key}_${r.ruler.gender === 'female' ? 'female' : 'male'}.jpg`], r.ruler.name, 'w-ruler-img')}
          <p class="map-desc"><strong>${esc(realmRulerLabel(state, key))}</strong>, ${r.ruler.age} let</p></div>
          ${bar('Síla', r.power, 'garrison')}

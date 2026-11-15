@@ -31,7 +31,7 @@ export function talkSection(state, role) {
     // "5 zlata", "2 grošů"
     const GEN = { gold: state.scenario === 'sedlak' ? 'grošů' : 'zlata', food: state.scenario === 'sedlak' ? 'zásob' : 'jídla', army: state.scenario === 'sedlak' ? 'čeledi' : 'vojska', prestige: 'prestiže', faith: 'víry' };
     const price = cost ? Object.entries(cost).map(([k, v]) => (k === 'gold' && state.scenario === 'sedlak' ? grosLabel(v) : `${v} ${GEN[k] || resourceLabel(RESOURCE_DEFS.find((d) => d.key === k), state.scenario).toLowerCase()}`)).join(', ') : '';
-    const tag = roll ? `${trait ? `${trait} · ` : ''}k% · ${pct} %` : price || 'jistě';
+    const tag = roll ? `${trait ? `${trait} · ` : ''}k% · ${pct} %` : price || def.tag || 'jistě';
     return `<button class="talk-topic" data-talk-topic="${key}"${block ? ` disabled title="${esc(block)}"` : ''}>
       <b>${esc(topicLabel(def, c))}</b><span>${esc(block || tag)}</span></button>`;
   }).join('');
@@ -45,6 +45,10 @@ export function talkSection(state, role) {
 function finish(key, success) {
   const { state, role } = current;
   const res = holdTalk(state, role, key, success);
+  if (res.closed) { // the spouse is gone: close the sheet and say so
+    document.dispatchEvent(new CustomEvent('kingdom:talk', { detail: { closed: true, text: res.text } }));
+    return;
+  }
   const shown = res.role || role; // after a wedding the sheet shows the new spouse
   const c = personOf(state, shown);
   c.lastTalk = res.text;
@@ -59,6 +63,12 @@ export function wireTalk() {
     if (!btn || btn.disabled || !current) return;
     const key = btn.dataset.talkTopic;
     const { state, role } = current;
+    // a weighty topic needs a second click
+    if (TOPICS[key].confirm && !btn.classList.contains('armed')) {
+      btn.classList.add('armed');
+      btn.querySelector('span').textContent = 'Opravdu? Klikni znovu';
+      return;
+    }
     const roll = topicRollChoice(state, role, key);
     const box = document.querySelector('#person-sheet .talk-box');
     box.querySelectorAll('.talk-topic').forEach((b) => { b.disabled = true; });
