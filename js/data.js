@@ -21,7 +21,7 @@ export const RESOURCE_HELP = {
   gold: { text: 'Peníze rodu a panství: z daní a obchodu, na stavby, žold, dary a dvůr. Když dojdou, nic se nezaplatí.', by: { sedlak: 'Tvé hotové peníze. Stačí na semeno, dobytek, stavby a poplatky vrchnosti.' } },
   food: { text: 'Zásoby jídla pro lid a vojsko. Když dojdou, přijde hlad, nepokoje a zběhové.', by: { sedlak: 'Co máš ve spíži a v komoře. Když v zimě dojdou, rodina hladoví.' } },
   army: { text: 'Počet vojáků, které země uživí. Potřebuješ je na války a obranu a stojí zlato i jídlo každé období.', by: { sedlak: 'Pracovní ruce na gruntu: čeleď a rodina. Víc rukou, víc práce na poli.' } },
-  stability: { text: 'Klid v zemi. Když klesne k nule, vypuknou nepokoje a vzpoury.', by: { sedlak: 'Stav gruntu: opravené stavení a zdravá půda. Při nule grunt zpustne.' } },
+  stability: { text: 'Klid v zemi. Když klesne k nule, vypuknou nepokoje a vzpoury.', by: { sedlak: 'Stav gruntu: opravené stavení a zdravá půda. Dobré roky a skutky ho zvednou i nad 100 (až na 200), při nule grunt zpustne.' } },
   legitimacy: { text: 'Jak pevně lidé a šlechta uznávají tvé právo vládnout. Slabý nárok láká uchvatitele.', by: { slechtic: 'Tvůj nárok na trůn: jak dobře ho zná země. Rozhoduje o šancích na korunu.' } },
   faith: { text: 'Zbožnost lidu a přízeň církve. Ovlivňuje klid, události i to, co si církev troufne.' },
   prestige: { text: 'Sláva a vážnost rodu. Otevírá dveře u dvora a zvyšuje respekt sousedů i cizích panovníků.', by: { sedlak: 'Co o tobě říkají sousedé. Dobrá pověst pomáhá při obchodu i při potíži.' } },
@@ -176,10 +176,17 @@ export function yearsLabel(n) {
  * Stock resources can grow past 100 (a full treasury, a big granary, a large host); the rest are gauges of 0–100.
  */
 export const RESOURCE_CAP = { gold: 999, food: 999, army: 250 };
+// The peasant's Grunt (stability) is a stock too: good years and good deeds pile up a buffer past 100.
+export const PEASANT_CAP = { stability: 200 };
+
+/** The ceiling of a resource in a scenario: 999 gold, 250 men, 200 Grunt for a peasant, 100 for a plain gauge. */
+export function capOf(key, scenario) {
+  return (scenario === 'sedlak' && PEASANT_CAP[key]) || RESOURCE_CAP[key] || 100;
+}
 
 /** Clamps a resource value to its own ceiling: clampRes('gold', 340) stays 340, clampRes('faith', 140) is 100. */
-export function clampRes(key, value) {
-  return Math.max(0, Math.min(RESOURCE_CAP[key] ?? 100, value));
+export function clampRes(key, value, scenario) {
+  return Math.max(0, Math.min(capOf(key, scenario), value));
 }
 
 export function clamp(value, min = 0, max = 100) {

@@ -388,6 +388,9 @@ Cizí vládci: `{realm.east}` („král Ctibor“), `{realm.east.Ruler}` (toté�
 - Větev události `town: { at: '<sídlo>', start: '<budova>' }` zahájí stavbu zdarma (`applyTownEffects` v `build.js`), peníze strhne sama událost. Volba i událost si před tím ověří `canRaise(state, id, key)` (sídlo je hráčovo, budova tam patří a ještě nestojí, nic jiného se nestaví, je volná parcela), jinak by hráč zaplatil a nedostal nic.
 - Takhle fungují „Postavit malou výheň na vlastním gruntu“ (`p_kovar_vyhen`, nová selská budova `vyhen`: +1 groš ročně a stabilita při dostavbě) a „Postavit mlýn“ (`n_mlyn`, mlýn v Přístavu Mark). Ostatní „postavit“ (kamenný hrad, chrám, kaple, mosty) jsou vyprávěné jen v kraji a žádnou budovu na mapě nemají.
 
+### Grunt nad 100
+- Stabilita sedláka („Grunt“) je zásoba jako zlato: strop 200 (`PEASANT_CAP` v `data.js`, `capOf(key, scenario)`, `clampRes(key, v, scenario)`). Šlechtic a král mají stabilitu dál 0–100. Efekty událostí (`applyEffects`) i roční hospodářství sedláka hlídají tenhle strop; panel mapy ukáže číslo nad 100 s plným ukazatelem a bublina u suroviny „Grunt 150 / 200“.
+
 ### Dědicové rodů a vyhubení rodu (`houses.js`, událost `w_rod_osud`)
 - Každý rod má `heirs` (1–3 děti hlavy; starší uložené hry je dostanou v `ensureHouses`). Dědicové stárnou, při smrti hlavy nastoupí nejstarší dospělý (`takeNextHead`), jinak neznámý příbuzný. Panel Rody je ukazuje u každého rodu.
 - Po vyhrané soukromé válce proti rodu (`house:<id>`) se po návratu vojska přidá událost **Osud poraženého rodu** (`w_rod_osud`, `state.lastWar.house`): nechat rod žít a vzít výkupné / zajmout dědice jako rukojmí (`houseFate: 'hostages'`) / **vyhubit rod a zabrat jeho pozemky** (`houseFate: 'extinct'`).

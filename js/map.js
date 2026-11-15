@@ -921,7 +921,7 @@ function sidebar(html) {
 }
 
 function statRow(label, value, cls) {
-  return `<div class="stat-bar-row"><span class="label">${label}</span><div class="stat-bar"><div class="stat-bar-fill ${cls}" style="width:${value}%"></div></div><span>${value}</span></div>`;
+  return `<div class="stat-bar-row"><span class="label">${label}</span><div class="stat-bar"><div class="stat-bar-fill ${cls}" style="width:${Math.min(100, value)}%"></div></div><span>${value}</span></div>`; // a stock past 100 (the peasant's Grunt) fills the bar and shows its number
 }
 
 function verdict(prov) {
@@ -943,7 +943,7 @@ function showOverview() {
 
 // ---------- the lands: compact cards instead of long text ----------
 
-const bar = (label, value, cls) => `<div class="mc-bar"><span>${label}</span><i><b class="${cls}" style="width:${value}%"></b></i><em>${value}</em></div>`;
+const bar = (label, value, cls) => `<div class="mc-bar"><span>${label}</span><i><b class="${cls}" style="width:${Math.min(100, value)}%"></b></i><em>${value}</em></div>`;
 const shortName = (p) => p.name.replace(/ \(.*\)$/, '');
 const buildingsWord = (n) => `${n} ${n === 1 ? 'stavba' : n >= 2 && n <= 4 ? 'stavby' : 'staveb'}`;
 

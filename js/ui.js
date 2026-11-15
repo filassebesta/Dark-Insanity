@@ -1,4 +1,4 @@
-import { RESOURCE_DEFS, RESOURCE_HELP, RESOURCE_CAP, TRAIT_DEFS, TERRAIN_DEFS, SEASONS, NOBLE_HOUSES, resourceLabel, activeResourceDefs, tierTitle, yearsLabel } from './data.js';
+import { RESOURCE_DEFS, RESOURCE_HELP, capOf, TRAIT_DEFS, TERRAIN_DEFS, SEASONS, NOBLE_HOUSES, resourceLabel, activeResourceDefs, tierTitle, yearsLabel } from './data.js';
 import { interpolate, computeSuccessChance, attitudeLabel, ownProvinces, reignEpithet } from './engine.js';
 import { ICONS } from './icons.js';
 import { crestSvg } from './crests.js';
@@ -117,7 +117,7 @@ function showResTip(chip) {
   if (!def) return;
   const help = RESOURCE_HELP[def.key] || {};
   const text = (help.by && help.by[state.scenario]) || help.text || '';
-  const cap = RESOURCE_CAP[def.key] ?? 100;
+  const cap = capOf(def.key, state.scenario);
   const value = state.resources[def.key];
   tipBox();
   resTip.innerHTML = `<b>${esc(resourceLabel(def, state.scenario))}</b> <span class="rt-val">${value} / ${cap}</span><p>${esc(text)}</p>${value <= def.critical ? '<p class="rt-warn">Nebezpečně málo.</p>' : ''}`;
