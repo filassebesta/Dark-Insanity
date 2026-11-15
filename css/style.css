@@ -2355,3 +2355,13 @@ button.ctb-title.crit b { color: #f0a08c; }
 .ctb-sum { font-size: .82rem; color: var(--paper-3); }
 .ctb-sum.crit { color: #f0a08c; font-weight: 600; }
 @media (max-width: 900px) { .contract-bar.folded { flex-direction: row; flex-wrap: wrap; } }
+
+/* hover bubble of the gauges in the top bar */
+.resource-chip { cursor: help; }
+.resource-chip:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+.res-tip { position: fixed; z-index: 400; max-width: min(19rem, calc(100vw - 16px)); padding: .55rem .8rem .6rem; background: rgba(13,11,9,.96); color: var(--paper); border: 1px solid var(--gold-dim); box-shadow: 0 6px 22px rgba(0,0,0,.55); pointer-events: none; font-size: .9rem; line-height: 1.4; }
+.res-tip[hidden] { display: none; }
+.res-tip b { font-family: var(--font-display); font-weight: 400; font-size: 1.05rem; color: var(--gold-bright); }
+.res-tip .rt-val { margin-left: .3rem; font-variant-numeric: tabular-nums; color: var(--paper); }
+.res-tip p { margin: .25rem 0 0; color: var(--paper-2, #e9dfc8); }
+.res-tip p.rt-warn { color: #f0a08c; font-weight: 600; }

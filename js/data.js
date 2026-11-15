@@ -16,6 +16,18 @@ export const RESOURCE_DEFS = [
   { key: 'favor', label: 'Přízeň krále', icon: ICONS.favor, critical: 15, labels: { sedlak: 'Přízeň vrchnosti', slechtic: 'Přízeň koruny' } },
 ];
 
+// What each gauge means, for the hover bubble in the top bar. `by` = a different text for a scenario.
+export const RESOURCE_HELP = {
+  gold: { text: 'Peníze rodu a panství: z daní a obchodu, na stavby, žold, dary a dvůr. Když dojdou, nic se nezaplatí.', by: { sedlak: 'Tvé hotové peníze. Stačí na semeno, dobytek, stavby a poplatky vrchnosti.' } },
+  food: { text: 'Zásoby jídla pro lid a vojsko. Když dojdou, přijde hlad, nepokoje a zběhové.', by: { sedlak: 'Co máš ve spíži a v komoře. Když v zimě dojdou, rodina hladoví.' } },
+  army: { text: 'Počet vojáků, které země uživí. Potřebuješ je na války a obranu a stojí zlato i jídlo každé období.', by: { sedlak: 'Pracovní ruce na gruntu: čeleď a rodina. Víc rukou, víc práce na poli.' } },
+  stability: { text: 'Klid v zemi. Když klesne k nule, vypuknou nepokoje a vzpoury.', by: { sedlak: 'Stav gruntu: opravené stavení a zdravá půda. Při nule grunt zpustne.' } },
+  legitimacy: { text: 'Jak pevně lidé a šlechta uznávají tvé právo vládnout. Slabý nárok láká uchvatitele.', by: { slechtic: 'Tvůj nárok na trůn: jak dobře ho zná země. Rozhoduje o šancích na korunu.' } },
+  faith: { text: 'Zbožnost lidu a přízeň církve. Ovlivňuje klid, události i to, co si církev troufne.' },
+  prestige: { text: 'Sláva a vážnost rodu. Otevírá dveře u dvora a zvyšuje respekt sousedů i cizích panovníků.', by: { sedlak: 'Co o tobě říkají sousedé. Dobrá pověst pomáhá při obchodu i při potíži.' } },
+  favor: { text: 'Přízeň panovníka. Když klesne k nule, přijdeš o půdu.', by: { sedlak: 'Přízeň vrchnosti. Když klesne k nule, pán ti vezme půdu.', slechtic: 'Přízeň koruny: jak tě vidí král. Při nule přijdeš o léno.' } },
+};
+
 /** Resource label as the current scenario calls it (legitimacy = claim to the throne for a noble). */
 export function resourceLabel(def, scenario) {
   return (def.labels && def.labels[scenario]) || def.label;
