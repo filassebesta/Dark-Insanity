@@ -19,7 +19,7 @@ import { syncTroops, armyUpkeep, processTroops, garrisonDrift, garrisonPower, ga
 import { autoFight } from './battle.js';
 import { processPrivileges, applyPrivilegeEffects, flushPrivilegeNews, privilegeTokens } from './privileges.js';
 import { empireTokens, empireGenders, processEmpire, empireYear, applyEmpireBranch, heldKeys } from './empire.js';
-import { ensureHouses, housesNeedMending, houseYear, addRel } from './houses.js';
+import { ensureHouses, housesNeedMending, houseYear, addRel, ageHeirs, takeNextHead, applyHouseFate, heirsLine } from './houses.js';
 import { regencyTokens, startRegency, applyRegencyBranch, processRegency, regencyOn, childRuler, COMING_OF_AGE } from './regency.js';
 
 const TRAIT_MIN = 1;
@@ -62,6 +62,7 @@ export function interpolate(state, text) {
       'house.HeadTitle': house.head.gender === 'female' ? 'Paní' : 'Pán',
       'house.seat': (house.def.hold && house.def.hold.name) || state.provinces.find((p) => p.id === house.def.seat).name,
       'house.trait': house.def.trait,
+      'house.heirs': heirsLine(house), // "Rodu zbývají dědicové: A, B a C."
     });
   }
   if (house2) {
@@ -213,7 +214,8 @@ export function ownProvinces(state) {
 }
 
 export function houseOf(state, id) {
-  const h = (state.houses || []).find((x) => x.id === id);
+  // a line that was wiped out still has a name and a head in the story that ends it (houses.js applyHouseFate)
+  const h = (state.houses || []).find((x) => x.id === id) || (state.deadHouses || []).find((x) => x.id === id);
   return h ? { ...h, def: NOBLE_HOUSES.find((d) => d.id === id) } : null;
 }
 
@@ -533,6 +535,11 @@ function applyBranch(state, branch, meta, outcome = 'normal') {
     notes.push({ text: `${NOBLE_HOUSES.find((d) => d.id === a).short} a ${NOBLE_HOUSES.find((d) => d.id === b).short}: vztah ${branch.houseRel > 0 ? '+' : ''}${branch.houseRel}`, tone: branch.houseRel > 0 ? 'pos' : 'neg' });
   }
   applyNobleEffects(state, branch.noble, notes);
+  // houseFate: what the victor does with the house the story is about ('hostages' | 'extinct', houses.js)
+  if (branch.houseFate && state.eventContext && state.eventContext.house) {
+    const fate = applyHouseFate(state, state.eventContext.house, branch.houseFate);
+    if (fate) notes.push({ text: fate.text, tone: branch.houseFate === 'extinct' ? 'neg' : 'pos' });
+  }
   // realm: { <key>: { attitude, power } } — how a foreign court takes what was done;
   // 'conquest' = the crown just taken, 'focus' = the held realm the event is about, 'held' = every held crown
   for (const [k, fx] of Object.entries(branch.realm || {})) {
@@ -1176,7 +1183,7 @@ function processTurnEconomy(state) {
   const tierBonus = isNoble(state) && state.ruler.statusTier >= 4 ? 2 : 0;
   // the army costs by what it is made of (troops.js): spearmen are cheap, riders and hired swords are not
   const keep = armyUpkeep(state);
-  const goldIncome = (capable(state, 'chancellor') ? 1 : 0) + Math.round(totalWealth / goldDiv) - Math.round(keep.gold) - 1 + traitBonuses(state).gold + tierBonus;
+  const goldIncome = (capable(state, 'chancellor') ? 1 : 0) + Math.round(totalWealth / goldDiv) - Math.round(keep.gold) - 1 + traitBonuses(state).gold + tierBonus + (state.seized || []).length; // + a groš a year from every hold taken from a wiped-out house
   const foodIncome = Math.round(totalWealth / foodDiv) - Math.round(keep.food) + SEASON_FOOD[state.seasonIndex];
   const unpaid = state.resources.gold + goldIncome < 0;
   state.resources.gold = clampRes('gold', state.resources.gold + goldIncome);
@@ -1271,9 +1278,11 @@ function ageNobleWorld(state) {
   }
   for (const h of state.houses) {
     h.head.age += 1;
+    ageHeirs(h);
     if (h.head.age > 64 && Math.random() < (h.head.age - 62) * 0.04) {
       const g = Math.random() < 0.75 ? 'male' : 'female';
-      const successor = { name: randomName(g), gender: g, age: randInt(28, 45) };
+      // the oldest grown heir takes the place; a line without one is led by a relative nobody has heard of
+      const successor = takeNextHead(h) || { name: randomName(g), gender: g, age: randInt(28, 45) };
       const houseName = NOBLE_HOUSES.find((d) => d.id === h.id).gen;
       state.chronicle.push(makeChronicleEntry(state, `${h.head.gender === 'female' ? 'Zemřela' : 'Zemřel'} ${h.head.name}, hlava rodu ${houseName}. Rod nyní vede ${successor.name}.`));
       h.head = successor;

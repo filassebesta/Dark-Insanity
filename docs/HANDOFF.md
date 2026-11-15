@@ -388,6 +388,11 @@ Cizí vládci: `{realm.east}` („král Ctibor“), `{realm.east.Ruler}` (toté�
 - Větev události `town: { at: '<sídlo>', start: '<budova>' }` zahájí stavbu zdarma (`applyTownEffects` v `build.js`), peníze strhne sama událost. Volba i událost si před tím ověří `canRaise(state, id, key)` (sídlo je hráčovo, budova tam patří a ještě nestojí, nic jiného se nestaví, je volná parcela), jinak by hráč zaplatil a nedostal nic.
 - Takhle fungují „Postavit malou výheň na vlastním gruntu“ (`p_kovar_vyhen`, nová selská budova `vyhen`: +1 groš ročně a stabilita při dostavbě) a „Postavit mlýn“ (`n_mlyn`, mlýn v Přístavu Mark). Ostatní „postavit“ (kamenný hrad, chrám, kaple, mosty) jsou vyprávěné jen v kraji a žádnou budovu na mapě nemají.
 
+### Dědicové rodů a vyhubení rodu (`houses.js`, událost `w_rod_osud`)
+- Každý rod má `heirs` (1–3 děti hlavy; starší uložené hry je dostanou v `ensureHouses`). Dědicové stárnou, při smrti hlavy nastoupí nejstarší dospělý (`takeNextHead`), jinak neznámý příbuzný. Panel Rody je ukazuje u každého rodu.
+- Po vyhrané soukromé válce proti rodu (`house:<id>`) se po návratu vojska přidá událost **Osud poraženého rodu** (`w_rod_osud`, `state.lastWar.house`): nechat rod žít a vzít výkupné / zajmout dědice jako rukojmí (`houseFate: 'hostages'`) / **vyhubit rod a zabrat jeho pozemky** (`houseFate: 'extinct'`).
+- `applyHouseFate(state, id, 'extinct')`: hlava i dědicové padnou, rod odejde z `state.houses` do `state.deadHouses` (`ensureHouses` ho už neoživí, `houseOf` ho pro příběh ještě zná); všechny kraje s `owner: id` se stanou hráčovými, držba nových rodů se zapíše do `state.seized` (každá +1 groš ročně v `engine.js`); ostatní rody −8 vztah, přízeň krále −6, prestiž −3. Test: `node tools/sim/test_extinct.mjs`.
+
 ### Záložky jako ikony (`js/tab_icons.js`, `initBookTabs` v `ui.js`)
 - Záložky horní lišty (Postava, Mapa, Obchod, Válka, Dvůr / Rodina, Rody / Vazalové, Kronika) jsou ikonová tlačítka; jméno je vidět v bublině po najetí myší nebo přejití klávesnicí (na dotykovém displeji se neukazuje, ikony jsou po klepnutí hned panel) a čte ho čtečka (`aria-label`). Ikona je nakreslená linková, dokud klíč není v `TAB_ART` a nedorazí malovaný `assets/ui/tab_<klíč>.webp` (prompt a zpracování: `docs/obrazky-ikony.md`). Název záložky se mění podle fáze života (`retitleTab`).
 
