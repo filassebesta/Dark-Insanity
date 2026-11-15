@@ -905,10 +905,19 @@ function handleTrade(btn) {
 
 // ---------- sidebar ----------
 
+// The same page redrawn (a stepper, a buy or sell button, a tab) keeps its scroll position; another page starts at the top.
+const sidebarSig = (el) => `${el.querySelector('.panel-overline')?.textContent || ''}|${el.querySelector('.panel-title')?.textContent || ''}`;
+
 function sidebar(html) {
   const el = host.querySelector('.map-sidebar');
+  const body = host.querySelector('.map-body'); // on a phone the picture and the sidebar scroll together in this one
+  const before = sidebarSig(el);
+  const top = el.scrollTop;
+  const bodyTop = body ? body.scrollTop : 0;
   el.innerHTML = html;
-  el.scrollTop = 0;
+  const same = before !== '|' && before === sidebarSig(el);
+  el.scrollTop = same ? top : 0;
+  if (body && same) body.scrollTop = bodyTop;
 }
 
 function statRow(label, value, cls) {
