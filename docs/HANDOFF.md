@@ -208,7 +208,6 @@ ROW=rodina_porucnictvi.jpg:692 python3 tools/images/process_batch.py dir <scratc
 - 5 scén rádců a výchovy (14.5) a 6 scén obchodu (15)
 - 24 scén krizí a ozvěn (13)
 - případně znovu `s_krupobiti` a `s_trh` (vložený spodní pruh jen zmírněný)
-- `s_smrt_souseda.jpg` (sekce 16; ostatní rodinné obrázky a portréty dospělých dědiců už jsou ve hře)
 
 ---
 
